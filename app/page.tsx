@@ -3,15 +3,14 @@
 import { useConvexAuth, useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useRouter } from "next/navigation";
-import { QRCodeSVG } from "qrcode.react";
 import React from "react";
-import cn from 'clsx';
 import { Button } from "@/components/ui/button";
 import { FeatureRequestDialog } from "@/components/FeatureRequestDialog";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
-import { useProfile } from "@/hooks/auth";
+import { useReadProfile } from "@/hooks/auth";
 import { api } from "@/convex/_generated/api";
 import { Logo } from "@/components/logo";
+import { CheckInCard } from "@/components/CheckInCard";
 
 
 function SignOutButton() {
@@ -37,54 +36,6 @@ function SignOutButton() {
   );
 }
 
-function QRCode({ data }: { data: string }) {
-  const [size, setSize] = React.useState<number | null>(null);
-  const ref = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const abortController = new AbortController();
-
-    if (ref.current) {
-      setSize(ref.current.clientWidth);
-    }
-
-    window.addEventListener('resize', () => {
-      if (ref.current) {
-        setSize(ref.current.clientWidth);
-      }
-    }, {
-      signal: abortController.signal
-    });
-
-    return () => {
-      abortController.abort()
-    };
-  }, []);
-
-  return (
-    <div ref={ref} className="w-full aspect-square p-2">
-      {size === null ? null :
-        <QRCodeSVG
-          size={size}
-          fgColor={"#111"}
-          value={data}
-          className="px-4 rounded-lg shadow-lg border w-full"
-        />}
-    </div>
-  );
-}
-
-function CheckInCard() {
-  return <div className="border overflow-hidden rounded-2xl bg-background dark:bg-gray-950">
-
-    <QRCode data={"302930924-helloman"} />
-
-    <p className="p-4 text-center border-t font-mono text-xs">
-      Present QR Code to Staff at Check-in Counter
-    </p>
-  </div>
-}
-
 function greet_time(): string {
   const date = new Date();
   const hour = date.getHours();
@@ -97,7 +48,7 @@ function greet_time(): string {
 
 
 function Content() {
-  const profile = useProfile();
+  const profile = useReadProfile();
 
   return (
     <div className="flex flex-col scanline-root max-w-lg mx-auto pt-6 pb-14">
@@ -151,7 +102,7 @@ function NotRegistered({ children }: { children: React.ReactNode }) {
 }
 
 export default function Home() {
-  const profile = useProfile();
+  const profile = useReadProfile();
 
   return (
     <>

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, InfoIcon } from "lucide-react";
 import { createStore, useStore } from 'zustand'
 import { addDays, addMonths, format, formatISO, parseISO } from "date-fns";
-import { useProfile } from "@/hooks/auth";
+import { useReadProfile } from "@/hooks/auth";
 
 interface StoreState {
   month: Date;
@@ -49,7 +49,7 @@ export function AttendanceCalendar() {
 
 function useAttendanceList() {
   const { month } = useStore(store)
-  const profile = useProfile();
+  const profile = useReadProfile();
 
   return useQuery(api.myFunctions.getAttendanceByMonth, {
     userId: profile?.id,

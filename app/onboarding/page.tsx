@@ -3,11 +3,11 @@
 import { useEffect } from "react";
 import OnboardingForm from "@/components/OnboardingForm";
 import { useRouter } from "next/navigation";
-import { useProfile } from "@/hooks/auth";
+import { useReadProfile } from "@/hooks/auth";
 
 export default function Onboarding() {
   const router = useRouter();
-  const profile = useProfile()
+  const profile = useReadProfile()
 
   useEffect(() => {
     if (!profile) return;

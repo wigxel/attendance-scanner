@@ -4,6 +4,7 @@ import "./globals.css";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { QueryProvider } from "@/components/react-query";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -28,15 +29,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ConvexAuthNextjsServerProvider>
-      <html lang="en" className="scanline-root">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
-        >
-          <ConvexClientProvider>{children}</ConvexClientProvider>
-        </body>
-      </html>
-      <Toaster />
-    </ConvexAuthNextjsServerProvider>
+    <QueryProvider>
+      <ConvexAuthNextjsServerProvider>
+        <html lang="en" className="scanline-root">
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
+          >
+            <ConvexClientProvider>{children}</ConvexClientProvider>
+          </body>
+        </html>
+        <Toaster />
+      </ConvexAuthNextjsServerProvider>
+    </QueryProvider>
   );
 }
