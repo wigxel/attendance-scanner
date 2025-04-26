@@ -1,13 +1,15 @@
 "use client";
 
-import { useConvexAuth, useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
+import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import React from "react";
 import cn from 'clsx';
 import { Button } from "@/components/ui/button";
+import { FeatureRequestDialog } from "@/components/FeatureRequestDialog";
+import { AttendanceCalendar } from "@/components/AttendanceCalendar";
+import { useProfile } from "@/hooks/auth";
 
 function Logo(props: { className: string }) {
   return <svg
@@ -20,9 +22,6 @@ function Logo(props: { className: string }) {
 }
 
 
-function useProfile() {
-  return useQuery(api.myFunctions.getProfile);
-}
 
 export default function Home() {
   const profile = useProfile();
@@ -48,10 +47,10 @@ export default function Home() {
         <Content />
       </main>
 
-      <div className="p-2 text-xs border-t w-full text-center">
-        Designed & Crafted 100% by
+      <footer className="mt-4 p-2 text-xs border-t w-full text-center">
+        Designed & Crafted 100% by{" "}
         <a className="underline" href="https://wigxel.io">Wigxel</a>
-      </div>
+      </footer>
     </div>
   );
 }
@@ -132,8 +131,8 @@ function Content() {
   const profile = useProfile();
 
   return (
-    <div className="flex flex-col gap-8 max-w-lg mx-auto">
-      <section className="min-h-screen gap-[1rem] flex flex-col">
+    <div className="flex flex-col max-w-lg mx-auto">
+      <section className="min-h-screen gap-[2rem] flex flex-col">
         <h1>
           <span className="flex">WELCOME</span>
           <span className="text-4xl font-semibold">
@@ -142,6 +141,10 @@ function Content() {
         </h1>
 
         <CheckInCard />
+
+        <AttendanceCalendar />
+
+        <FeatureRequestDialog />
       </section>
     </div>
   );

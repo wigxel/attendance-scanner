@@ -3,6 +3,7 @@ import { query, mutation, action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
+import { startOfMonth, endOfMonth, format, parseISO } from "date-fns";
 
 // Write your Convex functions in any file inside this directory (`convex`).
 // See https://docs.convex.dev/functions for more.
@@ -50,6 +51,27 @@ export const getProfile = query({
     if (userId === null) return null;
 
     return await ctx.db.query('profile').filter(q => q.eq(q.field('id'), userId)).unique();
+  }
+})
+
+export const getAttendanceByMonth = query({
+  args: {
+    userId: v.id('users'), // user id
+    start: v.string(), // iso timestamp
+    end: v.string(), // iso timestamp
+  },
+  handler: async (ctx, args) => {
+    // Query attendance records in the date range
+    return await ctx.db
+      .query("daily_register")
+      .filter(q =>
+        q.and(
+          q.eq(q.field("userId"), args.userId),
+          q.gte(q.field("timestamp"), args.start),
+          q.lte(q.field("timestamp"), args.end)
+        )
+      )
+      .collect()
   }
 })
 

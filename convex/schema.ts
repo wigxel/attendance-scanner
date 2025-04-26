@@ -6,11 +6,21 @@ const daily_register = defineTable({
   userId: v.id("users"),
   timestamp: v.string(),
   source: v.literal('web'),
-  device_meta: v.object({
+  device: v.object({
     browser: v.string(),
+    name: v.string(),
+    visitorId: v.string(),
   }),
-  status: v.literal('')
-});
+  admitted_by: v.id("users")
+}).index('admitted_by', ['admitted_by'])
+  .index('unique_visitor', ['device.visitorId'])
+
+const featureRequest = defineTable({
+  userId: v.id("users"),
+  title: v.string(),
+  description: v.string(),
+  status: v.literal('open')
+}).index('user_id', ['userId'])
 
 const profile = defineTable({
   id: v.id('users'),
@@ -29,5 +39,6 @@ export default defineSchema({
     value: v.number(),
   }),
   daily_register,
-  profile
+  profile,
+  featureRequest,
 });
