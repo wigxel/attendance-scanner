@@ -1,0 +1,148 @@
+"use client";
+
+import { useConvexAuth, useQuery } from "convex/react";
+import { api } from "../convex/_generated/api";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useRouter } from "next/navigation";
+import { QRCodeSVG } from "qrcode.react";
+import React from "react";
+import cn from 'clsx';
+import { Button } from "@/components/ui/button";
+
+function Logo(props: { className: string }) {
+  return <svg
+    viewBox="0 0 279 47" fill="none" id="svg-171850183_3028" role="img" aria-label="Wigxel Logo"
+    className={cn(props.className, "aspect-[279/47]")}
+  >
+    <path d="M37.112 16.46c3.167-.638 6.277-1.19 9.474-1.772.988 1.686 1.976 3.4 3.022 5.202-5.405.698-10.694 1.366-16.042 2.034a424.372 424.372 0 0 1-3.022-5.26c3.255-4.272 6.48-8.544 9.764-12.874.989 1.715 1.947 3.342 2.907 5.028-2.035 2.586-4.07 5.085-6.103 7.643Zm-24.499-.115c-.814-.93-1.657-1.86-2.47-2.82-1.28-1.482-2.529-2.964-3.866-4.504.988-1.715 1.977-3.43 3.023-5.231 3.284 4.36 6.51 8.602 9.764 12.874a425.104 425.104 0 0 0-3.022 5.26C10.752 21.256 5.435 20.588 0 19.89c.988-1.714 1.918-3.342 2.877-4.998.96.058 1.89.261 2.82.407l6.45 1.046c.175.029.32.174.466 0-.03.029-.03.058.029.087h.058c0-.058-.03-.087-.087-.087ZM43.33 37.967c-1.016 1.743-1.975 3.429-3.022 5.202-3.284-4.302-6.51-8.574-9.764-12.875.988-1.744 2.005-3.458 3.022-5.26a6116.21 6116.21 0 0 1 16.042 2.034c-.988 1.715-1.918 3.342-2.906 5.028-3.255-.465-6.51-1.017-9.881-1.598 2.325 2.47 4.388 4.94 6.51 7.469ZM27.841 15.095h-6.103A3172.756 3172.756 0 0 0 15.578.332C16.1.186 19.587.128 21.33.244a545.806 545.806 0 0 1 3.517 9.126c1.017-3.08 2.092-6.103 3.197-9.155h6.015c-2.063 4.999-4.126 9.91-6.219 14.88Zm-8.777 15.199c-3.255 4.301-6.48 8.544-9.764 12.875-.988-1.686-1.918-3.343-2.906-5.028a326.432 326.432 0 0 1 6.335-7.76c-3.313.756-6.48 1.337-9.707 1.89-1.017-1.715-1.976-3.4-3.022-5.203 5.376-.668 10.695-1.366 16.042-2.034.988 1.744 2.005 3.488 3.022 5.26Zm5.667 7.295c-.988 3.08-2.092 6.074-3.167 9.125h-6.016c2.063-4.97 4.127-9.91 6.219-14.85h6.074c2.063 4.94 4.156 9.851 6.248 14.85h-5.812a589.937 589.937 0 0 1-3.546-9.125Zm.059-19.472c2.615-.145 5.405 2.122 5.376 5.377-.03 2.993-2.412 5.376-5.406 5.376a5.333 5.333 0 0 1-5.347-5.347c0-3.371 2.848-5.551 5.377-5.406Z" fill="currentColor" />
+    <path d="M12.613 16.345c.058 0 .087.029.087.087 0 0-.058.029-.058 0-.088-.03-.088-.058-.03-.087ZM137.724 5.237v10.871h-7.399v-3.562h-14.434v7.17h21.788v22.017h-29.187V30.861h7.354v3.517h14.479v-7.217h-21.833V5.283c9.729-.046 19.458-.046 29.232-.046ZM279 34.424v7.354h-29.187V5.283H279v7.263h-21.787v7.262H279v7.354h-21.787v7.262H279ZM208.339 5.237v36.495h-7.308c-.046-1.142 0-2.329-.046-3.517V27.208H186.46v14.57h-7.216c-.229-.822-.32-33.8-.092-36.404.959-.228 23.843-.365 29.187-.137Zm-21.787 7.309v7.17h14.433v-7.17h-14.433Zm-84.226 29.141c-.959.137-6.212.137-7.263 0V22.868c-3.334-3.334-6.668-6.623-9.957-9.957-.32-.32-.594-.457-1.05-.457-1.142.046-2.284 0-3.472 0v29.279c-1.279.045-2.466 0-3.654.045h-3.608c-.274-.913-.366-32.11-.137-36.495.228-.228.548-.137.822-.137H87.07c.594 0 1.005.228 1.416.64a331.456 331.456 0 0 0 5.664 5.663c.228.274.457.549.64.868l.273-.137V5.237h7.308c.092 1.051.092 35.536-.045 36.45Zm41.519-36.45h29.141v21.788l-.046.046c-.045.045-.045.045-.091.045h-21.696v14.617h-7.217c-.182-.777-.319-33.572-.091-36.496Zm21.787 7.354h-14.433v7.171h14.433v-7.17Zm48.874 29.187V5.283h29.141v10.825h-7.217v-3.517h-14.57V34.38h14.479c.183-1.142 0-2.33.137-3.517h7.217v10.916h-29.187Zm-147.442-.091c-1.005.137-6.258.183-7.262 0V5.237h7.262v36.45Z" fill="currentColor" />
+  </svg>
+}
+
+
+function useProfile() {
+  return useQuery(api.myFunctions.getProfile);
+}
+
+export default function Home() {
+  const profile = useProfile();
+
+  return (
+    <div className="bg-background">
+      <header className="sticky top-0 z-10 bg-background/[0.4] backdrop-blur-sm p-4 border-slate-200 dark:border-slate-800 flex flex-row justify-between items-center">
+        <Logo className="w-[9rem]" />
+
+        <div className="flex gap-3 items-center">
+          <p>
+            <span>Hi </span>
+            <span >
+              {profile?.firstName}
+            </span>
+          </p>
+
+          <SignOutButton />
+        </div>
+      </header>
+
+      <main>
+        <Content />
+      </main>
+
+      <div className="p-2 text-xs border-t w-full text-center">
+        Designed & Crafted 100% by
+        <a className="underline" href="https://wigxel.io">Wigxel</a>
+      </div>
+    </div>
+  );
+}
+
+function SignOutButton() {
+  const { isAuthenticated } = useConvexAuth();
+  const { signOut } = useAuthActions();
+  const router = useRouter();
+
+  return (
+    <>
+      {isAuthenticated && (
+        <Button
+          variant={'default'}
+          onClick={() => {
+            signOut().then(() => {
+              router.push("/signin");
+            })
+          }}
+        >
+          Sign out
+        </Button>
+      )}
+    </>
+  );
+}
+
+function QRCode({ data }: { data: string }) {
+  const [size, setSize] = React.useState<number | null>(null);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const abortController = new AbortController();
+
+    if (ref.current) {
+      setSize(ref.current.clientWidth);
+    }
+
+    window.addEventListener('resize', () => {
+      if (ref.current) {
+        setSize(ref.current.clientWidth);
+      }
+    }, {
+      signal: abortController.signal
+    });
+
+    return () => {
+      abortController.abort()
+    };
+  }, []);
+
+  return (
+    <div ref={ref} className="w-full aspect-square p-2 bg-white">
+      {size === null ? null :
+        <QRCodeSVG
+          size={size}
+          fgColor={"#111"}
+          value={data}
+          className="p-4 bg-white w-full"
+        />}
+    </div>
+  );
+}
+
+function CheckInCard() {
+  return <div className="border overflow-hidden rounded-2xl bg-white dark:bg-gray-950">
+
+    <QRCode data={"302930924-helloman"} />
+
+    <p className="p-4 text-center border-t font-mono text-xs">
+      Present QR Code to Staff at Check-in Counter
+    </p>
+  </div>
+}
+
+
+function Content() {
+  const profile = useProfile();
+
+  return (
+    <div className="flex flex-col gap-8 max-w-lg mx-auto">
+      <section className="min-h-screen gap-[1rem] flex flex-col">
+        <h1>
+          <span className="flex">WELCOME</span>
+          <span className="text-4xl font-semibold">
+            {profile?.firstName} {profile?.lastName}
+          </span>
+        </h1>
+
+        <CheckInCard />
+      </section>
+    </div>
+  );
+}
