@@ -1,37 +1,8 @@
 import { v } from "convex/values";
-import { query, mutation, action } from "./_generated/server";
-import { api } from "./_generated/api";
+import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { Id } from "./_generated/dataModel";
-import { startOfMonth, endOfMonth, format, parseISO } from "date-fns";
-
-// Write your Convex functions in any file inside this directory (`convex`).
-// See https://docs.convex.dev/functions for more.
-
-// You can read data from the database via a query:
-export const listNumbers = query({
-  // Validators for arguments.
-  args: {
-    count: v.number(),
-  },
-
-  // Query implementation.
-  handler: async (ctx, args) => {
-    //// Read the database as many times as you need here.
-    //// See https://docs.convex.dev/database/reading-data.
-    const numbers = await ctx.db
-      .query("numbers")
-      // Ordered by _creationTime, return most recent
-      .order("desc")
-      .take(args.count);
-    const userId = await getAuthUserId(ctx);
-    const user = userId === null ? null : await ctx.db.get(userId);
-    return {
-      viewer: user?.email ?? null,
-      numbers: numbers.reverse().map((number) => number.value),
-    };
-  },
-});
+import { formatISO, setHours } from "date-fns";
+import { api, internal } from './_generated/api'
 
 export const authUser = query({
   args: {},
@@ -56,11 +27,13 @@ export const getProfile = query({
 
 export const getAttendanceByMonth = query({
   args: {
-    userId: v.id('users'), // user id
+    userId: v.optional(v.id('users')), // user id
     start: v.string(), // iso timestamp
     end: v.string(), // iso timestamp
   },
   handler: async (ctx, args) => {
+    if (!args.userId) return []
+
     // Query attendance records in the date range
     return await ctx.db
       .query("daily_register")
@@ -75,51 +48,60 @@ export const getAttendanceByMonth = query({
   }
 })
 
-// You can write data to the database via a mutation:
-export const addNumber = mutation({
-  // Validators for arguments.
+
+export const isRegisteredForToday = query({
   args: {
-    value: v.number(),
   },
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
 
-  // Mutation implementation.
-  handler: async (ctx, args) => {
-    //// Insert or modify documents in the database here.
-    //// Mutations can also read from the database like queries.
-    //// See https://docs.convex.dev/database/writing-data.
+    if (userId === null) return false;
 
-    const id = await ctx.db.insert("numbers", { value: args.value });
+    const today = new Date();
+    const start = formatISO(setHours(today, 0))
+    const end = formatISO(setHours(today, 23));
 
-    console.log("Added new document with id:", id);
-    // Optionally, return a value from your mutation.
-    // return id;
-  },
-});
+    // Query attendance records in the date range
+    const first = await ctx.db
+      .query("daily_register")
+      .filter(q =>
+        q.and(
+          q.eq(q.field("userId"), userId),
+          q.gte(q.field("timestamp"), start),
+          q.lte(q.field("timestamp"), end)
+        )
+      )
+      .first()
 
-// You can fetch data from and send data to third-party APIs via an action:
-export const myAction = action({
-  // Validators for arguments.
+    return first !== null;
+  }
+})
+
+export const updateUser = mutation({
   args: {
-    first: v.number(),
-    second: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+    phoneNumber: v.string(),
+    // email: v.string(),
   },
-
-  // Action implementation.
   handler: async (ctx, args) => {
-    //// Use the browser-like `fetch` API to send HTTP requests.
-    //// See https://docs.convex.dev/functions/actions#calling-third-party-apis-and-using-npm-packages.
-    // const response = await ctx.fetch("https://api.thirdpartyservice.com");
-    // const data = await response.json();
+    const userId = await getAuthUserId(ctx);
 
-    //// Query data by running Convex queries.
-    const data = await ctx.runQuery(api.myFunctions.listNumbers, {
-      count: 10,
-    });
-    console.log(data);
+    if (!userId) {
+      console.log("User not authenticated")
+      return null;
+    }
 
-    //// Write data by running Convex mutations.
-    await ctx.runMutation(api.myFunctions.addNumber, {
-      value: args.first,
+    const profile = await ctx.runQuery(api.myFunctions.getProfile);
+    if (!profile) return;
+
+    await ctx.db.replace(profile._id, {
+      id: userId,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      phoneNumber: args.phoneNumber,
+      role: "user",
+      occupation: "None",
     });
-  },
-});
+  }
+})

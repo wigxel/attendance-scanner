@@ -26,7 +26,10 @@ const profile = defineTable({
   id: v.id('users'),
   firstName: v.string(),
   lastName: v.string(),
+  phoneNumber: v.optional(v.string()),
+  email: v.optional(v.string()),
   occupation: v.string(),
+  role: v.optional(v.union(v.literal("admin"), v.literal("user")))
 })
   .index("occupation", ['occupation'])
 
@@ -35,9 +38,6 @@ const profile = defineTable({
 // The schema provides more precise TypeScript types.
 export default defineSchema({
   ...authTables,
-  numbers: defineTable({
-    value: v.number(),
-  }),
   daily_register,
   profile,
   featureRequest,

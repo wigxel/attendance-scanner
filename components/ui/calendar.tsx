@@ -60,8 +60,8 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Caption: () => {
-          return <CalendarCaption />
+        Caption: (props) => {
+          return <CalendarCaption key={props.displayIndex} />
         },
         IconLeft: ({ className, ...props }) => (
           <ChevronLeft className={cn("size-4", className)} {...props} />

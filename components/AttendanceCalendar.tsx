@@ -1,4 +1,5 @@
 "use client"
+import { motion as m } from "motion/react";
 import React from "react";
 import { DateCalendar } from "./DateCalendar";
 import { useQuery } from "convex/react";
@@ -35,10 +36,11 @@ export function AttendanceCalendar() {
         days={parsed_dates} month={month}
         setMonth={setMonth} />
 
-      <p className="text-sm inline-flex gap-2 items-start">
+      <p className="text-sm inline-flex justify-center gap-2 text-muted-foreground -mt-4 p-2 w-full rounded-xl items-center px-3">
         <InfoIcon size={18} className="opacity-50" />
         <span>
-          You are {20 - attendanceDays.length} days away from getting <span>2 days</span> free this month
+          You are <span className="font-semibold">{20 - attendanceDays.length} days</span>
+          {" "}away from getting <span className="font-semibold">2 days</span> free this month
         </span>
       </p>
     </section>
@@ -82,9 +84,13 @@ export function CalendarCaption() {
         <span className="opacity-50 text-sm font-mono">
           |
         </span>
-        <span className="opacity-50 text-sm font-mono">
+        <m.span
+          initial={{ opacity: 0, y: 2 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-gray-500 text-sm font-mono">
           {format_visits(list.length)}
-        </span>
+        </m.span>
       </h2>
 
       <div className="flex gap-2">

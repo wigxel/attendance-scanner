@@ -13,7 +13,7 @@ interface DateCalendarProps {
 export function DateCalendar({ className, days = [], month, setMonth }: DateCalendarProps) {
 
   return (
-    <div className={cn("flex border rounded-2xl items-center justify-center space-x-4", className)}>
+    <div className={cn("flex border bg-background rounded-2xl items-center justify-center space-x-4", className)}>
       <Calendar
         mode="single"
         selected={days}
