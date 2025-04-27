@@ -9,13 +9,7 @@ import { cn } from "@/lib/utils";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "./ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
 
 // Zod schema for form validation
 const onboardingSchema = z.object({
@@ -29,7 +23,9 @@ const onboardingSchema = z.object({
     .string()
     .startsWith("+234", { message: "Phone number must start with +234" })
     .min(8, { message: "Phone number must be at least 8 digits" })
-    .regex(/^\+234\d+$/, { message: "Please enter a valid Nigerian phone number" }),
+    .regex(/^\+234\d+$/, {
+      message: "Please enter a valid Nigerian phone number",
+    }),
 });
 
 type OnboardingFormValues = z.infer<typeof onboardingSchema>;
@@ -65,7 +61,10 @@ export default function OnboardingForm() {
   };
 
   // Helper function to ensure +234 prefix and validate phone number
-  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: string) => void) => {
+  const handlePhoneNumberChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    onChange: (value: string) => void,
+  ) => {
     let value = e.target.value;
 
     // Ensure it always starts with +234
@@ -81,7 +80,10 @@ export default function OnboardingForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-4 w-full"
+      >
         <div className="grid grid-cols-2 gap-3">
           <FormField
             control={form.control}
@@ -131,7 +133,7 @@ export default function OnboardingForm() {
         <button
           className={cn(
             "bg-foreground text-background rounded-md p-2 h-10",
-            "hover:bg-foreground/90 transition-colors"
+            "hover:bg-foreground/90 transition-colors",
           )}
           type="submit"
         >

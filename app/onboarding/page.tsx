@@ -7,7 +7,7 @@ import { useReadProfile } from "@/hooks/auth";
 
 export default function Onboarding() {
   const router = useRouter();
-  const profile = useReadProfile()
+  const profile = useReadProfile();
 
   useEffect(() => {
     if (!profile) return;
@@ -20,7 +20,9 @@ export default function Onboarding() {
   return (
     <div className="flex flex-col gap-8 w-96 mx-auto h-screen justify-center items-center">
       <h1 className="text-2xl font-bold">Complete Your Profile</h1>
-      <p className="text-center text-muted-foreground">Please provide the following information to complete your registration.</p>
+      <p className="text-center text-muted-foreground">
+        Please provide the following information to complete your registration.
+      </p>
 
       <OnboardingForm />
     </div>

@@ -8,13 +8,7 @@ import * as z from "zod";
 import { Input } from "./ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "./ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
 
 interface SignInFormProps {
   onError: (error: string | null) => void;
@@ -50,12 +44,12 @@ export default function SignInForm({ onError, onToggleFlow }: SignInFormProps) {
   const onSubmit = async (values: SignInFormValues) => {
     const formData = new FormData();
     formData.set("flow", "signIn");
-    
+
     // Add all form values to formData
     Object.entries(values).forEach(([key, value]) => {
       formData.set(key, value);
     });
-    
+
     try {
       await signIn("password", formData);
       toast.success("Signed in successfully");
@@ -69,7 +63,10 @@ export default function SignInForm({ onError, onToggleFlow }: SignInFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-4 w-full"
+      >
         <FormField
           control={form.control}
           name="email"
@@ -82,7 +79,7 @@ export default function SignInForm({ onError, onToggleFlow }: SignInFormProps) {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="password"
@@ -95,17 +92,17 @@ export default function SignInForm({ onError, onToggleFlow }: SignInFormProps) {
             </FormItem>
           )}
         />
-        
+
         <button
           className={cn(
             "bg-foreground text-background rounded-md p-2 h-10",
-            "hover:bg-foreground/90 transition-colors"
+            "hover:bg-foreground/90 transition-colors",
           )}
           type="submit"
         >
           Sign in
         </button>
-        
+
         <div className="flex flex-row gap-2">
           <span>Don't have an account?</span>
           <button

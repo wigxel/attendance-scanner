@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { formatISO, setHours } from "date-fns";
-import { api, internal } from './_generated/api'
+import { api, internal } from "./_generated/api";
 
 export const authUser = query({
   args: {},
@@ -10,9 +10,9 @@ export const authUser = query({
     const userId = await getAuthUserId(ctx);
     const user = userId === null ? null : await ctx.db.get(userId);
 
-    return user
-  }
-})
+    return user;
+  },
+});
 
 export const getProfile = query({
   args: {},
@@ -21,61 +21,62 @@ export const getProfile = query({
 
     if (userId === null) return null;
 
-    return await ctx.db.query('profile').filter(q => q.eq(q.field('id'), userId)).unique();
-  }
-})
+    return await ctx.db
+      .query("profile")
+      .filter((q) => q.eq(q.field("id"), userId))
+      .unique();
+  },
+});
 
 export const getAttendanceByMonth = query({
   args: {
-    userId: v.optional(v.id('users')), // user id
+    userId: v.optional(v.id("users")), // user id
     start: v.string(), // iso timestamp
     end: v.string(), // iso timestamp
   },
   handler: async (ctx, args) => {
-    if (!args.userId) return []
+    if (!args.userId) return [];
 
     // Query attendance records in the date range
     return await ctx.db
       .query("daily_register")
-      .filter(q =>
+      .filter((q) =>
         q.and(
           q.eq(q.field("userId"), args.userId),
           q.gte(q.field("timestamp"), args.start),
-          q.lte(q.field("timestamp"), args.end)
-        )
+          q.lte(q.field("timestamp"), args.end),
+        ),
       )
-      .collect()
-  }
-})
-
+      .collect();
+  },
+});
 
 export const isRegisteredForToday = query({
-  args: {
-  },
+  args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
 
     if (userId === null) return false;
 
     const today = new Date();
-    const start = formatISO(setHours(today, 0))
+    const start = formatISO(setHours(today, 0));
     const end = formatISO(setHours(today, 23));
 
     // Query attendance records in the date range
     const first = await ctx.db
       .query("daily_register")
-      .filter(q =>
+      .filter((q) =>
         q.and(
           q.eq(q.field("userId"), userId),
           q.gte(q.field("timestamp"), start),
-          q.lte(q.field("timestamp"), end)
-        )
+          q.lte(q.field("timestamp"), end),
+        ),
       )
-      .first()
+      .first();
 
     return first !== null;
-  }
-})
+  },
+});
 
 export const updateUser = mutation({
   args: {
@@ -88,7 +89,7 @@ export const updateUser = mutation({
     const userId = await getAuthUserId(ctx);
 
     if (!userId) {
-      console.log("User not authenticated")
+      console.log("User not authenticated");
       return null;
     }
 
@@ -103,5 +104,5 @@ export const updateUser = mutation({
       role: "user",
       occupation: "None",
     });
-  }
-})
+  },
+});

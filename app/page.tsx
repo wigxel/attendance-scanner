@@ -11,7 +11,7 @@ import { useReadProfile } from "@/hooks/auth";
 import { api } from "@/convex/_generated/api";
 import { Logo } from "@/components/logo";
 import { CheckInCard } from "@/components/CheckInCard";
-
+import QRCodeScanner from "@/components/QRCodeScanner";
 
 function SignOutButton() {
   const { isAuthenticated } = useConvexAuth();
@@ -22,11 +22,11 @@ function SignOutButton() {
     <>
       {isAuthenticated && (
         <Button
-          variant={'default'}
+          variant={"default"}
           onClick={() => {
             signOut().then(() => {
               router.push("/signin");
-            })
+            });
           }}
         >
           Sign out
@@ -46,7 +46,6 @@ function greet_time(): string {
   return "Good evening 🌙";
 }
 
-
 function Content() {
   const profile = useReadProfile();
 
@@ -54,17 +53,19 @@ function Content() {
     <div className="flex flex-col scanline-root max-w-lg mx-auto pt-6 pb-14">
       <section className="min-h-screen gap-[1.6rem] flex flex-col">
         <h1>
-          <span className="flex text-xs lg:text-base">
-            {greet_time()}
-          </span>
+          <span className="flex text-xs lg:text-base">{greet_time()}</span>
           <span className="text-2xl lg:text-4xl font-sans tracking-[-1.5px] font-semibold">
             {profile?.firstName} {profile?.lastName}
           </span>
         </h1>
 
-        <NotRegistered>
-          <CheckInCard />
-        </NotRegistered>
+        {profile?.role === "admin" ? (
+          <QRCodeScanner onScan={(v) => console.log(">>>", v)} />
+        ) : (
+          <NotRegistered>
+            <CheckInCard />
+          </NotRegistered>
+        )}
 
         <AttendanceCalendar />
 
@@ -76,9 +77,14 @@ function Content() {
 
         <div className="border shadow-inner bg-background relative flex flex-col rounded-2xl p-4 gap-4">
           <div className="flex flex-col gap-[0.5rem]">
-            <h1 className="text-lg font-semibold text-start">What&apos;s coming next?</h1>
+            <h1 className="text-lg font-semibold text-start">
+              What&apos;s coming next?
+            </h1>
 
-            <p className="text-base text-balance text-muted-foreground">You might just inspire us to add something you need. Don&apos;t hesitate to share your awesome ideas.</p>
+            <p className="text-base text-balance text-muted-foreground">
+              You might just inspire us to add something you need. Don&apos;t
+              hesitate to share your awesome ideas.
+            </p>
             <div className="mt-2" />
           </div>
 
@@ -92,13 +98,13 @@ function Content() {
 }
 
 function NotRegistered({ children }: { children: React.ReactNode }) {
-  const is_attendance_taken = useQuery(api.myFunctions.isRegisteredForToday)
+  const is_attendance_taken = useQuery(api.myFunctions.isRegisteredForToday);
 
   if (is_attendance_taken === undefined) return null;
 
-  if (is_attendance_taken) return null
+  if (is_attendance_taken) return null;
 
-  return <div>{children}</div>
+  return <div>{children}</div>;
 }
 
 export default function Home() {
@@ -112,9 +118,7 @@ export default function Home() {
           <Logo className="w-[7rem] md:w-[9rem]" />
 
           <div className="flex gap-3 items-center">
-            <span>
-              {profile?.firstName}
-            </span>
+            <span>{profile?.firstName}</span>
 
             <SignOutButton />
           </div>
@@ -126,7 +130,9 @@ export default function Home() {
 
         <footer className="mt-4 p-4 text-xs border-t w-full text-center">
           Designed & Crafted 100% by{" "}
-          <a className="underline" href="https://wigxel.io">Wigxel</a>
+          <a className="underline" href="https://wigxel.io">
+            Wigxel
+          </a>
         </footer>
       </div>
     </>

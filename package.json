@@ -4,12 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "npm-run-all --parallel dev:frontend dev:backend",
-    "dev:frontend": "next dev",
+    "dev:frontend": "next dev --turbo -H 0.0.0.0",
     "dev:backend": "convex dev",
     "predev": "convex dev --until-success && convex dev --once --run-sh \"node setup.mjs --once\" && convex dashboard",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "biome format --write .",
+    "check": "biome check --apply ."
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.81",
@@ -25,6 +27,7 @@
     "convex": "^1.23.0",
     "date-fns": "^4.1.0",
     "effect": "^3.14.14",
+    "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.503.0",
     "motion": "^12.9.2",
     "next": "15.2.3",
@@ -40,6 +43,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

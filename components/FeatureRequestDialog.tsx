@@ -50,8 +50,8 @@ export function FeatureRequestDialog() {
           <DialogHeader>
             <DialogTitle>Feature Request</DialogTitle>
             <DialogDescription>
-              We're continuously improving this app and would love to hear your ideas.
-              Share what features you'd like to see added next!
+              We're continuously improving this app and would love to hear your
+              ideas. Share what features you'd like to see added next!
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -65,7 +65,9 @@ export function FeatureRequestDialog() {
                 {...form.register("subject", { required: true })}
               />
               {form.formState.errors.subject && (
-                <span className="text-sm text-red-500">Subject is required</span>
+                <span className="text-sm text-red-500">
+                  Subject is required
+                </span>
               )}
             </div>
             <div className="space-y-2">
@@ -79,7 +81,9 @@ export function FeatureRequestDialog() {
                 {...form.register("description", { required: true })}
               />
               {form.formState.errors.description && (
-                <span className="text-sm text-red-500">Description is required</span>
+                <span className="text-sm text-red-500">
+                  Description is required
+                </span>
               )}
             </div>
           </div>
@@ -87,7 +91,12 @@ export function FeatureRequestDialog() {
           <div className="border-t my-4 -mx-6" />
 
           <DialogFooter>
-            <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" size="sm" disabled={isSubmitting}>

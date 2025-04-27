@@ -1,4 +1,3 @@
-
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -7,13 +6,7 @@ import * as z from "zod";
 import { Input } from "./ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "./ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
 
 interface SignUpFormProps {
   onError: (error: string | null) => void;
@@ -68,7 +61,10 @@ export default function SignUpForm({ onError, onToggleFlow }: SignUpFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-4 w-full"
+      >
         <FormField
           control={form.control}
           name="email"
@@ -98,7 +94,7 @@ export default function SignUpForm({ onError, onToggleFlow }: SignUpFormProps) {
         <button
           className={cn(
             "bg-foreground text-background rounded-md p-2 h-10",
-            "hover:bg-foreground/90 transition-colors"
+            "hover:bg-foreground/90 transition-colors",
           )}
           type="submit"
         >

@@ -16,9 +16,7 @@ export default function SignIn() {
         Welcome to InSpace
       </h1>
 
-      <p>
-        Please Log In to get started
-      </p>
+      <p>Please Log In to get started</p>
 
       {flow === "signIn" ? (
         <SignInForm onError={setError} onToggleFlow={toggleFlow} />
