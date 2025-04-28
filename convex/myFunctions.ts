@@ -168,3 +168,26 @@ export const updateUser = mutation({
     });
   },
 });
+
+//function to submit a new feature request
+export const submitFeatureRequest = mutation({
+  args: {
+    title: v.string(),
+    description: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+
+    if (!userId) {
+      console.log("User not authenticated");
+      return null;
+    }
+
+    await ctx.db.insert("featureRequest", {
+      userId,
+      title: args.title,
+      description: args.description,
+      status: "open",
+    });
+  },
+});

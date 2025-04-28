@@ -14,6 +14,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+
+//import convex mutation and api
+import { api } from "@/convex/_generated/api";
+import {useMutation} from "convex/react";
 
 type FeatureRequestFormData = {
   subject: string;
@@ -25,15 +30,22 @@ export function FeatureRequestDialog() {
   const form = useForm<FeatureRequestFormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const submitFeatureRequest = useMutation(api.myFunctions.submitFeatureRequest);
+
   const onSubmit = async (data: FeatureRequestFormData) => {
     setIsSubmitting(true);
     try {
-      // Here you would implement logic to submit the feature request
+      await submitFeatureRequest({
+        title: data.subject,
+        description: data.description,
+      });
       console.log("Feature request submitted:", data);
+      toast.success("Feature request submitted successfully!");
       setOpen(false);
       form.reset();
     } catch (error) {
       console.error("Error submitting feature request:", error);
+      toast.error("Failed to submit feature request. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
