@@ -104,7 +104,7 @@ export default function SignInForm({ onError, onToggleFlow }: SignInFormProps) {
         </button>
 
         <div className="flex flex-row gap-2">
-          <span>Don't have an account?</span>
+          <span>Don&apos;t have an account?</span>
           <button
             type="button"
             className="text-foreground appearance-none underline hover:no-underline cursor-pointer"

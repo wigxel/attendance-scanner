@@ -23,6 +23,7 @@ export function DateCalendar({
         className,
       )}
     >
+      {/* @ts-expect-error Calendar expects just a single date. But I'm setting an array of dates */}
       <Calendar
         mode="single"
         selected={days}

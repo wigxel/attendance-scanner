@@ -50,8 +50,8 @@ export function FeatureRequestDialog() {
           <DialogHeader>
             <DialogTitle>Feature Request</DialogTitle>
             <DialogDescription>
-              We're continuously improving this app and would love to hear your
-              ideas. Share what features you'd like to see added next!
+              We&apos;re continuously improving this app and would love to hear your
+              ideas. Share what features you&apos;d like to see added next!
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
