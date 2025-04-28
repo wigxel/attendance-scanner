@@ -33,6 +33,12 @@ const profile = defineTable({
   role: v.optional(v.union(v.literal("admin"), v.literal("user"))),
 }).index("occupation", ["occupation"]);
 
+//Schema for stats
+const stats = defineTable({
+  userId: v.id("users"),
+  timestamp: v.string(),
+}).index("user_id", ["userId"]);
+
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
 // The schema provides more precise TypeScript types.
@@ -41,4 +47,5 @@ export default defineSchema({
   daily_register,
   profile,
   featureRequest,
+  stats,
 });

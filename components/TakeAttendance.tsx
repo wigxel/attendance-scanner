@@ -64,8 +64,19 @@ export function TakeAttendance() {
         throw new Error("Anomaly: Customer info not found");
       }
 
+      //Fetch user stats
+      const userStats = await convex.query(api.myFunctions.getUserStats,{
+        userId: customer_id as Id<"users">
+      });
+
+      if (!userStats) {
+        throw new Error("Anomaly: Customer info not found");
+      }
+
       toast.success(
-        `Attendance recorded for ${customer_info.firstName ?? "{{firstName}}"} ${customer_info.lastName ?? "{{lastname}}"}`,
+        `Attendance recorded for ${customer_info.firstName ?? "{{firstName}}"} ${customer_info.lastName ?? "{{lastname}}"}\n
+        Visits: ${userStats.attendanceCount}\n
+        free day eligibility: ${userStats.freeDayEligible ? "Yes!" : "No"}`
       );
 
       setTimeout(() => {

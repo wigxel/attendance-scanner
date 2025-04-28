@@ -191,3 +191,33 @@ export const submitFeatureRequest = mutation({
     });
   },
 });
+
+//function to get user stats
+export const getUserStats = query ({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { userId }) => {
+    const user = await ctx.db.get(userId);
+
+    if (!user) {
+      console.log("User not authenticated");
+      return null;
+    }
+
+    const stats = await ctx.db
+      .query("stats")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
+
+    const attendanceCount = stats.length;
+    const freeDayEligible = attendanceCount >= 20;
+
+    return {
+      name: user.name,
+      attendanceCount,
+      freeDayEligible,
+      
+    };
+  },
+})
