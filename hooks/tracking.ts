@@ -25,7 +25,7 @@ export function useDeviceMeta() {
             ? safeArray(result.components.vendorFlavors.value)
             : ["unknown"];
 
-        const data = {
+        const data: DeviceMeta = {
           browser: values.join("/"),
           visitorId: result.visitorId,
         };
@@ -43,9 +43,24 @@ export function useDeviceMeta() {
   };
 }
 
-export function useQueryHash(data: unknown[]) {
+type DeviceMeta = {
+  browser: string;
+  visitorId: string;
+};
+
+export type CustomerRegisterTuple = [
+  string | undefined, // customer id
+  string | undefined, // browser fingerprint
+  string | undefined, // browser name
+];
+
+export function useQueryHash(
+  data: CustomerRegisterTuple,
+  opts: { enabled: boolean },
+) {
   return useQuery({
     queryKey: data,
     queryFn: () => encodeQRCodeData(data),
+    enabled: opts.enabled,
   });
 }

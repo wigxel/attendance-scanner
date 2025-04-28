@@ -3,7 +3,7 @@
 import { useConvexAuth, useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useRouter } from "next/navigation";
-import React from "react";
+import type React from "react";
 import { Button } from "@/components/ui/button";
 import { FeatureRequestDialog } from "@/components/FeatureRequestDialog";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
@@ -11,12 +11,12 @@ import { useReadProfile } from "@/hooks/auth";
 import { api } from "@/convex/_generated/api";
 import { Logo } from "@/components/logo";
 import { CheckInCard } from "@/components/CheckInCard";
-import QRCodeScanner from "@/components/QRCodeScanner";
+import { TakeAttendance } from "@/components/TakeAttendance";
 
 function SignOutButton() {
-  const { isAuthenticated } = useConvexAuth();
-  const { signOut } = useAuthActions();
   const router = useRouter();
+  const { signOut } = useAuthActions();
+  const { isAuthenticated } = useConvexAuth();
 
   return (
     <>
@@ -55,43 +55,46 @@ function Content() {
         <h1>
           <span className="flex text-xs lg:text-base">{greet_time()}</span>
           <span className="text-2xl lg:text-4xl font-sans tracking-[-1.5px] font-semibold">
-            {profile?.firstName} {profile?.lastName}
+            {profile?.role !== "admin"
+              ? <>{profile?.firstName} {profile?.lastName}</>
+              : "Administrator"}
           </span>
         </h1>
 
         {profile?.role === "admin" ? (
-          <QRCodeScanner onScan={(v) => console.log(">>>", v)} />
+          <TakeAttendance />
         ) : (
-          <NotRegistered>
-            <CheckInCard />
-          </NotRegistered>
+          <>
+            <NotRegistered>
+              <CheckInCard />
+            </NotRegistered>
+            <AttendanceCalendar />
+
+            <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-gray-500">
+              <span />
+              <span />
+              <span />
+            </div>
+
+            <div className="border shadow-inner bg-background relative flex flex-col rounded-2xl p-4 gap-4">
+              <div className="flex flex-col gap-[0.5rem]">
+                <h1 className="text-lg font-semibold text-start">
+                  What&apos;s coming next?
+                </h1>
+
+                <p className="text-base text-balance text-muted-foreground">
+                  You might just inspire us to add something you need.
+                  Don&apos;t hesitate to share your awesome ideas.
+                </p>
+                <div className="mt-2" />
+              </div>
+
+              <div className="-mx-2 -mb-2 flex flex-col">
+                <FeatureRequestDialog />
+              </div>
+            </div>
+          </>
         )}
-
-        <AttendanceCalendar />
-
-        <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-gray-500">
-          <span />
-          <span />
-          <span />
-        </div>
-
-        <div className="border shadow-inner bg-background relative flex flex-col rounded-2xl p-4 gap-4">
-          <div className="flex flex-col gap-[0.5rem]">
-            <h1 className="text-lg font-semibold text-start">
-              What&apos;s coming next?
-            </h1>
-
-            <p className="text-base text-balance text-muted-foreground">
-              You might just inspire us to add something you need. Don&apos;t
-              hesitate to share your awesome ideas.
-            </p>
-            <div className="mt-2" />
-          </div>
-
-          <div className="-mx-2 -mb-2 flex flex-col">
-            <FeatureRequestDialog />
-          </div>
-        </div>
       </section>
     </div>
   );

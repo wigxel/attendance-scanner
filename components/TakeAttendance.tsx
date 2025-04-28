@@ -1,37 +1,72 @@
 "use client";
-
 import React, { useState } from "react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { toast } from "sonner";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { decodeQRCodeData } from "@/app/actions/encrypt";
+import type { Id } from "@/convex/_generated/dataModel";
+import { convex } from "./ConvexClientProvider";
+import { getErrorMessage } from "@/lib/error.helpers";
+import { isDevelopment } from "@/config/constants";
+import { If } from "./if";
 
-export default function AttendanceScanPage() {
+export function TakeAttendance() {
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [scanningEnabled, setScanningEnabled] = useState(true);
 
   // In a real implementation, you'd create a mutation to record attendance
-  // For example: const recordAttendance = useMutation(api.myFunctions.recordAttendanceByQR);
+  const register = useMutation(api.myFunctions.registerUser);
 
-  const handleScan = (data: string) => {
-    setScannedData(data);
+  const handleScan = async (uri_string: string) => {
+    setScannedData(uri_string);
     try {
-      // Validate the QR data format
-      const qrData = JSON.parse(data);
+      const url = new URL(uri_string);
+      const encoded_data = url.pathname.split("/").at(-1);
 
-      if (!qrData.userId) {
-        toast.error("Invalid QR code format");
+      // Validate the QR data format
+      const [customer_id, visitor_id, browser] = await decodeQRCodeData(
+        encoded_data ?? "none",
+      );
+
+      if (!customer_id) {
+        toast.error("User doesn't exist or isn't registered");
         return;
       }
 
+      const is_registered = await convex.query(
+        api.myFunctions.isUserRegisteredForToday,
+        {
+          userId: customer_id as Id<"users">,
+        },
+      );
+
+      if (is_registered) {
+        throw new Error("Customer already registered for today.");
+      }
+
       setProcessing(true);
-      toast.success(`Attendance recorded for: ${qrData.userId}`);
 
       // Here you would call your API to record attendance
-      // Example:
-      // await recordAttendance({ userId: qrData.userId });
+      await register({
+        browser: browser ?? "unknown",
+        visitorId: visitor_id ?? "unknown",
+        customerId: customer_id as Id<"users">,
+      });
+
+      const customer_info = await convex.query(api.myFunctions.getUserById, {
+        userId: customer_id as Id<"users">,
+      });
+
+      if (!customer_info) {
+        throw new Error("Anomaly: Customer info not found");
+      }
+
+      toast.success(
+        `Attendance recorded for ${customer_info.firstName ?? "{{firstName}}"} ${customer_info.lastName ?? "{{lastname}}"}`,
+      );
 
       setTimeout(() => {
         // Reset for next scan
@@ -41,8 +76,7 @@ export default function AttendanceScanPage() {
         setScanningEnabled(true);
       }, 2000);
     } catch (error) {
-      console.error("Error processing QR data:", error);
-      toast.error("Invalid QR code format");
+      toast.error(getErrorMessage(error));
       setProcessing(false);
     }
   };
@@ -59,11 +93,7 @@ export default function AttendanceScanPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-md">
-      <h1 className="text-2xl font-bold text-center mb-6">
-        Scan Attendance QR Code
-      </h1>
-
+    <div>
       <div className="mb-6">
         {scanningEnabled ? (
           <QRCodeScanner
@@ -102,14 +132,16 @@ export default function AttendanceScanPage() {
         )}
       </div>
 
-      {scannedData && (
-        <div className="mt-6 p-4 border rounded-lg bg-muted">
-          <h2 className="text-lg font-medium mb-2">QR Data:</h2>
-          <pre className="text-xs overflow-auto p-2 bg-background rounded">
-            {scannedData}
-          </pre>
-        </div>
-      )}
+      <If cond={isDevelopment}>
+        {scannedData && (
+          <div className="mt-6 p-4 border rounded-lg bg-muted">
+            <h2 className="text-lg font-medium mb-2">QR Data:</h2>
+            <pre className="text-xs overflow-auto p-2 bg-background rounded">
+              {scannedData}
+            </pre>
+          </div>
+        )}
+      </If>
 
       <div className="mt-6 p-4 border rounded-lg bg-muted">
         <h2 className="text-lg font-medium mb-2">Instructions:</h2>

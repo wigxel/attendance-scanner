@@ -8,6 +8,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { LucideLoader, XIcon } from "lucide-react";
 import { motion } from "motion/react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import consola from "consola";
 
 interface QRCodeScannerProps {
   onScan: (data: string) => void;
@@ -128,7 +136,7 @@ export default function QRCodeScanner({
         },
         (errorMessage) => {
           // This is just for QR detection errors, not for permission errors
-          console.trace("QR Error:", errorMessage);
+          consola.trace("QR Error:", errorMessage);
         },
       );
     } catch (error) {
@@ -154,8 +162,8 @@ export default function QRCodeScanner({
     }
   };
 
-  const handleCameraChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCamera(e.target.value);
+  const handleCameraChange = (value: string) => {
+    setSelectedCamera(value);
     if (isScanning) {
       stopScanner().then(() => startScanner());
     }
@@ -170,19 +178,24 @@ export default function QRCodeScanner({
               hidden: isScanning,
             })}
           >
-            {cameras.length > 1 && (
-              <select
-                className="w-full p-2 rounded bg-background border border-input"
-                value={selectedCamera || ""}
-                onChange={handleCameraChange}
-              >
+            <Select
+              // className="w-full p-2 rounded bg-background border border-input"
+              value={selectedCamera || ""}
+              onValueChange={(v) => {
+                handleCameraChange(v);
+              }}
+            >
+              <SelectTrigger className="bg-white w-full">
+                <SelectValue placeholder="Select camera" className="h-[4rem]" />
+              </SelectTrigger>
+              <SelectContent>
                 {cameras.map((camera) => (
-                  <option key={camera.id} value={camera.id}>
+                  <SelectItem key={camera.id} value={camera.id}>
                     {camera.label || `Camera ${camera.id.slice(0, 8)}`}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-            )}
+              </SelectContent>
+            </Select>
 
             <Button className="w-full" onClick={startScanner}>
               Use Camera

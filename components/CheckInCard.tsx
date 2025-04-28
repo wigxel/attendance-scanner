@@ -1,7 +1,7 @@
 "use client";
+import React from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
-import React from "react";
 import { LucideLoader } from "lucide-react";
 import { motion as m } from "motion/react";
 import { useProfile } from "@/hooks/auth";
@@ -12,10 +12,18 @@ function QRCode() {
   const ref = React.useRef<HTMLDivElement>(null);
   const device_meta = useDeviceMeta();
   const profile = useProfile();
-  const qr_hash = useQueryHash([
-    device_meta.data?.visitorId,
-    device_meta?.data,
-  ]);
+  const qr_hash = useQueryHash(
+    [
+      profile.data?.id,
+      // @ts-expect-error Not important
+      device_meta?.data?.visitorId,
+      // @ts-expect-error Not important
+      device_meta?.data?.browser,
+    ],
+    {
+      enabled: Boolean(profile),
+    },
+  );
 
   const isLoading =
     device_meta.isLoading || profile.isLoading || qr_hash.isLoading;
