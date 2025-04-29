@@ -220,4 +220,39 @@ export const getUserStats = query ({
       
     };
   },
-})
+});
+
+//function to get all users 
+export const getAllUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    //get all profiles joined with auth users
+    const profiles = await ctx.db.query("profile").collect();
+    
+    const data = await Promise.all(
+      profiles.map(async (profile) => {
+        const registrations = await ctx.db
+          .query("daily_register")
+          .withIndex("admitted_by", (q) => q.eq("admitted_by", profile.id))
+          .collect();
+        const visitCount = registrations.length;
+        const eligible = visitCount >= 20;
+
+        return {
+          id: profile._id,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          email: profile.email ?? "N/A",
+          occupation: profile.occupation,
+          role: profile.role ?? "user",
+          phoneNumber: profile.phoneNumber ?? "N/A",
+          visitCount,
+          eligible,
+          
+        };
+      })
+    );
+
+    return data;
+  },
+});
