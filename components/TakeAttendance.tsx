@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ export function TakeAttendance() {
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [scanningEnabled, setScanningEnabled] = useState(true);
+
+  const router = useRouter();
 
   // In a real implementation, you'd create a mutation to record attendance
   const register = useMutation(api.myFunctions.registerUser);
@@ -110,16 +113,16 @@ export function TakeAttendance() {
     if (!users) {
       return <div>Loading...</div>;
     }
-  
+
     return (
       <div className="p-4">
         <h1 className="text-2xl font-semibold mb-4">User Attendance Overview</h1>
         <DataTable
           columns={columns}
-          data={users.map(user => ({
-            ...user,
-            firstname: user.firstName,
-            lastname: user.lastName,
+          data={users.map((user) => ({
+        ...user,
+        firstname: user.firstName,
+        lastname: user.lastName,
           }))}
         />
       </div>
@@ -188,6 +191,13 @@ export function TakeAttendance() {
       </div>
 
       <AdminUserTable />
+
+      <Button
+              onClick={() => router.push("/occupationManagement")}
+              className="w-half"
+            >
+              Manage Occupations
+      </Button>
     </div>
   );
 }

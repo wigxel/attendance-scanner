@@ -145,6 +145,7 @@ export const updateUser = mutation({
     firstName: v.string(),
     lastName: v.string(),
     phoneNumber: v.string(),
+    occupation: v.string(),
     // email: v.string(),
   },
   handler: async (ctx, args) => {
@@ -256,3 +257,87 @@ export const getAllUsers = query({
     return data;
   },
 });
+
+//Query to get all occupations
+export const listOccupations = query({
+  handler: async (ctx) => {
+    const occupations = await ctx.db.query("occupations").collect();
+    return occupations.map((occupation) => ({
+      id: occupation._id,
+      name: occupation.name,
+      description: occupation.description ?? "N/A",
+    }));
+  },
+});
+
+//Mutation to create a new occupation
+export const addOccupation = mutation({
+  args: {
+    name: v.string(),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const occupations = await ctx.db.query("occupations").collect();
+    const occupationExists = occupations.some(
+      (occupation) => occupation.name === args.name
+    );
+
+    if (occupationExists) {
+      throw new Error("Occupation already exists");
+    }
+
+    const now = Date.now();
+    const occupationId = ctx.db.insert("occupations", {
+      name: args.name,
+      description: args.description,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return occupationId;
+  },
+});
+
+//Mutation to update an occupation
+export const updateOccupation = mutation({
+  args: {
+    id: v.id("occupations"),
+    name: v.string(),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const occupation = await ctx.db.get(args.id);
+
+    if (!occupation) {
+      throw new Error("Occupation not found");
+    }
+
+    const now = Date.now();
+    await ctx.db.replace(args.id, {
+      ...occupation,
+      name: args.name,
+      description: args.description,
+      updatedAt: now,
+    });
+
+    return args.id;
+  },
+});
+
+//Mutation to delete an occupation
+export const deleteOccupation = mutation({
+  args: {
+    id: v.id("occupations"),
+  },
+  handler: async (ctx, args) => {
+    const occupation = await ctx.db.get(args.id);
+
+    if (!occupation) {
+      throw new Error("Occupation not found");
+    }
+
+    await ctx.db.delete(args.id);
+    return args.id;
+  },
+});
+
