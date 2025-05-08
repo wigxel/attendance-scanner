@@ -303,7 +303,7 @@ export const addOccupation = mutation({
     const profile = await authGuard(ctx, "admin");
     if (!profile) {
       logger.warn("Not authorized to create an occupation");
-      return null;
+      throw new Error("Not authorized to create an occupation");
     }
 
     const occupations = await ctx.db.query("occupations").collect();
@@ -339,7 +339,7 @@ export const updateOccupation = mutation({
     const profile = await authGuard(ctx, "admin");
     if (!profile) {
       logger.warn("Not authorized to update an occupation");
-      return null;
+      throw new Error("Not authorized to update an occupation");
     }
 
     const occupation = await ctx.db.get(args.id);
@@ -370,9 +370,9 @@ export const deleteOccupation = mutation({
     const profile = await authGuard(ctx, "admin");
     if (!profile) {
       logger.warn("Not authorized to delete an occupation");
-      return null;
+      throw new Error("Not authorized to delete an occupation");
     }
-    
+
     const occupation = await ctx.db.get(args.id);
 
     if (!occupation) {
