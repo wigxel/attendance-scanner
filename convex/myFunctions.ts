@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { formatISO, setHours } from "date-fns";
 import type { GenericQueryCtx } from "convex/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { getAuthUserId  } from "@convex-dev/auth/server";
 import { mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
 import { logger } from "../config/logger";
@@ -271,6 +271,27 @@ export const listOccupations = query({
   },
 });
 
+//Function for Auth guard
+export const authGuard = async (ctx: GenericQueryCtx<any>, requiredRole?: string) => {
+  const userId = await getAuthUserId(ctx);
+
+  if (!userId) {
+    logger.warn("User not authenticated");
+    return null;
+  }
+
+  const profile = await ctx.runQuery(api.myFunctions.getProfile);
+  if (!profile) return null;
+  
+  // Check if the user has the required role
+  if (requiredRole && profile.role !== requiredRole) {
+    logger.warn(`User does not have the required role: ${requiredRole}`);
+    return null;
+  }
+  
+  return profile;
+}
+
 //Mutation to create a new occupation
 export const addOccupation = mutation({
   args: {
@@ -278,6 +299,13 @@ export const addOccupation = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    //Check if user is Admin
+    const profile = await authGuard(ctx, "admin");
+    if (!profile) {
+      logger.warn("Not authorized to create an occupation");
+      return null;
+    }
+
     const occupations = await ctx.db.query("occupations").collect();
     const occupationExists = occupations.some(
       (occupation) => occupation.name === args.name
@@ -307,6 +335,13 @@ export const updateOccupation = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Admin check
+    const profile = await authGuard(ctx, "admin");
+    if (!profile) {
+      logger.warn("Not authorized to update an occupation");
+      return null;
+    }
+
     const occupation = await ctx.db.get(args.id);
 
     if (!occupation) {
@@ -331,6 +366,13 @@ export const deleteOccupation = mutation({
     id: v.id("occupations"),
   },
   handler: async (ctx, args) => {
+    // Check if user is Admin
+    const profile = await authGuard(ctx, "admin");
+    if (!profile) {
+      logger.warn("Not authorized to delete an occupation");
+      return null;
+    }
+    
     const occupation = await ctx.db.get(args.id);
 
     if (!occupation) {
