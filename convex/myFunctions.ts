@@ -4,6 +4,7 @@ import type { GenericQueryCtx } from "convex/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
+import { logger } from "../config/logger";
 
 export const authUser = query({
   args: {},
@@ -118,7 +119,7 @@ export const registerUser = mutation({
     });
 
     if (!userId) {
-      console.log("User not authenticated");
+      logger.warn("User not authenticated");
       return null;
     }
 
@@ -152,7 +153,7 @@ export const updateUser = mutation({
     const userId = await getAuthUserId(ctx);
 
     if (!userId) {
-      console.log("User not authenticated");
+      logger.warn("User not authenticated");
       return null;
     }
 
@@ -180,7 +181,7 @@ export const submitFeatureRequest = mutation({
     const userId = await getAuthUserId(ctx);
 
     if (!userId) {
-      console.log("User not authenticated");
+      logger.warn("User not authenticated");
       return null;
     }
 
@@ -202,7 +203,7 @@ export const getUserStats = query ({
     const user = await ctx.db.get(userId);
 
     if (!user) {
-      console.log("User not authenticated");
+      logger.warn("User not authenticated");
       return null;
     }
 
