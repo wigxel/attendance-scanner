@@ -145,6 +145,7 @@ export const updateUser = mutation({
     firstName: v.string(),
     lastName: v.string(),
     phoneNumber: v.string(),
+    occupation: v.string(),
     // email: v.string(),
   },
   handler: async (ctx, args) => {
@@ -191,3 +192,152 @@ export const submitFeatureRequest = mutation({
     });
   },
 });
+
+//function to get user stats
+export const getUserStats = query ({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { userId }) => {
+    const user = await ctx.db.get(userId);
+
+    if (!user) {
+      console.log("User not authenticated");
+      return null;
+    }
+
+    const stats = await ctx.db
+      .query("stats")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
+
+    const attendanceCount = stats.length;
+    const freeDayEligible = attendanceCount >= 20;
+
+    return {
+      name: user.name,
+      attendanceCount,
+      freeDayEligible,
+      
+    };
+  },
+});
+
+//function to get all users 
+export const getAllUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    //get all profiles joined with auth users
+    const profiles = await ctx.db.query("profile").collect();
+    
+    const data = await Promise.all(
+      profiles.map(async (profile) => {
+        const registrations = await ctx.db
+          .query("daily_register")
+          .withIndex("admitted_by", (q) => q.eq("admitted_by", profile.id))
+          .collect();
+        const visitCount = registrations.length;
+        const eligible = visitCount >= 20;
+
+        return {
+          id: profile._id,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          email: profile.email ?? "N/A",
+          occupation: profile.occupation,
+          role: profile.role ?? "user",
+          phoneNumber: profile.phoneNumber ?? "N/A",
+          visitCount,
+          eligible,
+          
+        };
+      })
+    );
+
+    return data;
+  },
+});
+
+//Query to get all occupations
+export const listOccupations = query({
+  handler: async (ctx) => {
+    const occupations = await ctx.db.query("occupations").collect();
+    return occupations.map((occupation) => ({
+      id: occupation._id,
+      name: occupation.name,
+      description: occupation.description ?? "N/A",
+    }));
+  },
+});
+
+//Mutation to create a new occupation
+export const addOccupation = mutation({
+  args: {
+    name: v.string(),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const occupations = await ctx.db.query("occupations").collect();
+    const occupationExists = occupations.some(
+      (occupation) => occupation.name === args.name
+    );
+
+    if (occupationExists) {
+      throw new Error("Occupation already exists");
+    }
+
+    const now = Date.now();
+    const occupationId = ctx.db.insert("occupations", {
+      name: args.name,
+      description: args.description,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return occupationId;
+  },
+});
+
+//Mutation to update an occupation
+export const updateOccupation = mutation({
+  args: {
+    id: v.id("occupations"),
+    name: v.string(),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const occupation = await ctx.db.get(args.id);
+
+    if (!occupation) {
+      throw new Error("Occupation not found");
+    }
+
+    const now = Date.now();
+    await ctx.db.replace(args.id, {
+      ...occupation,
+      name: args.name,
+      description: args.description,
+      updatedAt: now,
+    });
+
+    return args.id;
+  },
+});
+
+//Mutation to delete an occupation
+export const deleteOccupation = mutation({
+  args: {
+    id: v.id("occupations"),
+  },
+  handler: async (ctx, args) => {
+    const occupation = await ctx.db.get(args.id);
+
+    if (!occupation) {
+      throw new Error("Occupation not found");
+    }
+
+    await ctx.db.delete(args.id);
+    return args.id;
+  },
+});
+

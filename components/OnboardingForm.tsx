@@ -6,10 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Input } from "./ui/input";
 import { cn } from "@/lib/utils";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from "./ui/form";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 // Zod schema for form validation
 const onboardingSchema = z.object({
@@ -26,6 +27,9 @@ const onboardingSchema = z.object({
     .regex(/^\+234\d+$/, {
       message: "Please enter a valid Nigerian phone number",
     }),
+  occupation: z.string({
+    required_error: "Please select an occupation",
+  }),
 });
 
 type OnboardingFormValues = z.infer<typeof onboardingSchema>;
@@ -34,6 +38,9 @@ export default function OnboardingForm() {
   const router = useRouter();
   const updateUser = useMutation(api.myFunctions.updateUser);
 
+  //Fetch occupations from the database
+  const occupations = useQuery(api.myFunctions.listOccupations);
+
   // Define form with zod resolver
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingSchema),
@@ -41,17 +48,19 @@ export default function OnboardingForm() {
       firstName: "",
       lastName: "",
       phoneNumber: "+234",
+      occupation: "",
     },
   });
 
   // Handle form submission
   const onSubmit = async (values: OnboardingFormValues) => {
     try {
-      await updateUser({
-        firstName: values.firstName,
-        lastName: values.lastName,
-        phoneNumber: values.phoneNumber,
-      });
+  await updateUser({
+    firstName: values.firstName,
+    lastName: values.lastName,
+    phoneNumber: values.phoneNumber,
+    occupation: values.occupation,
+  });
       toast.success("Profile created successfully");
       router.push("/");
     } catch (error) {
@@ -130,6 +139,43 @@ export default function OnboardingForm() {
           )}
         />
 
+<FormField
+          control={form.control}
+          name="occupation"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Occupation</FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your occupation" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                    {(occupations ?? []).length > 0 ? (
+                    (occupations ?? []).map((occupation: { id: string; name: string }) => (
+                      <SelectItem 
+                        key={occupation.id} 
+                        value={occupation.id}
+                      >
+                        {occupation.name}
+                      </SelectItem>
+                    ))
+                    ) : (
+                    <SelectItem value="none" disabled>
+                      No occupations available
+                    </SelectItem>
+                    )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <button
           className={cn(
             "bg-foreground text-background rounded-md p-2 h-10",
@@ -143,3 +189,6 @@ export default function OnboardingForm() {
     </Form>
   );
 }
+
+
+

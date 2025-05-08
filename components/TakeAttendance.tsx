@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { toast } from "sonner";
-import { useMutation } from "convex/react";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { decodeQRCodeData } from "@/app/actions/encrypt";
@@ -11,11 +12,15 @@ import { convex } from "./ConvexClientProvider";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { isDevelopment } from "@/config/constants";
 import { If } from "./if";
+import { columns } from "@/components/columns";
+import { DataTable } from "@/components/DataTable";
 
 export function TakeAttendance() {
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [scanningEnabled, setScanningEnabled] = useState(true);
+
+  const router = useRouter();
 
   // In a real implementation, you'd create a mutation to record attendance
   const register = useMutation(api.myFunctions.registerUser);
@@ -64,8 +69,19 @@ export function TakeAttendance() {
         throw new Error("Anomaly: Customer info not found");
       }
 
+      //Fetch user stats
+      const userStats = await convex.query(api.myFunctions.getUserStats,{
+        userId: customer_id as Id<"users">
+      });
+
+      if (!userStats) {
+        throw new Error("Anomaly: Customer info not found");
+      }
+
       toast.success(
-        `Attendance recorded for ${customer_info.firstName ?? "{{firstName}}"} ${customer_info.lastName ?? "{{lastname}}"}`,
+        `Attendance recorded for ${customer_info.firstName ?? "{{firstName}}"} ${customer_info.lastName ?? "{{lastname}}"}\n
+        Visits: ${userStats.attendanceCount}\n
+        free day eligibility: ${userStats.freeDayEligible ? "Yes!" : "No"}`
       );
 
       setTimeout(() => {
@@ -91,6 +107,27 @@ export function TakeAttendance() {
     setProcessing(false);
     setScanningEnabled(true);
   };
+
+  function AdminUserTable() {
+    const users = useQuery(api.myFunctions.getAllUsers);
+    if (!users) {
+      return <div>Loading...</div>;
+    }
+
+    return (
+      <div className="p-4">
+        <h1 className="text-2xl font-semibold mb-4">User Attendance Overview</h1>
+        <DataTable
+          columns={columns}
+          data={users.map((user) => ({
+        ...user,
+        firstname: user.firstName,
+        lastname: user.lastName,
+          }))}
+        />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -152,6 +189,15 @@ export function TakeAttendance() {
           <li>You can scan multiple codes in succession</li>
         </ul>
       </div>
+
+      <AdminUserTable />
+
+      <Button
+              onClick={() => router.push("/occupationManagement")}
+              className="w-half"
+            >
+              Manage Occupations
+      </Button>
     </div>
   );
 }
