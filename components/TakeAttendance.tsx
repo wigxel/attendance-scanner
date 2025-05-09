@@ -79,9 +79,7 @@ export function TakeAttendance() {
       }
 
       toast.success(
-        `Attendance recorded for ${customer_info.firstName ?? "{{firstName}}"} ${customer_info.lastName ?? "{{lastname}}"}\n
-        Visits: ${userStats.attendanceCount}\n
-        free day eligibility: ${userStats.freeDayEligible ? "Yes!" : "No"}`
+        `Attendance recorded for ${customer_info.firstName ?? "{{firstName}}"} ${customer_info.lastName ?? "{{lastname}}"}`,
       );
 
       setTimeout(() => {
