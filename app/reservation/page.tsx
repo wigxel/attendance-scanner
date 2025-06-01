@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useReadProfile } from "@/hooks/auth";
 import 'react-day-picker/dist/style.css';
 import { useForm } from "react-hook-form";
-import LoginOptionsComponent from "@/components/loginOptions";
+import LoginLandingPageComponent from "@/components/loginLandingPage";
 
 
 export default function Reservation() {
@@ -37,7 +37,7 @@ export default function Reservation() {
     <section className="w-full h-screen flex justify-center items-center p-4 xl:p-0">
 
       {/* reservation
-      <div className="w-full lg:w-[335px] h-[812px] flex flex-col gap-8 justify-center items-center">
+      <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-center items-center">
         <header className="flex flex-col justify-center items-center">
           <h3 className="text-xl">Welcome to</h3>
           <h1 className="text-5xl font-bold my-2">INSPACE</h1>
@@ -68,12 +68,12 @@ export default function Reservation() {
 
       <div>
         <span>Don&apos;t have an account? </span>
-        <a href="#" className="ml-2 underline hover:text-blue-500">Register Instead</a>
+        <a href="#" className="ml-2 underline hover:text-blue-500 cursor-pointer">Register Instead</a>
       </div>
 
       </div> */}
 
-      <LoginOptionsComponent/>
+      <LoginLandingPageComponent/>
 
     </section>
   );
