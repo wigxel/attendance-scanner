@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useReadProfile } from "@/hooks/auth";
 import 'react-day-picker/dist/style.css';
 import { useForm } from "react-hook-form";
-import SignupComponent from "@/components/signupComponent";
+import TransactionSuccessComponent from "@/components/transactionSuccessComponent";
 
 
 export default function Reservation() {
@@ -73,7 +73,7 @@ export default function Reservation() {
 
       </div> */}
 
-      <SignupComponent/>
+      <TransactionSuccessComponent/>
 
     </section>
   );
