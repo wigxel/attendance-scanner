@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useReadProfile } from "@/hooks/auth";
 import 'react-day-picker/dist/style.css';
 import { useForm } from "react-hook-form";
-import LoginLandingPageComponent from "@/components/loginLandingPage";
+import SignupComponent from "@/components/signupComponent";
 
 
 export default function Reservation() {
@@ -49,31 +49,31 @@ export default function Reservation() {
           <input 
             placeholder="Enter your email" 
             {...register("email", { required: true })}  
-            className="w-full sm:max-w[335px] h-8 border p-2 mb-4 rounded-sm "
+            className="w-full sm:max-w[335px] h-8 text-xs border p-2 mb-4 rounded-sm "
           />
 
-          {errors.email && <span className="text-red-500">This field is required</span>}
+          {errors.email && <span className="text-red-500 text-xs">This field is required</span>}
 
           <input 
             placeholder="Enter your password" 
             {...register("password", { required: true })} 
-            className="w-full sm:max-w[335px] h-8 border p-2 mb-4 rounded-sm " 
+            className="w-full sm:max-w[335px] h-8 text-xs border p-2 mb-4 rounded-sm " 
           />
 
-          {errors.password && <span className="text-red-500">This field is required</span>}
+          {errors.password && <span className="text-red-500 text-xs">This field is required</span>}
           
           <button type="submit" className="w-full h-8 text-xs font-semibold bg-(--button-gray) text-black hover:bg-gray-300 rounded-sm">Log In</button>
 
       </form>
 
       <div>
-        <span>Don&apos;t have an account? </span>
-        <a href="#" className="ml-2 underline hover:text-blue-500 cursor-pointer">Register Instead</a>
+        <span className='text-sm font-normal'>Don&apos;t have an account? </span>
+        <a href="#" className="text-sm font-normal ml-2 underline hover:text-blue-500 cursor-pointer">Register Instead</a>
       </div>
 
       </div> */}
 
-      <LoginLandingPageComponent/>
+      <SignupComponent/>
 
     </section>
   );

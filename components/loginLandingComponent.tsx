@@ -37,7 +37,7 @@ export default function LoginLandingPageComponent() {
             data.map((item) => (
               <div
                 key={item.id}
-                className="w-full sm:w-[335px] h-[232px] rounded-lg bg-(--background-gray) px-6 py-12 mb-4"
+                className="w-full sm:w-[335px] h-[232px] flex flex-col justify-center rounded-lg bg-(--background-gray) px-6 py-12 mb-4"
               >
                 {/* header text */}
                 <h1 className="font-semibold text-base">{item.title}</h1>
