@@ -28,6 +28,6 @@ export default function TransactionSuccessComponent() {
             View e-Ticket
         </button>
         
-      </div>
+    </div>
   )
 }
