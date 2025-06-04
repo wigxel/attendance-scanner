@@ -34,7 +34,7 @@ export default function Reservation() {
   }
   
   return (
-    <section className="w-full h-screen flex justify-center items-center px-5 xl:p-0">
+    <section className="w-full h-screen flex justify-center items-center relative px-5 xl:p-0">
 
       {/* reservation
       <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-center items-center">

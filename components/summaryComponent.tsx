@@ -15,43 +15,43 @@ export default function SummaryComponent() {
         {id: 10, field: 'Amount', val: 'N3000.00'}
     ]
   return (
-    <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-center items-center relative">
+    <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-center items-center">
 
-        <nav className='w-full h-[99px] absolute top-0 xl:-top-[75px] flex items-center bg-(--navigation-gray) px-2.5 pt-12'>
+        <nav className='w-full h-[99px] absolute top-0 flex items-center bg-(--navigation-gray) px-2.5 pt-12'>
 
             <button type='button'>
                 <span className='w-8 h-8 text-left'><ChevronLeft /></span>
             </button>
             
-            <div className='ml-20'>
+            <div className='xl:w-full ml-20 xl:ml-0'>
                 <h3 className='text-sm text-center font-semibold'>Reserve a seat</h3>
             </div>
         </nav>
         
         {/* header text */}
-        <h3 className='w-full text-2xl font-normal text-left mb-10 mt-16'>Reservation Summary</h3>
+        <header className='w-[335px] sm:max-w-[335px] mt-32 xl:mt-8'>
+            <h3 className='w-full text-2xl font-normal text-left mb-10 mt-16'>Reservation Summary</h3>
+        </header>
 
         {/* summary information */}
-        <div className="w-[335px] sm:max-w-[335px] h-[389px] sm:max-h-[389px] flex flex-col justify-center items-center bg-(--background-gray) rounded-lg">
-
-            {
-                data.map((items, index) => (
-                    <div key={index} className='w-full px-4 py-2'>
-                        <ul className='w-full list-none'>
-                            <li className={(index === 2) ? 
-                                'w-full flex justify-between items-center border-b-2 border-dashed pb-6 mb-5' : 
-                                'w-full flex justify-between items-center'
-                            }>
-                                <span className='text-xs font-medium text-(--text-gray)'>{items.field}</span>
-                                <span className='text-xs font-semibold'>{items.val}</span>
-                            </li>
-                        </ul>
-                    </div>
-                ))
-            }
-            <div></div>
-
-            
+        <div className="w-[335px] sm:max-w-[335px] h-[389px] sm:max-h-[389px] flex flex-col justify-center items-center bg-(--background-gray) rounded-lg ">
+            <div className='w-full h-full px-4 py-6'> 
+                {
+                    data.map((items, index) => (
+                        <div key={index} className='w-full'>
+                            <ul className='w-full list-none'>
+                                <li className={(index === 2) ? 
+                                    'w-full flex justify-between items-center border-b-2 border-dashed pb-6 mb-5' : 
+                                    'w-full flex justify-between items-center py-2'
+                                }>
+                                    <span className='text-xs font-medium text-(--text-gray)'>{items.field}</span>
+                                    <span className='text-xs font-semibold'>{items.val}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    ))
+                }
+            </div>
             
         </div>
           
