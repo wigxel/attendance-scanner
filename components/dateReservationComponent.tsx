@@ -1,4 +1,4 @@
-import { Calendar, ChevronDown, ChevronLeft, Clock, Minus, Plus, UsersRound } from 'lucide-react'
+import { Calendar, ChevronDown, ChevronLeft, ChevronUp, Clock, Minus, Plus, UsersRound } from 'lucide-react'
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form';
 import {DayPicker} from 'react-day-picker'
@@ -167,19 +167,31 @@ export default function DateReservationComponent() {
                         onClick={toggleDropdown}
                         className='w-8 h-8 flex justify-center items-center text-(--text-gray) bg-(--button-gray) rounded-sm hover:bg-gray-200'
                     >
-                        <ChevronDown />
+                        {(isOpen === false) ? <ChevronDown /> : <ChevronUp />}
                     </label>
                     <ul 
                         id='time'
-                        {...register('time', {required: true})}
-                        className={'w-36 h-fit absolute right-0 top-14 py-2 bg-(--background-gray)  text-xs text-(--text-gray) focus:outline-none' + (isOpen ? ' block' : ' hidden')}
+                        className={'w-full h-fit absolute right-0 top-11 rounded-b-xl p-4 bg-(--background-gray) text-xs text-(--text-gray) ' + (isOpen ? ' block' : ' hidden')}
                         onClick={() => setIsOpen(false)}
                     >
-                        <li className='py-2 px-4 border-b hover:bg-(--navigation-gray)'>10:00 AM</li>
-                        <li className='py-2 px-4 border-b hover:bg-(--navigation-gray)'>11:00 AM</li>
-                        <li className='py-2 px-4 border-b hover:bg-(--navigation-gray)'>12:00 PM</li>
-                        <li className='py-2 px-4 border-b hover:bg-(--navigation-gray)'>1:00 PM</li>
-                        <li className='py-2 px-4 hover:bg-(--navigation-gray)'>2:00 PM</li>
+                        <li className='py-2 px-2 text-(--primary) hover:bg-(--navigation-gray) flex justify-between items-center rounded-sm'>
+                            All Day (9am - 5pm)
+                            {/* time input selector */}
+                            <input 
+                                type='radio'
+                                {...register('time', {required: true})}
+                                className='mr-0.5'
+                            />
+                        </li>
+                        <li className='py-2 px-2 text-(--primary) hover:bg-(--navigation-gray) flex justify-between items-center rounded-sm'>
+                            Custom
+                            {/* time input selector */}
+                            <input 
+                                type='radio'
+                                {...register('time', {required: true})}
+                                className='mr-0.5'
+                            />
+                        </li>
                     </ul>
                 </div>
             </div>
