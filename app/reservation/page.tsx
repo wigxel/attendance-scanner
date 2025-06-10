@@ -6,6 +6,11 @@ import { useReadProfile } from "@/hooks/auth";
 import 'react-day-picker/dist/style.css';
 import { useForm } from "react-hook-form";
 import DateReservationComponent from "@/components/dateReservationComponent";
+import WelcomebackComponent from "@/components/welcomebackComponent";
+import LoginLandingPageComponent from "@/components/loginLandingComponent";
+import LoginOptionsComponent from "@/components/loginOptionsComponent";
+import TransactionSuccessComponent from "@/components/transactionSuccessComponent";
+import SummaryComponent from "@/components/summaryComponent";
 
 
 export default function Reservation() {
@@ -73,7 +78,12 @@ export default function Reservation() {
 
       </div> */}
 
-      <DateReservationComponent/>
+      <WelcomebackComponent/>
+      {/* <DateReservationComponent/> */}
+      {/* <LoginLandingPageComponent/> */}
+      {/* <LoginOptionsComponent/> */}
+      {/* <TransactionSuccessComponent/> */}
+      {/* <SummaryComponent/> */}
 
     </section>
   );

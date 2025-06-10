@@ -1,7 +1,7 @@
 import { Calendar, ChevronDown, ChevronLeft, ChevronUp, Clock, Minus, Plus, UsersRound } from 'lucide-react'
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form';
-import {DayPicker} from 'react-day-picker'
+import {DateRange, DayPicker} from 'react-day-picker'
 import "react-day-picker/dist/style.css";
 
 interface FormData {
@@ -13,7 +13,7 @@ interface FormData {
 
 export default function DateReservationComponent() {
 
-    const [selected, setSelected] = useState<Date>(); // user date selection
+    const [selected, setSelected] = useState<DateRange | undefined>(); // user date selection
     const [isOpen, setIsOpen] = useState(false);
     const toggleDropdown = () => setIsOpen(prev => !prev);
     const [numberOfSeats, setNumberOfSeats] = useState<number>(0); // default number of seats
@@ -88,16 +88,16 @@ export default function DateReservationComponent() {
                  {/* date picker*/}
                 <div className='w-full h-full'>
                     <DayPicker
-                        mode="single"
+                        mode="range"
                         selected={selected}
                         onSelect={setSelected}
                         // footer={
-                        //     selected ? `Selected: ${selected.toLocaleDateString()}` : "Pick a day."
+                        //     selected && selected.length > 0 ? `Selected: ${selected.map(d => d.toLocaleDateString()).join(', ')}` : "Pick a day."
                         // }
                         classNames={{
                             day_selected:`!bg-(--primary) !text-white !rounded-sm`,
                             day_disabled: `!bg-(--text-gray) !rounded-sm !border !border-(--primary)`,
-                            day: `hover:!rounded-sm !p-1 hover:!bg-gray-200`,
+                            day: `hover:!rounded-sm w-8 h-8 hover:!bg-gray-200`,
                         }}
                     />
                 </div>
