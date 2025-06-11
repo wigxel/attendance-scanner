@@ -78,8 +78,8 @@ export default function Reservation() {
 
       </div> */}
 
-      <WelcomebackComponent/>
-      {/* <DateReservationComponent/> */}
+      {/* <WelcomebackComponent/> */}
+      <DateReservationComponent/>
       {/* <LoginLandingPageComponent/> */}
       {/* <LoginOptionsComponent/> */}
       {/* <TransactionSuccessComponent/> */}

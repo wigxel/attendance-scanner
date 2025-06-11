@@ -1,7 +1,8 @@
-import { Calendar, ChevronDown, ChevronLeft, ChevronUp, Clock, Minus, Plus, UsersRound } from 'lucide-react'
+import { Calendar, CheckIcon, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Minus, Plus, UsersRound } from 'lucide-react'
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form';
 import {DateRange, DayPicker} from 'react-day-picker'
+import { DropdownMenu, DropdownMenuArrow, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuItemIndicator, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
 import "react-day-picker/dist/style.css";
 
 interface FormData {
@@ -9,19 +10,32 @@ interface FormData {
     available: boolean,
     selected: boolean
     time: string;
+    customTime: string
 }
 
 export default function DateReservationComponent() {
 
     const [selected, setSelected] = useState<DateRange | undefined>(); // user date selection
-    const [isOpen, setIsOpen] = useState(false);
-    const toggleDropdown = () => setIsOpen(prev => !prev);
+    const [isOpen, setIsOpen] = useState(false); // dropdown state
+    const [isCustom, setIsCustom] = useState(false);
+    const [timeValue, setTimeValue] = useState() // custom time state
+    const [customTime, setCustomTime] = useState(''); // dropdown for custom time state option
     const [numberOfSeats, setNumberOfSeats] = useState<number>(0); // default number of seats
 
     const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
 
-
-
+    const timeData = [
+        {label: '8:00 - 9:00', value: '8:00 - 9:00'},
+        {label: '9:00 - 10:00', value: '9:00 - 10:00'},
+        {label: '10:00 - 11:00', value: '10:00 - 11:00'},
+        {label: '11:00 - 12:00', value: '11:00 - 12:00'},
+        {label: '12:00 - 13:00', value: '12:00 - 13:00'},
+        {label: '13:00 - 14:00', value: '13:00 - 14:00'},
+        {label: '14:00 - 15:00', value: '14:00 - 15:00'},
+        {label: '15:00 - 16:00', value: '15:00 - 16:00'},
+        {label: '16:00 - 17:00', value: '16:00 - 17:00'},
+    ]
+    
   return (
     <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-start items-center">
 
@@ -155,51 +169,96 @@ export default function DateReservationComponent() {
             </div>
 
             {/* time */}
-            <div className='w-full h-fit relative'> 
-                <div className='w-full h-[50px] bg-(--background-gray) rounded-md relative flex items-center justify-between px-5 mt-4'>
-                    <span className='flex items-center text-xs text-(--text-gray)'>
-                        <Clock className='w-4 h-4 mr-1'/>
-                        Choose Time
-                    </span>
+            <div className={ (isOpen === true) ? 'w-full h-fit relative mb-[250px]' : '!mb-[110px]'}>
+                <div className='w-full h-[50px] bg-(--background-gray) rounded-md relative flex items-center justify-between px-5 mt-4'>    
+                    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+                        <span className='flex items-center text-xs text-(--text-gray)'>
+                            <Clock className='w-4 h-4 mr-1'/>
+                            Choose Time
+                        </span>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                className='w-8 h-8 flex justify-center items-center text-(--text-gray) bg-(--button-gray) rounded-sm hover:bg-gray-200'
+                                aria-label="Customise options"
+                                onClick={() => setIsOpen(!isOpen)}
+                            >
+                                {(isOpen === false) ? <ChevronDown /> : <ChevronUp />}
+                            </button>
+                        </DropdownMenuTrigger>
 
-                    <label 
-                        htmlFor="time" 
-                        onClick={toggleDropdown}
-                        className='w-8 h-8 flex justify-center items-center text-(--text-gray) bg-(--button-gray) rounded-sm hover:bg-gray-200'
-                    >
-                        {(isOpen === false) ? <ChevronDown /> : <ChevronUp />}
-                    </label>
-                    <ul 
-                        id='time'
-                        className={'w-full h-fit absolute right-0 top-11 rounded-b-xl p-4 bg-(--background-gray) text-xs text-(--text-gray) ' + (isOpen ? ' block' : ' hidden')}
-                        onClick={() => setIsOpen(false)}
-                    >
-                        <li className='py-2 px-2 text-(--primary) hover:bg-(--navigation-gray) flex justify-between items-center rounded-sm'>
-                            All Day (9am - 5pm)
-                            {/* time input selector */}
-                            <input 
-                                type='radio'
-                                {...register('time', {required: true})}
-                                className='mr-0.5'
-                            />
-                        </li>
-                        <li className='py-2 px-2 text-(--primary) hover:bg-(--navigation-gray) flex justify-between items-center rounded-sm'>
-                            Custom
-                            {/* time input selector */}
-                            <input 
-                                type='radio'
-                                {...register('time', {required: true})}
-                                className='mr-0.5'
-                            />
-                        </li>
-                    </ul>
+                        <DropdownMenuPortal>
+                            <DropdownMenuContent
+                                className="w-[335px] h-fit rounded-b-md p-4 bg-(--background-gray) will-change-[opacity,transform] data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade data-[side=right]:animate-slideLeftAndFade data-[side=top]:animate-slideDownAndFade"
+                                sideOffset={5}
+                                align='end'
+                                alignOffset={-20}
+                            >
+                                
+                                {/* time input selector option*/}
+                                <DropdownMenuItem
+                                    className="w-full h-[31px] px-5 rounded-sm group relative flex select-none justify-between items-center  hover:bg-(--button-gray) text-xs leading-none text-violet11 outline-none data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[disabled]:text-mauve8 data-[highlighted]:text-violet1"
+                                >
+                                    All Day (9am - 5pm)
+                                    {/* time input selector */}
+                                    <input 
+                                        type='radio'
+                                        value="allDay"
+                                        checked={timeValue === "allDay"}
+                                        {...register('time', {required: true})}
+                                        onClick={() => setIsCustom(false)}
+                                    />
+                                </DropdownMenuItem>
+
+
+                               
+                                <DropdownMenuItem 
+                                    className="w-full group flex flex-col relative h-fit select-none item-center text-xs leading-none text-violet11 outline-none data-[disabled]:pointer-events-none data-[highlighted]:bg-violet9 data-[disabled]:text-mauve8 data-[highlighted]:text-violet1"
+                                >
+                                    <label 
+                                        onClick={() => setIsCustom(true)}
+                                        className="w-full h-[31px] px-5 group relative select-none flex justify-between items-center hover:bg-(--button-gray) rounded-sm text-xs mb-4"
+                                    >
+                                        Custom
+                                        {/* time input selector */}
+                                        <input 
+                                            type='radio'
+                                            {...register('time', {required: true})}
+                                            value="custom"
+                                            checked={timeValue === "custom"}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setIsCustom(!isCustom)
+                                            }}
+                                        />
+                                    </label>
+
+                                    <div className={(isCustom ? "grid grid-cols-3 gap-1.5" : 'hidden')}>
+                                    {
+                                        timeData.map((time, index) => (
+                                            <button
+                                                key={index} 
+                                                type='button'
+                                                className={'border hover:border-(--primary) w-24 h-8 text-xs font-medium rounded-sm' + ((customTime === time.value) ? ' bg-(--primary) text-white' : 'bg-(--button-gray) rounded-sm')}   
+                                                onClick={() => { 
+                                                    setCustomTime(time.value); 
+                                                }} 
+                                            >
+                                                {time.label}
+                                            </button>
+                                        ))
+                                    }
+                                    </div>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenuPortal>
+                    </DropdownMenu>
                 </div>
             </div>
                 
             
             <button 
                 type="button" 
-                className="w-full h-8 text-xs font-semibold bg-(--button-gray) text-black hover:bg-gray-300 rounded-sm mt-[190px]"
+                className="w-full h-8 text-xs font-semibold bg-(--button-gray) text-black hover:bg-gray-300 rounded-sm"
             >
                 Proceed
             </button>
