@@ -1,15 +1,9 @@
 import React from "react";
 import Barcode from 'react-barcode';
 
-interface TicketProps {
-  title: string;
-  subtitle?: string;
-  description?: string;
-}
-
-export default function Ticket({ title, subtitle, description }: TicketProps) {
+export default function TicketComponent() {
   return (
-    <div className="relative w-[335px] h-[445px] mx-auto mt-[50px] bg-(--background-gray) rounded-md  overflow-hiddenn">
+    <div className="relative w-[335px] max-w-[335px] h-[445px] mx-auto mt-[50px] bg-(--background-gray) rounded-md  overflow-hidden">
 
       {/* Left side circle */}
       <div className="absolute w-[31px] h-[30px] bg-(--background) rounded-full left-[-13px] top-[135px] transform -translate-y-1/2"></div>
@@ -86,6 +80,14 @@ export default function Ticket({ title, subtitle, description }: TicketProps) {
           <div key={i} className="w-[11px] h-[12px] bg-(--background) rounded-full"></div>
         ))}
       </div>
+      
+      <button 
+        type="button" 
+        className="w-full h-8 text-xs font-semibold bg-(--button-gray) text-black hover:bg-gray-300 rounded-sm mt-[140px]"
+      >
+        Return to Homepage
+      </button>
+
     </div>
   );
 }

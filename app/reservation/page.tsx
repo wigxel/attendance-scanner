@@ -12,6 +12,7 @@ import LoginOptionsComponent from "@/components/loginOptionsComponent";
 import TransactionSuccessComponent from "@/components/transactionSuccessComponent";
 import SummaryComponent from "@/components/summaryComponent";
 import Ticket from "@/components/ticket";
+import SeatSelectionComponent from "@/components/seatSelection";
 
 
 export default function Reservation() {
@@ -85,11 +86,8 @@ export default function Reservation() {
       {/* <LoginOptionsComponent/> */}
       {/* <TransactionSuccessComponent/> */}
       {/* <SummaryComponent/> */}
-      <Ticket
-        title="VIP Entry"
-        subtitle="Event Access: 9th July 2025"
-        description="Admit one. Please present this ticket at the entrance."
-      />
+      {/* <Ticket /> */}
+      <SeatSelectionComponent/>
 
     </section>
   );

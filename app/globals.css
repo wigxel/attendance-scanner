@@ -161,3 +161,6 @@
   background-color: var(--primary);
   color: var(--background);
 }
+/* .seat, .seat > span > div{
+  @apply border hover:border-(--primary)
+} */
