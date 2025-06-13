@@ -1,9 +1,20 @@
-import { ChevronLeft } from 'lucide-react'
+import { Calendar, ChevronLeft } from 'lucide-react'
 import React from 'react'
+import { useForm } from 'react-hook-form';
+
+interface FormData {
+    reserved: boolean,
+    available: boolean,
+    selected: boolean
+}
 
 export default function SeatSelectionComponent() {
+
+    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
+
   return (
-    <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-center items-center">
+    <div className="w-[335px] sm:w-[335px] h-[812px] flex flex-col justify-center items-center">
+        {/* navigation */}
         <nav className='w-full h-[99px] absolute top-0 flex items-center bg-(--navigation-gray) px-2.5 pt-12'>
         
             <button type='button'>
@@ -15,6 +26,47 @@ export default function SeatSelectionComponent() {
             </div>
 
         </nav>
+
+        {/* reservation */}
+        <div className=' w-[335px] max-w-[335px] h-11 flex items-center justify-center'>
+        
+            <div className='w-full flex justify-between items-center'>
+                <label htmlFor='reserved' className='flex items-center text-xs font-medium'>
+                
+                    {/* reserved input selector */}
+                    <input 
+                        type='radio'
+                        {...register('reserved', {required: true})}
+                        className='mr-1'
+                    />
+                    Reserved
+                </label>
+
+                <label htmlFor='reserved' className='flex items-center text-xs font-medium'>
+                
+                    {/* selected input selector */}
+                    <input 
+                        type='radio'
+                        {...register('reserved', {required: true})}
+                        className='mr-1'
+                    />
+                    Selected
+                </label>
+
+                <label htmlFor='reserved' className='flex items-center text-xs font-medium'>
+                    
+                    {/* available input selector */}
+                    <input 
+                        type='radio'
+                        {...register('reserved', {required: true})}
+                        className='mr-1'
+                    />
+                    Available
+                </label>
+            </div>
+
+        </div>
+
         {/* section 1 */}
         <div className='w-full sm:max-w-[335px] h-[150px] sm:max-h-[150px] flex justify-between items-center'>
             {/* first table and seats */}

@@ -11,8 +11,10 @@ import LoginLandingPageComponent from "@/components/loginLandingComponent";
 import LoginOptionsComponent from "@/components/loginOptionsComponent";
 import TransactionSuccessComponent from "@/components/transactionSuccessComponent";
 import SummaryComponent from "@/components/summaryComponent";
-import Ticket from "@/components/ticket";
 import SeatSelectionComponent from "@/components/seatSelection";
+import PaymentOptionComponent from "@/components/paymentOption";
+import PaymentGatewayComponent from "@/components/paymentGateway";
+import TicketComponent from "@/components/ticket";
 
 
 export default function Reservation() {
@@ -86,8 +88,10 @@ export default function Reservation() {
       {/* <LoginOptionsComponent/> */}
       {/* <TransactionSuccessComponent/> */}
       {/* <SummaryComponent/> */}
-      {/* <Ticket /> */}
-      <SeatSelectionComponent/>
+      {/* <TicketComponent/> */}
+      {/* <SeatSelectionComponent/> */}
+      {/* <PaymentOptionComponent/> */}
+      <PaymentGatewayComponent/>
 
     </section>
   );
