@@ -1,7 +1,18 @@
+'use client'
+
 import { ChevronLeft } from 'lucide-react'
 import React from 'react'
+import PaymentOptionComponent from './paymentOption';
 
-export default function SummaryComponent() {
+type ReservationTicketComponentProps = {
+  setIsConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
+  isConfirmed: boolean;
+};
+
+const ReservationSummaryComponent: React.FC<ReservationTicketComponentProps> = ({setIsConfirmed, isConfirmed}) => {
+
+    const [isPaymentOption, setIsPaymentOption] = React.useState(false);
+
     const data = [
         {id: 1, field: 'Name', val: 'Sim Fubara'},
         {id: 2, field: 'Phone', val: '08041941941'},
@@ -15,12 +26,13 @@ export default function SummaryComponent() {
         {id: 10, field: 'Amount', val: 'N3000.00'}
     ]
   return (
-    <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-center items-center">
+    (isPaymentOption === false) ? 
+      <div className={(isConfirmed === false) ? "hidden" : "w-full sm:w-[335px] h-[812px] flex flex-col justify-center items-center"}>
 
         <nav className='w-full h-[99px] absolute top-0 flex items-center bg-(--navigation-gray) px-2.5 pt-12'>
 
-            <button type='button'>
-                <span className='w-8 h-8 text-left'><ChevronLeft /></span>
+            <button type='button' onClick={() => setIsConfirmed(false)} className='w-8 h-8 flex justify-center items-center rounded-md hover:bg-gray-300'>
+                <span className='w-8 h-8 flex justify-center items-center'><ChevronLeft /></span>
             </button>
             
             <div className='xl:w-full ml-20 xl:ml-0'>
@@ -58,10 +70,14 @@ export default function SummaryComponent() {
         <button 
             type="button" 
             className="w-full h-8 text-xs font-semibold bg-(--button-gray) text-black hover:bg-gray-300 rounded-sm mt-[140px]"
+            onClick={() => setIsPaymentOption(true)}
         >
             Pay with PayStack
         </button>
         
-      </div>
+    </div> : 
+    <PaymentOptionComponent/>
   )
 }
+
+export default ReservationSummaryComponent

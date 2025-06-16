@@ -27,8 +27,7 @@ function SignOutButton() {
             signOut().then(() => {
               router.push("/signin");
             });
-          }}
-        >
+          }}        >
           Sign out
         </Button>
       )}

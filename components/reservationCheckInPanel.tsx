@@ -6,7 +6,7 @@ import "react-day-picker/dist/style.css";
 
 
 
-export default function WelcomebackComponent() {
+export default function ReservationCheckInPanelComponent() {
 
 
     const [selected, setSelected] = useState<DateRange | undefined>(); // user date selection
@@ -29,7 +29,7 @@ export default function WelcomebackComponent() {
         >
             <QRCodeSVG 
                 value="https://picturesofpeoplescanningqrcodes.tumblr.com/" 
-                size={150}
+                size={100}
                 level={"H"}
                 className='h-full'
             />
@@ -106,7 +106,3 @@ export default function WelcomebackComponent() {
     </section>
   )
 }
-
-
-
-            // <DateCalendar days={parsed_dates} month={month} setMonth={setMonth} />

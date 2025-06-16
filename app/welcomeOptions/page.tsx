@@ -1,22 +1,38 @@
 "use client";
 
+import { useConvexAuth } from "convex/react";
 import { Minus, MoveRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 
-export default function LoginLandingPageComponent() {
+export default function WelcomeOptionsComponent() {
+
+    const { isAuthenticated } = useConvexAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+      // If user is not authenticated, redirect to sign-in page
+      if (!isAuthenticated) {
+        router.push("/userLogin");
+      }
+    }, [isAuthenticated, router])
+      
 
   const data = [
     {
       id: 1, 
       title: 'Where creativity connects',
       description: 'Flexible workspaces designed for remote creatives, freelancers and teams to collaborate, create, and thrive.', 
-      cta: 'Make a Reservation'
+      cta: 'Make a Reservation',
+      link: '/reservationScheduler'
     },
     {
       id: 2, 
       title: 'Code. Create. Launch', 
       description: 'Hands-on training in tech and digital skills-empowering the next generation of innovators and problem-solvers.', 
-      cta: 'Enroll Today'
+      cta: 'Enroll Today',
+      link: '/#'
     }
   ]
   
@@ -37,15 +53,15 @@ export default function LoginLandingPageComponent() {
             data.map((item) => (
               <div
                 key={item.id}
-                className="w-full sm:w-[335px] h-[232px] flex flex-col justify-center rounded-lg bg-(--background-gray) px-6 py-12 mb-4"
+                className="w-full sm:w-[335px] h-[232px] flex flex-col justify-center rounded-lg bg-(--background-gray) hover:bg-(--navigation-gray) px-6 py-12 mb-4"
               >
                 {/* header text */}
                 <h1 className="font-semibold text-base">{item.title}</h1>
                 {/* description */}
                 <p className="w-full text-sm font-normal tracking-wide py-4">{item.description}</p>
                 {/* CTA */}
-                <button
-                  type="button"
+                <a
+                  href={item.link}
                   className="w-full sm:max-w[232px] h-8 flex items-center justify-between text-xs font-semibold text-left px-4 bg-(--button-gray) text-black hover:bg-gray-300 rounded-sm mb-4"
                 >
                   {item.cta}
@@ -54,7 +70,7 @@ export default function LoginLandingPageComponent() {
                     <Minus className="-mr-2" />
                     <MoveRight />
                   </span>
-                </button>
+                </a>
               </div>
             ))}
         </div>
