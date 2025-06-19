@@ -23,7 +23,7 @@ export default function ReservationScheduler() {
     const [step, setStep] = useState<string>('scheduler'); // step in the reservation process
     const [isNav, setIsNav] = useState<boolean>(false) // for navigation bar
     const [table, setTable] = useState<string>('')
-    const [seat, setSeat] = useState<string>('')
+    const [seat, setSeat] = useState<string[]>([])
    
 
     

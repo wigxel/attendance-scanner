@@ -15,8 +15,8 @@ interface SeatReservationComponentProps {
     setStep: Dispatch<SetStateAction<string>>;
     table: string;
     setTable: Dispatch<SetStateAction<string>>;
-    seat: string;
-    setSeat: Dispatch<SetStateAction<string>>;
+    seat: string[];
+    setSeat: Dispatch<SetStateAction<string[]>>;
 }
 
 interface FormData {
@@ -34,7 +34,7 @@ export default function SeatReservationComponent(
     const { isAuthenticated } = useConvexAuth();
     const router = useRouter();
 
-
+    const [tableSeatOptions, setTableSeatOptions] = useState<string[]>([])
     const [isConfirmed, setIsConfirmed] = useState(false);
     const [filter, setFilter] = useState('Available')
     const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
@@ -58,7 +58,7 @@ export default function SeatReservationComponent(
         {id: 'available', label: 'Available'}
     ]
 
-    console.log(filter)
+    console.log(tableSeatOptions, table)
 
   return (
     <section className="w-full h-screen flex justify-center items-start p-4 xl:p-0 mt-20 xl:mt-6" >
@@ -90,42 +90,39 @@ export default function SeatReservationComponent(
                             <TableComponent 
                                 id='T1' 
                                 label='T1' 
-                                onClick={setTable}
+                                seatOptions={['t1s1', 't1s2']} //list of seats for each table
+                                setTable={setTable}//sets selected table
+                                setTableSeatOptions={setTableSeatOptions}//sets table seat options
+                                table={table}//users selected table 
+                                setSeat={setSeat}
                                 size='w-[51px] h-[99px] rounded-[10px]' 
                                 position='left-[calc(50%-25.5px-74px)] top-[45px]' 
                                 tableRotation='-rotate-90'
                                 textRotation='!rotate-90'
                             />
 
-        
                             {/* Seat S1 */}
-                            <button 
-                                type='button'
-                                onClick={()=> {
-                                    if (table === 'T1') setSeat('S1');
-                                }}
-                                className="absolute w-4 h-[31px] left-[calc(50%-8px-105px)] top-[35px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)"
-                            >
-                                <span className='!-rotate-90 text-xs'>
-                                    S1
-                                    {/* seat bar S1 */}
-                                    <div className=" absolute w-1 h-[39px] left-[4px] -top-[25px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't1s1', name: 'S1', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-105px)] top-[35px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="left-[4px] -top-[25px] rotate-90" 
+                                currentTable='T1'                          
+                            />
         
                             {/* Seat S2 */}
-                            <button
-                                type='button'
-                                onClick={()=> {
-                                    if (table === 'T1') setSeat('S2');
-                                }}
-                                className="seat absolute w-4 h-[31px] left-[calc(50%-8px-42px)] top-[35px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S2
-                                    {/* seat bar S1 */}
-                                    <div className=" absolute w-1 h-[39px] right-[4px] -top-[25px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't1s2', name: 'S2', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="right-[4px] -top-[25px] rotate-90" 
+                                currentTable='T1'                          
+                            />
                         </div>
                     </div>
                     {/* Second table and seats */}
@@ -137,7 +134,11 @@ export default function SeatReservationComponent(
                             <TableComponent 
                                 id='T2' 
                                 label='T2' 
-                                onClick={setTable}
+                                seatOptions={['t2s1', 't2s2','t2s3']} //list of seats for each table
+                                setTable={setTable}//sets selected table
+                                setTableSeatOptions={setTableSeatOptions}//sets table seat options
+                                table={table}
+                                setSeat={setSeat}
                                 size='w-[51px] h-[99px] rounded-[10px]' 
                                 position='left-[calc(50%-25.5px-74px)] top-[45px]' 
                                 tableRotation='-rotate-90'
@@ -145,46 +146,37 @@ export default function SeatReservationComponent(
                             />
         
                             {/* Seat S1 */}
-                            <button
-                                type='button' 
-                                onClick={()=> {
-                                    if (table === 'T2') setSeat('S2');
-                                }}
-                                className="absolute w-4 h-[31px] left-[calc(50%-8px-105px)] top-[35px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S1
-                                    {/* seat bar S1 */}
-                                    <div className=" absolute w-1 h-[39px] left-[4px] -top-[25px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't2s1', name: 'S1', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-105px)] top-[35px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="left-[4px] -top-[25px] rotate-90" 
+                                currentTable='T2'                          
+                            />
         
                             {/* Seat S2 */}
-                            <button
-                                type='button' 
-                                onClick={()=> {
-                                    if (table === 'T2') setSeat('S2');
-                                }}
-                                className="seat absolute w-4 h-[31px] left-[calc(50%-8px-42px)] top-[35px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S2
-                                    {/* seat bar S2 */}
-                                    <div className=" absolute w-1 h-[39px] right-[4px] -top-[25px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't2s2', name: 'S2', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="left-[4px] -top-[25px] rotate-90" 
+                                currentTable='T2'                          
+                            />
         
                             {/* Seat S3 */}
-                            <button
-                                type='button' 
-                                onClick={()=> {
-                                    if (table === 'T2') setSeat('S3');
-                                }}
-                                className="seat absolute w-4 h-[31px] left-[calc(50%-8px-8px)] top-[80px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-0 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S3
-                                    {/* seat bar S3 */}
-                                    <div className=" absolute w-1 h-[39px] right-[4px] top-[2px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't2s3', name: 'S3', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-8px)] top-[80px] rotate-0"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="right-[4px] top-[2px] rotate-90" 
+                                currentTable='T2'                          
+                            />
         
                         </div>
                         
@@ -201,7 +193,11 @@ export default function SeatReservationComponent(
                             <TableComponent 
                                 id='T3' 
                                 label='T3' 
-                                onClick={setTable}
+                                table={table}
+                                seatOptions={['t3s1', 't3s2', 't3s3', 't3s4', 't3s5', 't3s6' ]}//list of seats for each table
+                                setTable={setTable}//sets selected table
+                                setTableSeatOptions={setTableSeatOptions}//sets table seat options
+                                setSeat={setSeat}
                                 size='w-[83px] h-[158px] rounded-full' 
                                 position='left-[calc(50%-25.5px-61px)] top-[30px]' 
                                 tableRotation='-rotate-90'
@@ -209,88 +205,73 @@ export default function SeatReservationComponent(
                             />
         
                             {/* Seat S1 */}
-                            <button 
-                                type='button'
-                                onClick={()=> {
-                                    if (table === 'T3') setSeat('S1');
-                                }}
-                                className="absolute w-4 h-[31px] left-[calc(50%-8px-105px)] top-[35px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded -rotate-290 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S1
-                                    {/* seat bar S1 */}
-                                    <div className=" absolute w-1 h-[39px] left-[5px] -top-[25px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't3s1', name: 'S1', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-105px)] top-[35px] -rotate-290"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="left-[4px] -top-[25px] rotate-90" 
+                                currentTable='T3'                          
+                            />
         
                             {/* Seat S2 */}
-                            <button 
-                                type='button'
-                                onClick={()=> {
-                                    if (table === 'T3') setSeat('S2');
-                                }}
-                                className="seat absolute w-4 h-[31px] left-[calc(50%-8px-42px)] top-[35px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S2
-                                    {/* seat bar S2 */}
-                                    <div className=" absolute w-1 h-[39px] right-[5px] -top-[25px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't3s2', name: 'S2', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="right-[5px] -top-[25px] rotate-90" 
+                                currentTable='T3'                          
+                            />
         
                             {/* Seat S3 */}
-                            <button 
-                                type='button'
-                                onClick={()=> {
-                                    if (table === 'T3') setSeat('S3');
-                                }}
-                                className="absolute w-4 h-[31px] -left-[calc(50%-8px-0px)] top-[34px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-110 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S3
-                                    {/* seat bar S3 */}
-                                    <div className=" absolute w-1 h-[39px] left-[6px] -top-[24px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't3s3', name: 'S3', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="-left-[calc(50%-8px-0px)] top-[34px] rotate-110"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="left-[6px] -top-[24px] rotate-90" 
+                                currentTable='T3'                          
+                            />
         
                             {/* Seat S4 */}
-                            <button 
-                                type='button'
-                                onClick={()=> {
-                                    if (table === 'T3') setSeat('S4');
-                                }}
-                                className="absolute w-4 h-[31px] left-[calc(50%-8px-105px)] top-[150px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-110 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S4
-                                    {/* seat bar S4 */}
-                                    <div className=" absolute w-1 h-[39px] left-[8px] top-[2px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't3s4', name: 'S4', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-105px)] top-[150px] rotate-110"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="left-[8px] top-[2px] rotate-90" 
+                                currentTable='T3'                          
+                            />
         
                             {/* Seat S5 */}
-                            <button 
-                                type='button'
-                                onClick={()=> {
-                                    if (table === 'T3') setSeat('S5');
-                                }}
-                                className="seat absolute w-4 h-[31px] left-[calc(50%-8px-42px)] top-[155px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S5
-                                    {/* seat bar S5 */}
-                                    <div className=" absolute w-1 h-[39px] right-[5px] top-[1px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't3s5', name: 'S5', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-42px)] top-[155px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="right-[5px] top-[1px] rotate-90" 
+                                currentTable='T3'                          
+                            />
         
                             {/* Seat S6 */}
-                            <button 
-                                type='button'
-                                onClick={()=> {
-                                    if (table === 'T3') setSeat('S6');
-                                }}
-                                className="absolute w-4 h-[31px] -left-[calc(50%-8px-0px)] top-[150px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-70 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S6
-                                    {/* seat bar S6 */}
-                                    <div className=" absolute w-1 h-[39px] left-[7px] top-[1px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't3s6', name: 'S6', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="-left-[calc(50%-8px-0px)] top-[150px] rotate-70"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="left-[7px] top-[1px] rotate-90" 
+                                currentTable='T3'                          
+                            />
         
                         </div>
                     </div>
@@ -303,7 +284,11 @@ export default function SeatReservationComponent(
                             <TableComponent 
                                 id='Hub Manager' 
                                 label='Hub Manager' 
-                                onClick={setTable}
+                                seatOptions={['Hub Manager']} //list of seats for each table
+                                table={table}
+                                setSeat={setSeat}
+                                setTable={setTable}//sets selected table
+                                setTableSeatOptions={setTableSeatOptions}//sets table seat options
                                 size='w-[59px] h-[74px] rounded-[10px]' 
                                 position='left-[calc(50%-25.5px-54px)] top-[62px]' 
                                 tableRotation='-rotate-90'
@@ -311,17 +296,15 @@ export default function SeatReservationComponent(
                             />
 
                             {/* Seat S1 */}
-                            <button 
-                                type='button'
-                                onClick={()=> {
-                                    if (table === 'Hub Manager') setSeat('S1');
-                                }}
-                                className="absolute w-4 h-[31px] left-[calc(50%-8px-52px)] top-[35px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    {/* seat bar S1 */}
-                                    <div className=" absolute w-1 h-[39px] -left-[1px] -top-[32px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 'Hub Manager', name: 'S1', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-52px)] top-[35px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="-left-[1px] -top-[32px] rotate-90" 
+                                currentTable='Hub Manager'                          
+                            />
         
                         </div>
                         
@@ -339,7 +322,11 @@ export default function SeatReservationComponent(
                             <TableComponent 
                                 id='T4' 
                                 label='T4' 
-                                onClick={setTable}
+                                seatOptions={['t5s1', 't5s2', 't5s3', 't5s4', 't5s5', 't5s6']} 
+                                table={table}
+                                setTable={setTable}//sets selected table
+                                setTableSeatOptions={setTableSeatOptions}//sets table seat options
+                                setSeat={setSeat}
                                 size='w-[83px] h-[158px] rounded' 
                                 position='left-[calc(50%-25.5px-61px)] top-[30px]' 
                                 tableRotation='-rotate-90'
@@ -347,88 +334,70 @@ export default function SeatReservationComponent(
                             />
         
                             {/* Seat S1 */}
-                            <button 
-                                type='button'
-                                onClick={()=> {
-                                    if (table === 'T4') setSeat('S1');
-                                }}
-                                className="absolute w-4 h-[31px] left-[calc(50%-8px-105px)] top-[35px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S1
-                                    {/* seat bar S1 */}
-                                    <div className=" absolute w-1 h-[39px] left-[5px] -top-[25px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't5s1', name: 'S1', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-105px)] top-[35px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="left-[5px] -top-[25px] rotate-90" 
+                                currentTable='T4'                          
+                            />
         
                             {/* Seat S2 */}
-                            <button
-                                type='button' 
-                                onClick={()=> {
-                                    if (table === 'T4') setSeat('S2');
-                                }}
-                                className="seat absolute w-4 h-[31px] left-[calc(50%-8px-42px)] top-[35px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S2
-                                    {/* seat bar S2 */}
-                                    <div className=" absolute w-1 h-[39px] right-[5px] -top-[25px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't5s2', name: 'S2', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="right-[5px] -top-[25px] rotate-90" 
+                                currentTable='T4'                          
+                            />
         
                             {/* Seat S3 */}
-                            <button
-                                type='button' 
-                                onClick={()=> {
-                                    if (table === 'T4') setSeat('S3');
-                                }}
-                                className="absolute w-4 h-[31px] -left-[calc(50%-8px-0px)] top-[34px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S3
-                                    {/* seat bar S3 */}
-                                    <div className=" absolute w-1 h-[39px] left-[6px] -top-[24px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't5s3', name: 'S3', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="-left-[calc(50%-8px-0px)] top-[34px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="left-[6px] -top-[24px] rotate-90" 
+                                currentTable='T4'                          
+                            />
         
                             {/* Seat S4 */}
-                            <button
-                                type='button' 
-                                onClick={()=> {
-                                    if (table === 'T4') setSeat('S4');
-                                }}
-                                className="absolute w-4 h-[31px] left-[calc(50%-8px-105px)] top-[150px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S4
-                                    {/* seat bar S4 */}
-                                    <div className=" absolute w-1 h-[39px] left-[8px] top-[2px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't5s4', name: 'S4', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-105px)] top-[150px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="left-[8px] top-[2px] rotate-90" 
+                                currentTable='T4'                          
+                            />
         
                             {/* Seat S5 */}
-                            <button
-                                type='button'
-                                onClick={()=> {
-                                    if (table === 'T4') setSeat('S5');
-                                }}
-                                className="seat absolute w-4 h-[31px] left-[calc(50%-8px-42px)] top-[150px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S5
-                                    {/* seat bar S5 */}
-                                    <div className=" absolute w-1 h-[39px] right-[5px] top-[1px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't5s5', name: 'S5', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="left-[calc(50%-8px-42px)] top-[150px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="right-[5px] top-[1px] rotate-90" 
+                                currentTable='T4'                          
+                            />
         
                             {/* Seat S6 */}
-                            <button
-                                type='button' 
-                                onClick={()=> {
-                                    if (table === 'T4') setSeat('S6');
-                                }}
-                                className="absolute w-4 h-[31px] -left-[calc(50%-8px-0px)] top-[150px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                <span className='!-rotate-90 text-xs'>
-                                    S6
-                                    {/* seat bar S6 */}
-                                    <div className=" absolute w-1 h-[39px] left-[7px] top-[1px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                </span>
-                            </button>
+                            <SeatComponent 
+                                seat={seat}
+                                seatId={{ seatOption: 't5s6', name: 'S6', setSeat }}
+                                tableSeatOptions={tableSeatOptions}//available options for parent table
+                                positionClasses="-left-[calc(50%-8px-0px)] top-[150px] rotate-90"
+                                textAlignment='!-rotate-90'
+                                seatBarPosition="left-[7px] top-[1px] rotate-90" 
+                                currentTable='T4'                          
+                            />
         
                         </div>
                     </div>
@@ -443,7 +412,11 @@ export default function SeatReservationComponent(
                                 <TableComponent 
                                     id='T5' 
                                     label='T5' 
-                                    onClick={setTable}
+                                    seatOptions={['t6s1', 't6s2', 't6s3']}//list of seats for each table
+                                    table={table}
+                                    setTable={setTable}//sets selected table
+                                    setTableSeatOptions={setTableSeatOptions}//sets table seat options
+                                    setSeat={setSeat}
                                     size='w-[59px] h-[114px] rounded-[10px]' 
                                     position='left-[calc(50%-25.5px-40px)] top-[35px]' 
                                     tableRotation='-rotate-90'
@@ -451,46 +424,38 @@ export default function SeatReservationComponent(
                                 />
         
                                 {/* Seat S1 */}
-                                <button
-                                    type='button' 
-                                    onClick={()=> {
-                                    if (table === 'T5') setSeat('S1');
-                                }}
-                                    className="absolute w-4 h-[31px] left-[calc(50%-8px-75px)] top-[30px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                    <span className='!-rotate-90 text-xs'>
-                                        S1
-                                        {/* seat bar S1 */}
-                                        <div className=" absolute w-1 h-[39px] left-[4px] -top-[25px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                    </span>
-                                </button>
+                                <SeatComponent 
+                                    seat={seat}
+                                    seatId={{ seatOption: 't6s1', name: 'S1', setSeat }}
+                                    tableSeatOptions={tableSeatOptions}//available options for parent table
+                                    positionClasses="left-[calc(50%-8px-75px)] top-[30px] rotate-90"
+                                    textAlignment='!-rotate-90'
+                                    seatBarPosition="left-[4px] -top-[25px] rotate-90" 
+                                    currentTable='T5'                          
+                                />
         
                                 {/* Seat S2 */}
-                                <button
-                                    type='button' 
-                                    onClick={()=> {
-                                        if (table === 'T5') setSeat('S2');
-                                    }}
-                                    className="seat absolute w-4 h-[31px] right-[calc(50%-8px-4px)] top-[30px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)">
-                                    <span className='!-rotate-90 text-xs'>
-                                        S2
-                                        {/* seat bar S2 */}
-                                        <div className=" absolute w-1 h-[39px] right-[4px] -top-[25px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                    </span>
-                                </button>
+                                <SeatComponent 
+                                    seat={seat}
+                                    seatId={{ seatOption: 't6s2', name: 'S2', setSeat }}
+                                    tableSeatOptions={tableSeatOptions}//available options for parent table
+                                    positionClasses="right-[calc(50%-8px-4px)] top-[30px] rotate-90"
+                                    textAlignment='!-rotate-90'
+                                    seatBarPosition="right-[4px] -top-[25px] rotate-90" 
+                                    currentTable='T5'                          
+                                />
         
                                 {/* Seat S3 */}
-                                <button
-                                    type='button' 
-                                    onClick={()=> {
-                                        if (table === 'T5') setSeat('S3');
-                                    }}
-                                    className="seat absolute w-4 h-[31px] left-[calc(50%-8px-110px)] top-[75px] cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-0 group border hover:border-(--primary)">
-                                    <span className='!-rotate-90 text-xs'>
-                                        S3
-                                        {/* seat bar S3 */}
-                                        <div className=" absolute w-1 h-[39px] right-[4px] -top-[23px] bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)" />
-                                    </span>
-                                </button>
+
+                                <SeatComponent 
+                                    seat={seat}
+                                    seatId={{ seatOption: 't6s3', name: 'S3', setSeat }}
+                                    tableSeatOptions={tableSeatOptions}//available options for parent table
+                                    positionClasses="left-[calc(50%-8px-110px)] top-[75px] rotate-0"
+                                    textAlignment='!-rotate-90'
+                                    seatBarPosition="right-[4px] -top-[23px] rotate-90" 
+                                    currentTable='T5'                          
+                                />
         
                             </div>
         
@@ -514,3 +479,4 @@ export default function SeatReservationComponent(
     </section>
   )
 }
+// each table has seat options and each seat has an optionId assigned to it for the table it belongs

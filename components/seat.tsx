@@ -1,14 +1,49 @@
-// Seat.tsx
-export const Seat = ({ table, currentTable, seatId, positionClasses, seatBarPosition }: any) => (
-  <button
-    type='button'
-    onClick={() => {
-      if (table === currentTable) seatId.setSeat(seatId.name);
-    }}
-    className={`absolute w-4 h-[31px] ${positionClasses} cursor-pointer flex items-center justify-center bg-[#D9D9D9] rounded rotate-90 group border hover:border-(--primary)`}>
-    <span className='!-rotate-90 text-xs'>
-      {seatId.name}
-      <div className={`absolute w-1 h-[39px] ${seatBarPosition} bg-[#D9D9D9] rounded rotate-90 border group-hover:border-(--primary)`} />
-    </span>
-  </button>
-);
+
+interface SeatId {
+    name: string;
+    seatOption:string
+    setSeat: (name: string[]) => void;
+}
+
+interface SeatComponentProps{
+    currentTable: string
+    seat: string[]
+    seatId: SeatId
+    tableSeatOptions:string[]
+    positionClasses: string
+    seatBarPosition: string
+    textAlignment: string
+}
+
+export default function SeatComponent(
+    { 
+        currentTable, seat, seatId, 
+        positionClasses, seatBarPosition,
+        textAlignment, tableSeatOptions
+    }: SeatComponentProps
+) {
+
+    const buttonClasses = `absolute w-4 h-[31px] ${positionClasses} cursor-pointer flex items-center justify-center rounded group border hover:border-[var(--primary)] ${seat.includes(seatId.seatOption) ? 'bg-[var(--primary)]' : 'bg-[#D9D9D9]'}`;
+    const barClasses = `absolute w-1 h-[39px] ${seatBarPosition} rounded border group-hover:border-[var(--primary)] ${seat.includes(seatId.seatOption) ? 'bg-[var(--primary)]' : 'bg-[#D9D9D9]'}`;
+
+  return (
+    <button
+        type='button'
+        onClick={() => {
+            //if the user clicks a button, then let them choose from the list of seats options for that table only
+            if (currentTable && tableSeatOptions.includes(seatId.seatOption)) {
+                seatId.setSeat([...seat, seatId.seatOption]);
+            }
+        }}
+        className={buttonClasses}
+    >
+        <span className={`${textAlignment} text-xs ${seat.includes(seatId.seatOption) && 'text-white'}` }>
+            {seatId.name}
+            {/* seat bar */}
+            <div 
+                className={barClasses} 
+            />
+        </span>
+    </button>
+  )
+}

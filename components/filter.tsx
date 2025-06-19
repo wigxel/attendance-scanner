@@ -1,10 +1,14 @@
 import React from 'react'
 import { Dispatch, SetStateAction } from 'react';
+import { UseFormRegister } from 'react-hook-form';
 
+interface FormData {
+    filter: string;
+}
 interface FilterComponentProps{
     id: string,
     label: string,
-    register: string,
+    register:  UseFormRegister<FormData>,
     filter: string
     setFilter: Dispatch<SetStateAction<string>>
 }
