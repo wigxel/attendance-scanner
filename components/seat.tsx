@@ -32,7 +32,13 @@ export default function SeatComponent(
         onClick={() => {
             //if the user clicks a button, then let them choose from the list of seats options for that table only
             if (currentTable && tableSeatOptions.includes(seatId.seatOption)) {
-                seatId.setSeat([...seat, seatId.seatOption]);
+                // If seat is already selected, remove it
+                if (seat.includes(seatId.seatOption)) {
+                    seatId.setSeat(seat.filter((s) => (s !== seatId.seatOption && s !== seatId.name)));
+                } else {
+                    // Otherwise, add it
+                    seatId.setSeat([...seat, seatId.seatOption, seatId.name]);
+                }
             }
         }}
         className={buttonClasses}

@@ -68,11 +68,17 @@ export default function SeatReservationComponent(
                 
                 {/* reservation */}
                 <div className='w-[335px] max-w-[335px] h-11 flex items-center justify-center mt-24'>
-                
+                    {/* filter to see seat availability, selection or already reserved seats */}
                     <div className='w-full flex justify-between items-center'>
                         {
                             filterOptions.map((item, index) => (
-                                <RadioFilterComponent key={index} id={item.id} label={item.label} register={register} filter={filter} setFilter={setFilter}/>
+                                <RadioFilterComponent 
+                                    key={index} 
+                                    id={item.id} 
+                                    label={item.label} 
+                                    filter={filter} 
+                                    setFilter={setFilter}
+                                />
                             ))
                         }
                     </div>

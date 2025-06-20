@@ -4,6 +4,7 @@ import { DateRange, DayPicker } from 'react-day-picker';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
 import { Calendar, ChevronDown, ChevronUp, Clock, Minus, Plus, UsersRound } from 'lucide-react'
 import { useForm } from 'react-hook-form';
+import RadioFilterComponent from './filter';
 
 interface SchedulerComponentProps {
     setIsNav: Dispatch<SetStateAction<boolean>>;
@@ -33,22 +34,29 @@ export default function SchedulerComponent(
         setNumberOfSeats
     }: SchedulerComponentProps) {
 
-        const [filter, setFilter] = useState('')
+        const [filter, setFilter] = useState('Available')
         const [isOpen, setIsOpen] = useState(false)// dropdown toggle state
         const [isCustom, setIsCustom] = useState(false);//state for custom time
 
         const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
 
         const timeData = [
-        {label: '8:00 - 9:00', value: '8:00 - 9:00'},
-        {label: '9:00 - 10:00', value: '9:00 - 10:00'},
-        {label: '10:00 - 11:00', value: '10:00 - 11:00'},
-        {label: '11:00 - 12:00', value: '11:00 - 12:00'},
-        {label: '12:00 - 13:00', value: '12:00 - 13:00'},
-        {label: '13:00 - 14:00', value: '13:00 - 14:00'},
-        {label: '14:00 - 15:00', value: '14:00 - 15:00'},
-        {label: '15:00 - 16:00', value: '15:00 - 16:00'},
-        {label: '16:00 - 17:00', value: '16:00 - 17:00'},
+            {label: '8:00 - 9:00', value: '8:00 - 9:00'},
+            {label: '9:00 - 10:00', value: '9:00 - 10:00'},
+            {label: '10:00 - 11:00', value: '10:00 - 11:00'},
+            {label: '11:00 - 12:00', value: '11:00 - 12:00'},
+            {label: '12:00 - 13:00', value: '12:00 - 13:00'},
+            {label: '13:00 - 14:00', value: '13:00 - 14:00'},
+            {label: '14:00 - 15:00', value: '14:00 - 15:00'},
+            {label: '15:00 - 16:00', value: '15:00 - 16:00'},
+            {label: '16:00 - 17:00', value: '16:00 - 17:00'},
+        ]
+
+    // filter
+    const filterOptions = [
+        {id: 'reserved', label: 'Reserved'},
+        {id: 'selected', label: 'Selected'},
+        {id: 'available', label: 'Available'}
     ]
 
     useEffect(() => {
@@ -68,44 +76,15 @@ export default function SchedulerComponent(
                 </span>
 
                 <div className='flex justify-evenly items-center'>
-                    <label htmlFor='reserved' className='flex items-center text-xs font-medium'>
-                    
-                        {/* reserved input selector */}
-                        <input 
-                            type='radio'
-                            value='reserved'
-                            id='reserved'
-                            {...register('filter', {required: true})}
-                            className='mr-0.5'
-                        />
-                        Reserved
-                    </label>
-
-                    <label htmlFor='seleceted' className='flex items-center text-xs font-medium mx-1'>
-                    
-                        {/* selected input selector */}
-                        <input 
-                            type='radio'
-                            value='selected'
-                            id='selected'
-                            {...register('filter', {required: true})}
-                            className='mr-0.5'
-                        />
-                        Selected
-                    </label>
-
-                    <label htmlFor='available' className='flex items-center text-xs font-medium'>
-                        
-                        {/* available input selector */}
-                        <input 
-                            type='radio'
-                            value='available'
-                            id='available'
-                            {...register('filter', {required: true})}
-                            className='mr-0.5'
-                        />
-                        Available
-                    </label>
+                    {
+                        filterOptions.map((item, index) => (
+                            <RadioFilterComponent 
+                                key={index} id={item.id} 
+                                label={item.label} 
+                                filter={filter} setFilter={setFilter}
+                            />
+                        ))
+                    }
                 </div>
 
             </div>
@@ -255,45 +234,15 @@ export default function SchedulerComponent(
 
                                 {/* time filter */}
                                 <div className={(isCustom === true) ? 'flex justify-end items-center mb-2' : 'hidden'}>
-                                    <label htmlFor='reserved' className='flex items-center text-xs font-medium'>
-                                    
-                                        {/* reserved input selector */}
-                                        <input 
-                                            type='radio'
-                                            id='reserved'
-                                            value='reserved'
-                                            {...register('filter', {required: true})}
-                                            className='mr-0.5'
-                                        />
-                                        Reserved
-                                    </label>
-                
-                                    <label htmlFor='selected' className='flex items-center text-xs font-medium mx-1'>
-                                    
-                                        {/* selected input selector */}
-                                        <input 
-                                            type='radio'
-                                            id='selected'
-                                            value='selected'
-                                            {...register('filter', {required: true})}
-                                            className='mr-0.5'
-                                        />
-                                        Selected
-                                    </label>
-                
-                                    <label htmlFor='available' className='flex items-center text-xs font-medium'>
-                                        
-                                        {/* available input selector */}
-                                        <input 
-                                            type='radio'
-                                            id='available'
-                                            value='available'
-                                            {...register('filter', {required: true})}
-                                            className='mr-0.5'
-                                        />
-                                        Available
-                                    </label>
-
+                                    {
+                                        filterOptions.map((item, index) => (
+                                            <RadioFilterComponent 
+                                                key={index} id={item.id} 
+                                                label={item.label} 
+                                                filter={filter} setFilter={setFilter}
+                                            />
+                                        ))
+                                    }
                                 </div>
 
                                 <div className={(isCustom ? "grid grid-cols-3 gap-1.5" : 'hidden')}>

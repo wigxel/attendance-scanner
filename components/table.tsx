@@ -22,17 +22,25 @@ export default function TableComponent(
     }: 
         TableComponentProps
     ) {
+
+        const tableClasses = `absolute ${size} ${position} cursor-pointer flex items-center justify-center ${tableRotation} border hover:border-(--primary) ${(label === table) ? 'bg-(--primary) text-white' : 'bg-[#D9D9D9]'}`;
   return (
         <button
             type='button'
             onClick={() => {
-                setTable(id)
-                setTableSeatOptions(seatOptions)
-                setSeat([])
+                if (table === id) {
+                    // Deselect if already selected
+                    setTable('')
+                    setTableSeatOptions([])
+                    setSeat([])
+                } else {
+                    // Select this table
+                    setTable(id)
+                    setTableSeatOptions(seatOptions)
+                    setSeat([])
+                }
             }}
-            className={(label === table) ? `absolute ${size} ${position} cursor-pointer flex items-center justify-center bg-(--primary) text-white ${tableRotation} border hover:border-(--primary)`:
-                `absolute ${size} ${position} cursor-pointer flex items-center justify-center bg-[#D9D9D9] ${tableRotation} border hover:border-(--primary)`
-            }
+            className={tableClasses}
         >
             <span className={`${textRotation} text-xs relative`}>{label}</span>
         </button>

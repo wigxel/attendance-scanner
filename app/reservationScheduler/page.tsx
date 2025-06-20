@@ -34,7 +34,7 @@ export default function ReservationScheduler() {
     //     }
     // }, [isAuthenticated, router])
 
-    console.log(selected, timeValue, numberOfSeats, step, isNav, seat, table)
+    console.log(selected, timeValue, numberOfSeats, step, isNav, 'selected seat = '+seat, 'selected table = '+table)
 
   return (
     <section className="w-full h-screen flex justify-center items-center p-4 xl:p-0">
