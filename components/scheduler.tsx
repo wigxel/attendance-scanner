@@ -213,7 +213,7 @@ export default function SchedulerComponent(
                                 <input 
                                     type='radio'
                                     value="allDay"
-                                    checked={timeValue === "allDay"}
+                                    checked={!isCustom && timeValue === "9:00 - 17:00"}
                                     onChange={() => {
                                         setTimeValue('9:00 - 17:00')
                                         setIsCustom(false)

@@ -1,6 +1,5 @@
 'use client'
 
-import { ChevronLeft } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { DateRange } from 'react-day-picker'
@@ -26,10 +25,10 @@ export default function ReservationScheduler() {
     const [numberOfSeats, setNumberOfSeats] = useState<number>(1);
     const [step, setStep] = useState<string>('scheduler'); // step in the reservation process
     const [isNav, setIsNav] = useState<boolean>(false) // for navigation bar
-    const [table, setTable] = useState<string>('')
-    const [seat, setSeat] = useState<string[]>([])
+    const [table, setTable] = useState<string>('')//table selection
+    const [seat, setSeat] = useState<string[]>([])//seat selection
    
-    const { watch} = useForm();
+    // const { watch} = useForm();
     
     // useEffect(() => {
     //     // If user is not authenticated, redirect to sign-in page
@@ -38,7 +37,7 @@ export default function ReservationScheduler() {
     //     }
     // }, [isAuthenticated, router])
 
-    console.log(selected, timeValue, numberOfSeats, step, isNav, 'selected seat = '+seat, 'selected table = '+table)
+    console.log('selected seat = '+seat[1], 'selected table = '+table)
   return (
     <section className="w-full h-screen flex justify-center items-center p-4 xl:p-0 relative">
         <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-start items-center">
@@ -74,6 +73,11 @@ export default function ReservationScheduler() {
                 step === 'reservationSummary' && 
                 <ReservationSummaryComponent 
                     setStep={setStep} 
+                    selected={selected}
+                    timeValue={timeValue}
+                    numberOfSeats={numberOfSeats}
+                    table={table}
+                    seat={seat}
                 />
             }
             {
@@ -91,7 +95,11 @@ export default function ReservationScheduler() {
             {
                 step === 'e-ticket' && 
                 <ReservationTicketComponent
-                
+                    selected={selected}
+                    timeValue={timeValue}
+                    numberOfSeats={numberOfSeats}
+                    table={table}
+                    seat={seat}
                 />
             }
          </div>

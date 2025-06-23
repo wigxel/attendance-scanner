@@ -2,14 +2,21 @@
 
 import React, { Dispatch, SetStateAction, useState } from 'react'
 import ReservationNavigationComponent from './reservationNavigation';
+import { DateRange } from 'react-day-picker';
 
 type ReservationSummaryComponentProps = {
   setStep: Dispatch<SetStateAction<string>>
+  selected: DateRange | undefined
+  timeValue: string
+  numberOfSeats: number
+  table: string
+  seat: string[]
 };
 
 export default function ReservationSummaryComponent(
     {
-        setStep, 
+        setStep, selected, timeValue, 
+        numberOfSeats, table, seat 
     }:
         ReservationSummaryComponentProps 
     ){
@@ -20,10 +27,11 @@ export default function ReservationSummaryComponent(
         {id: 2, field: 'Phone', val: '08041941941'},
         {id: 3, field: 'Email', val: 'simfubara@gmail.com'},
         {id: 4, field: 'Reservation ID', val: 'Sim Fubara'},
-        {id: 5, field: 'Duration', val: '1hr'},
-        {id: 6, field: 'Table No.', val: 'T2-S1, S2, S3'},
-        {id: 7, field: 'No. of Seats', val: '3'},
-        {id: 8, field: 'Reservation Date', val: '22nd May, 2025'},
+        {id: 5, field: 'Duration', val: timeValue},
+        // {id: 6, field: 'Table No.', val: 'T2-S1, S2, S3'},
+        {id: 6, field: 'Table No.', val: `${table}-${seat.filter((item) => item.startsWith('S'))}`},
+        {id: 7, field: 'No. of Seats', val: numberOfSeats},
+        {id: 8, field: 'Reservation Date', val: selected},
         {id: 9, field: 'Payment Status', val: 'Not Paid'},
         {id: 10, field: 'Amount', val: 'N3000.00'}
     ]
@@ -53,7 +61,13 @@ export default function ReservationSummaryComponent(
                                     'w-full flex justify-between items-center py-2'
                                 }>
                                     <span className='text-xs font-medium text-(--text-gray)'>{items.field}</span>
-                                    <span className='text-xs font-semibold'>{items.val}</span>
+                                    <span className='text-xs font-semibold'>
+                                        {typeof items.val === 'object' && items.val !== null
+                                            ? `${items.val.from?.toLocaleDateString() || ''} - ${items.val.to?.toLocaleDateString() || ''}`
+                                            : items.val !== undefined
+                                                ? items.val.toString()
+                                                : ''}
+                                    </span>
                                 </li>
                             </ul>
                         </div>
