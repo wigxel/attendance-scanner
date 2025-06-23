@@ -7,7 +7,7 @@ import Barcode from 'react-barcode';
 export default function ReservationTicketComponent(){
   return (
 
-    <section className=" w-[335px] max-w-[335px] h-[445px]">
+    <section className="w-full h-screen flex flex-col justify-center">
       <div className="relative w-[335px] max-w-[335px] h-[445px] mx-auto bg-(--background-gray) rounded-md overflow-hidden">
 
         {/* Left side circle */}
@@ -78,7 +78,7 @@ export default function ReservationTicketComponent(){
           </footer>
         </div>
         
-
+ 
         {/* Bottom dots */}
         <div className="absolute bottom-[-3px] left-[2px] flex space-x-[9px] px-3">
           {[...Array(26)].map((_, i) => (

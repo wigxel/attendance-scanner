@@ -1,17 +1,19 @@
 'use client'
 
-import { ChevronLeft } from 'lucide-react'
-import React from 'react'
-import PaymentOptionComponent from './paymentOption';
+import React, { Dispatch, SetStateAction, useState } from 'react'
+import ReservationNavigationComponent from './reservationNavigation';
 
-type ReservationTicketComponentProps = {
-  setIsConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
-  isConfirmed: boolean;
+type ReservationSummaryComponentProps = {
+  setStep: Dispatch<SetStateAction<string>>
 };
 
-const ReservationSummaryComponent: React.FC<ReservationTicketComponentProps> = ({setIsConfirmed, isConfirmed}) => {
+export default function ReservationSummaryComponent(
+    {
+        setStep, 
+    }:
+        ReservationSummaryComponentProps 
+    ){
 
-    const [isPaymentOption, setIsPaymentOption] = React.useState(false);
 
     const data = [
         {id: 1, field: 'Name', val: 'Sim Fubara'},
@@ -25,20 +27,14 @@ const ReservationSummaryComponent: React.FC<ReservationTicketComponentProps> = (
         {id: 9, field: 'Payment Status', val: 'Not Paid'},
         {id: 10, field: 'Amount', val: 'N3000.00'}
     ]
+
+    const handlePayment = () =>{
+        setStep('paymentOptions')
+    }
   return (
-    (isPaymentOption === false) ? 
-      <div className={(isConfirmed === false) ? "hidden" : "w-full sm:w-[335px] h-[812px] flex flex-col justify-center items-center"}>
-
-        <nav className='w-full h-[99px] absolute top-0 flex items-center bg-(--navigation-gray) px-2.5 pt-12'>
-
-            <button type='button' onClick={() => setIsConfirmed(false)} className='w-8 h-8 flex justify-center items-center rounded-md hover:bg-gray-300'>
-                <span className='w-8 h-8 flex justify-center items-center'><ChevronLeft /></span>
-            </button>
-            
-            <div className='xl:w-full ml-20 xl:ml-0'>
-                <h3 className='text-sm text-center font-semibold'>Reserve a seat</h3>
-            </div>
-        </nav>
+      <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-center items-center">
+        {/* navigation for component rendering */}
+        <ReservationNavigationComponent step={'seatReservation'} setStep={setStep}/>
         
         {/* header text */}
         <header className='w-[335px] sm:max-w-[335px] mt-32 xl:mt-8'>
@@ -70,14 +66,12 @@ const ReservationSummaryComponent: React.FC<ReservationTicketComponentProps> = (
         <button 
             type="button" 
             className="w-full h-8 text-xs font-semibold bg-(--button-gray) text-black hover:bg-gray-300 rounded-sm mt-[140px]"
-            onClick={() => setIsPaymentOption(true)}
+            onClick={() => handlePayment()}
         >
             Pay with PayStack
         </button>
         
-    </div> : 
-    <PaymentOptionComponent/>
+    </div>
+    
   )
 }
-
-export default ReservationSummaryComponent

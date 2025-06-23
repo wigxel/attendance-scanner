@@ -30,16 +30,26 @@ export default function SeatComponent(
     <button
         type='button'
         onClick={() => {
+            
             //if the user clicks a button, then let them choose from the list of seats options for that table only
             if (currentTable && tableSeatOptions.includes(seatId.seatOption)) {
-                // If seat is already selected, remove it
-                if (seat.includes(seatId.seatOption)) {
-                    seatId.setSeat(seat.filter((s) => (s !== seatId.seatOption && s !== seatId.name)));
+                const selectedSeats = seat.filter((_, index) => index % 2 === 0); // seatOptions only
+                const isAlreadySelected = seat.includes(seatId.seatOption);
+
+                if (isAlreadySelected) {
+                    // Remove both seatOption and name
+                    seatId.setSeat(seat.filter((s) => s !== seatId.seatOption && s !== seatId.name));
                 } else {
-                    // Otherwise, add it
-                    seatId.setSeat([...seat, seatId.seatOption, seatId.name]);
+                    // Only add if selection limit not exceeded
+                    if (selectedSeats.length < 6) {
+                        seatId.setSeat([...seat, seatId.seatOption, seatId.name]);
+                    } else {
+                        console.warn('Maximum seat selection reached.');
+                        // Optionally show a UI message
+                    }
                 }
             }
+            
         }}
         className={buttonClasses}
     >

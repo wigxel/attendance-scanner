@@ -2,21 +2,27 @@ import React from 'react'
 import { Dispatch, SetStateAction } from 'react';
 
 interface FilterComponentProps{
-    id: string,
-    label: string,
-    filter: string
-    setFilter: Dispatch<SetStateAction<string>>
+  id: string,
+  label: string,
+  checker: string //unique checker for each field
+  name: string
+  value: string
+  onChange: Dispatch<SetStateAction<string>>
 }
-export default function RadioFilterComponent({ id, label, filter, setFilter }: FilterComponentProps) {
+export default function RadioFilterComponent(
+  { id, label, checker, onChange, name, value }: FilterComponentProps) 
+  {
+
   return (
     <label htmlFor={id} className='flex items-center text-xs font-medium mr-1'>
         <input
-            type='radio'
-            id={id}
-            value={id}
-            checked={filter === label}
-            className='mr-0.5'
-            onChange={() => setFilter(label)}
+          type='radio'
+          id={id}
+          value={value}
+          name={name}
+          checked={checker === value}
+          className='mr-0.5'
+          onChange={() => onChange(value)}
         />
         {label}
     </label>

@@ -1,13 +1,22 @@
 import { Check } from 'lucide-react'
-import React from 'react'
+import React, { Dispatch, SetStateAction } from 'react'
 import ReservationTicketComponent from './reservationTicket';
 
-export default function SeatReservationSuccessComponent() {
+interface SeatReservationSuccessComponentProps{
+    setStep: Dispatch<SetStateAction<string>>
+}
 
-    const [isETicket, setIsETicket] = React.useState(false);
+export default function SeatReservationSuccessComponent(
+    {
+        setStep
+    }:  SeatReservationSuccessComponentProps
+) {
+
+    const handleSubmit = () =>{
+        setStep('e-ticket')
+    }
 
   return (
-    (isETicket === false) ?
     <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-center items-center">
         {/* header text */}
         <div className="w-[335px] sm:max-w-[335px] h-[373px] sm:max-h-[373px] flex flex-col justify-center items-center bg-(--background-gray) rounded-lg">
@@ -29,12 +38,11 @@ export default function SeatReservationSuccessComponent() {
         <button 
             type="button" 
             className="w-full h-8 text-xs font-semibold bg-(--button-gray) text-black hover:bg-gray-300 rounded-sm mt-[140px]"
-            onClick={() => setIsETicket(true)}
+            onClick={() => handleSubmit()}
         >
             View e-Ticket
         </button>
         
-    </div> : 
-    <ReservationTicketComponent/>
+    </div>
   )
 }

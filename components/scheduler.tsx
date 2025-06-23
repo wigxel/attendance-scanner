@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Dispatch, SetStateAction } from 'react';
 import { DateRange, DayPicker } from 'react-day-picker';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
 import { Calendar, ChevronDown, ChevronUp, Clock, Minus, Plus, UsersRound } from 'lucide-react'
 import { useForm } from 'react-hook-form';
 import RadioFilterComponent from './filter';
+import ReservationNavigationComponent from './reservationNavigation';
+import ToastComponentProps from './toast';
 
 interface SchedulerComponentProps {
-    setIsNav: Dispatch<SetStateAction<boolean>>;
     setStep: Dispatch<SetStateAction<string>>;
     setSelected: Dispatch<SetStateAction<DateRange | undefined>>;
     selected: DateRange | undefined;
@@ -16,15 +17,14 @@ interface SchedulerComponentProps {
     numberOfSeats: number;
     setNumberOfSeats: Dispatch<SetStateAction<number>>;
 }
-interface FormData {
-    filter: string
-    time: string;
-    customTime: string
-}
+// interface FormData {
+//     filter: string
+//     time: string;
+//     customTime: string
+// }
 
 export default function SchedulerComponent(
     {
-        setIsNav, 
         setStep, 
         setSelected, 
         selected,
@@ -34,11 +34,12 @@ export default function SchedulerComponent(
         setNumberOfSeats
     }: SchedulerComponentProps) {
 
-        const [filter, setFilter] = useState('Available')
+        const [dateFilter, setDateFilter] = useState('dateAvailable')
+        const [timeFilter, setTimeFilter] = useState('timeAvailable')
         const [isOpen, setIsOpen] = useState(false)// dropdown toggle state
         const [isCustom, setIsCustom] = useState(false);//state for custom time
 
-        const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
+        // const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
 
         const timeData = [
             {label: '8:00 - 9:00', value: '8:00 - 9:00'},
@@ -53,19 +54,31 @@ export default function SchedulerComponent(
         ]
 
     // filter
-    const filterOptions = [
-        {id: 'reserved', label: 'Reserved'},
-        {id: 'selected', label: 'Selected'},
-        {id: 'available', label: 'Available'}
+    const dateFilterOptions = [
+        {id: 'dateReserved', checker: 'dateReserved', label: 'Reserved'},
+        {id: 'dateSelected', checker: 'dateSelected', label: 'Selected'},
+        {id: 'dateAvailable', checker: 'dateAvailable', label: 'Available'}
     ]
 
-    useEffect(() => {
-        setIsNav(true)
-        setStep('scheduler')
-    },[])
-
+    const timeFilterOptions = [
+        {id: 'timeReserved', checker: 'timeReserved', label: 'Reserved'},
+        {id: 'timeSelected', checker: 'timeSelected', label: 'Selected'},
+        {id: 'timeAvailable', checker: 'timeAvailable', label: 'Available'}
+    ]
+    // confirms that all necessary fields are filled before loading the next component
+    // fields date, number of seats, time
+    const handleNextStep = () =>{
+        if(timeValue === '' || selected === undefined || numberOfSeats === 0){
+            ToastComponentProps({ type: 'error', message: 'All fields must be filled.' })
+            return false
+        }else{
+            return setStep('seatReservation')
+        }
+    }
+    console.log(dateFilter, timeFilter)
   return (
-    <section className="w-full h-fit flex flex-col justify-center items-center p-4 xl:p-0 mt-38 xl:mt-18'">
+    <section className="w-full h-fit flex flex-col justify-center items-center p-4 xl:p-0 mt-38 xl:mt-18">
+        <ReservationNavigationComponent step='scheduler' setStep={setStep}/>
         <div className='w-[335px] sm:max-w-[335px] h-[330px] sm:max-h-[330px] p-4 flex flex-col bg-(--background-gray) rounded-lg'>
             {/* date filter */}
             <div className='flex items-center justify-between'>
@@ -77,11 +90,15 @@ export default function SchedulerComponent(
 
                 <div className='flex justify-evenly items-center'>
                     {
-                        filterOptions.map((item, index) => (
+                        dateFilterOptions.map((item) => (
                             <RadioFilterComponent 
-                                key={index} id={item.id} 
+                                key={item.id} 
+                                id={item.id} 
                                 label={item.label} 
-                                filter={filter} setFilter={setFilter}
+                                name='dateFilter'
+                                value={item.checker}
+                                checker={dateFilter} 
+                                onChange={setDateFilter}
                             />
                         ))
                     }
@@ -119,7 +136,7 @@ export default function SchedulerComponent(
                 </span>
 
                 <span className='w-full text-[11px] text-(--text-gray) text-center'>
-                    5 seats remaining
+                    {(6 - numberOfSeats)} seats remaining
                 </span>
 
             </div>
@@ -133,7 +150,7 @@ export default function SchedulerComponent(
                     className='w-8 h-8 flex justify-center items-center text-(--text-gray) bg-(--button-gray) rounded-sm hover:bg-gray-200'
                     onClick={(e) => {
                         e.preventDefault();
-                        if (numberOfSeats > 0) {
+                        if (numberOfSeats > 1) {
                             setNumberOfSeats(numberOfSeats - 1);
                         }
                     }} >
@@ -149,7 +166,7 @@ export default function SchedulerComponent(
                     className='w-8 h-8 flex justify-center items-center text-(--text-gray) bg-(--button-gray) rounded-sm hover:bg-gray-200'
                     onClick={(e) => {
                         e.preventDefault();
-                        if (numberOfSeats < 5) { // assuming max seats is 5
+                        if (numberOfSeats < 6) { // assuming max seats is 6
                         setNumberOfSeats(numberOfSeats + 1);    
                     }}}
                 >
@@ -197,10 +214,9 @@ export default function SchedulerComponent(
                                     type='radio'
                                     value="allDay"
                                     checked={timeValue === "allDay"}
-                                    {...register('time', {required: true})}
-                                    onClick={() => {
-                                    setTimeValue('9:00 - 17:00')
-                                    setIsCustom(false)
+                                    onChange={() => {
+                                        setTimeValue('9:00 - 17:00')
+                                        setIsCustom(false)
                                     }}
                                 />
                             </DropdownMenuItem>
@@ -235,11 +251,15 @@ export default function SchedulerComponent(
                                 {/* time filter */}
                                 <div className={(isCustom === true) ? 'flex justify-end items-center mb-2' : 'hidden'}>
                                     {
-                                        filterOptions.map((item, index) => (
+                                        timeFilterOptions.map((item) => (
                                             <RadioFilterComponent 
-                                                key={index} id={item.id} 
+                                                key={item.id} 
+                                                id={item.id} 
                                                 label={item.label} 
-                                                filter={filter} setFilter={setFilter}
+                                                name='timeFilter'
+                                                value={item.checker}//default checked filter value
+                                                checker={timeFilter} 
+                                                onChange={setTimeFilter}
                                             />
                                         ))
                                     }
@@ -270,7 +290,7 @@ export default function SchedulerComponent(
 
         <button 
             type="button" 
-            onClick={() => setStep('seatReservation')}
+            onClick={() => handleNextStep()}
             className="w-full h-8 text-xs font-semibold bg-(--button-gray) text-black hover:bg-gray-300 rounded-sm flex justify-center items-center"
         >
             Proceed
