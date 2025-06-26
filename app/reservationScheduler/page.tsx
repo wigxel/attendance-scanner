@@ -25,7 +25,7 @@ export default function ReservationScheduler() {
     const [numberOfSeats, setNumberOfSeats] = useState<number>(1);
     const [step, setStep] = useState<string>('scheduler'); // step in the reservation process
     const [isNav, setIsNav] = useState<boolean>(false) // for navigation bar
-    const [table, setTable] = useState<string>('')//table selection
+    const [table, setTable] = useState<string[]>([])//table selection
     const [seat, setSeat] = useState<string[]>([])//seat selection
    
     // const { watch} = useForm();
@@ -37,7 +37,6 @@ export default function ReservationScheduler() {
     //     }
     // }, [isAuthenticated, router])
 
-    console.log('selected seat = '+seat[1], 'selected table = '+table)
   return (
     <section className="w-full h-screen flex justify-center items-center p-4 xl:p-0 relative">
         <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-start items-center">

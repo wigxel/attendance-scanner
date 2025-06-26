@@ -9,7 +9,7 @@ type ReservationSummaryComponentProps = {
   selected: DateRange | undefined
   timeValue: string
   numberOfSeats: number
-  table: string
+  table: string[]
   seat: string[]
 };
 

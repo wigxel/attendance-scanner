@@ -6,7 +6,7 @@ import { Calendar, ChevronDown, ChevronUp, Clock, Minus, Plus, UsersRound } from
 import { useForm } from 'react-hook-form';
 import RadioFilterComponent from './filter';
 import ReservationNavigationComponent from './reservationNavigation';
-import ToastComponentProps from './toast';
+import Toast from './toast';
 
 interface SchedulerComponentProps {
     setStep: Dispatch<SetStateAction<string>>;
@@ -69,15 +69,16 @@ export default function SchedulerComponent(
     // fields date, number of seats, time
     const handleNextStep = () =>{
         if(timeValue === '' || selected === undefined || numberOfSeats === 0){
-            ToastComponentProps({ type: 'error', message: 'All fields must be filled.' })
+            Toast({ type: 'error', message: 'All fields must be filled.' })
             return false
         }else{
             return setStep('seatReservation')
         }
     }
-    console.log(dateFilter, timeFilter)
+    
   return (
     <section className="w-full h-fit flex flex-col justify-center items-center p-4 xl:p-0 mt-38 xl:mt-18">
+        {/* sets the next component to render */}
         <ReservationNavigationComponent step='scheduler' setStep={setStep}/>
         <div className='w-[335px] sm:max-w-[335px] h-[330px] sm:max-h-[330px] p-4 flex flex-col bg-(--background-gray) rounded-lg'>
             {/* date filter */}
@@ -231,25 +232,25 @@ export default function SchedulerComponent(
                                 <label
                                     className="w-full h-[31px] px-5 group relative select-none flex justify-between items-center hover:bg-(--button-gray) rounded-sm mb-4"
                                 >
-                                <span className='text-xs'>Custom</span>
-                                    
-                                    {/* time input selector */}
-                                <button 
-                                    type='button'
-                                    className={(isCustom === true) ? 
-                                        'w-3.5 h-3.5 flex justify-center items-center bg-white rounded-full border border-blue-600' :
-                                        'w-3.5 h-3.5 flex justify-center items-center bg-white rounded-full border border-gray-400'
-                                    }
-                                >
-                                    <span className={(isCustom === true) ? 
-                                        'w-2.5 h-2.5 bg-blue-600 rounded-full':
-                                        'w-2.5 h-2.5 bg-white rounded-full'
-                                    }></span>
-                                </button>
+                                    <span className='text-xs'>Custom</span>
+                                        
+                                        {/* time input selector */}
+                                    <button 
+                                        type='button'
+                                        className={(isCustom === true) ? 
+                                            'w-3.5 h-3.5 flex justify-center items-center bg-white rounded-full border border-blue-600' :
+                                            'w-3.5 h-3.5 flex justify-center items-center bg-white rounded-full border border-gray-400'
+                                        }
+                                    >
+                                        <span className={(isCustom === true) ? 
+                                            'w-2.5 h-2.5 bg-blue-600 rounded-full':
+                                            'w-2.5 h-2.5 bg-white rounded-full'
+                                        }></span>
+                                    </button>
                                 </label>
 
                                 {/* time filter */}
-                                <div className={(isCustom === true) ? 'flex justify-end items-center mb-2' : 'hidden'}>
+                                <div className={(isCustom === true) ? 'flex justify-end items-center mb-2 relative': 'hidden relative'}>
                                     {
                                         timeFilterOptions.map((item) => (
                                             <RadioFilterComponent 

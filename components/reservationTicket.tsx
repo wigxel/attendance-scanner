@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Dispatch, SetStateAction } from "react";
+import React from "react";
 import Barcode from 'react-barcode';
 import { DateRange } from "react-day-picker";
 
@@ -8,7 +8,7 @@ type ReservationTicketComponentProps = {
   selected: DateRange | undefined
   timeValue: string
   numberOfSeats: number
-  table: string
+  table: string[]
   seat: string[]
 };
 export default function ReservationTicketComponent(
@@ -18,19 +18,20 @@ export default function ReservationTicketComponent(
   }:
     ReservationTicketComponentProps 
   ){
+
   const data = [
-        {id: 1, field: 'Name', val: 'Sim Fubara'},
-        {id: 2, field: 'Phone', val: '08041941941'},
-        {id: 3, field: 'Email', val: 'simfubara@gmail.com'},
-        {id: 4, field: 'Reservation ID', val: 'Sim Fubara'},
-        {id: 5, field: 'Duration', val: timeValue},
-        // {id: 6, field: 'Table No.', val: 'T2-S1, S2, S3'},
-        {id: 6, field: 'Table No.', val: `${table}-${seat.filter((item) => item.startsWith('S'))}`},
-        {id: 7, field: 'No. of Seats', val: numberOfSeats},
-        {id: 8, field: 'Reservation Date', val: selected},
-        {id: 9, field: 'Payment Status', val: 'Not Paid'},
-        {id: 10, field: 'Amount', val: 'N3000.00'}
-    ]
+    {id: 1, field: 'Name', val: 'Sim Fubara'},
+    {id: 2, field: 'Phone', val: '08041941941'},
+    {id: 3, field: 'Email', val: 'simfubara@gmail.com'},
+    {id: 4, field: 'Reservation ID', val: 'Sim Fubara'},
+    {id: 5, field: 'Duration', val: timeValue},
+    {id: 6, field: 'Table No.', val: `${table}-${seat.filter((item) => item.startsWith('S'))}`},
+    {id: 7, field: 'No. of Seats', val: numberOfSeats},
+    {id: 8, field: 'Reservation Date', val: selected},
+    {id: 9, field: 'Payment Status', val: 'Not Paid'},
+    {id: 10, field: 'Amount', val: 'N3000.00'}
+  ]
+
   return (
 
     <section className="w-full h-screen flex flex-col justify-center">
@@ -95,14 +96,14 @@ export default function ReservationTicketComponent(
           <footer className="w-full h-fit flex justify-center items-center">
               <div className="w-[206px] max-w-[206px] h-[67px] max-h-[67px]">
                   <Barcode 
-                      value={data[3]?.val?.toString() ?? ''} // Use Reservation ID as barcode value
-                      width={1} 
-                      height={50}
-                      format="CODE128"
-                      displayValue={false}
-                      background="transparent"
-                      marginTop={20}
-                      marginLeft={35}
+                    value={data[3]?.val?.toString() ?? ''} // Use Reservation ID as barcode value
+                    width={1} 
+                    height={50}
+                    format="CODE128"
+                    displayValue={false}
+                    background="transparent"
+                    marginTop={20}
+                    marginLeft={35}
                   />
               </div>
           </footer>

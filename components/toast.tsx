@@ -6,7 +6,7 @@ interface ToastComponentProps{
     type: string
     message: string
 }
-export default function ToastComponentProps({type, message}: ToastComponentProps) {
+export default function Toast({type, message}: ToastComponentProps) {
   switch (type) {
     case 'success':
       toast.success(message);
