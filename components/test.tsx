@@ -73,3 +73,21 @@
         // //2.Replace the selection: add all matches, drop everything else
         // //(If matchingTableIds = [], all tables are removed — exactly what we want.)
         // setTable([...table, ...matchingTableIds]);
+
+
+
+        // compare table with matchingID's and delete item that doesnt match
+
+        //compare the return values of matchingTableIds, seatOptions and table. use the difference to update table array
+        const matchingTableIds = tableSeatOptions
+            .filter(({ options }) =>
+                options.some(opt => seatOptions.includes(opt))
+            )
+            .map(({ id }) => id);
+
+        const filteredTable = table.filter(item => seatOptions.includes(item));
+        setTable([filteredTable])
+        
+        console.log(`filtered table is = ${filteredTable}, matching table ids is = ${matchingTableIds}, selected seat options is = ${seatOptions}`)
+        
+        // console.log(` Table ${filteredTable} has been removed `)

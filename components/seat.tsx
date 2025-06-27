@@ -21,7 +21,7 @@ interface SeatComponentProps{
 
 export default function SeatComponent(
     { 
-        seat, seatId, 
+        seat, seatId, currentTable,
         positionClasses, seatBarPosition,
         textAlignment, table, setTable
     }: SeatComponentProps
@@ -38,18 +38,37 @@ export default function SeatComponent(
         {id: 'T4', options: ['t4s1', 't4s2', 't4s3', 't4s4', 't4s5', 't4s6']},
         {id: 'T5', options: ['t5s1', 't5s2', 't5s3']},
     ]
+    
+    /**
+     * operation;
+     * 1: user picks a seat and seat name and seatOption #should be renamed# gets added to the seat array
+     * 2: when there is a seat, table function checks if the seatOption matches one if its options #matchingIDs# and if it does, the table gets added to the table array
+     * 3: a merge is performed to remove remove duplicates by merging IDs in the table array with incoming matchingIDs, i.e. don't add additional table option if it already exist in table
+     *     
+     */
+
+    const selectedSeats = () =>{
+        return seat.filter((_, index) => index % 2 === 0); 
+    }
+    const getSeatOptions = () =>{
+        
+        return seat.filter(s => s.startsWith('t') || s.startsWith('H'))
+    }
+    // function to handle user seat selection
     const handleSeatSelection = () =>{
         //if the user clicks a button, then let them choose from the list of seats regardless of the table
-        const selectedSeats = seat.filter((_, index) => index % 2 === 0); // seatOptions only
+        const selectedSeatOptions =  selectedSeats()// seatOptions only
         
         const isAlreadySelected = seat.includes(seatId.seatOption);
-
+        
         if (isAlreadySelected) {
             // Remove both seatOption and name
             seatId.setSeat(seat.filter((s) => s !== seatId.seatOption && s !== seatId.name));
+            //trigger table deselection on click
         } else {
+            selectedSeats()
             // Only add if selection limit not exceeded
-            if (selectedSeats.length < 6) {
+            if (selectedSeatOptions.length < 6) {
                 seatId.setSeat([...seat, seatId.seatOption, seatId.name]);
                 // No need to call deriveTables here, handled in useEffect
             } else {
@@ -58,6 +77,7 @@ export default function SeatComponent(
         }
     }
     
+    // function to handle table selection when user picks a seat
     const handleTableSelection = (
         seatOptions: string[]
     ): string[] => {
@@ -74,19 +94,32 @@ export default function SeatComponent(
         return Array.from(merged);
     }
 
+    const handleTableDeselect = (selectedSeatOptions: string[]) =>{
+
+        //if the user clicks a button, then let them choose from the list of seats regardless of the table
+        
+        // Keep every table that still owns ≥1 selected seat
+        const matchingTableIds = tableSeatOptions
+            .filter(({ options }) =>
+                options.some(opt => selectedSeatOptions.includes(opt))
+            )
+            .map(({ id }) => id);
+
+        setTable(matchingTableIds); // no accidental nesting
+    }
+
     useEffect(() => {
+        // table selection trigger
+
         // get the options for every seat
-        const selectedSeatOptions = seat.filter((_, i) => i % 2 === 0);
+        const selectedSeatOptions = getSeatOptions()
+
         setTable(handleTableSelection(selectedSeatOptions));
 
-        // if there are no seats, empty the table array
-        if(selectedSeatOptions.length === 0){
-            setTable([])
-        }
+        handleTableDeselect(selectedSeatOptions)
+        
     }, [seat, setTable]);
-
-    console.log('table = '+table, 'seat = '+seat)
-
+    
   return (
     <button
         type='button'
