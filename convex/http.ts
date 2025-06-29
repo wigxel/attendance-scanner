@@ -12,8 +12,6 @@ const syncConvexUsers = httpAction(async (ctx) => {
   // 1. Get all authUsers
   const authUsers = await ctx.runQuery(api.myFunctions.getAllProfiles) // Adjust to your query method
 
-  console.log(authUsers)
-
   for await (const entry of authUsers) {
     const user = entry.profile;
 

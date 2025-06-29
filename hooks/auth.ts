@@ -25,8 +25,6 @@ export function useProfile() {
   const profile = useQuery(api.myFunctions.getProfile);
   const autoCreateProfile = useMutation(api.auth.autoCreateProfile);
 
-  console.log("User", profile, isSignedIn);
-
   // Auto-create profile when user signs in but doesn't have a profile
   useEffect(() => {
     if (isSignedIn && user && profile === null) {

@@ -12,8 +12,6 @@ export const authUser = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
 
-    console.log(">>>", identity);
-
     return identity;
   },
 });
@@ -72,7 +70,6 @@ export const isRegisteredForToday = query({
   handler: async (ctx) => {
     const userId = await readId(ctx);
 
-    console.log({ userId });
     if (userId === null) return false;
 
     return await _isUserRegistered(ctx, { userId });

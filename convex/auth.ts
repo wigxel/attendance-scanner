@@ -27,7 +27,6 @@ export const getUserProfile = query({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
 
-    console.log({ identity });
     if (!identity) {
       throw new Error("User must be authenticated");
     }
