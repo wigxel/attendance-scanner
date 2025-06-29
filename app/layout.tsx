@@ -1,18 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
+
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/react-query";
-import {
-  ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from '@clerk/nextjs'
+import { ClerkProvider } from '@clerk/nextjs'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,21 +32,20 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       appearance={{
         cssLayerName: 'clerk',
       }}
     >
       <QueryProvider>
-        <ConvexAuthNextjsServerProvider>
-          <html lang="en" className="scanline-root">
-            <body
-              className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
-            >
-              <ConvexClientProvider>{children}</ConvexClientProvider>
-            </body>
-          </html>
-          <Toaster />
-        </ConvexAuthNextjsServerProvider>
+        <html lang="en" className="scanline-root">
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
+          >
+            <ConvexClientProvider>{children}</ConvexClientProvider>
+            <Toaster />
+          </body>
+        </html>
       </QueryProvider>
     </ClerkProvider>
   );

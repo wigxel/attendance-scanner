@@ -1,25 +1,26 @@
 import { v } from "convex/values";
 import { formatISO, setHours } from "date-fns";
-import type { GenericQueryCtx } from "convex/server";
-import { getAuthUserId  } from "@convex-dev/auth/server";
-import { mutation, query } from "./_generated/server";
-import { api } from "./_generated/api";
+import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { logger } from "../config/logger";
+import { mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { api } from "./_generated/api";
 
 export const authUser = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    const user = userId === null ? null : await ctx.db.get(userId);
+    const identity = await ctx.auth.getUserIdentity();
 
-    return user;
+    console.log(">>>", identity);
+
+    return identity;
   },
 });
 
 export const getProfile = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await readId(ctx);
 
     if (userId === null) return null;
 
@@ -32,7 +33,7 @@ export const getProfile = query({
 
 export const getUserById = query({
   args: {
-    userId: v.id("users"),
+    userId: v.id("profile"),
   },
   handler: async (ctx, args) => {
     return await ctx.db
@@ -44,7 +45,7 @@ export const getUserById = query({
 
 export const getAttendanceByMonth = query({
   args: {
-    userId: v.optional(v.id("users")), // user id
+    userId: v.optional(v.string()), // user id
     start: v.string(), // iso timestamp
     end: v.string(), // iso timestamp
   },
@@ -68,8 +69,9 @@ export const getAttendanceByMonth = query({
 export const isRegisteredForToday = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await readId(ctx);
 
+    console.log({ userId })
     if (userId === null) return false;
 
     return await _isUserRegistered(ctx, { userId });
@@ -98,7 +100,7 @@ async function _isUserRegistered(ctx: GenericQueryCtx<any>, args: { userId: stri
 
 export const isUserRegisteredForToday = query({
   args: {
-    userId: v.id("users"),
+    userId: v.id("profile"),
   },
   handler: async (ctx, args) => {
     return _isUserRegistered(ctx, { userId: args.userId })
@@ -107,12 +109,12 @@ export const isUserRegisteredForToday = query({
 
 export const registerUser = mutation({
   args: {
-    customerId: v.id("users"),
+    customerId: v.id("profile"),
     visitorId: v.string(),
     browser: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await readId(ctx);
 
     const customer = await ctx.runQuery(api.myFunctions.getUserById, {
       userId: args.customerId,
@@ -135,11 +137,18 @@ export const registerUser = mutation({
         browser: args.browser,
       },
       source: "web",
-      admitted_by: userId,
+      admitted_by: userId as Id<'profile'>,
       timestamp: new Date().toISOString(),
     });
   },
 });
+
+async function readId(ctx: any): Promise<string | null> {
+  const identity = await ctx.auth.getUserIdentity();
+  const userId = identity?.profile_id ?? null;
+
+  return String(userId) || null;
+}
 
 export const updateUser = mutation({
   args: {
@@ -150,18 +159,19 @@ export const updateUser = mutation({
     // email: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await readId(ctx);
 
     if (!userId) {
       logger.warn("User not authenticated");
       return null;
+
     }
 
     const profile = await ctx.runQuery(api.myFunctions.getProfile);
     if (!profile) return;
 
     await ctx.db.replace(profile._id, {
-      id: userId,
+      id: userId as Id<'profile'>,
       firstName: args.firstName,
       lastName: args.lastName,
       phoneNumber: args.phoneNumber,
@@ -178,7 +188,7 @@ export const submitFeatureRequest = mutation({
     description: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await readId(ctx);
 
     if (!userId) {
       logger.warn("User not authenticated");
@@ -186,7 +196,7 @@ export const submitFeatureRequest = mutation({
     }
 
     await ctx.db.insert("featureRequest", {
-      userId,
+      userId: userId as Id<"profile">,
       title: args.title,
       description: args.description,
       status: "open",
@@ -195,9 +205,9 @@ export const submitFeatureRequest = mutation({
 });
 
 //function to get user stats
-export const getUserStats = query ({
+export const getUserStats = query({
   args: {
-    userId: v.id("users"),
+    userId: v.id("profile"),
   },
   handler: async (ctx, { userId }) => {
     const user = await ctx.db.get(userId);
@@ -216,21 +226,21 @@ export const getUserStats = query ({
     const freeDayEligible = attendanceCount >= 20;
 
     return {
-      name: user.name,
+      name: `${user.firstName} ${user.lastName}`,
       attendanceCount,
       freeDayEligible,
-      
+
     };
   },
 });
 
-//function to get all users 
+//function to get all users
 export const getAllUsers = query({
   args: {},
   handler: async (ctx) => {
     //get all profiles joined with auth users
     const profiles = await ctx.db.query("profile").collect();
-    
+
     const data = await Promise.all(
       profiles.map(async (profile) => {
         const registrations = await ctx.db
@@ -250,7 +260,7 @@ export const getAllUsers = query({
           phoneNumber: profile.phoneNumber ?? "N/A",
           visitCount,
           eligible,
-          
+
         };
       })
     );
@@ -272,8 +282,10 @@ export const listOccupations = query({
 });
 
 //Function for Auth guard
+//
 export const authGuard = async (ctx: GenericQueryCtx<any>, requiredRole?: string) => {
-  const userId = await getAuthUserId(ctx);
+  const identity = await ctx.auth.getUserIdentity();
+  const userId = identity?.profile_id ?? null;
 
   if (!userId) {
     logger.warn("User not authenticated");
@@ -282,13 +294,13 @@ export const authGuard = async (ctx: GenericQueryCtx<any>, requiredRole?: string
 
   const profile = await ctx.runQuery(api.myFunctions.getProfile);
   if (!profile) return null;
-  
+
   // Check if the user has the required role
   if (requiredRole && profile.role !== requiredRole) {
     logger.warn(`User does not have the required role: ${requiredRole}`);
     return null;
   }
-  
+
   return profile;
 }
 
@@ -383,4 +395,3 @@ export const deleteOccupation = mutation({
     return args.id;
   },
 });
-

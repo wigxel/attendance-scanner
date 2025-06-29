@@ -1,10 +1,6 @@
 "use client";
-
-import { useConvexAuth, useQuery } from "convex/react";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useRouter } from "next/navigation";
+import { useQuery } from "convex/react";
 import type React from "react";
-import { Button } from "@/components/ui/button";
 import { FeatureRequestDialog } from "@/components/FeatureRequestDialog";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 import { useReadProfile } from "@/hooks/auth";
@@ -13,29 +9,6 @@ import { Logo } from "@/components/logo";
 import { CheckInCard } from "@/components/CheckInCard";
 import { TakeAttendance } from "@/components/TakeAttendance";
 import { SignedOut, SignInButton, SignUpButton, SignedIn, UserButton } from "@clerk/nextjs";
-
-function SignOutButton() {
-  const router = useRouter();
-  const { signOut } = useAuthActions();
-  const { isAuthenticated } = useConvexAuth();
-
-  return (
-    <>
-      {isAuthenticated && (
-        <Button
-          variant={"default"}
-          onClick={() => {
-            signOut().then(() => {
-              router.push("/signin");
-            });
-          }}
-        >
-          Sign out
-        </Button>
-      )}
-    </>
-  );
-}
 
 function greet_time(): string {
   const date = new Date();

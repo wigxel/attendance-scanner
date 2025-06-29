@@ -7,5 +7,7 @@ function generateIV(): string {
   return iv.toString('hex');
 }
 
+crypto.randomBytes(32).toString('base64url')
+
 const generatedIV = generateIV();
 console.log(`QR_CODE_VI_HEX=${generatedIV}`);

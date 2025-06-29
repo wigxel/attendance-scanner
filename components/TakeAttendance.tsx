@@ -44,7 +44,7 @@ export function TakeAttendance() {
       const is_registered = await convex.query(
         api.myFunctions.isUserRegisteredForToday,
         {
-          userId: customer_id as Id<"users">,
+          userId: customer_id as Id<"profile">,
         },
       );
 
@@ -58,11 +58,11 @@ export function TakeAttendance() {
       await register({
         browser: browser ?? "unknown",
         visitorId: visitor_id ?? "unknown",
-        customerId: customer_id as Id<"users">,
+        customerId: customer_id as Id<"profile">,
       });
 
       const customer_info = await convex.query(api.myFunctions.getUserById, {
-        userId: customer_id as Id<"users">,
+        userId: customer_id as Id<"profile">,
       });
 
       if (!customer_info) {
@@ -70,8 +70,8 @@ export function TakeAttendance() {
       }
 
       //Fetch user stats
-      const userStats = await convex.query(api.myFunctions.getUserStats,{
-        userId: customer_id as Id<"users">
+      const userStats = await convex.query(api.myFunctions.getUserStats, {
+        userId: customer_id as Id<"profile">
       });
 
       if (!userStats) {
@@ -118,9 +118,9 @@ export function TakeAttendance() {
         <DataTable
           columns={columns}
           data={users.map((user) => ({
-        ...user,
-        firstname: user.firstName,
-        lastname: user.lastName,
+            ...user,
+            firstname: user.firstName,
+            lastname: user.lastName,
           }))}
         />
       </div>
@@ -191,10 +191,10 @@ export function TakeAttendance() {
       <AdminUserTable />
 
       <Button
-              onClick={() => router.push("/occupationManagement")}
-              className="w-half"
-            >
-              Manage Occupations
+        onClick={() => router.push("/occupationManagement")}
+        className="w-half"
+      >
+        Manage Occupations
       </Button>
     </div>
   );

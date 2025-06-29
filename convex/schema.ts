@@ -1,9 +1,9 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { authTables } from "@convex-dev/auth/server";
+// import { authTables } from "@convex-dev/auth/server";
 
 const daily_register = defineTable({
-  userId: v.id("users"),
+  userId: v.string(), // v.id("profile"),
   timestamp: v.string(),
   source: v.literal("web"),
   device: v.object({
@@ -11,20 +11,20 @@ const daily_register = defineTable({
     name: v.string(),
     visitorId: v.string(),
   }),
-  admitted_by: v.id("users"),
+  admitted_by: v.string(), // v.id("profile"),
 })
   .index("admitted_by", ["admitted_by"])
   .index("unique_visitor", ["device.visitorId"]);
 
 const featureRequest = defineTable({
-  userId: v.id("users"),
+  userId: v.string(), // v.id("profile"),
   title: v.string(),
   description: v.string(),
   status: v.literal("open"),
 }).index("user_id", ["userId"]);
 
 const profile = defineTable({
-  id: v.id("users"),
+  id: v.string(),
   firstName: v.string(),
   lastName: v.string(),
   phoneNumber: v.optional(v.string()),
@@ -35,7 +35,7 @@ const profile = defineTable({
 
 //Schema for stats
 const stats = defineTable({
-  userId: v.id("users"),
+  userId: v.string(), // v.id("profile"),
   timestamp: v.string(),
 }).index("user_id", ["userId"]);
 
@@ -51,7 +51,7 @@ const occupations = defineTable({
 // requires indexes defined on `authTables`.
 // The schema provides more precise TypeScript types.
 export default defineSchema({
-  ...authTables,
+  // ...authTables,
   daily_register,
   profile,
   featureRequest,
