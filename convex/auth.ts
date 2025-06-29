@@ -75,7 +75,7 @@ export const createOrUpdateProfile = mutation({
 
     // Create new profile
     const profileId = await ctx.db.insert("profile", {
-      id: userId as Id<'profile'>,
+      id: userId as Id<"profile">,
       firstName: args.firstName,
       lastName: args.lastName,
       email: args.email,

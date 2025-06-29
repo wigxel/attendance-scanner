@@ -71,7 +71,7 @@ export function TakeAttendance() {
 
       //Fetch user stats
       const userStats = await convex.query(api.myFunctions.getUserStats, {
-        userId: customer_id as Id<"profile">
+        userId: customer_id as Id<"profile">,
       });
 
       if (!userStats) {
@@ -114,7 +114,9 @@ export function TakeAttendance() {
 
     return (
       <div className="p-4">
-        <h1 className="text-2xl font-semibold mb-4">User Attendance Overview</h1>
+        <h1 className="text-2xl font-semibold mb-4">
+          User Attendance Overview
+        </h1>
         <DataTable
           columns={columns}
           data={users.map((user) => ({
@@ -181,7 +183,9 @@ export function TakeAttendance() {
       <div className="mt-6 p-4 border rounded-lg bg-muted">
         <h2 className="text-lg font-medium mb-2">Instructions:</h2>
         <ul className="text-sm list-disc list-inside">
-          <li>Scan the attendance QR code displayed on the member&apos;s profile</li>
+          <li>
+            Scan the attendance QR code displayed on the member&apos;s profile
+          </li>
           <li>The camera will automatically detect the QR code</li>
           <li>Attendance will be recorded instantly</li>
           <li>You can scan multiple codes in succession</li>

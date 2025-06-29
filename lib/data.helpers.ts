@@ -49,10 +49,10 @@ export function safeDict<T>(opt: { map: T; default?: Values<T> }) {
     TValues = Values<TRecord> | undefined,
   > = TValues extends Maybe<infer TValues>
     ? TKey extends keyof TRecord
-    ? TRecord[TKey]
-    : TFallback extends keyof TRecord
-    ? TRecord[TFallback]
-    : null
+      ? TRecord[TKey]
+      : TFallback extends keyof TRecord
+        ? TRecord[TFallback]
+        : null
     : null;
 
   return {

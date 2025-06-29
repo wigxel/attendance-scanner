@@ -176,7 +176,7 @@ export const updateUser = mutation({
       lastName: args.lastName,
       phoneNumber: args.phoneNumber,
       role: "user",
-      occupation: "None",
+      occupation: args.occupation ?? "None",
     });
   },
 });

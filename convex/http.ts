@@ -10,7 +10,7 @@ const http = httpRouter();
  */
 const syncConvexUsers = httpAction(async (ctx) => {
   // 1. Get all authUsers
-  const authUsers = await ctx.runQuery(api.myFunctions.getAllProfiles) // Adjust to your query method
+  const authUsers = await ctx.runQuery(api.myFunctions.getAllProfiles); // Adjust to your query method
 
   for await (const entry of authUsers) {
     const user = entry.profile;
@@ -36,7 +36,7 @@ const syncConvexUsers = httpAction(async (ctx) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.CLERK_API_KEY}`,
+        Authorization: `Bearer ${process.env.CLERK_API_KEY}`,
       },
       body: JSON.stringify(payload),
     });
@@ -44,10 +44,10 @@ const syncConvexUsers = httpAction(async (ctx) => {
     const res = response.json();
 
     // @ts-expect-error Nothing really more like the movement
-    const errors: { message: string }[] = (res.errors ?? []);
+    const errors: { message: string }[] = res.errors ?? [];
 
-    const account_already_exists = errors.map(e => {
-      return e.message.includes('That email address is taken');
+    const account_already_exists = errors.map((e) => {
+      return e.message.includes("That email address is taken");
     });
 
     if (account_already_exists) {
@@ -62,8 +62,8 @@ const syncConvexUsers = httpAction(async (ctx) => {
     }
   }
 
-  return Response.json({ message: 'OK' })
-})
+  return Response.json({ message: "OK" });
+});
 
 http.route({
   method: "POST",

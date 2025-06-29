@@ -6,14 +6,13 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import { 
+import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow, 
-
+  TableRow,
 } from "@/components/ui/table";
 
 interface DataTableProps<TData, TValue> {
@@ -45,7 +44,7 @@ export function DataTable<TData, TValue>({
                         <div className="text-sm font-medium text-muted-foreground">
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                         </div>
                       </div>
@@ -57,7 +56,7 @@ export function DataTable<TData, TValue>({
           ))}
         </TableHeader>
         <TableBody>
-        {table.getRowModel().rows?.length ? (
+          {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
