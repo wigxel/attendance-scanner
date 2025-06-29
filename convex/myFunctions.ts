@@ -1,10 +1,11 @@
 import { v } from "convex/values";
 import { formatISO, setHours } from "date-fns";
-import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
+import type { GenericQueryCtx } from "convex/server";
 import { logger } from "../config/logger";
 import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { api } from "./_generated/api";
+import type { Profile, User } from "@auth/core/types";
 
 export const authUser = query({
   args: {},
@@ -71,14 +72,17 @@ export const isRegisteredForToday = query({
   handler: async (ctx) => {
     const userId = await readId(ctx);
 
-    console.log({ userId })
+    console.log({ userId });
     if (userId === null) return false;
 
     return await _isUserRegistered(ctx, { userId });
   },
 });
 
-async function _isUserRegistered(ctx: GenericQueryCtx<any>, args: { userId: string }) {
+async function _isUserRegistered(
+  ctx: GenericQueryCtx<any>,
+  args: { userId: string },
+) {
   const today = new Date();
   const start = formatISO(setHours(today, 0));
   const end = formatISO(setHours(today, 23));
@@ -103,7 +107,7 @@ export const isUserRegisteredForToday = query({
     userId: v.id("profile"),
   },
   handler: async (ctx, args) => {
-    return _isUserRegistered(ctx, { userId: args.userId })
+    return _isUserRegistered(ctx, { userId: args.userId });
   },
 });
 
@@ -137,7 +141,7 @@ export const registerUser = mutation({
         browser: args.browser,
       },
       source: "web",
-      admitted_by: userId as Id<'profile'>,
+      admitted_by: userId as Id<"profile">,
       timestamp: new Date().toISOString(),
     });
   },
@@ -164,14 +168,13 @@ export const updateUser = mutation({
     if (!userId) {
       logger.warn("User not authenticated");
       return null;
-
     }
 
     const profile = await ctx.runQuery(api.myFunctions.getProfile);
     if (!profile) return;
 
     await ctx.db.replace(profile._id, {
-      id: userId as Id<'profile'>,
+      id: userId as Id<"profile">,
       firstName: args.firstName,
       lastName: args.lastName,
       phoneNumber: args.phoneNumber,
@@ -229,12 +232,37 @@ export const getUserStats = query({
       name: `${user.firstName} ${user.lastName}`,
       attendanceCount,
       freeDayEligible,
-
     };
   },
 });
 
-//function to get all users
+// function to get all users
+export const getAllProfiles = query({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+
+    const _profiles: Array<{
+      user: User;
+      profile: Profile | null;
+    }> = [];
+
+    for await (const user of users) {
+      const profile = await ctx.db
+        .query("profile")
+        .filter((q) => q.eq(q.field("id"), user._id))
+        .unique();
+
+      _profiles.push({
+        user: user,
+        profile: profile,
+      });
+    }
+
+    return _profiles;
+  },
+});
+
 export const getAllUsers = query({
   args: {},
   handler: async (ctx) => {
@@ -260,9 +288,8 @@ export const getAllUsers = query({
           phoneNumber: profile.phoneNumber ?? "N/A",
           visitCount,
           eligible,
-
         };
-      })
+      }),
     );
 
     return data;
@@ -283,7 +310,10 @@ export const listOccupations = query({
 
 //Function for Auth guard
 //
-export const authGuard = async (ctx: GenericQueryCtx<any>, requiredRole?: string) => {
+export const authGuard = async (
+  ctx: GenericQueryCtx<any>,
+  requiredRole?: string,
+) => {
   const identity = await ctx.auth.getUserIdentity();
   const userId = identity?.profile_id ?? null;
 
@@ -302,7 +332,7 @@ export const authGuard = async (ctx: GenericQueryCtx<any>, requiredRole?: string
   }
 
   return profile;
-}
+};
 
 //Mutation to create a new occupation
 export const addOccupation = mutation({
@@ -313,6 +343,7 @@ export const addOccupation = mutation({
   handler: async (ctx, args) => {
     //Check if user is Admin
     const profile = await authGuard(ctx, "admin");
+
     if (!profile) {
       logger.warn("Not authorized to create an occupation");
       throw new Error("Not authorized to create an occupation");
@@ -320,7 +351,7 @@ export const addOccupation = mutation({
 
     const occupations = await ctx.db.query("occupations").collect();
     const occupationExists = occupations.some(
-      (occupation) => occupation.name === args.name
+      (occupation) => occupation.name === args.name,
     );
 
     if (occupationExists) {

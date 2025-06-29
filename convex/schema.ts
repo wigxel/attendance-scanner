@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-// import { authTables } from "@convex-dev/auth/server";
+import { authTables } from "@convex-dev/auth/server";
 
 const daily_register = defineTable({
   userId: v.string(), // v.id("profile"),
@@ -51,7 +51,7 @@ const occupations = defineTable({
 // requires indexes defined on `authTables`.
 // The schema provides more precise TypeScript types.
 export default defineSchema({
-  // ...authTables,
+  ...authTables,
   daily_register,
   profile,
   featureRequest,
