@@ -47,6 +47,48 @@ const occupations = defineTable({
   updatedAt: v.number(),
 }).index("name", ["name"]);
 
+const reservations = defineTable({
+  userId: v.id("users"),
+  date: v.string(),
+  timestamp: v.string(),
+  duration: v.number(),
+  numOfSeats: v.number(),
+  tableId: v.id('tables'),
+  status: v.union(
+   v.literal('pending'),
+   v.literal('confirmed'),
+   v.literal('occupied') 
+  ),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()), 
+}).index("userId", ["userId"]).index("tableId", ["tableId"])
+
+const seatReservations = defineTable({
+  reservationId: v.id('reservations'),
+  seatId: v.id('seats'),
+  table: v.string(),
+  createdAt: v.number(),
+  updatedAt: v.optional(v.number()), 
+}).index("seat", ["seatId"])
+  .index("reservation", ["reservationId"])
+
+const seats = defineTable({
+  label: v.string(),
+  tableId: v.id('tables'),
+  seatOption: v.string(),
+  status: v.union(
+    v.literal('available'),
+    v.literal('selected'),
+    v.literal('reserved'), 
+  )
+}).index("tables", ["tableId"])
+
+const tables = defineTable({
+  label: v.string(),
+  options: v.array(v.string(),),
+  // )
+})
+
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
 // The schema provides more precise TypeScript types.
@@ -57,4 +99,8 @@ export default defineSchema({
   featureRequest,
   stats,
   occupations,
+  reservations,
+  seats,
+  tables,
+  seatReservations
 });

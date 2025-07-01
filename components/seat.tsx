@@ -1,19 +1,23 @@
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Toast from "./toast";
 
 interface SeatId {
     name: string;
-    seatOption:string
-    setSeat: (name: string[]) => void;
+    seatOption: string;
+    setSeat: (seat: SeatObject[]) => void;
+}
+
+interface SeatObject {
+    name: string;
+    option: string;
 }
 
 interface SeatComponentProps{
-    currentTable: string
-    seat: string[]
+    seat: SeatObject[]
     seatId: SeatId
     table: string[]
+    numberOfSeats: number
     setTable: Dispatch<SetStateAction<string[]>>
-    tableSeatOptions:string[]
     positionClasses: string
     seatBarPosition: string
     textAlignment: string
@@ -21,14 +25,15 @@ interface SeatComponentProps{
 
 export default function SeatComponent(
     { 
-        seat, seatId, currentTable,
+        seat, seatId, numberOfSeats,
         positionClasses, seatBarPosition,
         textAlignment, table, setTable
     }: SeatComponentProps
 ) {
+
     // Removed updateSeat state as it's unnecessary
-    const buttonClasses = `absolute w-4 h-[31px] ${positionClasses} cursor-pointer flex items-center justify-center rounded group border hover:border-[var(--primary)] ${seat.includes(seatId.seatOption) ? 'bg-[var(--primary)]' : 'bg-[#D9D9D9]'}`;
-    const barClasses = `absolute w-1 h-[39px] ${seatBarPosition} rounded border group-hover:border-[var(--primary)] ${seat.includes(seatId.seatOption) ? 'bg-[var(--primary)]' : 'bg-[#D9D9D9]'}`;
+    const buttonClasses = `absolute w-4 h-[31px] ${positionClasses} cursor-pointer flex items-center justify-center rounded group border hover:border-[var(--primary)] ${seat.some((item) => item.option.includes(seatId.seatOption)) ? 'bg-[var(--primary)]  text-white' : 'bg-[#D9D9D9]'}`;
+    const barClasses = `absolute w-1 h-[39px] ${seatBarPosition} rounded border group-hover:border-[var(--primary)] ${seat.some((item) => item.option.includes(seatId.seatOption)) ? 'bg-[var(--primary)]' : 'bg-[#D9D9D9]'}`;
 
     const tableSeatOptions: { id: string; options: string[] }[] = [
         {id: 'T1', options: ['t1s1', 't1s2']},
@@ -50,26 +55,33 @@ export default function SeatComponent(
     const selectedSeats = () =>{
         return seat.filter((_, index) => index % 2 === 0); 
     }
+
     const getSeatOptions = () =>{
         
-        return seat.filter(s => s.startsWith('t') || s.startsWith('H'))
+        return seat.filter(s => s.option.startsWith('t') || s.option.startsWith('H')).map((s) => s.option);
+        
     }
+
     // function to handle user seat selection
     const handleSeatSelection = () =>{
         //if the user clicks a button, then let them choose from the list of seats regardless of the table
-        const selectedSeatOptions =  selectedSeats()// seatOptions only
-        
-        const isAlreadySelected = seat.includes(seatId.seatOption);
-        
+        const currentSeat = { option: seatId.seatOption, name: seatId.name };
+
+        const isAlreadySelected = seat.some(
+            (s) => s.option === currentSeat.option && s.name === currentSeat.name
+        );
+
         if (isAlreadySelected) {
-            // Remove both seatOption and name
-            seatId.setSeat(seat.filter((s) => s !== seatId.seatOption && s !== seatId.name));
-            //trigger table deselection on click
+            // Remove the seat by both option and name
+            const updatedSeats = seat.filter(
+                (s) => !(s.option === currentSeat.option && s.name === currentSeat.name)
+            );
+            seatId.setSeat(updatedSeats);
         } else {
             selectedSeats()
             // Only add if selection limit not exceeded
-            if (selectedSeatOptions.length < 6) {
-                seatId.setSeat([...seat, seatId.seatOption, seatId.name]);
+            if (seat.length < numberOfSeats) {
+                seatId.setSeat([...seat,currentSeat]);
                 // No need to call deriveTables here, handled in useEffect
             } else {
                 Toast({ type: 'warning', message: 'Maximum seat selection reached.' })
@@ -88,38 +100,39 @@ export default function SeatComponent(
             )
             .map(({ id }) => id);
 
-        // Remove duplicates by using a Set
-        const merged = new Set([...table, ...matchingTableIds]);
-        
-        return Array.from(merged);
+        // b. Merge with tables already selected, dedup with a Set
+        const mergedTableIds = Array.from(new Set([...table, ...matchingTableIds]));
+
+
+        return mergedTableIds; // return updated list so caller can setTable
     }
 
-    const handleTableDeselect = (selectedSeatOptions: string[]) =>{
+    const handleTableDeselect = (seatOptions: string[]) =>{
 
         //if the user clicks a button, then let them choose from the list of seats regardless of the table
         
         // Keep every table that still owns ≥1 selected seat
-        const matchingTableIds = tableSeatOptions
+        const stillSelectedIds  = tableSeatOptions
             .filter(({ options }) =>
-                options.some(opt => selectedSeatOptions.includes(opt))
+                options.some(opt => seatOptions.includes(opt))
             )
             .map(({ id }) => id);
-
-        setTable(matchingTableIds); // no accidental nesting
+        setTable(stillSelectedIds ); // no accidental nesting
     }
 
     useEffect(() => {
         // table selection trigger
 
         // get the options for every seat
-        const selectedSeatOptions = getSeatOptions()
+        const seatOptions = getSeatOptions()
 
-        setTable(handleTableSelection(selectedSeatOptions));
+        setTable(handleTableSelection(seatOptions));
 
-        handleTableDeselect(selectedSeatOptions)
+        handleTableDeselect(seatOptions)
         
     }, [seat, setTable]);
-    
+
+    console.log(seat, table)
   return (
     <button
         type='button'
@@ -128,7 +141,7 @@ export default function SeatComponent(
         }}
         className={buttonClasses}
     >
-        <span className={`${textAlignment} text-xs ${seat.includes(seatId.seatOption) && 'text-white'}` }>
+        <span className={`${textAlignment} text-xs ${seat.some(s => s.option === seatId.seatOption) && 'text-white'}` }>
             {seatId.name}
             {/* seat bar */}
             <div 
@@ -138,3 +151,4 @@ export default function SeatComponent(
     </button>
   )
 }
+

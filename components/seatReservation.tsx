@@ -15,6 +15,7 @@ interface SeatReservationComponentProps {
     setTable: Dispatch<SetStateAction<string[]>>;
     seat: string[];
     setSeat: Dispatch<SetStateAction<string[]>>;
+    numberOfSeats: number
 }
 
 // interface FormData {
@@ -24,7 +25,7 @@ interface SeatReservationComponentProps {
 // each table has seat options and each seat has an optionId assigned to it for the table it belongs
 export default function SeatReservationComponent(
     {
-        setStep,
+        setStep, numberOfSeats,
         table, setTable,
         seat, setSeat
     }: SeatReservationComponentProps
@@ -33,7 +34,6 @@ export default function SeatReservationComponent(
     const { isAuthenticated } = useConvexAuth();
     const router = useRouter();
 
-    const [tableSeatOptions, setTableSeatOptions] = useState<string[]>([])
     const [seatFilter, setSeatFilter] = useState('seatAvailable')
 
     // useEffect(() => {
@@ -109,26 +109,24 @@ export default function SeatReservationComponent(
                         <SeatComponent 
                             seat={seat}
                             seatId={{ seatOption: 't1s1', name: 'S1', setSeat }}
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
                             setTable={setTable}//sets selected table
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-105px)] top-[35px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[4px] -top-[25px] rotate-90" 
-                            currentTable='T1'                          
                         />
     
                         {/* Seat S2 */}
                         <SeatComponent 
                             seat={seat}
                             seatId={{ seatOption: 't1s2', name: 'S2', setSeat }}
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
                             setTable={setTable}//sets selected table
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="right-[4px] -top-[25px] rotate-90" 
-                            currentTable='T1'                          
                         />
                     </div>
                 </div>
@@ -151,39 +149,36 @@ export default function SeatReservationComponent(
                         <SeatComponent 
                             seat={seat}
                             seatId={{ seatOption: 't2s1', name: 'S1', setSeat }}
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
                             setTable={setTable}//sets selected table
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-105px)] top-[35px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[4px] -top-[25px] rotate-90" 
-                            currentTable='T2'                          
                         />
     
                         {/* Seat S2 */}
                         <SeatComponent 
                             seat={seat}
                             seatId={{ seatOption: 't2s2', name: 'S2', setSeat }}
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
                             setTable={setTable}//sets selected table
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[4px] -top-[25px] rotate-90" 
-                            currentTable='T2'                          
                         />
     
                         {/* Seat S3 */}
                         <SeatComponent 
                             seat={seat}
                             seatId={{ seatOption: 't2s3', name: 'S3', setSeat }}
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
                             setTable={setTable}//sets selected table
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-8px)] top-[80px] rotate-0"
                             textAlignment='!-rotate-90'
                             seatBarPosition="right-[4px] top-[2px] rotate-90" 
-                            currentTable='T2'                          
                         />
     
                     </div>
@@ -211,13 +206,12 @@ export default function SeatReservationComponent(
                         <SeatComponent 
                             seat={seat}
                             seatId={{ seatOption: 't3s1', name: 'S1', setSeat }}
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
                             setTable={setTable}//sets selected table
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-105px)] top-[35px] -rotate-290"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[4px] -top-[25px] rotate-90" 
-                            currentTable='T3'                          
                         />
     
                         {/* Seat S2 */}
@@ -226,12 +220,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 't3s2', name: 'S2', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="right-[5px] -top-[25px] rotate-90" 
-                            currentTable='T3'                          
                         />
     
                         {/* Seat S3 */}
@@ -240,12 +233,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 't3s3', name: 'S3', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}
                             positionClasses="-left-[calc(50%-8px-0px)] top-[34px] rotate-110"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[6px] -top-[24px] rotate-90" 
-                            currentTable='T3'                          
                         />
     
                         {/* Seat S4 */}
@@ -253,12 +245,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 't3s4', name: 'S4', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}       
                             positionClasses="left-[calc(50%-8px-105px)] top-[150px] rotate-110"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[8px] top-[2px] rotate-90" 
-                            currentTable='T3'                          
                         />
     
                         {/* Seat S5 */}
@@ -267,12 +258,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 't3s5', name: 'S5', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-42px)] top-[155px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="right-[5px] top-[1px] rotate-90" 
-                            currentTable='T3'                          
                         />
     
                         {/* Seat S6 */}
@@ -280,12 +270,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 't3s6', name: 'S6', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}                            
                             positionClasses="-left-[calc(50%-8px-0px)] top-[150px] rotate-70"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[7px] top-[1px] rotate-90" 
-                            currentTable='T3'                          
                         />
     
                     </div>
@@ -310,12 +299,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 'Hub Manager', name: 'S1', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-52px)] top-[35px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[5px] -top-[24px] rotate-90" 
-                            currentTable='Hub Manager'                          
                         />
     
                     </div>
@@ -345,12 +333,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 't4s1', name: 'S1', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-105px)] top-[35px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[5px] -top-[25px] rotate-90" 
-                            currentTable='T4'                          
                         />
     
                         {/* Seat S2 */}
@@ -358,12 +345,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 't4s2', name: 'S2', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="right-[5px] -top-[25px] rotate-90" 
-                            currentTable='T4'                          
                         />
     
                         {/* Seat S3 */}
@@ -371,12 +357,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 't4s3', name: 'S3', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}
                             positionClasses="-left-[calc(50%-8px-0px)] top-[34px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[6px] -top-[24px] rotate-90" 
-                            currentTable='T4'                          
                         />
     
                         {/* Seat S4 */}
@@ -384,12 +369,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 't4s4', name: 'S4', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}                            
                             positionClasses="left-[calc(50%-8px-105px)] top-[150px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[8px] top-[2px] rotate-90" 
-                            currentTable='T4'                          
                         />
     
                         {/* Seat S5 */}
@@ -397,12 +381,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 't4s5', name: 'S5', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}
                             positionClasses="left-[calc(50%-8px-42px)] top-[150px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="right-[5px] top-[1px] rotate-90" 
-                            currentTable='T4'                          
                         />
     
                         {/* Seat S6 */}
@@ -410,12 +393,11 @@ export default function SeatReservationComponent(
                             seat={seat}
                             seatId={{ seatOption: 't4s6', name: 'S6', setSeat }}
                             setTable={setTable}//sets selected table
-                            tableSeatOptions={tableSeatOptions}//available options for parent table
                             table={table}//users selected table 
+                            numberOfSeats={numberOfSeats}    
                             positionClasses="-left-[calc(50%-8px-0px)] top-[150px] rotate-90"
                             textAlignment='!-rotate-90'
                             seatBarPosition="left-[7px] top-[1px] rotate-90" 
-                            currentTable='T4'                          
                         />
     
                     </div>
@@ -442,12 +424,11 @@ export default function SeatReservationComponent(
                                 seat={seat}
                                 seatId={{ seatOption: 't5s1', name: 'S1', setSeat }}
                                 setTable={setTable}//sets selected table
-                                tableSeatOptions={tableSeatOptions}//available options for parent table
                                 table={table}//users selected table 
+                                numberOfSeats={numberOfSeats}
                                 positionClasses="left-[calc(50%-8px-75px)] top-[30px] rotate-90"
                                 textAlignment='!-rotate-90'
                                 seatBarPosition="left-[4px] -top-[25px] rotate-90" 
-                                currentTable='T5'                          
                             />
     
                             {/* Seat S2 */}
@@ -455,12 +436,11 @@ export default function SeatReservationComponent(
                                 seat={seat}
                                 seatId={{ seatOption: 't5s2', name: 'S2', setSeat }}
                                 setTable={setTable}//sets selected table
-                                tableSeatOptions={tableSeatOptions}//available options for parent table
                                 table={table}//users selected table 
+                                numberOfSeats={numberOfSeats}
                                 positionClasses="right-[calc(50%-8px-4px)] top-[30px] rotate-90"
                                 textAlignment='!-rotate-90'
                                 seatBarPosition="right-[4px] -top-[25px] rotate-90" 
-                                currentTable='T5'                          
                             />
     
                             {/* Seat S3 */}
@@ -469,12 +449,11 @@ export default function SeatReservationComponent(
                                 seat={seat}
                                 seatId={{ seatOption: 't5s3', name: 'S3', setSeat }}
                                 setTable={setTable}//sets selected table
-                                tableSeatOptions={tableSeatOptions}//available options for parent table
                                 table={table}//users selected table 
+                                numberOfSeats={numberOfSeats}
                                 positionClasses="left-[calc(50%-8px-110px)] top-[75px] rotate-0"
                                 textAlignment='!-rotate-90'
                                 seatBarPosition="right-[4px] -top-[23px] rotate-90" 
-                                currentTable='T5'                          
                             />
     
                         </div>

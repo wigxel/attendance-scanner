@@ -24,7 +24,6 @@ export default function ReservationScheduler() {
     const [timeValue, setTimeValue] = useState('') // custom time state
     const [numberOfSeats, setNumberOfSeats] = useState<number>(1);
     const [step, setStep] = useState<string>('scheduler'); // step in the reservation process
-    const [isNav, setIsNav] = useState<boolean>(false) // for navigation bar
     const [table, setTable] = useState<string[]>([])//table selection
     const [seat, setSeat] = useState<string[]>([])//seat selection
    
@@ -65,6 +64,7 @@ export default function ReservationScheduler() {
                         setTable={setTable}
                         seat={seat}
                         setSeat={setSeat}
+                        numberOfSeats={numberOfSeats}
                     />
                 }
            </form>
