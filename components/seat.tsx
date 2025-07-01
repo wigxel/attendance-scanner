@@ -7,7 +7,7 @@ interface SeatId {
     setSeat: (seat: SeatObject[]) => void;
 }
 
-interface SeatObject {
+export interface SeatObject {
     name: string;
     option: string;
 }
@@ -131,8 +131,7 @@ export default function SeatComponent(
         handleTableDeselect(seatOptions)
         
     }, [seat, setTable]);
-
-    console.log(seat, table)
+    console.log(seat)
   return (
     <button
         type='button'

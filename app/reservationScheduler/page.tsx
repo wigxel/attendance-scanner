@@ -12,7 +12,7 @@ import ReservationSummaryComponent from '@/components/reservationSummary';
 import PaymentOptionComponent from '@/components/paymentOption';
 import SeatReservationSuccessComponent from '@/components/seatReservationSuccess';
 import ReservationTicketComponent from '@/components/reservationTicket';
-
+import { SeatObject } from '@/components/seat';
 
 
 export default function ReservationScheduler() {
@@ -25,7 +25,10 @@ export default function ReservationScheduler() {
     const [numberOfSeats, setNumberOfSeats] = useState<number>(1);
     const [step, setStep] = useState<string>('scheduler'); // step in the reservation process
     const [table, setTable] = useState<string[]>([])//table selection
-    const [seat, setSeat] = useState<string[]>([])//seat selection
+    // Import the SeatObject type at the top of the file:
+    // import type { SeatObject } from '@/components/seatReservation';
+
+    const [seat, setSeat] = useState<SeatObject[]>([])//seat selection
    
     // const { watch} = useForm();
     

@@ -3,13 +3,14 @@
 import React from "react";
 import Barcode from 'react-barcode';
 import { DateRange } from "react-day-picker";
+import { SeatObject } from "./seat";
 
 type ReservationTicketComponentProps = {
   selected: DateRange | undefined
   timeValue: string
   numberOfSeats: number
   table: string[]
-  seat: string[]
+  seat: SeatObject[]
 };
 export default function ReservationTicketComponent(
   {
@@ -25,7 +26,7 @@ export default function ReservationTicketComponent(
     {id: 3, field: 'Email', val: 'simfubara@gmail.com'},
     {id: 4, field: 'Reservation ID', val: 'Sim Fubara'},
     {id: 5, field: 'Duration', val: timeValue},
-    {id: 6, field: 'Table No.', val: `${table}-${seat.filter((item) => item.startsWith('S'))}`},
+    {id: 6, field: 'Table No.', val: `${table}`},
     {id: 7, field: 'No. of Seats', val: numberOfSeats},
     {id: 8, field: 'Reservation Date', val: selected},
     {id: 9, field: 'Payment Status', val: 'Not Paid'},
@@ -71,7 +72,7 @@ export default function ReservationTicketComponent(
           </div>
           <div className="w-full flex justify-between items-center mb-2">
               <h1 className="text-xs font-medium text-(--text-gray)">Table No.</h1>
-              <span className="text-xs font-semibold">{`${table}-${seat.filter((item) => item.startsWith('S'))}`}</span>
+              <span className="text-xs font-semibold">{`${table}`}</span>
           </div>
           <div className="w-full flex justify-between items-center mb-2">
               <h1 className="text-xs font-medium text-(--text-gray)">No. of Seats</h1>

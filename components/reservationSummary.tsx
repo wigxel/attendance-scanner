@@ -1,8 +1,9 @@
 'use client'
 
-import React, { Dispatch, SetStateAction, useState } from 'react'
+import React, { Dispatch, SetStateAction } from 'react'
 import ReservationNavigationComponent from './reservationNavigation';
 import { DateRange } from 'react-day-picker';
+import { SeatObject } from './seat';
 
 type ReservationSummaryComponentProps = {
   setStep: Dispatch<SetStateAction<string>>
@@ -10,7 +11,7 @@ type ReservationSummaryComponentProps = {
   timeValue: string
   numberOfSeats: number
   table: string[]
-  seat: string[]
+  seat: SeatObject[]
 };
 
 export default function ReservationSummaryComponent(
@@ -21,7 +22,7 @@ export default function ReservationSummaryComponent(
         ReservationSummaryComponentProps 
     ){
 
-
+        console.log(seat)
     const data = [
         {id: 1, field: 'Name', val: 'Sim Fubara'},
         {id: 2, field: 'Phone', val: '08041941941'},
@@ -29,7 +30,7 @@ export default function ReservationSummaryComponent(
         {id: 4, field: 'Reservation ID', val: 'Sim Fubara'},
         {id: 5, field: 'Duration', val: timeValue},
         // {id: 6, field: 'Table No.', val: 'T2-S1, S2, S3'},
-        {id: 6, field: 'Table No.', val: `${table}-${seat.filter((item) => item.startsWith('S'))}`},
+        {id: 6, field: 'Table No.', val: `${table}`},
         {id: 7, field: 'No. of Seats', val: numberOfSeats},
         {id: 8, field: 'Reservation Date', val: selected},
         {id: 9, field: 'Payment Status', val: 'Not Paid'},
