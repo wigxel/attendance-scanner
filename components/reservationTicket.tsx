@@ -20,18 +20,49 @@ export default function ReservationTicketComponent(
     ReservationTicketComponentProps 
   ){
 
-  const data = [
-    {id: 1, field: 'Name', val: 'Sim Fubara'},
-    {id: 2, field: 'Phone', val: '08041941941'},
-    {id: 3, field: 'Email', val: 'simfubara@gmail.com'},
-    {id: 4, field: 'Reservation ID', val: 'Sim Fubara'},
-    {id: 5, field: 'Duration', val: timeValue},
-    {id: 6, field: 'Table No.', val: `${table}`},
-    {id: 7, field: 'No. of Seats', val: numberOfSeats},
-    {id: 8, field: 'Reservation Date', val: selected},
-    {id: 9, field: 'Payment Status', val: 'Not Paid'},
-    {id: 10, field: 'Amount', val: 'N3000.00'}
-  ]
+  const seatToTable = (seatOption) => {
+        // Exact match for Hub manager
+        if (seatOption === 'Hub Manager') return 'Hub Manager';
+
+        // Match 't1s1' → 'T1', 't2s3' → 'T2', etc.
+        const match = seatOption.match(/^t(\d+)/i);
+        return match ? `T${match[1]}` : null;
+    };
+
+    /* -------------------------------------------------
+    rebuild table into to take the shape T1 - S1, T3 - S1, S2, S3, T4 - S2
+    ------------------------------------------------- */
+    const mappedTable = table.reduce((acc, tableElement) => {
+        // all seats that belong to this table
+        const reserved = seat.filter(
+            (s) => seatToTable(s.option) === tableElement
+        );
+
+        if (reserved.length) {
+            acc.push({ tableElement, seatReserved: reserved });
+        }
+        return acc;
+    }, []);
+
+    const data = [
+      {id: 1, field: 'Name', val: 'Sim Fubara'},
+      {id: 2, field: 'Phone', val: '08041941941'},
+      {id: 3, field: 'Email', val: 'simfubara@gmail.com'},
+      {id: 4, field: 'Reservation ID', val: 'Sim Fubara'},
+      {id: 5, field: 'Duration', val: timeValue},
+      {
+        id: 6,
+        field: 'Table No.', 
+        val: mappedTable.map((item) => {
+          const seatNames = item.seatReserved.map((s) => s.name).join(', ');
+          return `${item.tableElement} - ${seatNames}`;
+        }).join('; ') // separate multiple tables with semicolon
+      },
+      {id: 7, field: 'No. of Seats', val: numberOfSeats},
+      {id: 8, field: 'Reservation Date', val: selected},
+      {id: 9, field: 'Payment Status', val: 'Not Paid'},
+      {id: 10, field: 'Amount', val: 'N3000.00'}
+    ]
 
   return (
 
@@ -72,7 +103,14 @@ export default function ReservationTicketComponent(
           </div>
           <div className="w-full flex justify-between items-center mb-2">
               <h1 className="text-xs font-medium text-(--text-gray)">Table No.</h1>
-              <span className="text-xs font-semibold">{`${table}`}</span>
+                <span className="text-xs font-semibold">
+                  {
+                    mappedTable.map((item) => {
+                      const seatNames = item.seatReserved.map((s) => s.name).join(', ');
+                      return `${item.tableElement} - ${seatNames}`;
+                    }).join('; ') // separate multiple tables with semicolon
+                  }
+              </span>
           </div>
           <div className="w-full flex justify-between items-center mb-2">
               <h1 className="text-xs font-medium text-(--text-gray)">No. of Seats</h1>

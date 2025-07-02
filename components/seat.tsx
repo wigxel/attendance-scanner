@@ -131,7 +131,7 @@ export default function SeatComponent(
         handleTableDeselect(seatOptions)
         
     }, [seat, setTable]);
-    console.log(seat)
+    
   return (
     <button
         type='button'

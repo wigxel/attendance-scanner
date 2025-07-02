@@ -8,14 +8,13 @@ import SeatComponent from '@/components/seat'
 import TableComponent from '@/components/table'
 import ReservationNavigationComponent from './reservationNavigation';
 import ToastComponentProps from './toast';
-import { SeatObject } from './seat'; // Import SeatObject type
 
 interface SeatReservationComponentProps {
     setStep: Dispatch<SetStateAction<string>>;
     table: string[];
     setTable: Dispatch<SetStateAction<string[]>>;
-    seat: SeatObject[];
-    setSeat: Dispatch<SetStateAction<SeatObject[]>>;
+    seat: string[];
+    setSeat: Dispatch<SetStateAction<string[]>>;
     numberOfSeats: number
 }
 
