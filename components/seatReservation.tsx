@@ -107,7 +107,7 @@ export default function SeatReservationComponent(
                         setTable={setTable}
                         numberOfSeats={numberOfSeats}
                         TABLE_LAYOUT={TABLE_LAYOUT_SECTION_1}
-                        dbSeats={dbSeats ?? []}
+                        // dbSeats={dbSeats ?? []}
                     />
                     
                 </div>
@@ -124,7 +124,7 @@ export default function SeatReservationComponent(
                     setTable={setTable}
                     numberOfSeats={numberOfSeats}
                     TABLE_LAYOUT={TABLE_LAYOUT_SECTION_2}
-                    dbSeats={dbSeats ?? []}
+                    // dbSeats={dbSeats ?? []}
                 />
 
             </div>
@@ -140,7 +140,7 @@ export default function SeatReservationComponent(
                     setTable={setTable}
                     numberOfSeats={numberOfSeats}
                     TABLE_LAYOUT={TABLE_LAYOUT_SECTION_3}
-                    dbSeats={dbSeats ?? []}
+                    // dbSeats={dbSeats ?? []}
                 />
                     
             </div>

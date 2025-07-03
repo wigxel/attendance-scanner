@@ -124,7 +124,7 @@ export const TABLE_LAYOUT_SECTION_2 = [
   {
     id: 'Hub Manager',
     wrapper: "w-1/2 h-full flex justify-center items-center",
-    container: 'relative top-[40%] left-[70%] rotate-90',
+    container: 'relative top-[40%] left-[72%] rotate-90',
     table: {
       size: 'w-[59px] h-[74px] rounded-[10px]',
       position: 'left-[calc(50%-25.5px-54px)] top-[62px]' ,
@@ -203,7 +203,7 @@ export const TABLE_LAYOUT_SECTION_3 = [
   {
     id: 'T5',
     wrapper: "w-1/2 h-full flex justify-center items-center",
-    container: 'relative top-[40%] -right-[135%] rotate-90',
+    container: 'relative top-[40%] -right-[68%] rotate-90',
     table: {
       size: 'w-[59px] h-[114px] rounded-[10px]',
       position: 'left-[calc(50%-25.5px-40px)] top-[35px]',
