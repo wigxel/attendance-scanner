@@ -1,15 +1,15 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Toast from "./toast";
 
-interface SeatId {
-    name: string;
-    seatOption: string;
-    setSeat: (seat: SeatObject[]) => void;
-}
-
 export interface SeatObject {
     name: string;
     option: string;
+}
+
+export interface SeatId {
+    name: string;
+    seatOption: string;
+    setSeat: (seat: SeatObject[]) => void;
 }
 
 interface SeatComponentProps{

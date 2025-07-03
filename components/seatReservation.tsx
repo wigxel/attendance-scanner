@@ -4,24 +4,25 @@ import { useConvexAuth } from 'convex/react';
 import { useRouter } from 'next/navigation';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import RadioFilterComponent from '@/components/filter'
-import SeatComponent from '@/components/seat'
-import TableComponent from '@/components/table'
 import ReservationNavigationComponent from './reservationNavigation';
 import ToastComponentProps from './toast';
-import { SeatObject } from './seat'; // Import SeatObject type
+import { SeatObject } from './seat';
+import { useQuery } from "convex/react";
+import { api } from "../convex/_generated/api";
+import { SeatStatus } from '@/convex/seats';
+import { TABLE_LAYOUT_SECTION_1, TABLE_LAYOUT_SECTION_2, TABLE_LAYOUT_SECTION_3, TableCfg } from '@/lib/tableData' //data for refactored table;
+import SeatingLayout from './seatingLayout';//refactored seating layout which calls the table and seats components;
 
-interface SeatReservationComponentProps {
+export interface SeatReservationComponentProps {
     setStep: Dispatch<SetStateAction<string>>;
     table: string[];
     setTable: Dispatch<SetStateAction<string[]>>;
     seat: SeatObject[];
-    setSeat: Dispatch<SetStateAction<SeatObject[]>>;
+    setSeat: (s: { option: string; name: string }[]) => void;
     numberOfSeats: number
+    cfg: TableCfg;
+    TABLE_LAYOUT: Array<object>
 }
-
-// interface FormData {
-//     filter: string
-// }
 
 // each table has seat options and each seat has an optionId assigned to it for the table it belongs
 export default function SeatReservationComponent(
@@ -31,11 +32,17 @@ export default function SeatReservationComponent(
         seat, setSeat
     }: SeatReservationComponentProps
 ) {
+    
+    const [seatFilter, setSeatFilter] = useState<SeatStatus>('seatAvailable')
+
+    // fetch all the seats from our db using the filter
+    const dbSeats = useQuery(api.seats.getAllSeats, { seatFilter })
+
+    console.log(dbSeats)
 
     const { isAuthenticated } = useConvexAuth();
     const router = useRouter();
 
-    const [seatFilter, setSeatFilter] = useState('seatAvailable')
 
     // useEffect(() => {
     //     // If user is not authenticated, redirect to sign-in page
@@ -78,7 +85,7 @@ export default function SeatReservationComponent(
                                 id={item.id} 
                                 label={item.label} 
                                 name='seatFilter'
-                                value={item.checker}//default checked filter value
+                                value={item.checker as SeatStatus}//default checked filter value
                                 checker={seatFilter} 
                                 onChange={setSeatFilter}
                             />
@@ -90,378 +97,52 @@ export default function SeatReservationComponent(
     
             {/* section 1 */}
             <div className='w-full sm:max-w-[335px] h-[150px] sm:max-h-[150px] flex justify-between items-center'>
-                {/* first table and seats */}
-                <div className="w-1/2 h-full flex justify-center items-center">
+                {/* first table, Second table and seat allocation */}
+                <div className="w-full h-full flex justify-between items-center">
     
-                    <div className='relative bottom-[65%] left-[25%]'> 
-                        {/* Table T1 */}
-                        
-                        <TableComponent 
-                            label='T1' 
-                            table={table}//users selected table 
-                            size='w-[51px] h-[99px] rounded-[10px]' 
-                            position='left-[calc(50%-25.5px-74px)] top-[45px]' 
-                            tableRotation='-rotate-90'
-                            textRotation='!rotate-90'
-                        />
-
-                        {/* Seat S1 */}
-                        
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't1s1', name: 'S1', setSeat }}
-                            table={table}//users selected table 
-                            setTable={setTable}//sets selected table
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-105px)] top-[35px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[4px] -top-[25px] rotate-90" 
-                        />
-    
-                        {/* Seat S2 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't1s2', name: 'S2', setSeat }}
-                            table={table}//users selected table 
-                            setTable={setTable}//sets selected table
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="right-[4px] -top-[25px] rotate-90" 
-                        />
-                    </div>
-                </div>
-                {/* Second table and seats */}
-                <div className="w-1/2 h-full flex justify-center items-center">
-    
-                    <div className='relative top-[40%] left-[70%] rotate-90'>
-                        {/* Table T2 */}
-                        
-                        <TableComponent 
-                            label='T2' 
-                            table={table}
-                            size='w-[51px] h-[99px] rounded-[10px]' 
-                            position='left-[calc(50%-25.5px-74px)] top-[45px]' 
-                            tableRotation='-rotate-90'
-                            textRotation='!rotate-0'
-                        />
-    
-                        {/* Seat S1 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't2s1', name: 'S1', setSeat }}
-                            table={table}//users selected table 
-                            setTable={setTable}//sets selected table
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-105px)] top-[35px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[4px] -top-[25px] rotate-90" 
-                        />
-    
-                        {/* Seat S2 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't2s2', name: 'S2', setSeat }}
-                            table={table}//users selected table 
-                            setTable={setTable}//sets selected table
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[4px] -top-[25px] rotate-90" 
-                        />
-    
-                        {/* Seat S3 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't2s3', name: 'S3', setSeat }}
-                            table={table}//users selected table 
-                            setTable={setTable}//sets selected table
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-8px)] top-[80px] rotate-0"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="right-[4px] top-[2px] rotate-90" 
-                        />
-    
-                    </div>
+                    <SeatingLayout 
+                        seat={seat}
+                        setSeat={setSeat}
+                        table={table}
+                        setTable={setTable}
+                        numberOfSeats={numberOfSeats}
+                        TABLE_LAYOUT={TABLE_LAYOUT_SECTION_1}
+                        dbSeats={dbSeats ?? []}
+                    />
                     
                 </div>
             </div>
     
             {/* section 2 */}
             <div className='w-full sm:max-w-[335px] h-[150px] sm:max-h-[150px] flex justify-between items-center my-12'>
-                {/* third table and seats */}
-                <div className="w-1/2 h-full flex justify-center items-center">
-    
-                    <div className='relative bottom-[65%] left-[25%]'> 
-                        {/* Table T3 */}
-                        <TableComponent
-                            label='T3' 
-                            table={table}
-                            size='w-[83px] h-[158px] rounded-full' 
-                            position='left-[calc(50%-25.5px-61px)] top-[30px]' 
-                            tableRotation='-rotate-90'
-                            textRotation='!rotate-90'
-                        />
-    
-                        {/* Seat S1 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't3s1', name: 'S1', setSeat }}
-                            table={table}//users selected table 
-                            setTable={setTable}//sets selected table
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-105px)] top-[35px] -rotate-290"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[4px] -top-[25px] rotate-90" 
-                        />
-    
-                        {/* Seat S2 */}
+                {/* third table, fourth table and seat allocation */}
+                
+                <SeatingLayout 
+                    seat={seat}
+                    setSeat={setSeat}
+                    table={table}
+                    setTable={setTable}
+                    numberOfSeats={numberOfSeats}
+                    TABLE_LAYOUT={TABLE_LAYOUT_SECTION_2}
+                    dbSeats={dbSeats ?? []}
+                />
 
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't3s2', name: 'S2', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="right-[5px] -top-[25px] rotate-90" 
-                        />
-    
-                        {/* Seat S3 */}
-
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't3s3', name: 'S3', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="-left-[calc(50%-8px-0px)] top-[34px] rotate-110"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[6px] -top-[24px] rotate-90" 
-                        />
-    
-                        {/* Seat S4 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't3s4', name: 'S4', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}       
-                            positionClasses="left-[calc(50%-8px-105px)] top-[150px] rotate-110"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[8px] top-[2px] rotate-90" 
-                        />
-    
-                        {/* Seat S5 */}
-
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't3s5', name: 'S5', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-42px)] top-[155px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="right-[5px] top-[1px] rotate-90" 
-                        />
-    
-                        {/* Seat S6 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't3s6', name: 'S6', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}                            
-                            positionClasses="-left-[calc(50%-8px-0px)] top-[150px] rotate-70"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[7px] top-[1px] rotate-90" 
-                        />
-    
-                    </div>
-                </div>
-                {/* fourth table and seats */}
-                <div className="w-1/2 h-full flex justify-center items-center">
-    
-                    <div className='relative top-[40%] left-[70%] rotate-90'>
-                        {/* (fourth) Table Hub Manager */}
-                        
-                        <TableComponent 
-                            label='Hub Manager' 
-                            table={table}
-                            size='w-[59px] h-[74px] rounded-[10px]' 
-                            position='left-[calc(50%-25.5px-54px)] top-[62px]' 
-                            tableRotation='-rotate-90'
-                            textRotation='!rotate-0 text-center'
-                        />
-
-                        {/* Seat S1 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 'Hub Manager', name: 'S1', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-52px)] top-[35px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[5px] -top-[24px] rotate-90" 
-                        />
-    
-                    </div>
-                    
-                </div>
             </div>
     
             {/* section 3 */}
             <div className='w-full sm:max-w-[335px] h-[150px] sm:max-h-[150px] flex justify-between items-center mb-[110px]'>
-                {/* fifth table and seats */}
-                <div className="w-1/2 h-full flex justify-center items-center">
-    
-                    <div className='relative bottom-[65%] left-[25%]'> 
-                        {/* Table T4 */}
-
-                        <TableComponent 
-                            label='T4' 
-                            table={table}
-                            size='w-[83px] h-[158px] rounded' 
-                            position='left-[calc(50%-25.5px-61px)] top-[30px]' 
-                            tableRotation='-rotate-90'
-                            textRotation='!rotate-90'
-                        />
-    
-                        {/* Seat S1 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't4s1', name: 'S1', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-105px)] top-[35px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[5px] -top-[25px] rotate-90" 
-                        />
-    
-                        {/* Seat S2 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't4s2', name: 'S2', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-42px)] top-[35px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="right-[5px] -top-[25px] rotate-90" 
-                        />
-    
-                        {/* Seat S3 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't4s3', name: 'S3', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="-left-[calc(50%-8px-0px)] top-[34px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[6px] -top-[24px] rotate-90" 
-                        />
-    
-                        {/* Seat S4 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't4s4', name: 'S4', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}                            
-                            positionClasses="left-[calc(50%-8px-105px)] top-[150px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[8px] top-[2px] rotate-90" 
-                        />
-    
-                        {/* Seat S5 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't4s5', name: 'S5', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}
-                            positionClasses="left-[calc(50%-8px-42px)] top-[150px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="right-[5px] top-[1px] rotate-90" 
-                        />
-    
-                        {/* Seat S6 */}
-                        <SeatComponent 
-                            seat={seat}
-                            seatId={{ seatOption: 't4s6', name: 'S6', setSeat }}
-                            setTable={setTable}//sets selected table
-                            table={table}//users selected table 
-                            numberOfSeats={numberOfSeats}    
-                            positionClasses="-left-[calc(50%-8px-0px)] top-[150px] rotate-90"
-                            textAlignment='!-rotate-90'
-                            seatBarPosition="left-[7px] top-[1px] rotate-90" 
-                        />
-    
-                    </div>
-                </div>
-                {/* sixth table and seats */}
-                <div className="w-1/2 h-full flex justify-center items-center">
-    
-                    {/* sixth table and seats */}
-                    <div className="w-1/2 h-full flex justify-center items-center">
-    
-                        <div className='relative top-[40%] -right-[135%] rotate-90'>
-                            {/* Table T5 */}
-                            <TableComponent 
-                                label='T5' 
-                                table={table}
-                                size='w-[59px] h-[114px] rounded-[10px]' 
-                                position='left-[calc(50%-25.5px-40px)] top-[35px]' 
-                                tableRotation='-rotate-90'
-                                textRotation='!rotate-0'
-                            />
-    
-                            {/* Seat S1 */}
-                            <SeatComponent 
-                                seat={seat}
-                                seatId={{ seatOption: 't5s1', name: 'S1', setSeat }}
-                                setTable={setTable}//sets selected table
-                                table={table}//users selected table 
-                                numberOfSeats={numberOfSeats}
-                                positionClasses="left-[calc(50%-8px-75px)] top-[30px] rotate-90"
-                                textAlignment='!-rotate-90'
-                                seatBarPosition="left-[4px] -top-[25px] rotate-90" 
-                            />
-    
-                            {/* Seat S2 */}
-                            <SeatComponent 
-                                seat={seat}
-                                seatId={{ seatOption: 't5s2', name: 'S2', setSeat }}
-                                setTable={setTable}//sets selected table
-                                table={table}//users selected table 
-                                numberOfSeats={numberOfSeats}
-                                positionClasses="right-[calc(50%-8px-4px)] top-[30px] rotate-90"
-                                textAlignment='!-rotate-90'
-                                seatBarPosition="right-[4px] -top-[25px] rotate-90" 
-                            />
-    
-                            {/* Seat S3 */}
-
-                            <SeatComponent 
-                                seat={seat}
-                                seatId={{ seatOption: 't5s3', name: 'S3', setSeat }}
-                                setTable={setTable}//sets selected table
-                                table={table}//users selected table 
-                                numberOfSeats={numberOfSeats}
-                                positionClasses="left-[calc(50%-8px-110px)] top-[75px] rotate-0"
-                                textAlignment='!-rotate-90'
-                                seatBarPosition="right-[4px] -top-[23px] rotate-90" 
-                            />
-    
-                        </div>
-    
-                    </div>
+                {/* fifth table, sixth table and seat allocation */}
+                
+                <SeatingLayout 
+                    seat={seat}
+                    setSeat={setSeat}
+                    table={table}
+                    setTable={setTable}
+                    numberOfSeats={numberOfSeats}
+                    TABLE_LAYOUT={TABLE_LAYOUT_SECTION_3}
+                    dbSeats={dbSeats ?? []}
+                />
                     
-                </div>
             </div>
     
             <button 

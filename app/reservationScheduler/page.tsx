@@ -25,8 +25,6 @@ export default function ReservationScheduler() {
     const [numberOfSeats, setNumberOfSeats] = useState<number>(1);
     const [step, setStep] = useState<string>('scheduler'); // step in the reservation process
     const [table, setTable] = useState<string[]>([])//table selection
-    // Import the SeatObject type at the top of the file:
-    // import type { SeatObject } from '@/components/seatReservation';
 
     const [seat, setSeat] = useState<SeatObject[]>([])//seat selection
    
@@ -67,7 +65,20 @@ export default function ReservationScheduler() {
                         setTable={setTable}
                         seat={seat}
                         setSeat={setSeat}
-                        numberOfSeats={numberOfSeats}
+                        numberOfSeats={numberOfSeats} 
+                        cfg={{
+                        id: '',
+                        wrapper: '',
+                        container: '',
+                        table: {
+                            size: '',
+                            position: '',
+                            tableRotation: '',
+                            textRotation: ''
+                        },
+                        seats: []
+                        }} 
+                        TABLE_LAYOUT={[]}               
                     />
                 }
            </form>

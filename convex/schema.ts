@@ -47,6 +47,7 @@ const occupations = defineTable({
   updatedAt: v.number(),
 }).index("name", ["name"]);
 
+// schema for reservation
 const reservations = defineTable({
   userId: v.id("users"),
   date: v.string(),
@@ -61,7 +62,7 @@ const reservations = defineTable({
   ),
   createdAt: v.number(),
   updatedAt: v.optional(v.number()), 
-}).index("userId", ["userId"]).index("tableId", ["tableId"])
+}).index("by_userId", ["userId"]).index("by_tableId", ["tableId"]).index("by_status", ["status"])
 
 const seatReservations = defineTable({
   reservationId: v.id('reservations'),
@@ -70,23 +71,22 @@ const seatReservations = defineTable({
   createdAt: v.number(),
   updatedAt: v.optional(v.number()), 
 }).index("seat", ["seatId"])
-  .index("reservation", ["reservationId"])
+  .index("by_reservations", ["reservationId"])
 
 const seats = defineTable({
   label: v.string(),
   tableId: v.id('tables'),
   seatOption: v.string(),
   status: v.union(
-    v.literal('available'),
-    v.literal('selected'),
-    v.literal('reserved'), 
+    v.literal('seatAvailable'),
+    v.literal('seatSelected'),
+    v.literal('seatReserved'), 
   )
-}).index("tables", ["tableId"])
+}).index("by_tables", ["tableId"]).index("by_status", ["status"])
 
 const tables = defineTable({
   label: v.string(),
-  options: v.array(v.string(),),
-  // )
+  options: v.array(v.string(),)
 })
 
 // The schema is normally optional, but Convex Auth

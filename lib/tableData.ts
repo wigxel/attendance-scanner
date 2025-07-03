@@ -1,5 +1,4 @@
-
-const TABLE_LAYOUT = [
+export const TABLE_LAYOUT_SECTION_1 = [
   {
     // table 1
     id: 'T1',
@@ -16,12 +15,14 @@ const TABLE_LAYOUT = [
         option: 't1s1',
         name: 'S1',
         position: 'left-[calc(50%-8px-105px)] top-[35px] rotate-90',
+        textAlignment:'!-rotate-90',
         bar: 'left-[4px] -top-[25px] rotate-90',
       },
       {
         option: 't1s2',
         name: 'S2',
         position: 'left-[calc(50%-8px-42px)]  top-[35px] rotate-90',
+        textAlignment:'!-rotate-90',
         bar: 'right-[4px] -top-[25px] rotate-90',
       },
     ],
@@ -42,23 +43,28 @@ const TABLE_LAYOUT = [
         option: 't2s1',
         name: 'S1',
         position: 'left-[calc(50%-8px-105px)] top-[35px] rotate-90',
+        textAlignment:'!-rotate-90',
         bar: 'left-[4px] -top-[25px] rotate-90',
       },
       {
         option: 't2s2',
         name: 'S2',
         position: 'left-[calc(50%-8px-42px)]  top-[35px] rotate-90',
+        textAlignment:'!-rotate-90',
         bar: 'left-[4px] -top-[25px] rotate-90',
       },
       {
         option: 't2s3',
         name: 'S3',
         position: 'left-[calc(50%-8px-8px)]   top-[80px] rotate-0',
+        textAlignment:'!-rotate-90',
         bar: 'right-[4px] top-[2px] rotate-90',
       },
     ],
-  },
+  }
+]
 //   table 3
+export const TABLE_LAYOUT_SECTION_2 = [  
   {
     id: 'T3',
     wrapper: "w-1/2 h-full flex justify-center items-center",
@@ -135,7 +141,9 @@ const TABLE_LAYOUT = [
       },
     ],
   },
+]
 //   table 4
+export const TABLE_LAYOUT_SECTION_3 = [
   {
     id: 'T4',
     wrapper: "w-1/2 h-full flex justify-center items-center",
@@ -239,7 +247,7 @@ interface SeatCfg {
   bar: string;
 }
 
-interface TableCfg {
+export interface TableCfg {
   id: string;
   wrapper: string;
   container: string;
@@ -250,83 +258,4 @@ interface TableCfg {
     textRotation: string;
   };
   seats: SeatCfg[];
-}
-
-type Props = {
-  cfg: TableCfg;
-  table: string[];
-  setTable: (t: string[]) => void;
-  seat: { option: string; name: string }[];
-  setSeat: (s: { option: string; name: string }[]) => void;
-  numberOfSeats: number;
-};
-
-const TableWithSeats: React.FC<Props> = ({
-  cfg,
-  table,
-  setTable,
-  seat,
-  setSeat,
-  numberOfSeats,
-}) => (
-  <div className={cfg.wrapper}>
-    <div className={cfg.container}>
-      <TableComponent
-        label={cfg.id}
-        table={table}
-        size={cfg.table.size}
-        position={cfg.table.position}
-        tableRotation={cfg.table.tableRotation}
-        textRotation={cfg.table.textRotation}
-      />
-
-      {cfg.seats.map((s) => (
-        <SeatComponent
-          key={s.option}
-          seat={seat}
-          seatId={{ seatOption: s.option, name: s.name }}
-          setSeat={setSeat}
-          table={table}
-          setTable={setTable}
-          numberOfSeats={numberOfSeats}
-          positionClasses={s.position}
-          seatBarPosition={s.bar}
-          textAlignment={s.textAlignment}
-        />
-      ))}
-    </div>
-  </div>
-);
-
-// -------------------------------------------------------------------
-//  main render section
-// -------------------------------------------------------------------
-export default function SeatingLayout({
-  seat,
-  setSeat,
-  table,
-  setTable,
-  numberOfSeats,
-}: {
-  seat: { option: string; name: string }[];
-  setSeat: (s: { option: string; name: string }[]) => void;
-  table: string[];
-  setTable: (t: string[]) => void;
-  numberOfSeats: number;
-}) {
-  return (
-    <div className="w-full h-fit space-y-12">
-      {TABLE_LAYOUT.map((cfg) => (
-        <TableWithSeats
-          key={cfg.id}
-          cfg={cfg}
-          table={table}
-          setTable={setTable}
-          seat={seat}
-          setSeat={setSeat}
-          numberOfSeats={numberOfSeats}
-        />
-      ))}
-    </div>
-  );
 }

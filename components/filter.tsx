@@ -6,11 +6,17 @@ interface FilterComponentProps{
   label: string,
   checker: string //unique checker for each field
   name: string
-  value: string
-  onChange: Dispatch<SetStateAction<string>>
+  value: SeatStatus
+  onChange: Dispatch<SetStateAction<SeatStatus>>
 }
+
+
+export type SeatStatus = "seatAvailable" | "seatSelected" | "seatReserved";
+
 export default function RadioFilterComponent(
+  
   { id, label, checker, onChange, name, value }: FilterComponentProps) 
+
   {
 
   return (
