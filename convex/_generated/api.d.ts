@@ -16,6 +16,8 @@ import type {
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
 import type * as myFunctions from "../myFunctions.js";
+import type * as reservation from "../reservation.js";
+import type * as seatReservation from "../seatReservation.js";
 import type * as seats from "../seats.js";
 
 /**
@@ -30,6 +32,8 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   http: typeof http;
   myFunctions: typeof myFunctions;
+  reservation: typeof reservation;
+  seatReservation: typeof seatReservation;
   seats: typeof seats;
 }>;
 export declare const api: FilterApi<

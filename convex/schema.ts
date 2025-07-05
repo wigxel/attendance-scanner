@@ -51,7 +51,7 @@ const occupations = defineTable({
 const reservations = defineTable({
   userId: v.id("users"),
   date: v.string(),
-  timestamp: v.string(),
+  time: v.string(),
   duration: v.number(),
   numOfSeats: v.number(),
   tableId: v.id('tables'),
@@ -60,7 +60,7 @@ const reservations = defineTable({
    v.literal('confirmed'),
    v.literal('occupied') 
   ),
-  createdAt: v.number(),
+  createdAt: v.optional(v.number()),
   updatedAt: v.optional(v.number()), 
 }).index("by_userId", ["userId"]).index("by_tableId", ["tableId"]).index("by_status", ["status"])
 
@@ -68,7 +68,7 @@ const seatReservations = defineTable({
   reservationId: v.id('reservations'),
   seatId: v.id('seats'),
   table: v.string(),
-  createdAt: v.number(),
+  createdAt: v.optional(v.number()),
   updatedAt: v.optional(v.number()), 
 }).index("seat", ["seatId"])
   .index("by_reservations", ["reservationId"])
