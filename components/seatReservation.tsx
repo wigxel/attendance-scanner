@@ -22,6 +22,7 @@ export interface SeatReservationComponentProps {
     numberOfSeats: number
     cfg: TableCfg;
     TABLE_LAYOUT: Array<object>
+    dbSeats: object[]
 }
 
 // each table has seat options and each seat has an optionId assigned to it for the table it belongs
@@ -38,11 +39,8 @@ export default function SeatReservationComponent(
     // fetch all the seats from our db using the filter
     const dbSeats = useQuery(api.seats.getAllSeats, { seatFilter })
 
-    console.log(dbSeats)
-
     const { isAuthenticated } = useConvexAuth();
     const router = useRouter();
-
 
     // useEffect(() => {
     //     // If user is not authenticated, redirect to sign-in page
@@ -107,7 +105,7 @@ export default function SeatReservationComponent(
                         setTable={setTable}
                         numberOfSeats={numberOfSeats}
                         TABLE_LAYOUT={TABLE_LAYOUT_SECTION_1}
-                        // dbSeats={dbSeats ?? []}
+                        dbSeats={dbSeats ?? []}
                     />
                     
                 </div>
@@ -124,7 +122,7 @@ export default function SeatReservationComponent(
                     setTable={setTable}
                     numberOfSeats={numberOfSeats}
                     TABLE_LAYOUT={TABLE_LAYOUT_SECTION_2}
-                    // dbSeats={dbSeats ?? []}
+                    dbSeats={dbSeats ?? []}
                 />
 
             </div>
@@ -140,7 +138,7 @@ export default function SeatReservationComponent(
                     setTable={setTable}
                     numberOfSeats={numberOfSeats}
                     TABLE_LAYOUT={TABLE_LAYOUT_SECTION_3}
-                    // dbSeats={dbSeats ?? []}
+                    dbSeats={dbSeats ?? []}
                 />
                     
             </div>

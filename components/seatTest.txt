@@ -477,3 +477,14 @@ export default function SeatReservationComponent(
     </section>
   )
 }
+
+
+const buttonClasses = absolute w-4 h-[31px] ${positionClasses} cursor-pointer flex items-center justify-center rounded group border hover:border-[var(--primary)] 
+        ${seat.some((item) => item.option.includes(seatId.seatOption)) ? 'bg-[var(--primary)]' : 'bg-[#D9D9D9]'} 
+        ${dbSeats.map((item: { status?: string, seatOption?: string }) => ((item.seatOption === seatId.seatOption && item.status !== 'seatAvailable') ? 'text-[var(--primary)]' : 'text-white'))}
+    ;
+    const barClasses = absolute w-1 h-[39px] ${seatBarPosition} rounded border group-hover:border-[var(--primary)] 
+        ${seat.some((item) => item.option.includes(seatId.seatOption)) ? 'bg-[var(--primary)]' : 'bg-[#D9D9D9]'}
+        ${dbSeats.map((item: { status?: string, seatOption?: string }) => ((item.seatOption === seatId.seatOption && item.status !== 'seatAvailable') ? 'text-[var(--primary)]' : 'text-white'))}
+    ;
+

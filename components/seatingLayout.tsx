@@ -11,6 +11,7 @@ const TableWithSeats: React.FC<SeatReservationComponentProps> = ({
   seat,
   setSeat,
   numberOfSeats,
+  dbSeats
 }) => (
   <div className={cfg.wrapper}>
     <div className={cfg.container}>
@@ -28,7 +29,7 @@ const TableWithSeats: React.FC<SeatReservationComponentProps> = ({
           key={s.option}
           seat={seat}
           seatId={{ seatOption: s.option, name: s.name, setSeat }}
-          // setSeat={setSeat}
+          dbSeats={dbSeats}
           table={table}
           setTable={setTable}
           numberOfSeats={numberOfSeats}
@@ -52,6 +53,7 @@ export default function SeatingLayout({
   setTable,
   numberOfSeats,
   TABLE_LAYOUT,
+  dbSeats
 }: {
   seat: { option: string; name: string }[];
   setSeat: (s: { option: string; name: string }[]) => void;
@@ -59,6 +61,7 @@ export default function SeatingLayout({
   setTable: Dispatch<SetStateAction<string[]>>
   numberOfSeats: number;
   TABLE_LAYOUT: TableCfg[]
+  dbSeats: object[]
 }) {
   return (
     <div className="w-full h-full flex items-center">
@@ -73,7 +76,8 @@ export default function SeatingLayout({
           numberOfSeats={numberOfSeats} 
           setStep={function (value: SetStateAction<string>): void {
             throw new Error("Function not implemented.");
-          } } TABLE_LAYOUT={[]}    
+          } } TABLE_LAYOUT={[]}   
+          dbSeats={dbSeats} 
         />
       ))}
     </div>
