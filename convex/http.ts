@@ -25,10 +25,10 @@ const syncConvexUsers = httpAction(async (ctx) => {
     const payload = {
       first_name: user.firstName,
       last_name: user.lastName,
-      external_id: entry.profile?.id,
       email_address: [email_addr],
-      username: `${user.firstName}_${user.lastName}`.toLowerCase(),
       password: crypto.randomUUID(),
+      external_id: entry.profile?.id,
+      username: `${user.firstName}_${user.lastName}`.toLowerCase(),
     };
 
     // 4. POST to Clerk
@@ -70,6 +70,12 @@ http.route({
   path: "/sync/users",
   handler: syncConvexUsers,
 });
+
+// http.route({
+//   method: "POST",
+//   path: "/sync/users",
+//   handler: syncConvexUsers,
+// });
 
 // Add any custom HTTP routes here if needed in the future
 export default http;

@@ -51,7 +51,8 @@ const occupations = defineTable({
 // requires indexes defined on `authTables`.
 // The schema provides more precise TypeScript types.
 export default defineSchema({
-  ...authTables,
+  // preserve the users table because of migration from Convex Auth -> Clerk Auth.
+  users: authTables.users,
   daily_register,
   profile,
   featureRequest,

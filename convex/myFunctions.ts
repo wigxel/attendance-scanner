@@ -32,7 +32,7 @@ export const getProfile = query({
 
 export const getUserById = query({
   args: {
-    userId: v.id("profile"),
+    userId: v.string()
   },
   handler: async (ctx, args) => {
     return await ctx.db
@@ -101,7 +101,7 @@ async function _isUserRegistered(
 
 export const isUserRegisteredForToday = query({
   args: {
-    userId: v.id("profile"),
+    userId: v.string(),
   },
   handler: async (ctx, args) => {
     return _isUserRegistered(ctx, { userId: args.userId });
@@ -110,7 +110,7 @@ export const isUserRegisteredForToday = query({
 
 export const registerUser = mutation({
   args: {
-    customerId: v.id("profile"),
+    customerId: v.string(),
     visitorId: v.string(),
     browser: v.string(),
   },
@@ -207,15 +207,20 @@ export const submitFeatureRequest = mutation({
 //function to get user stats
 export const getUserStats = query({
   args: {
-    userId: v.id("profile"),
+    userId: v.string(),
   },
   handler: async (ctx, { userId }) => {
-    const user = await ctx.db.get(userId);
 
-    if (!user) {
+    const customer = await ctx.runQuery(api.myFunctions.getUserById, {
+      userId: userId
+    });
+
+    if (!customer) {
       logger.warn("User not authenticated");
       return null;
     }
+
+    const { firstName, lastName } = customer as { firstName: string, lastName: string };
 
     const stats = await ctx.db
       .query("stats")
@@ -226,7 +231,7 @@ export const getUserStats = query({
     const freeDayEligible = attendanceCount >= 20;
 
     return {
-      name: `${user.firstName} ${user.lastName}`,
+      name: `${firstName} ${lastName}` as string,
       attendanceCount,
       freeDayEligible,
     };

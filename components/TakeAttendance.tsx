@@ -27,6 +27,7 @@ export function TakeAttendance() {
 
   const handleScan = async (uri_string: string) => {
     setScannedData(uri_string);
+
     try {
       const url = new URL(uri_string);
       const encoded_data = url.pathname.split("/").at(-1);
@@ -40,6 +41,7 @@ export function TakeAttendance() {
         toast.error("User doesn't exist or isn't registered");
         return;
       }
+
 
       const is_registered = await convex.query(
         api.myFunctions.isUserRegisteredForToday,
