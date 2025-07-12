@@ -51,10 +51,9 @@ const occupations = defineTable({
 const reservations = defineTable({
   userId: v.id("users"),
   date: v.string(),
-  time: v.string(),
-  duration: v.number(),
-  numOfSeats: v.number(),
-  tableId: v.id('tables'),
+  duration: v.string(),
+  numberOfSeats: v.number(),
+  seatReservationsId: v.id('seatReservations'),
   status: v.union(
    v.literal('pending'),
    v.literal('confirmed'),
@@ -62,16 +61,26 @@ const reservations = defineTable({
   ),
   createdAt: v.optional(v.number()),
   updatedAt: v.optional(v.number()), 
-}).index("by_userId", ["userId"]).index("by_tableId", ["tableId"]).index("by_status", ["status"])
+}).index("by_users", ["userId"])
+  .index("by_status", ["status"])
 
 const seatReservations = defineTable({
-  reservationId: v.id('reservations'),
-  seatId: v.id('seats'),
-  table: v.string(),
+  table: v.array(
+    v.object({
+      selectedTable: v.string(),
+      seatReserved: v.array(
+        v.object(
+          {
+            seatAllocation: v.string(), 
+            label:v.string()
+          }
+        )
+      ),
+    })
+  ),
   createdAt: v.optional(v.number()),
   updatedAt: v.optional(v.number()), 
-}).index("seat", ["seatId"])
-  .index("by_reservations", ["reservationId"])
+})
 
 const seats = defineTable({
   label: v.string(),
@@ -89,6 +98,14 @@ const tables = defineTable({
   options: v.array(v.string(),)
 })
 
+const users = defineTable({
+  name: v.string(),//Full name
+  phone: v.string(),//Phone number
+  email: v.string(),//Email address
+  createdAt: v.optional(v.number()),//Timestamp (ms)
+})
+.index("by_emails", ["email"])//Optional index for lookups
+
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
 // The schema provides more precise TypeScript types.
@@ -102,5 +119,6 @@ export default defineSchema({
   reservations,
   seats,
   tables,
-  seatReservations
+  seatReservations,
+  users
 });

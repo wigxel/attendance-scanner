@@ -4,11 +4,13 @@ import React, { Dispatch, SetStateAction } from 'react'
 import ReservationNavigationComponent from './reservationNavigation';
 import { DateRange } from 'react-day-picker';
 import { SeatObject } from './seat';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 
 type ReservationSummaryComponentProps = {
   setStep: Dispatch<SetStateAction<string>>
-  selected: DateRange | undefined
-  timeValue: string
+  selectedDate: DateRange | undefined
+  duration: string
   numberOfSeats: number
   table: string[]
   seat: SeatObject[]
@@ -16,17 +18,17 @@ type ReservationSummaryComponentProps = {
 
 export default function ReservationSummaryComponent(
     {
-        setStep, selected, timeValue, 
+        setStep, selectedDate, duration, 
         numberOfSeats, table, seat 
     }:
         ReservationSummaryComponentProps 
     ){
-
+    
     /* -------------------------------------------------
     map “t1s1” → “T1”, “t2s2” → “T2”, …
     ------------------------------------------------- */
 
-   const seatToTable = (seatOption) => {
+   const seatToTable = (seatOption: string) => {
         // Exact match for Hub manager
         if (seatOption === 'Hub Manager') return 'Hub Manager';
 
@@ -38,14 +40,14 @@ export default function ReservationSummaryComponent(
     /* -------------------------------------------------
     rebuild table into to take the shape T1 - S1, T3 - S1, S2, S3, T4 - S2
     ------------------------------------------------- */
-    const mappedTable = table.reduce((acc, tableElement) => {
+    const mappedTable = table.reduce<{ selectedTable: string; seatReserved: SeatObject[] }[]>((acc, selectedTable) => {
         // all seats that belong to this table
         const reserved = seat.filter(
-            (s) => seatToTable(s.option) === tableElement
+            (s) => seatToTable(s.seatAllocation) === selectedTable
         );
 
         if (reserved.length) {
-            acc.push({ tableElement, seatReserved: reserved });
+            acc.push({ selectedTable, seatReserved: reserved });
         }
         return acc;
     }, []);
@@ -55,17 +57,17 @@ export default function ReservationSummaryComponent(
         {id: 2, field: 'Phone', val: '08041941941'},
         {id: 3, field: 'Email', val: 'simfubara@gmail.com'},
         {id: 4, field: 'Reservation ID', val: 'Sim Fubara'},
-        {id: 5, field: 'Duration', val: timeValue},
+        {id: 5, field: 'Duration', val: duration},
         {
             id: 6,
             field: 'Table No.', 
             val: mappedTable.map((item) => {
-                const seatNames = item.seatReserved.map((s) => s.name).join(', ');
-                return `${item.tableElement} - ${seatNames}`;
+                const seatNames = item.seatReserved.map((s) => s.label).join(', ');
+                return `${item.selectedTable} - ${seatNames}`;
             }).join('; ') // separate multiple tables with semicolon
         },
         {id: 7, field: 'No. of Seats', val: numberOfSeats},
-        {id: 8, field: 'Reservation Date', val: selected},
+        {id: 8, field: 'Reservation Date', val: selectedDate},
         {id: 9, field: 'Payment Status', val: 'Not Paid'},
         {id: 10, field: 'Amount', val: 'N3000.00'}
     ]

@@ -12,13 +12,12 @@ import { api } from "../convex/_generated/api";
 import { SeatStatus } from '@/convex/seats';
 import { TABLE_LAYOUT_SECTION_1, TABLE_LAYOUT_SECTION_2, TABLE_LAYOUT_SECTION_3, TableCfg } from '@/lib/tableData' //data for refactored table;
 import SeatingLayout from './seatingLayout';//refactored seating layout which calls the table and seats components;
-
 export interface SeatReservationComponentProps {
     setStep: Dispatch<SetStateAction<string>>;
     table: string[];
     setTable: Dispatch<SetStateAction<string[]>>;
     seat: SeatObject[];
-    setSeat: (s: { option: string; name: string }[]) => void;
+    setSeat: (s: { seatAllocation: string; label: string }[]) => void;
     numberOfSeats: number
     cfg: TableCfg;
     TABLE_LAYOUT: Array<object>
@@ -33,7 +32,6 @@ export default function SeatReservationComponent(
         seat, setSeat
     }: SeatReservationComponentProps
 ) {
-    
     const [seatFilter, setSeatFilter] = useState<SeatStatus>('seatAvailable')
 
     // fetch all the seats from our db using the filter
@@ -51,11 +49,15 @@ export default function SeatReservationComponent(
     
     // confirms that all necessary fields are filled before loading the next component
     // if a seat is selected
-    const handleNextStep = () =>{
+    const handleNextStep = async () =>{
         if(seat.length === 0){
             ToastComponentProps({ type: 'error', message: 'Kindly select a table and a seat(s)' })
             return false
+        }else if(seat.length !== numberOfSeats){
+            ToastComponentProps({ type: 'error', message: 'Seat selection should match number of seats.' })
+            return false
         }else{
+            // create seat reservation
             return setStep('reservationSummary')
         }
     }
@@ -63,7 +65,7 @@ export default function SeatReservationComponent(
     const filterOptions = [
         {id: 'seatReserved', checker: 'seatReserved', label: 'Reserved'},
         {id: 'seatSelected', checker: 'seatSelected', label: 'Selected'},
-        {id: 'seatAvailable', checker: 'seatAvailable', label: 'Available'}
+        {id: 'seatAvailable', checker: 'seatAvailable', label: 'Available'},
     ]
 
   return (

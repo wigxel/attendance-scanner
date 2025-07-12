@@ -10,26 +10,21 @@ import Toast from './toast';
 
 interface SchedulerComponentProps {
     setStep: Dispatch<SetStateAction<string>>;
-    setSelected: Dispatch<SetStateAction<DateRange | undefined>>;
-    selected: DateRange | undefined;
-    timeValue: string
-    setTimeValue: Dispatch<SetStateAction<string>>;
+    setSelectedDate: Dispatch<SetStateAction<DateRange | undefined>>;
+    selectedDate: DateRange | undefined;
+    duration: string
+    setDuration: Dispatch<SetStateAction<string>>;
     numberOfSeats: number;
     setNumberOfSeats: Dispatch<SetStateAction<number>>;
 }
-// interface FormData {
-//     filter: string
-//     time: string;
-//     customTime: string
-// }
 
 export default function SchedulerComponent(
     {
         setStep, 
-        setSelected, 
-        selected,
-        timeValue,
-        setTimeValue, 
+        setSelectedDate, 
+        selectedDate,
+        duration,
+        setDuration, 
         numberOfSeats,
         setNumberOfSeats
     }: SchedulerComponentProps) {
@@ -68,7 +63,7 @@ export default function SchedulerComponent(
     // confirms that all necessary fields are filled before loading the next component
     // fields date, number of seats, time
     const handleNextStep = () =>{
-        if(timeValue === '' || selected === undefined || numberOfSeats === 0){
+        if(duration === '' || selectedDate === undefined || numberOfSeats === 0){
             Toast({ type: 'error', message: 'All fields must be filled.' })
             return false
         }else{
@@ -111,8 +106,8 @@ export default function SchedulerComponent(
             <div className='w-full h-full'>
                 <DayPicker
                     mode="range"
-                    selected={selected}
-                    onSelect={setSelected}
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
                     // footer={
                     //     selected && selected.length > 0 ? `Selected: ${selected.map(d => d.toLocaleDateString()).join(', ')}` : "Pick a day."
                     // }
@@ -214,9 +209,9 @@ export default function SchedulerComponent(
                                 <input 
                                     type='radio'
                                     value="allDay"
-                                    checked={!isCustom && timeValue === "9:00 - 17:00"}
+                                    checked={!isCustom && duration === "9:00 - 17:00"}
                                     onChange={() => {
-                                        setTimeValue('9:00 - 17:00')
+                                        setDuration('9:00 - 17:00')
                                         setIsCustom(false)
                                     }}
                                 />
@@ -272,9 +267,9 @@ export default function SchedulerComponent(
                                         <button
                                             key={index} 
                                             type='button'
-                                            className={'border hover:border-(--primary) w-24 h-8 text-xs font-medium rounded-sm' + ((timeValue === time.value) ? ' bg-(--primary) text-white' : 'bg-(--button-gray) rounded-sm')}   
+                                            className={'border hover:border-(--primary) w-24 h-8 text-xs font-medium rounded-sm' + ((duration === time.value) ? ' bg-(--primary) text-white' : 'bg-(--button-gray) rounded-sm')}   
                                             onClick={() => { 
-                                                setTimeValue(time.value); 
+                                                setDuration(time.value); 
                                             }} 
                                         >
                                             {time.label}

@@ -13,7 +13,7 @@ export const getSeatReservation = query({
 // all seats fetch
 export const getAllSeatReservations = query({
     handler: async (ctx) => {
-      return ctx.db.query('seatReservations')
+      return await ctx.db.query('seatReservations')
         .order('asc')
         .collect();
     }
@@ -21,18 +21,26 @@ export const getAllSeatReservations = query({
 
 export const createSeatReservation = mutation({
   args: { 
-    reservationId: v.id('reservations'), 
-    seatId: v.id('seats'), 
-    table: v.string(), 
+    mappedTable: v.array(
+      v.object({
+        selectedTable: v.string(),
+        seatReserved: v.array(
+          v.object(
+            {
+              seatAllocation: v.string(), 
+              label:v.string()
+            }
+          )
+        ),
+      })
+    )
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("seatReservations", 
-        {
-          reservationId: args.reservationId,
-          seatId: args.seatId,
-          createdAt: Date.now(),
-          table: args.table
-        }
+      {
+        createdAt: Date.now(),
+        table: args.mappedTable
+      }
     );
   },
 });

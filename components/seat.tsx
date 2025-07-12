@@ -4,8 +4,8 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 export interface SeatObject {
-    name: string;
-    option: string;
+    label: string;
+    seatAllocation: string;
 }
 
 export interface SeatId {
@@ -40,7 +40,7 @@ export default function SeatComponent(
     // check if seat is available and a match to determine styling
     
     // compute relevant states
-    const isSelected = seat.some(item => item.option.includes(seatId.seatOption));
+    const isSelected = seat.some(item => item.seatAllocation.includes(seatId.seatOption));
     const dbSeat = dbSeats.find((item) => item.seatOption === seatId.seatOption);
     const isUnavailable = dbSeat && dbSeat.status !== 'seatAvailable'
 
@@ -74,33 +74,33 @@ export default function SeatComponent(
      *     
      */
 
-    const selectedSeats = () =>{
-        return seat.filter((_, index) => index % 2 === 0); 
-    }
+    // const selectedSeats = () =>{
+    //     return seat.filter((_, index) => index % 2 === 0); 
+    // }
 
     const getSeatOptions = () =>{
         
-        return seat.filter(s => s.option.startsWith('t') || s.option.startsWith('H')).map((s) => s.option);
+        return seat.filter(s => s.seatAllocation.startsWith('t') || s.seatAllocation.startsWith('H')).map((s) => s.seatAllocation);
         
     }
 
     // function to handle user seat selection
     const handleSeatSelection = () =>{
         //if the user clicks a button, then let them choose from the list of seats regardless of the table
-        const currentSeat = { option: seatId.seatOption, name: seatId.name };
+        const currentSeat = { seatAllocation: seatId.seatOption, label: seatId.name };
 
         const isAlreadySelected = seat.some(
-            (s) => s.option === currentSeat.option && s.name === currentSeat.name
+            (s) => s.seatAllocation === currentSeat.seatAllocation && s.label === currentSeat.label
         );
 
         if (isAlreadySelected) {
             // Remove the seat by both option and name
             const updatedSeats = seat.filter(
-                (s) => !(s.option === currentSeat.option && s.name === currentSeat.name)
+                (s) => !(s.seatAllocation === currentSeat.seatAllocation && s.label === currentSeat.label)
             );
             seatId.setSeat(updatedSeats);
         } else {
-            selectedSeats()
+            // selectedSeats()
             // Only add if selection limit not exceeded
             if (seat.length < numberOfSeats) {
                 seatId.setSeat([...seat,currentSeat]);
@@ -159,8 +159,6 @@ export default function SeatComponent(
         setSeatStatus(allSeat as (string | undefined)[]);
     }, [dbSeats])
 
-    console.log(seatStatus)
-
   return (
     <button
         type='button'
@@ -170,7 +168,7 @@ export default function SeatComponent(
         }}
         className={buttonClasses}
     >
-        <span className={`${textAlignment} text-xs ${seat.some(s => s.option === seatId.seatOption) && 'text-white'}` }>
+        <span className={`${textAlignment} text-xs ${seat.some(s => s.seatAllocation === seatId.seatOption) && 'text-white'}` }>
             {seatId.name}
             {/* seat bar */}
             <div 

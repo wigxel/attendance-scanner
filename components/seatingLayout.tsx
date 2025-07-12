@@ -55,8 +55,8 @@ export default function SeatingLayout({
   TABLE_LAYOUT,
   dbSeats
 }: {
-  seat: { option: string; name: string }[];
-  setSeat: (s: { option: string; name: string }[]) => void;
+  seat: { seatAllocation: string; label: string }[];
+  setSeat: (s: { seatAllocation: string; label: string }[]) => void;
   table: string[];
   setTable: Dispatch<SetStateAction<string[]>>
   numberOfSeats: number;

@@ -19,6 +19,7 @@ import type * as myFunctions from "../myFunctions.js";
 import type * as reservation from "../reservation.js";
 import type * as seatReservation from "../seatReservation.js";
 import type * as seats from "../seats.js";
+import type * as users from "../users.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   reservation: typeof reservation;
   seatReservation: typeof seatReservation;
   seats: typeof seats;
+  users: typeof users;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

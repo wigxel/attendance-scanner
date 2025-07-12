@@ -15,7 +15,7 @@ export const getSeat = query({
 export const getAllSeats = query({
     args: { seatFilter: v.string() as unknown as import("convex/values").Validator<SeatStatus> },
     handler: async (ctx, args) => {
-        return ctx.db.query('seats')
+        return await ctx.db.query('seats')
             .withIndex("by_status", (q) => q.eq("status", args.seatFilter as SeatStatus))
             .order('asc')
             .collect();
