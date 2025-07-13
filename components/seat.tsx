@@ -44,24 +44,26 @@ export default function SeatComponent(
     
     // compute relevant states
     const isSelected = seat.some(item => item.seatAllocation.includes(seatId.seatOption));
-    const dbseats = useQuery(api.seatReservation.getAllSeatReservations, { selectedDate });
+    // const dbSeats = useQuery(api.seatReservation.getAllSeatReservations, { selectedDate  });
     // find the seat in the dbSeats array
-    const dbSeat = dbSeats.find((item) => item.seatOption === seatId.seatOption);
-    const isUnavailable = dbSeat && dbSeat.status !== 'seatAvailable'
+    // const dbSeat = dbSeats && dbSeats.find((item) => item.seatOption === seatId.seatOption);
+    // const isUnavailable = dbSeat && dbSeat.status !== 'seatAvailable'
 
     // Conditionally build class strings
     const seatBg = isSelected ? 'bg-[var(--primary)] text-white' : 'bg-[#D9D9D9] text-[var(--primary)]';
-    const seatUnavailable = isUnavailable ?  'bg-[var(--primary)] text-white' : 'bg-[#D9D9D9] text-[var(--primary)]';;
+    // const seatUnavailable = isUnavailable ?  'bg-[var(--primary)] text-white' : 'bg-[#D9D9D9] text-[var(--primary)]';;
 
     const buttonClasses = `
         absolute w-4 h-[31px] ${positionClasses} cursor-pointer flex items-center justify-center rounded group border hover:border-[var(--primary)]
-        ${seatBg} ${seatUnavailable}
+        ${seatBg} 
     `;
+    //${seatUnavailable} ie {seatBg} ${seatUnavailable}
 
     const barClasses = `
         absolute w-1 h-[39px] ${seatBarPosition} rounded border group-hover:border-[var(--primary)]
-        ${seatBg} ${seatUnavailable}
+        ${seatBg}
     `;
+    //${seatUnavailable} ie {seatBg} ${seatUnavailable}
     const tableSeatOptions: { id: string; options: string[] }[] = [
         {id: 'T1', options: ['t1s1', 't1s2']},
         {id: 'T2', options: ['t2s1', 't2s2','t2s3']},
@@ -160,16 +162,17 @@ export default function SeatComponent(
     }, [seat, setTable]);
 
     useEffect(() => {
-        const allSeat = dbSeats && dbSeats.map((item: { status?: string }) => item);
-        setSeatStatus(allSeat as (string | undefined)[]);
-    }, [dbSeats])
+        // const allSeat = dbSeats && dbSeats.map((item: { status?: string }) => item);
+        // setSeatStatus(allSeat as (string | undefined)[]);
+    }, [])
 
   return (
     <button
         type='button'
         onClick={() => {
             // if the seat is available, then handle seat selection
-            dbSeats.map((item: { status?: string, seatOption?: string }) => ((item.seatOption === seatId.seatOption && item.status === 'seatAvailable') ? handleSeatSelection() : false));
+            // dbSeats.map((item: { status?: string, seatOption?: string }) => ((item.seatOption === seatId.seatOption && item.status === 'seatAvailable') ? handleSeatSelection() : false));
+            handleSeatSelection()
         }}
         className={buttonClasses}
     >

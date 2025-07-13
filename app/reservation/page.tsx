@@ -13,12 +13,12 @@ export default function Reservation() {
 
     const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
 
-    useEffect(() => {
-      // If user is not authenticated, redirect to sign-in page
-      if (!isAuthenticated) {
-        router.push("/userLogin");
-      }
-    }, [isAuthenticated, router])
+    // useEffect(() => {
+    //   // If user is not authenticated, redirect to sign-in page
+    //   if (!isAuthenticated) {
+    //     router.push("/userLogin");
+    //   }
+    // }, [isAuthenticated, router])
 
   const onSubmit = () =>{
 

@@ -191,7 +191,6 @@ export default function ReservationScheduler() {
                         seats: []
                         }} 
                         TABLE_LAYOUT={[]}  
-                        dbSeats={[]}   
                         selectedDate={selectedDate}          
                     />
                 }

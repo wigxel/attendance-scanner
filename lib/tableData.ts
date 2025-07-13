@@ -260,5 +260,4 @@ export interface TableCfg {
     textRotation: string;
   };
   seats: SeatCfg[];
-  selectedDate: DateRange | undefined
 }

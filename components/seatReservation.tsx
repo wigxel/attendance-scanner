@@ -12,6 +12,7 @@ import { api } from "../convex/_generated/api";
 import { SeatStatus } from '@/convex/seats';
 import { TABLE_LAYOUT_SECTION_1, TABLE_LAYOUT_SECTION_2, TABLE_LAYOUT_SECTION_3, TableCfg } from '@/lib/tableData' //data for refactored table;
 import SeatingLayout from './seatingLayout';//refactored seating layout which calls the table and seats components;
+import { DateRange } from 'react-day-picker';
 export interface SeatReservationComponentProps {
     setStep: Dispatch<SetStateAction<string>>;
     table: string[];
@@ -21,7 +22,7 @@ export interface SeatReservationComponentProps {
     numberOfSeats: number
     cfg: TableCfg;
     TABLE_LAYOUT: Array<object>
-    dbSeats: object[]
+    selectedDate: DateRange | undefined;
 }
 
 // each table has seat options and each seat has an optionId assigned to it for the table it belongs
