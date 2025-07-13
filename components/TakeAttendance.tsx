@@ -11,6 +11,7 @@ import { convex } from "./ConvexClientProvider";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { isDevelopment } from "@/config/constants";
 import { If } from "./if";
+import { Card } from "./ui/card";
 
 export function TakeAttendance() {
   const [scannedData, setScannedData] = useState<string | null>(null);
@@ -103,8 +104,8 @@ export function TakeAttendance() {
   };
 
   return (
-    <section className="flex shadow-inner p-1 rounded-[1.2rem] bg-gray-100">
-      <div className="bg-white  gap-2 flex flex-col border border-opacity-25 rounded-[1.1rem] p-2">
+    <Card>
+      <div className="p-4 flex flex-col gap-2">
         <>
           {scanningEnabled ? (
             <QRCodeScanner
@@ -140,23 +141,26 @@ export function TakeAttendance() {
                 Scan Another Code
               </Button>
             </div>
+
           )}
         </>
 
         <If cond={isDevelopment}>
           {scannedData && (
-            <div className="mt-6 p-4 border rounded-lg bg-muted">
+            <div className="mt-6 p-4 border rounded-lg bg-muted w-full">
               <h2 className="text-lg font-medium mb-2">QR Data:</h2>
-              <pre className="text-xs overflow-auto p-2 bg-background rounded">
-                {scannedData}
-              </pre>
+              <p className="text-xs p-2 bg-background rounded">
+                <span className="break-words block w-[35ch]">
+                  {scannedData}
+                </span>
+              </p>
             </div>
           )}
         </If>
 
         <div className="p-4 border rounded-lg bg-yellow-100">
           <h2 className="text-lg font-medium mb-2">Instructions:</h2>
-          <ul className="text-sm list-disc list-inside">
+          <ul className="text-xs list-disc list-inside">
             <li>
               Scan the attendance QR code displayed on the member&apos;s profile
             </li>
@@ -166,6 +170,6 @@ export function TakeAttendance() {
           </ul>
         </div>
       </div>
-    </section>
+    </Card>
   );
 }

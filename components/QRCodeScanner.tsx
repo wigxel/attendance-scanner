@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "./ui/select";
 import consola from "consola";
+import { Portal } from "@radix-ui/react-dialog";
+import { Dialog } from "./ui/dialog";
 
 interface QRCodeScannerProps {
   onScan: (data: string) => void;
@@ -170,93 +172,97 @@ export default function QRCodeScanner({
   };
 
   return (
-    <div className={cn("flex flex-col items-center w-full", className)}>
-      {permission === "allow" ? (
-        <div className="w-full">
-          <div
-            className={cn("flex flex-col gap-4 items-center w-full", {
-              hidden: isScanning,
-            })}
-          >
-            <Select
-              // className="w-full p-2 rounded bg-background border border-input"
-              value={selectedCamera || ""}
-              onValueChange={(v) => {
-                handleCameraChange(v);
-              }}
-            >
-              <SelectTrigger className="bg-white w-full">
-                <SelectValue placeholder="Select camera" className="h-[4rem]" />
-              </SelectTrigger>
-              <SelectContent>
-                {cameras.map((camera) => (
-                  <SelectItem key={camera.id} value={camera.id}>
-                    {camera.label || `Camera ${camera.id.slice(0, 8)}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button className="w-full" onClick={startScanner}>
-              Use Camera
-            </Button>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={isScanning ? { opacity: 1 } : { opacity: 0 }}
-            className={cn(
-              "*:first:rounded-2xl *:first:overflow-hidden z-20 fixed flex flex-col items-center justify-center p-12 inset-0 bg-black/[0.86]",
-              {
-                "pointer-events-none": !isScanning,
-              },
-            )}
-          >
+    <Dialog open={true}>
+      <div className={cn("flex flex-col items-center w-full", className)}>
+        {permission === "allow" ? (
+          <div className="w-full">
             <div
-              ref={containerRef}
-              className={cn("relative w-full mx-auto overflow-hidden")}
+              className={cn("flex flex-col gap-2 items-center w-full", {
+                hidden: isScanning,
+              })}
             >
-              {/* Scanner will be rendered here */}
+              <Select
+                // className="w-full p-2 rounded bg-background border border-input"
+                value={selectedCamera || ""}
+                onValueChange={(v) => {
+                  handleCameraChange(v);
+                }}
+              >
+                <SelectTrigger className="bg-white w-full">
+                  <SelectValue placeholder="Select camera" className="h-[4rem]" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cameras.map((camera) => (
+                    <SelectItem key={camera.id} value={camera.id}>
+                      {camera.label || `Camera ${camera.id.slice(0, 8)}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Button className="w-full" onClick={startScanner}>
+                Use Camera
+              </Button>
             </div>
 
-            <div className="z-[-1] absolute">
-              <LucideLoader
-                size={"2rem"}
-                strokeWidth={1}
-                className="animate animate-spin text-white"
-              />
-            </div>
+            <Portal>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={isScanning ? { opacity: 1 } : { opacity: 0 }}
+                className={cn(
+                  "*:first:rounded-2xl *:first:overflow-hidden z-20 fixed flex flex-col items-center justify-center p-12 inset-0 bg-black/[0.86]",
+                  {
+                    "pointer-events-none": !isScanning,
+                  },
+                )}
+              >
+                <div
+                  ref={containerRef}
+                  className={cn("relative w-full mx-auto overflow-hidden")}
+                >
+                  {/* Scanner will be rendered here */}
+                </div>
 
-            <button
+                <div className="z-[-1] absolute">
+                  <LucideLoader
+                    size={"2rem"}
+                    strokeWidth={1}
+                    className="animate animate-spin text-white"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  className="w-12 fixed right-6 top-6 flex justify-center items-center rounded-full bg-white/[0.36] backdrop-blur-sm aspect-square"
+                  onClick={stopScanner}
+                >
+                  <XIcon className="text-white/[0.95]" />
+                </button>
+              </motion.div>
+            </Portal>
+          </div>
+        ) : null}
+
+        {permission !== "allow" ? (
+          <>
+            <Button
               type="button"
-              className="w-12 fixed right-6 top-6 flex justify-center items-center rounded-full bg-white/[0.36] backdrop-blur-sm aspect-square"
-              onClick={stopScanner}
+              variant="default"
+              onClick={() => getCameras()}
+              className="w-full"
             >
-              <XIcon className="text-white/[0.95]" />
-            </button>
-          </motion.div>
-        </div>
-      ) : null}
+              Scan QR Code
+            </Button>
 
-      {permission !== "allow" ? (
-        <>
-          <Button
-            type="button"
-            variant="default"
-            onClick={() => getCameras()}
-            className="w-full"
-          >
-            Scan QR Code
-          </Button>
-
-          {permission === "reject" && (
-            <p className="text-red-500 text-sm text-left">
-              Camera access is required. Please allow camera access in your
-              browser settings.
-            </p>
-          )}
-        </>
-      ) : null}
-    </div>
+            {permission === "reject" && (
+              <p className="text-red-500 text-sm text-left">
+                Camera access is required. Please allow camera access in your
+                browser settings.
+              </p>
+            )}
+          </>
+        ) : null}
+      </div>
+    </Dialog>
   );
 }

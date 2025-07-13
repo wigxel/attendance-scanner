@@ -1,5 +1,5 @@
 import { api } from "@/convex/_generated/api";
-import { useQuery, useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useUser } from "@clerk/nextjs";
 import { useEffect } from "react";
 
@@ -16,6 +16,12 @@ export function useReadProfile() {
       });
     }
   }, [isSignedIn, user, profile, autoCreateProfile]);
+
+  return profile;
+}
+
+export function useCustomer({ userId }: { userId: string }) {
+  const profile = useQuery(api.myFunctions.getUserById, { userId });
 
   return profile;
 }

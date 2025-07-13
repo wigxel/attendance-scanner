@@ -144,6 +144,34 @@ export const registerUser = mutation({
   },
 });
 
+export const getDailyRegister = query({
+  args: {
+    start: v.string(),
+    end: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await readId(ctx);
+
+    if (!userId) {
+      logger.warn("User not authenticated");
+      return [];
+    }
+
+    const registers = await ctx.db
+      .query("daily_register")
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("timestamp"), args.start),
+          q.lte(q.field("timestamp"), args.end),
+        ),
+      )
+      .order("desc")
+      .take(6);
+
+    return registers;
+  },
+});
+
 async function readId(ctx: any): Promise<string | null> {
   const identity = await ctx.auth.getUserIdentity();
   const userId = identity?.profile_id ?? null;
@@ -275,11 +303,10 @@ export const getAllUsers = query({
 
     const data = await Promise.all(
       profiles.map(async (profile) => {
-        const registrations = await ctx.db
-          .query("daily_register")
-          .withIndex("admitted_by", (q) => q.eq("admitted_by", profile.id))
-          .collect();
-        const visitCount = registrations.length;
+
+        const visitCount: number = await ctx.runQuery(api.myFunctions.registrationCount, {
+          userId: profile.id,
+        })
         const eligible = visitCount >= 20;
 
         return {
@@ -297,6 +324,21 @@ export const getAllUsers = query({
     );
 
     return data;
+  },
+});
+
+// Query to
+export const registrationCount = query({
+  args: {
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const registrations = await ctx.db
+      .query("daily_register")
+      .withIndex('user', q => q.eq('userId', args.userId))
+      .collect();
+
+    return registrations.length
   },
 });
 

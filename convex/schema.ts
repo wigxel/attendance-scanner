@@ -14,7 +14,8 @@ const daily_register = defineTable({
   admitted_by: v.string(), // v.id("profile"),
 })
   .index("admitted_by", ["admitted_by"])
-  .index("unique_visitor", ["device.visitorId"]);
+  .index("unique_visitor", ["device.visitorId"])
+  .index("user", ["userId"]);
 
 const featureRequest = defineTable({
   userId: v.string(), // v.id("profile"),
