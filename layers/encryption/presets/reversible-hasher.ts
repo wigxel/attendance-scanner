@@ -11,11 +11,11 @@ export class AESAlgo {
 
   /**
    * Constructor that takes a salt value as an argument. This salt value is used to generate the encryption key.
-   * @param {string} salt
+   * @param {string} encryption_key
    * @param {string} hash_hex
    */
-  constructor(salt: string, buffer_hash: string) {
-    this.key = crypto.createHash("sha256").update(salt).digest();
+  constructor(encryption_key: string, buffer_hash: string) {
+    this.key = crypto.createHash("sha256").update(encryption_key).digest();
     this.iv = Buffer.from(buffer_hash, "hex"); // Initialisation Vector (IV)
   }
 

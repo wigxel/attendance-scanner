@@ -44,7 +44,7 @@ export function TakeAttendance() {
       const is_registered = await convex.query(
         api.myFunctions.isUserRegisteredForToday,
         {
-          userId: customer_id as Id<"users">,
+          userId: customer_id as Id<"profile">,
         },
       );
 
@@ -58,11 +58,11 @@ export function TakeAttendance() {
       await register({
         browser: browser ?? "unknown",
         visitorId: visitor_id ?? "unknown",
-        customerId: customer_id as Id<"users">,
+        customerId: customer_id as Id<"profile">,
       });
 
       const customer_info = await convex.query(api.myFunctions.getUserById, {
-        userId: customer_id as Id<"users">,
+        userId: customer_id as Id<"profile">,
       });
 
       if (!customer_info) {
@@ -70,8 +70,8 @@ export function TakeAttendance() {
       }
 
       //Fetch user stats
-      const userStats = await convex.query(api.myFunctions.getUserStats,{
-        userId: customer_id as Id<"users">
+      const userStats = await convex.query(api.myFunctions.getUserStats, {
+        userId: customer_id as Id<"profile">,
       });
 
       if (!userStats) {
@@ -114,13 +114,15 @@ export function TakeAttendance() {
 
     return (
       <div className="p-4">
-        <h1 className="text-2xl font-semibold mb-4">User Attendance Overview</h1>
+        <h1 className="text-2xl font-semibold mb-4">
+          User Attendance Overview
+        </h1>
         <DataTable
           columns={columns}
           data={users.map((user) => ({
-        ...user,
-        firstname: user.firstName,
-        lastname: user.lastName,
+            ...user,
+            firstname: user.firstName,
+            lastname: user.lastName,
           }))}
         />
       </div>
@@ -181,7 +183,9 @@ export function TakeAttendance() {
       <div className="mt-6 p-4 border rounded-lg bg-muted">
         <h2 className="text-lg font-medium mb-2">Instructions:</h2>
         <ul className="text-sm list-disc list-inside">
-          <li>Scan the attendance QR code displayed on the member&apos;s profile</li>
+          <li>
+            Scan the attendance QR code displayed on the member&apos;s profile
+          </li>
           <li>The camera will automatically detect the QR code</li>
           <li>Attendance will be recorded instantly</li>
           <li>You can scan multiple codes in succession</li>
@@ -191,10 +195,10 @@ export function TakeAttendance() {
       <AdminUserTable />
 
       <Button
-              onClick={() => router.push("/occupationManagement")}
-              className="w-half"
-            >
-              Manage Occupations
+        onClick={() => router.push("/occupationManagement")}
+        className="w-half"
+      >
+        Manage Occupations
       </Button>
     </div>
   );

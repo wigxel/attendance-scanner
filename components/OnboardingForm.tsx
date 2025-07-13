@@ -1,5 +1,4 @@
 "use client";
-
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,8 +8,23 @@ import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
-import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from "./ui/form";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+  FormLabel,
+} from "./ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import React from "react";
+import { useReadProfile } from "@/hooks/auth";
 
 // Zod schema for form validation
 const onboardingSchema = z.object({
@@ -34,33 +48,34 @@ const onboardingSchema = z.object({
 
 type OnboardingFormValues = z.infer<typeof onboardingSchema>;
 
-export default function OnboardingForm() {
+function OnboardingForm({ initial }: { initial: Partial<OnboardingFormValues> }) {
   const router = useRouter();
   const updateUser = useMutation(api.myFunctions.updateUser);
 
   //Fetch occupations from the database
-  const occupations = useQuery(api.myFunctions.listOccupations);
+  const occupations = useQuery(api.myFunctions.listOccupations) ?? [];
 
   // Define form with zod resolver
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingSchema),
-    defaultValues: {
+    defaultValues: React.useMemo(() => ({
       firstName: "",
       lastName: "",
       phoneNumber: "+234",
       occupation: "",
-    },
+      ...initial
+    }), [initial])
   });
 
   // Handle form submission
   const onSubmit = async (values: OnboardingFormValues) => {
     try {
-  await updateUser({
-    firstName: values.firstName,
-    lastName: values.lastName,
-    phoneNumber: values.phoneNumber,
-    occupation: values.occupation,
-  });
+      await updateUser({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        phoneNumber: values.phoneNumber,
+        occupation: values.occupation,
+      });
       toast.success("Profile created successfully");
       router.push("/");
     } catch (error) {
@@ -139,36 +154,33 @@ export default function OnboardingForm() {
           )}
         />
 
-<FormField
+        <FormField
           control={form.control}
           name="occupation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Occupation</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-              >
+              <FormLabel className="sr-only">Occupation</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select your occupation" />
                   </SelectTrigger>
                 </FormControl>
+
                 <SelectContent>
-                    {(occupations ?? []).length > 0 ? (
-                    (occupations ?? []).map((occupation: { id: string; name: string }) => (
-                      <SelectItem 
-                        key={occupation.id} 
-                        value={occupation.id}
-                      >
-                        {occupation.name}
-                      </SelectItem>
-                    ))
-                    ) : (
+                  {occupations.length > 0 ? (
+                    occupations.map(
+                      (occupation: { id: string; name: string }) => (
+                        <SelectItem key={occupation.id} value={occupation.id}>
+                          {occupation.name}
+                        </SelectItem>
+                      ),
+                    )
+                  ) : (
                     <SelectItem value="none" disabled>
                       No occupations available
                     </SelectItem>
-                    )}
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -190,5 +202,16 @@ export default function OnboardingForm() {
   );
 }
 
+export default function OnboardingForm_(props: React.ComponentProps<typeof OnboardingForm>) {
+  const router = useRouter();
+  const profile = useReadProfile();
 
+  React.useEffect(() => {
+    if (!profile) return;
+    if (profile?.occupation !== 'None') {
+      router.push("/");
+    }
+  }, [profile, router]);
 
+  return <OnboardingForm {...props} />
+}

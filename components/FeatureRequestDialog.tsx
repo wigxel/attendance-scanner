@@ -18,7 +18,7 @@ import { toast } from "sonner";
 
 //import convex mutation and api
 import { api } from "@/convex/_generated/api";
-import {useMutation} from "convex/react";
+import { useMutation } from "convex/react";
 
 type FeatureRequestFormData = {
   subject: string;
@@ -30,7 +30,9 @@ export function FeatureRequestDialog() {
   const form = useForm<FeatureRequestFormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submitFeatureRequest = useMutation(api.myFunctions.submitFeatureRequest);
+  const submitFeatureRequest = useMutation(
+    api.myFunctions.submitFeatureRequest,
+  );
 
   const onSubmit = async (data: FeatureRequestFormData) => {
     setIsSubmitting(true);
@@ -62,8 +64,8 @@ export function FeatureRequestDialog() {
           <DialogHeader>
             <DialogTitle>Feature Request</DialogTitle>
             <DialogDescription>
-              We&apos;re continuously improving this app and would love to hear your
-              ideas. Share what features you&apos;d like to see added next!
+              We&apos;re continuously improving this app and would love to hear
+              your ideas. Share what features you&apos;d like to see added next!
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

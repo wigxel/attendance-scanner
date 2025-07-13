@@ -1,10 +1,6 @@
 "use client";
-
-import { useConvexAuth, useQuery } from "convex/react";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useRouter } from "next/navigation";
+import { useQuery } from "convex/react";
 import type React from "react";
-import { Button } from "@/components/ui/button";
 import { FeatureRequestDialog } from "@/components/FeatureRequestDialog";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 import { useReadProfile } from "@/hooks/auth";
@@ -12,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { Logo } from "@/components/logo";
 import { CheckInCard } from "@/components/CheckInCard";
 import { TakeAttendance } from "@/components/TakeAttendance";
+<<<<<<< HEAD
 
 function SignOutButton() {
   const router = useRouter();
@@ -34,6 +31,15 @@ function SignOutButton() {
     </>
   );
 }
+=======
+import {
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  UserButton,
+} from "@clerk/nextjs";
+>>>>>>> 1ae61dc8a06031aecee77e389eb8e30e42a96885
 
 function greet_time(): string {
   const date = new Date();
@@ -54,9 +60,13 @@ function Content() {
         <h1>
           <span className="flex text-xs lg:text-base">{greet_time()}</span>
           <span className="text-2xl lg:text-4xl font-sans tracking-[-1.5px] font-semibold">
-            {profile?.role !== "admin"
-              ? <>{profile?.firstName} {profile?.lastName}</>
-              : "Administrator"}
+            {profile?.role !== "admin" ? (
+              <>
+                {profile?.firstName} {profile?.lastName}
+              </>
+            ) : (
+              "Administrator"
+            )}
           </span>
         </h1>
 
@@ -122,7 +132,20 @@ export default function Home() {
           <div className="flex gap-3 items-center">
             <span>{profile?.firstName}</span>
 
-            <SignOutButton />
+            <SignedOut>
+              <SignInButton />
+              <SignUpButton>
+                <button
+                  type="button"
+                  className="bg-[#6c47ff] text-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer"
+                >
+                  Sign Up
+                </button>
+              </SignUpButton>
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
           </div>
         </header>
 

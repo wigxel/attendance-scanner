@@ -123,13 +123,13 @@ export default function OccupationManagement() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-              <header className="sticky top-0 z-10 p-4 border-b dark:border-slate-800 flex justify-between items-center bg-background">
-                <Logo className="w-[7rem] md:w-[9rem]" />
-      
-                <div className="flex gap-3 items-center">
-                  <span>{profile?.firstName}</span>
-                </div>
-              </header>
+      <header className="sticky top-0 z-10 p-4 border-b dark:border-slate-800 flex justify-between items-center bg-background">
+        <Logo className="w-[7rem] md:w-[9rem]" />
+
+        <div className="flex gap-3 items-center">
+          <span>{profile?.firstName}</span>
+        </div>
+      </header>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 text-center sm:text-left">
         <h2 className="text-2xl font-bold">Occupation Management</h2>
         <Dialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen}>
@@ -221,7 +221,10 @@ export default function OccupationManagement() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {(occupations ?? []).length > 0 ? (
           (occupations ?? []).map((occupation: Occupation) => (
-            <Card key={occupation.id} className="shadow-sm hover:shadow-md transition-shadow duration-200 border">
+            <Card
+              key={occupation.id}
+              className="shadow-sm hover:shadow-md transition-shadow duration-200 border"
+            >
               <CardHeader>
                 <CardTitle>{occupation.name}</CardTitle>
                 {occupation.description && (
@@ -243,7 +246,7 @@ export default function OccupationManagement() {
                 >
                   <Trash className="h-4 w-4 mr-1" /> Delete
                 </Button>
-              </CardFooter >
+              </CardFooter>
             </Card>
           ))
         ) : (

@@ -1,4 +1,3 @@
-
 interface IfProps {
   cond: boolean;
   children: React.ReactNode;

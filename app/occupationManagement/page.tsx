@@ -1,12 +1,12 @@
-import React from 'react'
-import OccupationManagement from '@/components/OccupationManagement';
+import React from "react";
+import OccupationManagement from "@/components/OccupationManagement";
 
 const Page = () => {
   return (
     <div>
-        <OccupationManagement />
+      <OccupationManagement />
     </div>
-  )
-}
+  );
+};
 
 export default Page;

@@ -11,7 +11,7 @@ export type UserRow = {
   role: "admin" | "user" | null;
   visitCount: number;
   eligible: boolean;
-}
+};
 
 export const columns: ColumnDef<UserRow>[] = [
   {
