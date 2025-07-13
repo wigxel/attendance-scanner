@@ -3,6 +3,7 @@ import TableComponent from "./table";
 import SeatComponent from "./seat";
 import { SeatReservationComponentProps } from "./seatReservation";
 import { Dispatch, SetStateAction } from "react";
+import { DateRange } from "react-day-picker";
 
 const TableWithSeats: React.FC<SeatReservationComponentProps> = ({
   cfg,
@@ -11,7 +12,8 @@ const TableWithSeats: React.FC<SeatReservationComponentProps> = ({
   seat,
   setSeat,
   numberOfSeats,
-  dbSeats
+  dbSeats,
+  selectedDate
 }) => (
   <div className={cfg.wrapper}>
     <div className={cfg.container}>
@@ -36,6 +38,7 @@ const TableWithSeats: React.FC<SeatReservationComponentProps> = ({
           positionClasses={s.position}
           seatBarPosition={s.bar}
           textAlignment={s.textAlignment}
+          selectedDate={selectedDate}
         />
       ))}
     </div>
@@ -53,15 +56,17 @@ export default function SeatingLayout({
   setTable,
   numberOfSeats,
   TABLE_LAYOUT,
-  dbSeats
+  dbSeats,
+  selectedDate
 }: {
-  seat: { seatAllocation: string; label: string }[];
-  setSeat: (s: { seatAllocation: string; label: string }[]) => void;
+  seat: { seatAllocation: string; label: string, seatStatus: string}[];
+  setSeat: (s: { seatAllocation: string; label: string, seatStatus: string }[]) => void;
   table: string[];
   setTable: Dispatch<SetStateAction<string[]>>
   numberOfSeats: number;
   TABLE_LAYOUT: TableCfg[]
   dbSeats: object[]
+  selectedDate: DateRange | undefined
 }) {
   return (
     <div className="w-full h-full flex items-center">
@@ -78,6 +83,7 @@ export default function SeatingLayout({
             throw new Error("Function not implemented.");
           } } TABLE_LAYOUT={[]}   
           dbSeats={dbSeats} 
+          selectedDate={selectedDate}
         />
       ))}
     </div>

@@ -17,7 +17,7 @@ export interface SeatReservationComponentProps {
     table: string[];
     setTable: Dispatch<SetStateAction<string[]>>;
     seat: SeatObject[];
-    setSeat: (s: { seatAllocation: string; label: string }[]) => void;
+    setSeat: (s: { seatAllocation: string; label: string, seatStatus: string }[]) => void;
     numberOfSeats: number
     cfg: TableCfg;
     TABLE_LAYOUT: Array<object>
@@ -108,6 +108,7 @@ export default function SeatReservationComponent(
                         numberOfSeats={numberOfSeats}
                         TABLE_LAYOUT={TABLE_LAYOUT_SECTION_1}
                         dbSeats={dbSeats ?? []}
+                        selectedDate={undefined}
                     />
                     
                 </div>
@@ -125,6 +126,7 @@ export default function SeatReservationComponent(
                     numberOfSeats={numberOfSeats}
                     TABLE_LAYOUT={TABLE_LAYOUT_SECTION_2}
                     dbSeats={dbSeats ?? []}
+                    selectedDate={undefined}
                 />
 
             </div>
@@ -140,7 +142,8 @@ export default function SeatReservationComponent(
                     setTable={setTable}
                     numberOfSeats={numberOfSeats}
                     TABLE_LAYOUT={TABLE_LAYOUT_SECTION_3}
-                    dbSeats={dbSeats ?? []}
+                    dbSeats={dbSeats ?? []}                       
+                    selectedDate={undefined}
                 />
                     
             </div>

@@ -16,6 +16,7 @@ import { SeatObject } from '@/components/seat';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import ToastComponentProps from '@/components/toast'
+import { SeatStatus } from '@/convex/seatReservation';
 
 interface MappedTable {
     selectedTable: string;
@@ -30,12 +31,10 @@ export default function ReservationScheduler() {
     const [selectedDate, setSelectedDate] = useState<DateRange | undefined>(undefined);
     const [duration, setDuration] = useState('') // custom time state
     const [numberOfSeats, setNumberOfSeats] = useState<number>(1);
-    const [step, setStep] = useState<string>('e-ticket'); // step in the reservation process
+    const [step, setStep] = useState<string>('scheduler'); // step in the reservation process
     const [table, setTable] = useState<string[]>([])//table selection
     const [seat, setSeat] = useState<SeatObject[]>([])//seat selection
     const [userId, setUserId] = useState<Id<'users'> | null>(null)
-
-    //mutations
     //insert reservation mutation 
     const createReservation = useMutation(api.reservation.createReservation);
     //insert reservation mutation 
@@ -87,9 +86,11 @@ export default function ReservationScheduler() {
                        selectedTable,
                        seatReserved: seatReserved.map(seat => ({
                            label: seat.label,
-                           seatAllocation: seat.seatAllocation
+                           seatAllocation: seat.seatAllocation,
+                           seatStatus: seat.seatStatus as SeatStatus
                        }))
-                   }))
+                   })),
+                   selectedDate: selectedDate ? `${selectedDate.from?.toISOString() || ''}${selectedDate.to ? ' - ' + selectedDate.to.toISOString() : ''}` : '',
                 }
             );
 
@@ -146,6 +147,8 @@ export default function ReservationScheduler() {
         return setUserId(user && user[0]?._id ? user[0]._id as Id<'users'> : null);
     }, [user, userId])
 
+    console.log(seat)
+
   return (
     <section className="w-full h-screen flex justify-center items-center p-4 xl:p-0 relative">
         <div className="w-full sm:w-[335px] h-[812px] flex flex-col justify-start items-center">
@@ -188,7 +191,8 @@ export default function ReservationScheduler() {
                         seats: []
                         }} 
                         TABLE_LAYOUT={[]}  
-                        dbSeats={[]}             
+                        dbSeats={[]}   
+                        selectedDate={selectedDate}          
                     />
                 }
            </form>

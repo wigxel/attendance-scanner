@@ -2,10 +2,12 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Toast from "./toast";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { DateRange } from "react-day-picker";
 
 export interface SeatObject {
     label: string;
     seatAllocation: string;
+    seatStatus: string;
 }
 
 export interface SeatId {
@@ -23,14 +25,15 @@ interface SeatComponentProps{
     positionClasses: string
     seatBarPosition: string
     textAlignment: string
-    dbSeats: { status?: string; seatOption?: string }[]
+    selectedDate: DateRange | undefined
+    // dbSeats: { status?: string; seatOption?: string }[]
 }
 
 export default function SeatComponent(
     { 
         seat, seatId, numberOfSeats,
         positionClasses, seatBarPosition,
-        textAlignment, table, setTable, dbSeats
+        textAlignment, table, setTable, selectedDate
     }: SeatComponentProps
 ) {
 
@@ -41,6 +44,8 @@ export default function SeatComponent(
     
     // compute relevant states
     const isSelected = seat.some(item => item.seatAllocation.includes(seatId.seatOption));
+    const dbseats = useQuery(api.seatReservation.getAllSeatReservations, { selectedDate });
+    // find the seat in the dbSeats array
     const dbSeat = dbSeats.find((item) => item.seatOption === seatId.seatOption);
     const isUnavailable = dbSeat && dbSeat.status !== 'seatAvailable'
 
@@ -87,7 +92,7 @@ export default function SeatComponent(
     // function to handle user seat selection
     const handleSeatSelection = () =>{
         //if the user clicks a button, then let them choose from the list of seats regardless of the table
-        const currentSeat = { seatAllocation: seatId.seatOption, label: seatId.name };
+        const currentSeat = { seatAllocation: seatId.seatOption, label: seatId.name, seatStatus: 'seatReserved'};
 
         const isAlreadySelected = seat.some(
             (s) => s.seatAllocation === currentSeat.seatAllocation && s.label === currentSeat.label

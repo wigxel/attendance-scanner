@@ -1,3 +1,5 @@
+import { DateRange } from "react-day-picker";
+
 export const TABLE_LAYOUT_SECTION_1 = [
   {
     // table 1
@@ -258,4 +260,5 @@ export interface TableCfg {
     textRotation: string;
   };
   seats: SeatCfg[];
+  selectedDate: DateRange | undefined
 }
