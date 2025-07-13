@@ -24,9 +24,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Logo } from "@/components/logo";
 import { Id } from "@/convex/_generated/dataModel";
-import { useReadProfile } from "@/hooks/auth";
 
 export default function OccupationManagement() {
   //state for form values
@@ -119,25 +117,16 @@ export default function OccupationManagement() {
     setCurrentOccupationId(null);
   };
 
-  const profile = useReadProfile();
-
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-      <header className="sticky top-0 z-10 p-4 border-b dark:border-slate-800 flex justify-between items-center bg-background">
-        <Logo className="w-[7rem] md:w-[9rem]" />
-
-        <div className="flex gap-3 items-center">
-          <span>{profile?.firstName}</span>
-        </div>
-      </header>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 text-center sm:text-left">
-        <h2 className="text-2xl font-bold">Occupation Management</h2>
+    <div className="flex gap-4 flex-col">
+      <div className="flex justify-end">
         <Dialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => resetForm()}>
               <Plus className="mr-2 h-4 w-4" /> Add Occupation
             </Button>
           </DialogTrigger>
+
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Occupation</DialogTitle>

@@ -19,9 +19,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "InSpace",
-  description: "Learn and upskill in the diversity of tech",
+  description: "Be the best version of yourself.",
   icons: {
-    icon: "/convex.svg",
+    icon: "/logo.svg",
   },
 };
 
