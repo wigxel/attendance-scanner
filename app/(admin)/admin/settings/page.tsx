@@ -12,12 +12,19 @@ export default function SettingsPage() {
 
       <Tabs defaultValue="onboarding">
         <section className="flex min-h-[400px]">
-          <div className="flex w-full mx-auto bg-white dark:bg-black rounded-lg ">
+          <div className="flex w-full mx-auto bg-white p-1  dark:bg-black rounded-lg gap-4">
             {/* Tabs List (Sidebar) */}
-            <div className="w-96 p-6">
+            <div className="w-96 p-4">
               <TabsList className="flex flex-col gap-2 w-full bg-transparent p-0">
-                <TabsTrigger value="onboarding" className="justify-start w-full">Onboarding</TabsTrigger>
-                <TabsTrigger value="profile" className="justify-start w-full">User Profile</TabsTrigger>
+                <TabsTrigger
+                  value="onboarding"
+                  className="justify-start w-full"
+                >
+                  Onboarding
+                </TabsTrigger>
+                <TabsTrigger value="profile" className="justify-start w-full">
+                  User Profile
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -27,14 +34,11 @@ export default function SettingsPage() {
                 <OccupationManagement />
               </TabsContent>
 
-              <TabsContent value="profile">
-                Hello man
-              </TabsContent>
+              <TabsContent value="profile">Hello man</TabsContent>
             </section>
           </div>
-
         </section>
       </Tabs>
-    </div >
+    </div>
   );
 }

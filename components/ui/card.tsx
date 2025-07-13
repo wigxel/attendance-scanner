@@ -4,16 +4,30 @@ import { cn } from "@/lib/utils";
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
-      className,
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  const { children, ...rest } = props;
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "rounded-lg border bg-card text-card-foreground shadow-sm",
+        "flex shadow-inner p-0.5 rounded-[1.2rem] bg-gray-100",
+      )}
+      {...rest}
+    >
+      <div
+        className={cn(
+          "bg-white  w-full gap-2 flex flex-col border border-opacity-25 rounded-[1rem]",
+          className,
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+});
+
 Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<
@@ -22,7 +36,7 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    className={cn("flex flex-col space-y-1.5 p-4 border-b border-gray-100", className)}
     {...props}
   />
 ));

@@ -48,7 +48,9 @@ const onboardingSchema = z.object({
 
 type OnboardingFormValues = z.infer<typeof onboardingSchema>;
 
-function OnboardingForm({ initial }: { initial: Partial<OnboardingFormValues> }) {
+function OnboardingForm({
+  initial,
+}: { initial: Partial<OnboardingFormValues> }) {
   const router = useRouter();
   const updateUser = useMutation(api.myFunctions.updateUser);
 
@@ -58,13 +60,16 @@ function OnboardingForm({ initial }: { initial: Partial<OnboardingFormValues> })
   // Define form with zod resolver
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingSchema),
-    defaultValues: React.useMemo(() => ({
-      firstName: "",
-      lastName: "",
-      phoneNumber: "+234",
-      occupation: "",
-      ...initial
-    }), [initial])
+    defaultValues: React.useMemo(
+      () => ({
+        firstName: "",
+        lastName: "",
+        phoneNumber: "+234",
+        occupation: "",
+        ...initial,
+      }),
+      [initial],
+    ),
   });
 
   // Handle form submission
@@ -202,16 +207,18 @@ function OnboardingForm({ initial }: { initial: Partial<OnboardingFormValues> })
   );
 }
 
-export default function OnboardingForm_(props: React.ComponentProps<typeof OnboardingForm>) {
+export default function OnboardingForm_(
+  props: React.ComponentProps<typeof OnboardingForm>,
+) {
   const router = useRouter();
   const profile = useReadProfile();
 
   React.useEffect(() => {
     if (!profile) return;
-    if (profile?.occupation !== 'None') {
+    if (profile?.occupation !== "None") {
       router.push("/");
     }
   }, [profile, router]);
 
-  return <OnboardingForm {...props} />
+  return <OnboardingForm {...props} />;
 }

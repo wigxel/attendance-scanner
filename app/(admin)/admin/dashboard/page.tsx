@@ -1,6 +1,5 @@
-import { Navbar } from '@/components/navbar';
-import { TakeAttendance } from '@/components/TakeAttendance';
-import type { Metadata } from 'next';
+import { TodaysCustomers } from "@/components/customers";
+import { TakeAttendance } from "@/components/TakeAttendance";
 
 type PageProps = {
   params: {
@@ -8,19 +7,17 @@ type PageProps = {
   };
 };
 
-export const metadata: Metadata = {
-  title: 'Admin',
-};
-
 const Page = ({ params }: PageProps) => {
   return (
     <>
-      <main className="p-8">
+      <section className="p-8">
         <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-        <p>Welcome to your dashboard. Here you can view an overview of your application.</p>
-      </main>
+      </section>
 
-      <TakeAttendance />
+      <div className="grid-cols-4 grid gap-4">
+        <TakeAttendance />
+        <TodaysCustomers />
+      </div>
     </>
   );
 };

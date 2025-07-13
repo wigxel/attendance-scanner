@@ -90,15 +90,7 @@ export function isNumberLike(value: unknown): value is number {
 }
 
 export const serialNo = (num: number): string => {
-  if (num === 0) return "00";
-
-  if (Math.abs(num) < 10) {
-    if (num < 0) {
-      return `-0${Math.abs(num)}`;
-    }
-    return `0${num}`;
-  }
-  return String(num);
+  return String(num).padStart(2, "0");
 };
 
 export function isObject(data: unknown): data is Record<string, unknown> {

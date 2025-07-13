@@ -32,7 +32,7 @@ export const getProfile = query({
 
 export const getUserById = query({
   args: {
-    userId: v.string()
+    userId: v.string(),
   },
   handler: async (ctx, args) => {
     return await ctx.db
@@ -210,9 +210,8 @@ export const getUserStats = query({
     userId: v.string(),
   },
   handler: async (ctx, { userId }) => {
-
     const customer = await ctx.runQuery(api.myFunctions.getUserById, {
-      userId: userId
+      userId: userId,
     });
 
     if (!customer) {
@@ -220,7 +219,10 @@ export const getUserStats = query({
       return null;
     }
 
-    const { firstName, lastName } = customer as { firstName: string, lastName: string };
+    const { firstName, lastName } = customer as {
+      firstName: string;
+      lastName: string;
+    };
 
     const stats = await ctx.db
       .query("stats")

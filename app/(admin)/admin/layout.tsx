@@ -3,15 +3,17 @@ import { Header } from "@/components/header";
 import { Navbar } from "@/components/navbar";
 
 export default function AdminLayout(props: { children: React.ReactNode }) {
-  return <>
-    <Header />
+  return (
+    <div className="scanline-container relative">
+      <Header />
 
-    <Navbar />
+      <Navbar />
 
-    <main className="mx-auto container">
-      {props.children}
-    </main>
+      <main className="mx-auto container min-h-[calc(100svh_-_150px)]">
+        {props.children}
+      </main>
 
-    <Footer />
-  </>
+      <Footer />
+    </div>
+  );
 }

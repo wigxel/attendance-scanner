@@ -244,7 +244,7 @@ export default function QRCodeScanner({
             type="button"
             variant="default"
             onClick={() => getCameras()}
-            className="mt-4 w-full"
+            className="w-full"
           >
             Scan QR Code
           </Button>

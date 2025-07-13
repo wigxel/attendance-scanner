@@ -37,7 +37,6 @@ export function TakeAttendance() {
         return;
       }
 
-
       const is_registered = await convex.query(
         api.myFunctions.isUserRegisteredForToday,
         {
@@ -104,67 +103,69 @@ export function TakeAttendance() {
   };
 
   return (
-    <div>
-      <div className="mb-6">
-        {scanningEnabled ? (
-          <QRCodeScanner
-            onScan={(data) => {
-              setScanningEnabled(false); // Disable scanning after successful scan
-              handleScan(data);
-            }}
-            onError={handleError}
-          />
-        ) : (
-          <div className="flex flex-col items-center gap-4">
-            {processing ? (
-              <div className="text-center p-4">
-                <div className="animate-pulse mb-2">Processing...</div>
-                <p className="text-sm text-muted-foreground">
-                  Recording attendance data
-                </p>
-              </div>
-            ) : (
-              <div className="text-center p-4">
-                <div className="text-green-500 mb-2">Scan Complete</div>
-                <p className="text-sm text-muted-foreground">
-                  QR code processed successfully
-                </p>
-              </div>
-            )}
+    <section className="flex shadow-inner p-1 rounded-[1.2rem] bg-gray-100">
+      <div className="bg-white  gap-2 flex flex-col border border-opacity-25 rounded-[1.1rem] p-2">
+        <>
+          {scanningEnabled ? (
+            <QRCodeScanner
+              onScan={(data) => {
+                setScanningEnabled(false); // Disable scanning after successful scan
+                handleScan(data);
+              }}
+              onError={handleError}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              {processing ? (
+                <div className="text-center p-4">
+                  <div className="animate-pulse mb-2">Processing...</div>
+                  <p className="text-sm text-muted-foreground">
+                    Recording attendance data
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center p-4">
+                  <div className="text-green-500 mb-2">Scan Complete</div>
+                  <p className="text-sm text-muted-foreground">
+                    QR code processed successfully
+                  </p>
+                </div>
+              )}
 
-            <Button
-              onClick={resetScanner}
-              disabled={processing}
-              className="w-full"
-            >
-              Scan Another Code
-            </Button>
-          </div>
-        )}
+              <Button
+                onClick={resetScanner}
+                disabled={processing}
+                className="w-full"
+              >
+                Scan Another Code
+              </Button>
+            </div>
+          )}
+        </>
+
+        <If cond={isDevelopment}>
+          {scannedData && (
+            <div className="mt-6 p-4 border rounded-lg bg-muted">
+              <h2 className="text-lg font-medium mb-2">QR Data:</h2>
+              <pre className="text-xs overflow-auto p-2 bg-background rounded">
+                {scannedData}
+              </pre>
+            </div>
+          )}
+        </If>
+
+        <div className="p-4 border rounded-lg bg-yellow-100">
+          <h2 className="text-lg font-medium mb-2">Instructions:</h2>
+          <ul className="text-sm list-disc list-inside">
+            <li>
+              Scan the attendance QR code displayed on the member&apos;s profile
+            </li>
+            <li>The camera will automatically detect the QR code</li>
+            <li>Attendance will be recorded instantly</li>
+            <li>You can scan multiple codes in succession</li>
+          </ul>
+        </div>
       </div>
-
-      <If cond={isDevelopment}>
-        {scannedData && (
-          <div className="mt-6 p-4 border rounded-lg bg-muted">
-            <h2 className="text-lg font-medium mb-2">QR Data:</h2>
-            <pre className="text-xs overflow-auto p-2 bg-background rounded">
-              {scannedData}
-            </pre>
-          </div>
-        )}
-      </If>
-
-      <div className="mt-6 p-4 border rounded-lg bg-muted">
-        <h2 className="text-lg font-medium mb-2">Instructions:</h2>
-        <ul className="text-sm list-disc list-inside">
-          <li>
-            Scan the attendance QR code displayed on the member&apos;s profile
-          </li>
-          <li>The camera will automatically detect the QR code</li>
-          <li>Attendance will be recorded instantly</li>
-          <li>You can scan multiple codes in succession</li>
-        </ul>
-      </div>
-    </div>
+    </section>
   );
 }

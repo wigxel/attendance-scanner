@@ -24,8 +24,8 @@ function Content() {
   const profile = useReadProfile();
   const router = useRouter();
 
-  if (profile?.role === 'admin') {
-    router.push('/admin')
+  if (profile?.role === "admin") {
+    router.push("/admin");
   }
 
   return (
@@ -62,8 +62,8 @@ function Content() {
             </h1>
 
             <p className="text-base text-balance text-muted-foreground">
-              You might just inspire us to add something you need.
-              Don&apos;t hesitate to share your awesome ideas.
+              You might just inspire us to add something you need. Don&apos;t
+              hesitate to share your awesome ideas.
             </p>
             <div className="mt-2" />
           </div>
