@@ -1,3 +1,4 @@
+"use client"
 import { TodaysCustomers } from "@/components/customers";
 import { TakeAttendance } from "@/components/TakeAttendance";
 
@@ -14,9 +15,12 @@ const Page = ({ params }: PageProps) => {
         <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
       </section>
 
-      <div className="grid-cols-4 grid gap-4">
-        <TakeAttendance />
+      <div className="grid-cols-1 md:grid-cols-4 grid gap-4">
+        <div>
+          <TakeAttendance />
+        </div>
         <TodaysCustomers />
+
       </div>
     </>
   );

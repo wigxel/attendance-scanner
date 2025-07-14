@@ -11,6 +11,7 @@ import { useCustomer } from "@/hooks/auth";
 import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, formatDistanceToNow, formatISO, parseISO, setHours } from "date-fns";
 import { pipe, Option } from "effect";
 import { EmptyState, EmptyStateConceal, EmptyStateContent, EmptyStateDescription, EmptyStateTitle } from "./empty-state";
+import { ScrollArea } from "./ui/scroll-area";
 
 export function useUsers() {
   const record = useQuery(api.myFunctions.getAllUsers);
@@ -75,13 +76,16 @@ export function TodaysCustomers() {
 
         <EmptyStateConceal>
           <CardContent className="p-0">
-            <ul>
-              {records.map((e) => {
-                return (
-                  <RegisteredUserEntry entry={e} key={e._id} />
-                );
-              })}
-            </ul>
+            <ScrollArea>
+              <ul className="h-[32rem]">
+                {records.map((e) => {
+                  return (
+                    <RegisteredUserEntry entry={e} key={e._id} />
+                  );
+                })}
+              </ul>
+            </ScrollArea>
+
           </CardContent>
         </EmptyStateConceal>
       </EmptyState>

@@ -71,11 +71,17 @@ http.route({
   handler: syncConvexUsers,
 });
 
-// http.route({
-//   method: "POST",
-//   path: "/sync/users",
-//   handler: syncConvexUsers,
-// });
+const writeTx = httpAction(async (ctx, res) => {
+  console.log('#### >>', res.body);
+
+  return Response.json({ message: "OK" });
+})
+
+http.route({
+  method: "POST",
+  path: "/integrations/payments",
+  handler: writeTx,
+});
 
 // Add any custom HTTP routes here if needed in the future
 export default http;
