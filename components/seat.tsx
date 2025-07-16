@@ -1,8 +1,10 @@
+'use client'
+
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Toast from "./toast";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { DateRange } from "react-day-picker";
+import { useQuery } from "convex/react";
+import { api } from "../convex/_generated/api";
 
 export interface SeatObject {
     label: string;
@@ -25,28 +27,23 @@ interface SeatComponentProps{
     positionClasses: string
     seatBarPosition: string
     textAlignment: string
-    selectedDate: DateRange | undefined
-    // dbSeats: { status?: string; seatOption?: string }[]
+    reservedSeatsFromDb: object[] | undefined
 }
 
 export default function SeatComponent(
     { 
         seat, seatId, numberOfSeats,
         positionClasses, seatBarPosition,
-        textAlignment, table, setTable, selectedDate
+        textAlignment, table, setTable, reservedSeatsFromDb
     }: SeatComponentProps
 ) {
-
-    const [seatStatus, setSeatStatus] = useState<(string | undefined)[]>([])
-    
     //check is seat option identifier is included in the seat array to determine styling
-    // check if seat is available and a match to determine styling
+    // check if seat is available and a match to determine 
     
     // compute relevant states
     const isSelected = seat.some(item => item.seatAllocation.includes(seatId.seatOption));
-    // const dbSeats = useQuery(api.seatReservation.getAllSeatReservations, { selectedDate  });
     // find the seat in the dbSeats array
-    // const dbSeat = dbSeats && dbSeats.find((item) => item.seatOption === seatId.seatOption);
+    // const dbSeat = testCase && testCase.find((item) => item.seatOption === seatId.seatOption);
     // const isUnavailable = dbSeat && dbSeat.status !== 'seatAvailable'
 
     // Conditionally build class strings
@@ -161,17 +158,13 @@ export default function SeatComponent(
         
     }, [seat, setTable]);
 
-    useEffect(() => {
-        // const allSeat = dbSeats && dbSeats.map((item: { status?: string }) => item);
-        // setSeatStatus(allSeat as (string | undefined)[]);
-    }, [])
-
+    console.log(reservedSeatsFromDb)
   return (
     <button
         type='button'
         onClick={() => {
             // if the seat is available, then handle seat selection
-            // dbSeats.map((item: { status?: string, seatOption?: string }) => ((item.seatOption === seatId.seatOption && item.status === 'seatAvailable') ? handleSeatSelection() : false));
+            // return testCase && testCase.map((item: { status?: string, seatOption?: string }) => ((item.seatOption === seatId.seatOption && item.status === 'seatAvailable') ? handleSeatSelection() : false));
             handleSeatSelection()
         }}
         className={buttonClasses}
@@ -183,6 +176,7 @@ export default function SeatComponent(
                 className={barClasses} 
             />
         </span>
+
     </button>
   )
 }

@@ -5,21 +5,45 @@ import { v } from "convex/values";
 export type SeatStatus = "seatAvailable" | "seatReserved" | "seatSelected";
 // single seat reservation fetch
 export const getSeatReservation = query({
-    args: {seatReservationID: v.id('seatReservations')},
-    handler: async (ctx, args) => {
-      return await ctx.db.get(args.seatReservationID)
-    }
+  args: {seatReservationID: v.id('seatReservations')},
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.seatReservationID)
+  }
 })
 
 // all seats fetch
 export const getAllSeatReservations = query({
-    args: {date: v.string()},
-    handler: async (ctx, args) => {
-      return await ctx.db.query('seatReservations')
-        .withIndex("by_date", (q) =>q.eq("date", args.date))
-        .order('asc')
-        .collect()
+  args: {
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string())
+  },
+   handler: async (ctx, args) => {
+    // query without filter
+    const allSeats = ctx.db.query("seatReservations");
+    
+    // date range filter
+    if (args.startDate && args.endDate) {
+      return await allSeats
+        .withIndex("by_date", (q) =>
+          q
+            .gte("date", args.startDate)
+            .lte("date", args.endDate)
+        )
+        .collect();
     }
+    
+    // single date filter
+    if (args.startDate) {
+      return await allSeats
+        .withIndex("by_date", (q) =>
+          q.eq("date", args.startDate)
+        )
+        .collect();
+    }
+    
+    // return everything if there is no filter
+    return await allSeats.collect();
+  }
 })
 
 export const createSeatReservation = mutation({

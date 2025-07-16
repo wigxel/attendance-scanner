@@ -1,6 +1,5 @@
 'use client'
 
-import SignInForm from '@/components/SignInForm';
 import React, { useState } from 'react'
 
 export default function UserLogin() {
@@ -20,7 +19,6 @@ export default function UserLogin() {
           <span className="my-4">Please log in to get started</span>
         </header>
           
-        {/* <SignInForm onError={setError} onToggleFlow={() => { setFlow('signIn') }} /> */}
 
       </div>
 

@@ -1,9 +1,13 @@
+'use client'
+
 import { TableCfg } from "@/lib/tableData";
 import TableComponent from "./table";
 import SeatComponent from "./seat";
 import { SeatReservationComponentProps } from "./seatReservation";
 import { Dispatch, SetStateAction } from "react";
 import { DateRange } from "react-day-picker";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 const TableWithSeats: React.FC<SeatReservationComponentProps> = ({
   cfg,
@@ -12,7 +16,7 @@ const TableWithSeats: React.FC<SeatReservationComponentProps> = ({
   seat,
   setSeat,
   numberOfSeats,
-  selectedDate
+  reservedSeatsFromDb
 }) => (
   <div className={cfg.wrapper}>
     <div className={cfg.container}>
@@ -36,7 +40,7 @@ const TableWithSeats: React.FC<SeatReservationComponentProps> = ({
           positionClasses={s.position}
           seatBarPosition={s.bar}
           textAlignment={s.textAlignment}
-          selectedDate={selectedDate}
+          reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined}
         />
       ))}
     </div>
@@ -54,17 +58,17 @@ export default function SeatingLayout({
   setTable,
   numberOfSeats,
   TABLE_LAYOUT,
-  selectedDate
+  reservedSeatsFromDb 
 }: {
   seat: { seatAllocation: string; label: string, seatStatus: string}[];
   setSeat: (s: { seatAllocation: string; label: string, seatStatus: string }[]) => void;
   table: string[];
   setTable: Dispatch<SetStateAction<string[]>>
   numberOfSeats: number;
+  reservedSeatsFromDb?: object[] |undefined
   TABLE_LAYOUT: TableCfg[]
-  dbSeats: object[]
-  selectedDate: DateRange | undefined
 }) {
+    
   return (
     <div className="w-full h-full flex items-center">
       {TABLE_LAYOUT.map((cfg) => (
@@ -79,7 +83,7 @@ export default function SeatingLayout({
           setStep={function (value: SetStateAction<string>): void {
             throw new Error("Function not implemented.");
           } } TABLE_LAYOUT={[]}   
-          selectedDate={selectedDate}
+          reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined}
         />
       ))}
     </div>

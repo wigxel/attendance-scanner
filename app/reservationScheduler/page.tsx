@@ -35,24 +35,31 @@ export default function ReservationScheduler() {
     const [table, setTable] = useState<string[]>([])//table selection
     const [seat, setSeat] = useState<SeatObject[]>([])//seat selection
     const [userId, setUserId] = useState<Id<'users'> | null>(null)
+    const [reservedSeatsFromDb, setReservedSeatsFromDb] = useState<object[] | undefined>(undefined)
+
+    const startDate = selectedDate?.from?.toISOString()|| undefined;
+    const endDate = selectedDate?.to?.toISOString() || undefined;
+
     //insert reservation mutation 
     const createReservation = useMutation(api.reservation.createReservation);
     //insert reservation mutation 
     const createSeatReservation = useMutation(api.seatReservation.createSeatReservation);
-
     //queries
+    // fetch all the seat reservation by date
+    // const reservedSeatsFromDb = useQuery(api.seatReservation.getAllSeatReservations, startDate ? endDate ? { startDate, endDate  } : { startDate } : "skip")
+    const reservationData = useQuery(api.seatReservation.getAllSeatReservations, {startDate: undefined})
+
     //fetch all user for testing as we have just one user in the db. 
     // However it should fetch the details of the Authenticated user.
     const user = useQuery(api.users.getAllUsers)
-   
-    // const { watch} = useForm();
-    
+
     // useEffect(() => {
     //     // If user is not authenticated, redirect to sign-in page
     //     if (!isAuthenticated) {
     //     router.push("/userLogin");
     //     }
     // }, [isAuthenticated, router])
+
     const seatToTable = (seatOption: string) => {
         // Exact match for Hub manager
         if (seatOption === 'Hub Manager') return 'Hub Manager';
@@ -78,6 +85,7 @@ export default function ReservationScheduler() {
         return acc;
     }, []);
 
+    //save reserved seats to database
     const handleCreateSeatReservation = async () => {
         try{
             return await createSeatReservation(
@@ -147,7 +155,29 @@ export default function ReservationScheduler() {
         return setUserId(user && user[0]?._id ? user[0]._id as Id<'users'> : null);
     }, [user, userId])
 
-    console.log(seat)
+    useEffect(() => {
+        if (!reservationData || !startDate) return;
+
+        const reservedSeatsByDate = reservationData
+            .filter((item) => {
+            const itemDate = item.date;
+            return (
+                    itemDate &&
+                    itemDate >= startDate &&
+                    (!endDate || itemDate <= endDate)
+                );
+            })
+            .flatMap((item) =>
+                item.table.flatMap((tableItem) =>
+                        tableItem.seatReserved.map((seatItem) => ({
+                        seatStatus: seatItem.seatStatus,
+                        allocation: seatItem.seatAllocation,
+                    }))
+                )
+            );
+            
+            setReservedSeatsFromDb(reservedSeatsByDate);
+        }, [reservationData, startDate, endDate]);
 
   return (
     <section className="w-full h-screen flex justify-center items-center p-4 xl:p-0 relative">
@@ -191,7 +221,7 @@ export default function ReservationScheduler() {
                         seats: []
                         }} 
                         TABLE_LAYOUT={[]}  
-                        selectedDate={selectedDate}          
+                        reservedSeatsFromDb={reservedSeatsFromDb ?? undefined}
                     />
                 }
            </form>

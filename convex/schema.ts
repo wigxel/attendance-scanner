@@ -74,7 +74,7 @@ const seatReservations = defineTable({
             seatAllocation: v.string(), 
             label: v.string(),
             seatStatus: v.union(
-              v.literal ('seatAvailable'),
+              v.literal('seatAvailable'),
               v.literal('seatReserved'),
               v.literal('seatSelected') 
             ),
@@ -86,7 +86,7 @@ const seatReservations = defineTable({
   date: v.optional(v.string()),
   createdAt: v.optional(v.number()),
   updatedAt: v.optional(v.number()), 
-}).index('by_date', ['date']);
+}).index("by_date", ["date"]);
 
 const seats = defineTable({
   label: v.string(),

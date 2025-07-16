@@ -7,12 +7,9 @@ import RadioFilterComponent from '@/components/filter'
 import ReservationNavigationComponent from './reservationNavigation';
 import ToastComponentProps from './toast';
 import { SeatObject } from './seat';
-import { useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
 import { SeatStatus } from '@/convex/seats';
 import { TABLE_LAYOUT_SECTION_1, TABLE_LAYOUT_SECTION_2, TABLE_LAYOUT_SECTION_3, TableCfg } from '@/lib/tableData' //data for refactored table;
 import SeatingLayout from './seatingLayout';//refactored seating layout which calls the table and seats components;
-import { DateRange } from 'react-day-picker';
 export interface SeatReservationComponentProps {
     setStep: Dispatch<SetStateAction<string>>;
     table: string[];
@@ -22,7 +19,7 @@ export interface SeatReservationComponentProps {
     numberOfSeats: number
     cfg: TableCfg;
     TABLE_LAYOUT: Array<object>
-    selectedDate: DateRange | undefined;
+    reservedSeatsFromDb?: object[] | undefined;
 }
 
 // each table has seat options and each seat has an optionId assigned to it for the table it belongs
@@ -30,17 +27,15 @@ export default function SeatReservationComponent(
     {
         setStep, numberOfSeats,
         table, setTable,
-        seat, setSeat
+        seat, setSeat, reservedSeatsFromDb
     }: SeatReservationComponentProps
 ) {
     const [seatFilter, setSeatFilter] = useState<SeatStatus>('seatAvailable')
 
-    // fetch all the seats from our db using the filter
-    const dbSeats = useQuery(api.seats.getAllSeats, { seatFilter })
-
     const { isAuthenticated } = useConvexAuth();
     const router = useRouter();
 
+    
     // useEffect(() => {
     //     // If user is not authenticated, redirect to sign-in page
     //     if (!isAuthenticated) {
@@ -68,7 +63,7 @@ export default function SeatReservationComponent(
         {id: 'seatSelected', checker: 'seatSelected', label: 'Selected'},
         {id: 'seatAvailable', checker: 'seatAvailable', label: 'Available'},
     ]
-
+    
   return (
     <section className="w-full h-fit flex justify-center items-start p-4 xl:p-0 mt-10 xl:mt-0" >
         {/* navigation for component rendering  */}
@@ -108,8 +103,7 @@ export default function SeatReservationComponent(
                         setTable={setTable}
                         numberOfSeats={numberOfSeats}
                         TABLE_LAYOUT={TABLE_LAYOUT_SECTION_1}
-                        dbSeats={dbSeats ?? []}
-                        selectedDate={undefined}
+                        reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined}
                     />
                     
                 </div>
@@ -126,8 +120,7 @@ export default function SeatReservationComponent(
                     setTable={setTable}
                     numberOfSeats={numberOfSeats}
                     TABLE_LAYOUT={TABLE_LAYOUT_SECTION_2}
-                    dbSeats={dbSeats ?? []}
-                    selectedDate={undefined}
+                    reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined}
                 />
 
             </div>
@@ -142,9 +135,8 @@ export default function SeatReservationComponent(
                     table={table}
                     setTable={setTable}
                     numberOfSeats={numberOfSeats}
-                    TABLE_LAYOUT={TABLE_LAYOUT_SECTION_3}
-                    dbSeats={dbSeats ?? []}                       
-                    selectedDate={undefined}
+                    TABLE_LAYOUT={TABLE_LAYOUT_SECTION_3}    
+                    reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined} 
                 />
                     
             </div>
