@@ -64,6 +64,7 @@ const reservations = defineTable({
 }).index("by_users", ["userId"])
   .index("by_status", ["status"])
 
+ //schema for seat reservation 
 const seatReservations = defineTable({
   table: v.array(
     v.object({
@@ -86,7 +87,7 @@ const seatReservations = defineTable({
   date: v.optional(v.string()),
   createdAt: v.optional(v.number()),
   updatedAt: v.optional(v.number()), 
-}).index("by_date", ["date"]);
+})
 
 const seats = defineTable({
   label: v.string(),

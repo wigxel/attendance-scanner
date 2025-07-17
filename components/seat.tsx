@@ -3,8 +3,7 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Toast from "./toast";
 import { DateRange } from "react-day-picker";
-import { useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
+import { SeatStatus } from "./filter";
 
 export interface SeatObject {
     label: string;
@@ -27,13 +26,14 @@ interface SeatComponentProps{
     positionClasses: string
     seatBarPosition: string
     textAlignment: string
-    reservedSeatsFromDb: object[] | undefined
+    reservedSeatsFromDb: {seatReservationStatus: string; allocation: string}[] | undefined
+    seatFilter?: SeatStatus | undefined
 }
 
 export default function SeatComponent(
     { 
         seat, seatId, numberOfSeats,
-        positionClasses, seatBarPosition,
+        positionClasses, seatBarPosition, seatFilter,
         textAlignment, table, setTable, reservedSeatsFromDb
     }: SeatComponentProps
 ) {
@@ -42,19 +42,36 @@ export default function SeatComponent(
     
     // compute relevant states
     const isSelected = seat.some(item => item.seatAllocation.includes(seatId.seatOption));
-    // find the seat in the dbSeats array
-    // const dbSeat = testCase && testCase.find((item) => item.seatOption === seatId.seatOption);
-    // const isUnavailable = dbSeat && dbSeat.status !== 'seatAvailable'
+    
+    // Find the seat in the reservedSeatsFromDb array
+    const dbSeat = reservedSeatsFromDb?.find(
+        (item) => item?.allocation === seatId?.seatOption
+    );
 
-    // Conditionally build class strings
-    const seatBg = isSelected ? 'bg-[var(--primary)] text-white' : 'bg-[#D9D9D9] text-[var(--primary)]';
-    // const seatUnavailable = isUnavailable ?  'bg-[var(--primary)] text-white' : 'bg-[#D9D9D9] text-[var(--primary)]';;
+    // Determine the correct seat status
+    const seatStatus = dbSeat?.seatReservationStatus;
 
+    // Determine the correct class based on seat status and filter
+    let seatStatusClass = 'bg-[#D9D9D9] text-[var(--primary)]';
+
+    if (seatStatus === 'seatReserved' && seatFilter === 'seatReserved') {
+        seatStatusClass = 'bg-blue-300 text-white';
+    } else if (seatStatus === 'seatSelected' && seatFilter === 'seatSelected') {
+        seatStatusClass = 'bg-red-200 text-white';
+    } else if (seatStatus === 'seatAvailable' && seatFilter === 'seatAvailable') {
+        seatStatusClass = 'bg-[var(--primary)] text-white';
+    }
+
+    // Optionally override if user manually selected it
+    const seatBg = isSelected
+        ? 'bg-[var(--primary)] text-white'
+        : seatStatusClass;
+
+    // Final class strings
     const buttonClasses = `
         absolute w-4 h-[31px] ${positionClasses} cursor-pointer flex items-center justify-center rounded group border hover:border-[var(--primary)]
-        ${seatBg} 
+        ${seatBg}
     `;
-    //${seatUnavailable} ie {seatBg} ${seatUnavailable}
 
     const barClasses = `
         absolute w-1 h-[39px] ${seatBarPosition} rounded border group-hover:border-[var(--primary)]
@@ -158,14 +175,17 @@ export default function SeatComponent(
         
     }, [seat, setTable]);
 
-    console.log(reservedSeatsFromDb)
   return (
     <button
         type='button'
         onClick={() => {
             // if the seat is available, then handle seat selection
-            // return testCase && testCase.map((item: { status?: string, seatOption?: string }) => ((item.seatOption === seatId.seatOption && item.status === 'seatAvailable') ? handleSeatSelection() : false));
-            handleSeatSelection()
+            return (!dbSeat) ? 
+                handleSeatSelection() : 
+                (
+                    Toast({ type: 'warning', message: 'This seat is already selected or reserved.' }),
+                    false
+            )
         }}
         className={buttonClasses}
     >

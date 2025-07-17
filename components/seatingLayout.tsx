@@ -5,18 +5,20 @@ import TableComponent from "./table";
 import SeatComponent from "./seat";
 import { SeatReservationComponentProps } from "./seatReservation";
 import { Dispatch, SetStateAction } from "react";
-import { DateRange } from "react-day-picker";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { SeatStatus } from "./filter";
 
-const TableWithSeats: React.FC<SeatReservationComponentProps> = ({
+type ExtendedSeatReservationComponentProps = SeatReservationComponentProps & {
+  seatFilter: SeatStatus | undefined; // or whatever type seatFilter is
+};
+const TableWithSeats: React.FC<ExtendedSeatReservationComponentProps> = ({
   cfg,
   table,
   setTable,
   seat,
   setSeat,
   numberOfSeats,
-  reservedSeatsFromDb
+  reservedSeatsFromDb,
+  seatFilter
 }) => (
   <div className={cfg.wrapper}>
     <div className={cfg.container}>
@@ -41,6 +43,7 @@ const TableWithSeats: React.FC<SeatReservationComponentProps> = ({
           seatBarPosition={s.bar}
           textAlignment={s.textAlignment}
           reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined}
+          seatFilter={seatFilter}
         />
       ))}
     </div>
@@ -58,15 +61,17 @@ export default function SeatingLayout({
   setTable,
   numberOfSeats,
   TABLE_LAYOUT,
-  reservedSeatsFromDb 
+  reservedSeatsFromDb,
+  seatFilter
 }: {
   seat: { seatAllocation: string; label: string, seatStatus: string}[];
   setSeat: (s: { seatAllocation: string; label: string, seatStatus: string }[]) => void;
   table: string[];
   setTable: Dispatch<SetStateAction<string[]>>
   numberOfSeats: number;
-  reservedSeatsFromDb?: object[] |undefined
+  reservedSeatsFromDb?: {seatReservationStatus: string; allocation: string}[] |undefined
   TABLE_LAYOUT: TableCfg[]
+  seatFilter?: SeatStatus
 }) {
     
   return (
@@ -84,6 +89,7 @@ export default function SeatingLayout({
             throw new Error("Function not implemented.");
           } } TABLE_LAYOUT={[]}   
           reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined}
+          seatFilter={seatFilter}
         />
       ))}
     </div>

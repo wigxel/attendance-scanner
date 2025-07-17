@@ -4,15 +4,25 @@ import ReservationNavigationComponent from './reservationNavigation';
 
 interface PaymentOptionComponentProps{
     setStep: Dispatch<SetStateAction<string>>
+    handleCreateReservation: () =>  Promise<false | (string & {
+        __tableName: "reservations";
+    }) | undefined>
 }
 export default function PaymentOptionComponent(
     {
-        setStep
+        setStep, handleCreateReservation
     } : PaymentOptionComponentProps
 ) {
 
-    const handleSubmit = () =>{
+    const handleSubmit = async () =>{
         setStep('reservationSuccess')
+        const response = await handleCreateReservation();
+        if(response){
+            console.log(response)
+            return response
+        }else{
+            console.log('No response returned')
+        }
     }
 
   return (

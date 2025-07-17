@@ -169,7 +169,7 @@ export default function ReservationTicketComponent(
                     displayValue={false}
                     background="transparent"
                     marginTop={20}
-                    marginLeft={35}
+                    marginLeft={10}
                   />
               </div>
           </footer>

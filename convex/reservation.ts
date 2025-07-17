@@ -13,7 +13,7 @@ export const getReservation = query({
 
 // all seats fetch
 export const getAllReservations = query({
-    // args: { seatFilter: v.string() as unknown as import("convex/values").Validator<ReservationStatus> },
+    args: { seatFilter: v.string() as unknown as import("convex/values").Validator<ReservationStatus> },
     handler: async (ctx) => {
       return await ctx.db.query('reservations')
         .order('asc')
@@ -44,6 +44,7 @@ export const createReservation = mutation({
     status:v.string() as unknown as import("convex/values").Validator<ReservationStatus>,
   },
   handler: async (ctx, args) => {
+    console.log("Creating reservation with:", args)
     return await ctx.db.insert("reservations", 
       {
         userId: args.userId,

@@ -19,7 +19,7 @@ export interface SeatReservationComponentProps {
     numberOfSeats: number
     cfg: TableCfg;
     TABLE_LAYOUT: Array<object>
-    reservedSeatsFromDb?: object[] | undefined;
+    reservedSeatsFromDb?: {seatReservationStatus: string; allocation: string}[] | undefined;
 }
 
 // each table has seat options and each seat has an optionId assigned to it for the table it belongs
@@ -104,6 +104,7 @@ export default function SeatReservationComponent(
                         numberOfSeats={numberOfSeats}
                         TABLE_LAYOUT={TABLE_LAYOUT_SECTION_1}
                         reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined}
+                        seatFilter={seatFilter}
                     />
                     
                 </div>
@@ -121,6 +122,7 @@ export default function SeatReservationComponent(
                     numberOfSeats={numberOfSeats}
                     TABLE_LAYOUT={TABLE_LAYOUT_SECTION_2}
                     reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined}
+                    seatFilter={seatFilter}
                 />
 
             </div>
@@ -137,6 +139,7 @@ export default function SeatReservationComponent(
                     numberOfSeats={numberOfSeats}
                     TABLE_LAYOUT={TABLE_LAYOUT_SECTION_3}    
                     reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined} 
+                    seatFilter={seatFilter}
                 />
                     
             </div>
@@ -155,3 +158,4 @@ export default function SeatReservationComponent(
     </section>
   )
 }
+

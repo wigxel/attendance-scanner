@@ -13,36 +13,10 @@ export const getSeatReservation = query({
 
 // all seats fetch
 export const getAllSeatReservations = query({
-  args: {
-    startDate: v.optional(v.string()),
-    endDate: v.optional(v.string())
-  },
-   handler: async (ctx, args) => {
+  
+   handler: async (ctx) => {
     // query without filter
-    const allSeats = ctx.db.query("seatReservations");
-    
-    // date range filter
-    if (args.startDate && args.endDate) {
-      return await allSeats
-        .withIndex("by_date", (q) =>
-          q
-            .gte("date", args.startDate)
-            .lte("date", args.endDate)
-        )
-        .collect();
-    }
-    
-    // single date filter
-    if (args.startDate) {
-      return await allSeats
-        .withIndex("by_date", (q) =>
-          q.eq("date", args.startDate)
-        )
-        .collect();
-    }
-    
-    // return everything if there is no filter
-    return await allSeats.collect();
+    return ctx.db.query("seatReservations").collect();
   }
 })
 
@@ -65,12 +39,14 @@ export const createSeatReservation = mutation({
     selectedDate: v.string()
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("seatReservations", 
+    console.log("Creating reservation with:", args)
+    const response = await ctx.db.insert("seatReservations", 
       {
         createdAt: Date.now(),
         table: args.mappedTable,
         date: args.selectedDate
       }
     );
-  },
+    return response
+  }
 });

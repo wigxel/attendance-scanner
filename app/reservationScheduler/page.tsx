@@ -35,24 +35,19 @@ export default function ReservationScheduler() {
     const [table, setTable] = useState<string[]>([])//table selection
     const [seat, setSeat] = useState<SeatObject[]>([])//seat selection
     const [userId, setUserId] = useState<Id<'users'> | null>(null)
-    const [reservedSeatsFromDb, setReservedSeatsFromDb] = useState<object[] | undefined>(undefined)
+    const [reservedSeatsFromDb, setReservedSeatsFromDb] = useState<{seatReservationStatus: string; allocation: string}[] | undefined>(undefined)
 
     const startDate = selectedDate?.from?.toISOString()|| undefined;
     const endDate = selectedDate?.to?.toISOString() || undefined;
 
-    //insert reservation mutation 
-    const createReservation = useMutation(api.reservation.createReservation);
-    //insert reservation mutation 
-    const createSeatReservation = useMutation(api.seatReservation.createSeatReservation);
-    //queries
-    // fetch all the seat reservation by date
-    // const reservedSeatsFromDb = useQuery(api.seatReservation.getAllSeatReservations, startDate ? endDate ? { startDate, endDate  } : { startDate } : "skip")
-    const reservationData = useQuery(api.seatReservation.getAllSeatReservations, {startDate: undefined})
+    //Queries
+    const user = useQuery(api.users.getAllUsers)//fetch all user for testing as we have just one user in the db. However it should fetch the details of the Authenticated user.
+    const reservationData = useQuery(api.seatReservation.getAllSeatReservations)// fetch all the seat reservation by date
 
-    //fetch all user for testing as we have just one user in the db. 
-    // However it should fetch the details of the Authenticated user.
-    const user = useQuery(api.users.getAllUsers)
-
+    //Mutations
+    const createReservation = useMutation(api.reservation.createReservation);//insert reservation mutation 
+    const createSeatReservation = useMutation(api.seatReservation.createSeatReservation);//insert seat reservation mutation 
+    
     // useEffect(() => {
     //     // If user is not authenticated, redirect to sign-in page
     //     if (!isAuthenticated) {
@@ -84,11 +79,71 @@ export default function ReservationScheduler() {
         }
         return acc;
     }, []);
+    
+    useEffect(() => {
+        if (user && user.length > 0) {
+        setUserId(user[0]._id as Id<'users'>);
+    } else {
+        setUserId(null);
+    }
+    }, [user, userId])
+
+    useEffect(() => {
+        // No valid date input
+        if (!reservationData || !startDate) {
+            setReservedSeatsFromDb(undefined);
+            return;
+        }
+
+        const isRange = !!endDate && endDate !== startDate;
+
+        const reservedSeatsByDate = reservationData
+            .filter((item) => {
+                const itemDate = item.date;
+                if (!itemDate) return false;
+
+                if (isRange) {
+                    // Range check
+                    return itemDate >= startDate && itemDate <= endDate;
+                } else {
+                    // Exact date match
+                    return itemDate === startDate;
+                }
+            })
+            .flatMap((item) =>
+                item.table.flatMap((tableItem) =>
+                    tableItem.seatReserved.map((seatItem) => ({
+                        seatReservationStatus: seatItem.seatStatus,
+                        allocation: seatItem.seatAllocation,
+                    }))
+                )
+            );
+
+        setReservedSeatsFromDb(
+            reservedSeatsByDate.length > 0 ? reservedSeatsByDate : undefined
+        );
+    }, [reservationData, startDate, endDate]);
+
+    const formatSelectedDate = (date: DateRange | undefined) => {
+    if (!date || !date.from) return '';
+        return `${date.from.toISOString()}${date.to ? ' - ' + date.to.toISOString() : ''}`;
+    };
 
     //save reserved seats to database
     const handleCreateSeatReservation = async () => {
+        console.log('Creating seat reservation with:', { mappedTable, selectedDate });
+        //validate inputs
+        if(!mappedTable || mappedTable.length === 0){
+            ToastComponentProps({ type: 'error', message: 'Please select a table and seats' })
+            return false
+        }
+        if(!selectedDate || !selectedDate.from){
+            ToastComponentProps({ type: 'error', message: 'Please select a date.' })
+            return false
+        }
+
         try{
-            return await createSeatReservation(
+            const response = await createSeatReservation(
                 { 
                     mappedTable: mappedTable.map(({ selectedTable, seatReserved }) => ({
                        selectedTable,
@@ -98,86 +153,78 @@ export default function ReservationScheduler() {
                            seatStatus: seat.seatStatus as SeatStatus
                        }))
                    })),
-                   selectedDate: selectedDate ? `${selectedDate.from?.toISOString() || ''}${selectedDate.to ? ' - ' + selectedDate.to.toISOString() : ''}` : '',
+                   selectedDate: formatSelectedDate(selectedDate),
+                
                 }
             );
-
+            if(response){
+                console.log(`Reservation created successfully ${response}`)
+                return response
+            }else{
+                console.log('Seat reservation failed. No response was received. Problem with createSeatReservation')
+            }
             // reset form (optional)
 
         } catch (err) {
             console.error(err);
-            ToastComponentProps({ type: 'error', message: 'Failed to create reservation' })
+            return ToastComponentProps({ type: 'error', message: 'Failed to create seat reservation' })
         }
+        
     }
     
     const handleCreateReservation = async () => {
 
         const seatReservationsId = await handleCreateSeatReservation();
 
-        try{
-            if (!userId) {
-                ToastComponentProps({ type: 'error', message: 'User not found' });
-                return false;
-            }
-            if (!seatReservationsId) {
-                ToastComponentProps({ type: 'error', message: 'Seat reservation not found' });
-                return false;
-            }
+        //validate inputs
+        if (!seatReservationsId) {
+            ToastComponentProps({ type: 'error', message: 'Unable to create seat reservation.' })
+            return false
+        }
+        if (!userId) {
+            ToastComponentProps({ type: 'error', message: 'User not found' })
+            return false
+        }
+        if(!selectedDate || !selectedDate.from){
+            ToastComponentProps({ type: 'error', message: 'Please select a date.' })
+            return false
+        }
+        if(numberOfSeats === 0){
+            ToastComponentProps({ type: 'error', message: 'Please specify number of seats.' })
+            return false
+        }
+        if(duration === ''){
+            ToastComponentProps({ type: 'error', message: 'Please specify the duration of your stay.' })
+            return false
+        }
             
-            return await createReservation(
+        try{
+            console.log('Creating reservation with:', { userId, selectedDate, duration, numberOfSeats, seatReservationsId });
+            const response = await createReservation(
                 { 
                     userId, 
-                    selectedDate: selectedDate ? `${selectedDate.from?.toISOString() || ''}${selectedDate.to ? ' - ' + selectedDate.to.toISOString() : ''}` : '',
+                    selectedDate: formatSelectedDate(selectedDate),
                     duration, 
                     numberOfSeats, 
-                    seatReservationsId,  
+                    seatReservationsId, // this should be the id of the seat reservation created
                     status: 'pending'
                 }
             );
+
+            if(response){       
+                console.log(`Reservation created successfully ${response}`)
+                return response
+            }else{
+                console.log('Reservation creation failed. No response returned, problem with createReservation')
+            }
+
             // reset form (optional)
         } catch (err) {
             console.error(err);
             ToastComponentProps({ type: 'error', message: 'Failed to create reservation' })
+            return false
         }
     }
-    // useEffect to handle the step change and create seat reservation
-    useEffect(() => {
-        const createReservation = async () => {
-            if (step === 'paymentOptions') {
-                return await handleCreateReservation();
-            }
-        }
-
-        createReservation();
-    }, [step]);
-
-    useEffect(() => {
-        return setUserId(user && user[0]?._id ? user[0]._id as Id<'users'> : null);
-    }, [user, userId])
-
-    useEffect(() => {
-        if (!reservationData || !startDate) return;
-
-        const reservedSeatsByDate = reservationData
-            .filter((item) => {
-            const itemDate = item.date;
-            return (
-                    itemDate &&
-                    itemDate >= startDate &&
-                    (!endDate || itemDate <= endDate)
-                );
-            })
-            .flatMap((item) =>
-                item.table.flatMap((tableItem) =>
-                        tableItem.seatReserved.map((seatItem) => ({
-                        seatStatus: seatItem.seatStatus,
-                        allocation: seatItem.seatAllocation,
-                    }))
-                )
-            );
-            
-            setReservedSeatsFromDb(reservedSeatsByDate);
-        }, [reservationData, startDate, endDate]);
 
   return (
     <section className="w-full h-screen flex justify-center items-center p-4 xl:p-0 relative">
@@ -240,6 +287,7 @@ export default function ReservationScheduler() {
                 step === 'paymentOptions' && 
                 <PaymentOptionComponent
                     setStep={setStep} //sets the component to render
+                    handleCreateReservation={handleCreateReservation}
                 />
             }
             {
@@ -262,5 +310,3 @@ export default function ReservationScheduler() {
     </section>
   )
 }
-
-
