@@ -41,6 +41,13 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --button-gray: #D9D9D9;
+  --background-gray: #F5F6F6;
+  --navigation-gray: #C4CDD566;
+  --text-gray: #637381;
+
+
 }
 
 :root {
@@ -116,6 +123,7 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 
   --scanline-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAGklEQVR4Aa3IIQEAAADCsPcvDddoJgcjuocKFosT7bLfmPAAAAAASUVORK5CYII=);
+
 }
 
 @layer base {

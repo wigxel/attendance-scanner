@@ -8,6 +8,30 @@ import { api } from "@/convex/_generated/api";
 import { Logo } from "@/components/logo";
 import { CheckInCard } from "@/components/CheckInCard";
 import { TakeAttendance } from "@/components/TakeAttendance";
+<<<<<<< HEAD
+
+function SignOutButton() {
+  const router = useRouter();
+  const { signOut } = useAuthActions();
+  const { isAuthenticated } = useConvexAuth();
+
+  return (
+    <>
+      {isAuthenticated && (
+        <Button
+          variant={"default"}
+          onClick={() => {
+            signOut().then(() => {
+              router.push("/signin");
+            });
+          }}        >
+          Sign out
+        </Button>
+      )}
+    </>
+  );
+}
+=======
 import {
   SignedOut,
   SignInButton,
@@ -15,6 +39,7 @@ import {
   SignedIn,
   UserButton,
 } from "@clerk/nextjs";
+>>>>>>> 1ae61dc8a06031aecee77e389eb8e30e42a96885
 
 function greet_time(): string {
   const date = new Date();
