@@ -19,6 +19,12 @@ export function useUsers() {
   return { data: safeArray(record) };
 }
 
+/*
+  @todo: Add Visit History
+  @todo:
+*/
+
+
 export function CustomersTable() {
   const { data: users } = useUsers();
 
@@ -101,6 +107,20 @@ function useVisitCount({ userId }: { userId: string }) {
   return Option.fromNullable(response)
 }
 
+
+export function CustomerAvatar({ userId, className = "w-8 h-8" }: { userId: string, className?: string }) {
+  const user = useCustomer({ userId }) ?? { firstName: '', lastName: '' };
+
+  return <Avatar className={className}>
+    <AvatarImage
+      src={"undefined"}
+      alt="User Avatar"
+      className="object-cover"
+    />
+    <AvatarFallback>{CustomerImpl.initials(user)}</AvatarFallback>
+  </Avatar>
+}
+
 function RegisteredUserEntry({ entry }: { entry: { userId: string, timestamp: string } }) {
   const user = useCustomer({ userId: entry.userId }) ?? { firstName: '', lastName: '' };
   const visitCount = useVisitCount({ userId: entry.userId })
@@ -110,14 +130,7 @@ function RegisteredUserEntry({ entry }: { entry: { userId: string, timestamp: st
 
   return (
     <li className="flex items-center group gap-4 pt-2 px-4">
-      <Avatar className="w-10 h-10">
-        <AvatarImage
-          src={"undefined"}
-          alt="User Avatar"
-          className="object-cover"
-        />
-        <AvatarFallback>{CustomerImpl.initials(user)}</AvatarFallback>
-      </Avatar>
+      <CustomerAvatar userId={entry.userId} className="w-10 h-10" />
 
       <div className="group-last:border-none border-b flex items-center flex-1 pb-2">
         <div className="flex-1">

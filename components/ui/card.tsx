@@ -13,6 +13,7 @@ const Card = React.forwardRef<
       className={cn(
         "rounded-lg bg-card text-card-foreground",
         "flex shadow-inner p-1 rounded-[1.2rem] bg-gray-100",
+        className
       )}
       {...rest}
     >

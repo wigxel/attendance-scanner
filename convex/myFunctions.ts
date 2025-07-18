@@ -472,3 +472,73 @@ export const deleteOccupation = mutation({
     return args.id;
   },
 });
+
+export const listFeedbacks = query({
+  args: {},
+  handler: async (ctx) => {
+    const feedbacks = await ctx.db.query("featureRequest").take(12)
+
+    return {
+      data: await Promise.all(
+        feedbacks.map(async (e) => {
+          const count = await ctx.db.query("featureVotes").withIndex('request', q => q.eq("entityId", e._id))
+            .collect();
+
+          return { ...e, voteCount: countVotes(count.map(e => e.value)) };
+        }),
+      )
+    }
+  },
+});
+
+export const voteFeatureRequest = mutation({
+  args: {
+    entityId: v.string(), // featureRequest._id
+    value: v.number(),    // +1 for upvote, -1 for downvote
+  },
+  handler: async (ctx, args) => {
+    const userId = await readId(ctx);
+
+    if (!userId) {
+      logger.warn("User not authenticated");
+      throw new Error("User not authenticated");
+    }
+
+    // Check if user already voted on this entity
+    const existingVote = await ctx.db
+      .query("featureVotes")
+      .filter(q =>
+        q.and(
+          q.eq(q.field("entityId"), args.entityId),
+          q.eq(q.field("userId"), userId)
+        )
+      )
+      .unique();
+
+    if (existingVote) {
+      // Update existing vote
+      await ctx.db.replace(existingVote._id, {
+        ...existingVote,
+        value: args.value,
+      });
+      return existingVote._id;
+    }
+
+    // Insert new vote
+    const voteId = await ctx.db.insert("featureVotes", {
+      entityId: args.entityId,
+      value: args.value,
+      userId,
+    });
+    return voteId;
+  },
+});
+
+
+/**
+ * @param votes: A array of [1,1,-1,1,-1, 0]
+ * @returns
+ */
+function countVotes(votes: number[]) {
+  return votes.reduce((a, e) => e + a, 0)
+}

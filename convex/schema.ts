@@ -21,7 +21,7 @@ const featureRequest = defineTable({
   userId: v.string(), // v.id("profile"),
   title: v.string(),
   description: v.string(),
-  status: v.literal("open"),
+  status: v.union(v.literal("open"), v.literal("completed"), v.literal("rejected")),
 }).index("user_id", ["userId"]);
 
 const profile = defineTable({
@@ -48,6 +48,12 @@ const occupations = defineTable({
   updatedAt: v.number(),
 }).index("name", ["name"]);
 
+const featureVotes = defineTable({
+  entityId: v.string(),
+  value: v.number(),
+  userId: v.string(),
+}).index("request", ["entityId"]);
+
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
 // The schema provides more precise TypeScript types.
@@ -59,4 +65,5 @@ export default defineSchema({
   featureRequest,
   stats,
   occupations,
+  featureVotes
 });

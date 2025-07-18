@@ -1,5 +1,6 @@
 "use client"
 import { TodaysCustomers } from "@/components/customers";
+import { Feedbacks } from "@/components/feedbacks";
 import { TakeAttendance } from "@/components/TakeAttendance";
 
 type PageProps = {
@@ -20,7 +21,7 @@ const Page = ({ params }: PageProps) => {
           <TakeAttendance />
         </div>
         <TodaysCustomers />
-
+        <Feedbacks />
       </div>
     </>
   );
