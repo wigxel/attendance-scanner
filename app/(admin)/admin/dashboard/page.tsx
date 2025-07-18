@@ -3,9 +3,9 @@ import { TodaysCustomers } from "@/components/customers";
 import { TakeAttendance } from "@/components/TakeAttendance";
 
 type PageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>
 };
 
 const Page = ({ params }: PageProps) => {

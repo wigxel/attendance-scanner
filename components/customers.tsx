@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import React from "react";
 import { useCustomer } from "@/hooks/auth";
-import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, formatDistanceToNow, formatISO, parseISO, setHours } from "date-fns";
+import { differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds, formatISO, parseISO, setHours } from "date-fns";
 import { pipe, Option } from "effect";
 import { EmptyState, EmptyStateConceal, EmptyStateContent, EmptyStateDescription, EmptyStateTitle } from "./empty-state";
 import { ScrollArea } from "./ui/scroll-area";

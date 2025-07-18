@@ -166,10 +166,10 @@ export const columns: ColumnDef<Payment>[] = [
   },
 ];
 
-export function DataTableDemo({
+export function DataTableDemo<T>({
   columns,
   data,
-}: { columns: ColumnDef<unknown>[]; data: unknown[] }) {
+}: { columns: ColumnDef<T>[]; data: T[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -247,9 +247,9 @@ export function DataTableDemo({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}
