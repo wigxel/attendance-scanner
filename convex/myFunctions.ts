@@ -1,9 +1,11 @@
 import { v } from "convex/values";
+import { components } from "./_generated/api";
+import { TableAggregate } from '@convex-dev/aggregate';
 import { formatISO, setHours } from "date-fns";
 import type { GenericQueryCtx } from "convex/server";
 import { logger } from "../config/logger";
 import { mutation, query } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import type { DataModel, Id } from "./_generated/dataModel";
 import { api } from "./_generated/api";
 import type { Profile, User } from "@auth/core/types";
 import { featureRequestStatus } from "./shared";
@@ -476,7 +478,7 @@ export const deleteOccupation = mutation({
   },
 });
 
-export const listFeedbacks = query({
+export const listSuggestions = query({
   args: {
     status: v.optional(featureRequestStatus),
   },
@@ -485,22 +487,25 @@ export const listFeedbacks = query({
     const features =
       status !== undefined
         ? ctx.db
-            .query("featureRequest")
-            .withIndex("by_status", (q) => q.eq("status", status))
+          .query("featureRequest")
+          .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
-    const feedbacks = await features.take(50);
+    const feedbacks = await features.order('desc').take(50);
 
     return {
-      data: await Promise.all(
+      data: (await Promise.all(
         feedbacks.map(async (e) => {
-          const count = await ctx.db
-            .query("featureVotes")
-            .withIndex("request", (q) => q.eq("entityId", e._id))
-            .collect();
+          const voteCount = await aggregateBySuggestion.sum(ctx, {
+            bounds: {},
+            namespace: e._id,
+          })
 
-          return { ...e, voteCount: countVotes(count.map((e) => e.value)) };
-        }),
-      ),
+          return {
+            ...e,
+            voteCount
+          };
+        })
+      )).sort((a, b) => b.voteCount - a.voteCount),
     };
   },
 });
@@ -531,27 +536,36 @@ export const voteFeatureRequest = mutation({
 
     if (existingVote) {
       // Update existing vote
-      await ctx.db.replace(existingVote._id, {
+      const new_vote = {
         ...existingVote,
         value: args.value,
-      });
+      }
+      await ctx.db.replace(existingVote._id, new_vote);
+      await aggregateBySuggestion.replace(ctx, existingVote, new_vote)
       return existingVote._id;
     }
 
     // Insert new vote
-    const voteId = await ctx.db.insert("featureVotes", {
+    const payload = {
       entityId: args.entityId,
       value: args.value,
       userId,
-    });
+    }
+    const voteId = await ctx.db.insert("featureVotes", payload);
+    const entry = await ctx.db.get(voteId)
+    if (entry) await aggregateBySuggestion.insert(ctx, entry)
+
     return voteId;
   },
 });
 
-/**
- * @param votes: A array of [1,1,-1,1,-1, 0]
- * @returns
- */
-function countVotes(votes: number[]) {
-  return votes.reduce((a, e) => e + a, 0);
-}
+const aggregateBySuggestion = new TableAggregate<{
+  Namespace: Id<'featureRequest'>
+  Key: number // [number, string];
+  DataModel: DataModel;
+  TableName: "featureVotes";
+}>(components.aggregate, {
+  namespace: (doc) => doc.entityId as Id<'featureRequest'>,
+  sortKey: (doc) => doc._creationTime, //[doc._creationTime, doc.userId],
+  sumValue: (doc) => doc.value
+});

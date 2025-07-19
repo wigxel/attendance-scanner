@@ -13,16 +13,18 @@ import { CustomerAvatar } from "./customers";
 import { useCustomer } from "@/hooks/auth";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowBigDown, ArrowBigUp, ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowBigDown, ArrowBigUp, ArrowDown, ArrowUp, LightbulbIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { safeArray, serialNo } from "@/lib/data.helpers";
 import { Slot } from "@radix-ui/react-slot";
 import { useAsyncLoader } from "@/hooks/use-loader";
 import { FeatureRequestDialog } from "./FeatureRequestDialog";
 import { Button } from "./ui/button";
+import { motion } from "motion/react";
+import React from "react";
 
 export function Feedbacks() {
-  const record = useQuery(api.myFunctions.listFeedbacks, {});
+  const record = useQuery(api.myFunctions.listSuggestions, {});
 
   return (
     <Card className="col-span-2">
@@ -74,7 +76,7 @@ function FeedbackItem({
               "font-semibold": e.voteCount > 0,
             })}
           >
-            {e.voteCount < 0 ? <ArrowDown size={16} /> : <ArrowUp size={16} />}
+            {e.voteCount < 0 ? <ArrowDown size={'1rem'} className="text-red-500" /> : <ArrowUp size={'1rem'} className="text-green-500" />}
             <span>{e.voteCount}</span>
           </div>
         </div>
@@ -103,7 +105,7 @@ function FeedbackItem({
 }
 
 export function VotingSection() {
-  const result = useQuery(api.myFunctions.listFeedbacks, {
+  const result = useQuery(api.myFunctions.listSuggestions, {
     status: "open",
   });
   const openSuggestions = safeArray(result?.data);
@@ -145,7 +147,7 @@ export function VotingSection() {
                 </VoteTrigger>
 
                 <span className="font-mono text-[0.8em]">
-                  {serialNo(e.voteCount)}
+                  {e.voteCount}
                 </span>
 
                 <VoteTrigger value="down" feedbackId={e._id}>
@@ -208,5 +210,67 @@ function VoteTrigger(props: {
     >
       {props.children}
     </Slot>
+  );
+}
+
+export function SuggestionsFAB() {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const toggle = () => setIsOpen((e) => !e);
+
+  return (
+    <div className="flex items-end justify-end fixed bottom-4 right-4">
+      <motion.div
+        layout
+        transition={{ ease: "easeInOut", duration: !isOpen ? 0 : 0.4 }}
+        className="min-w-[3.2rem] min-h-[3.2rem] border shadow-lg bg-background relative rounded-2xl overflow-hidden"
+      >
+        {isOpen ? (
+          <div className="flex flex-col max-w-sm p-4 gap-4">
+            <Button
+              size={"icon"}
+              variant={"outline"}
+              className="self-end absolute"
+              onClick={toggle}
+            >
+              <XIcon />
+            </Button>
+
+            <div className="flex flex-col gap-[0.5rem]">
+              <h1 className="text-lg font-semibold text-start">
+                Need something?
+              </h1>
+
+              <p className="text-base text-balance text-muted-foreground">
+                Share your ideas—your suggestion could be our next feature.
+              </p>
+              <div className="mt-2" />
+            </div>
+
+            <div className="-mx-2 -mb-2 flex flex-col">
+              <FeatureRequestDialog>
+                <Button variant="outline" className="w-full">
+                  Make a suggestion
+                </Button>
+              </FeatureRequestDialog>
+            </div>
+          </div>
+        ) : null}
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isOpen ? 0 : 1 }}
+        className="absolute right-0"
+      >
+        <button
+          type="button"
+          className="w-[3.2rem] flex justify-center items-center aspect-square"
+          onClick={toggle}
+        >
+          <LightbulbIcon size="1.4rem" />
+        </button>
+      </motion.div>
+    </div>
   );
 }
