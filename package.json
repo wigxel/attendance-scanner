@@ -49,6 +49,7 @@
     "react-day-picker": "8.10.1",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.1",
+    "react-use-event-hook": "^0.9.6",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",
     "uncrypto": "^0.1.3",

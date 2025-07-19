@@ -6,6 +6,7 @@ import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { api } from "./_generated/api";
 import type { Profile, User } from "@auth/core/types";
+import { featureRequestStatus } from "./shared";
 
 export const authUser = query({
   args: {},
@@ -474,14 +475,23 @@ export const deleteOccupation = mutation({
 });
 
 export const listFeedbacks = query({
-  args: {},
-  handler: async (ctx) => {
-    const feedbacks = await ctx.db.query("featureRequest").take(12)
+  args: {
+    status: v.optional(featureRequestStatus)
+  },
+  handler: async (ctx, args) => {
+    const status = args.status;
+    const features = (status !== undefined
+      ? ctx.db
+        .query("featureRequest")
+        .withIndex("by_status", (q) => q.eq("status", status))
+      : ctx.db.query("featureRequest"));
+    const feedbacks = await features.take(50);
 
     return {
       data: await Promise.all(
         feedbacks.map(async (e) => {
-          const count = await ctx.db.query("featureVotes").withIndex('request', q => q.eq("entityId", e._id))
+          const count = await ctx.db.query("featureVotes")
+            .withIndex('request', q => q.eq("entityId", e._id))
             .collect();
 
           return { ...e, voteCount: countVotes(count.map(e => e.value)) };

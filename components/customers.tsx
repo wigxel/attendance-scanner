@@ -64,7 +64,7 @@ export function TodaysCustomers() {
       <CardHeader>
         <CardTitle>
           <span>Today&apos;s Scan</span>&nbsp;&nbsp;
-          <span className="text-muted-foreground font-mono font-normal">
+          <span className="section-record-count">
             {serialNo(records.length)}
           </span>
         </CardTitle>

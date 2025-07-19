@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "convex/react";
-import type React from "react";
+import React from "react";
 import { FeatureRequestDialog } from "@/components/FeatureRequestDialog";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 import { useReadProfile } from "@/hooks/auth";
@@ -9,6 +9,7 @@ import { CheckInCard } from "@/components/CheckInCard";
 import { useRouter } from "next/navigation";
 import { Header } from "../components/header";
 import { Footer } from "@/components/footer";
+import { VotingSection } from "@/components/feedbacks";
 
 function greet_time(): string {
   const date = new Date();
@@ -22,11 +23,6 @@ function greet_time(): string {
 
 function Content() {
   const profile = useReadProfile();
-  const router = useRouter();
-
-  if (profile?.role === "admin") {
-    router.push("/admin");
-  }
 
   return (
     <div className="flex flex-col scanline-root max-w-lg mx-auto pt-6 pb-14">
@@ -47,13 +43,17 @@ function Content() {
         <NotRegistered>
           <CheckInCard />
         </NotRegistered>
+
         <AttendanceCalendar />
+
 
         <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-gray-500">
           <span />
           <span />
           <span />
         </div>
+
+        <VotingSection />
 
         <div className="border shadow-inner bg-background relative flex flex-col rounded-2xl p-4 gap-4">
           <div className="flex flex-col gap-[0.5rem]">
@@ -88,6 +88,16 @@ function NotRegistered({ children }: { children: React.ReactNode }) {
 }
 
 export default function Home() {
+  const profile = useReadProfile();
+  const router = useRouter();
+
+  React.useMemo(() => {
+    if (profile?.role === "admin") {
+      router.push("/admin");
+    }
+  }, [router])
+
+
   return (
     <>
       <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />

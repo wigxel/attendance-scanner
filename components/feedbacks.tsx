@@ -1,15 +1,19 @@
-import { useQuery } from "convex/react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { useMutation, useQuery } from "convex/react";
+import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { api } from "@/convex/_generated/api";
 import { CustomerAvatar } from "./customers";
 import { useCustomer } from "@/hooks/auth";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowBigDown, ArrowBigUp, ArrowDown, ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { safeArray, serialNo } from "@/lib/data.helpers";
+import { Slot } from "@radix-ui/react-slot";
+import { useAsyncLoader } from "@/hooks/use-loader";
 
 export function Feedbacks() {
-  const record = useQuery(api.myFunctions.listFeedbacks);
+  const record = useQuery(api.myFunctions.listFeedbacks, {});
 
   return (
     <Card className="col-span-2">
@@ -84,4 +88,80 @@ function FeedbackItem({ entry: e }: { entry: Doc<'featureRequest'> & { voteCount
       </span>
     </div>
   </li>
+}
+
+export function VotingSection() {
+  const result = useQuery(api.myFunctions.listFeedbacks, {
+    status: "open"
+  });
+  const openSuggestions = safeArray(result?.data)
+
+  return (
+    <Card className="relative">
+      <Image
+        alt="3d logo"
+        src="/images/3d-bubble.png" width={500} height={500}
+        className="absolute w-[2rem] right-8 scale-[2.2] top-0 origin-bottom"
+      />
+      <CardHeader>
+        <CardTitle>Suggestions <span className="section-record-count">
+          {serialNo(openSuggestions.length)} </span>
+        </CardTitle>
+        <CardDescription>
+          Help prioritize our service improvements
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="gap-4 flex flex-col">
+        {
+          safeArray(openSuggestions).map((e) => {
+            return <div key={e._id} className="flex group gap-6">
+              <div className="flex flex-col mt-1 gap-1 self-start text-base items-center">
+                <VoteTrigger value="up" feedbackId={e._id}>
+                  <button type="button" className="cursor-pointer text-muted-foreground hover:text-green-500" title="I don't support this">
+                    <ArrowBigUp size="1em" />
+                  </button>
+                </VoteTrigger>
+
+                <span className="font-mono text-[0.8em]">{serialNo(e.voteCount)}</span>
+
+                <VoteTrigger value="down" feedbackId={e._id}>
+                  <button type="button" className="cursor-pointer text-muted-foreground hover:text-red-500" title="I support this">
+                    <ArrowBigDown size="1em" />
+                  </button>
+                </VoteTrigger>
+              </div>
+
+              <div className="flex flex-col gap-0.5 flex-1 group-last:border-0 border-b pb-8">
+                <h6 className="font-semibold">{e.title}</h6>
+                <p className="text-sm">{e.description}</p>
+                <p className="text-sm text-muted-foreground">{formatDistanceToNow(e._creationTime, { addSuffix: true })}</p>
+              </div>
+            </div>
+          })
+        }
+        {/* Add voting controls or content here */}
+      </CardContent>
+    </Card>
+  );
+}
+
+function VoteTrigger(props: { value: "up" | "down", feedbackId: string, children: React.ReactNode }) {
+  const { value, feedbackId: userId } = props;
+  const takeVote = useMutation(api.myFunctions.voteFeatureRequest);
+  const { loading: isPending, attachLoader } = useAsyncLoader({ default: false });
+
+  return <Slot
+    // @ts-expect-error Child will be button
+    disabled={isPending.default}
+    onClick={attachLoader("default", async () => {
+      const dir = {
+        up: 1,
+        down: -1,
+      } as const;
+
+      await takeVote({ entityId: userId, value: dir[value] });
+    })}>
+    {props.children}
+  </Slot >
 }

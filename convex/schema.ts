@@ -1,6 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
+import { featureRequestStatus } from "./shared";
 
 const daily_register = defineTable({
   userId: v.string(), // v.id("profile"),
@@ -21,8 +22,10 @@ const featureRequest = defineTable({
   userId: v.string(), // v.id("profile"),
   title: v.string(),
   description: v.string(),
-  status: v.union(v.literal("open"), v.literal("completed"), v.literal("rejected")),
-}).index("user_id", ["userId"]);
+  status: featureRequestStatus,
+})
+  .index("user_id", ["userId"])
+  .index("by_status", ["status"]);
 
 const profile = defineTable({
   id: v.string(),
