@@ -10,6 +10,9 @@ import { useRouter } from "next/navigation";
 import { Header } from "../components/header";
 import { Footer } from "@/components/footer";
 import { VotingSection } from "@/components/feedbacks";
+import { AnimatePresence, motion } from "motion/react";
+import { Button } from "@/components/ui/button";
+import { LightbulbIcon, XIcon } from "lucide-react";
 
 function greet_time(): string {
   const date = new Date();
@@ -46,7 +49,6 @@ function Content() {
 
         <AttendanceCalendar />
 
-
         <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-gray-500">
           <span />
           <span />
@@ -55,24 +57,70 @@ function Content() {
 
         <VotingSection />
 
-        <div className="border shadow-inner bg-background relative flex flex-col rounded-2xl p-4 gap-4">
-          <div className="flex flex-col gap-[0.5rem]">
-            <h1 className="text-lg font-semibold text-start">
-              What&apos;s coming next?
-            </h1>
-
-            <p className="text-base text-balance text-muted-foreground">
-              You might just inspire us to add something you need. Don&apos;t
-              hesitate to share your awesome ideas.
-            </p>
-            <div className="mt-2" />
-          </div>
-
-          <div className="-mx-2 -mb-2 flex flex-col">
-            <FeatureRequestDialog />
-          </div>
-        </div>
+        <SuggestionsFAB />
       </section>
+    </div>
+  );
+}
+
+function SuggestionsFAB() {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const toggle = () => setIsOpen((e) => !e);
+
+  return (
+    <div className="flex items-end justify-end fixed bottom-4 right-4">
+      <motion.div
+        layout
+        transition={{ ease: "easeInOut", duration: !isOpen ? 0 : 0.4 }}
+        className="min-w-[3.2rem] min-h-[3.2rem] border shadow-lg bg-background relative rounded-2xl overflow-hidden"
+      >
+        {isOpen ? (
+          <div className="flex flex-col max-w-sm p-4 gap-4">
+            <Button
+              size={"icon"}
+              variant={"outline"}
+              className="self-end absolute"
+              onClick={toggle}
+            >
+              <XIcon />
+            </Button>
+
+            <div className="flex flex-col gap-[0.5rem]">
+              <h1 className="text-lg font-semibold text-start">
+                Need something?
+              </h1>
+
+              <p className="text-base text-balance text-muted-foreground">
+                Share your ideas—your suggestion could be our next feature.
+              </p>
+              <div className="mt-2" />
+            </div>
+
+            <div className="-mx-2 -mb-2 flex flex-col">
+              <FeatureRequestDialog>
+                <Button variant="outline" className="w-full">
+                  Make a suggestion
+                </Button>
+              </FeatureRequestDialog>
+            </div>
+          </div>
+        ) : null}
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isOpen ? 0 : 1 }}
+        className="absolute right-0"
+      >
+        <button
+          type="button"
+          className="w-[3.2rem] flex justify-center items-center aspect-square"
+          onClick={toggle}
+        >
+          <LightbulbIcon size="1.4rem" />
+        </button>
+      </motion.div>
     </div>
   );
 }
@@ -95,8 +143,7 @@ export default function Home() {
     if (profile?.role === "admin") {
       router.push("/admin");
     }
-  }, [router])
-
+  }, [router]);
 
   return (
     <>

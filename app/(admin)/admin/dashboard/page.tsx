@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { TodaysCustomers } from "@/components/customers";
 import { Feedbacks } from "@/components/feedbacks";
 import { TakeAttendance } from "@/components/TakeAttendance";
@@ -6,7 +6,7 @@ import { TakeAttendance } from "@/components/TakeAttendance";
 type PageProps = {
   params: Promise<{
     id: string;
-  }>
+  }>;
 };
 
 const Page = ({ params }: PageProps) => {

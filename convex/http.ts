@@ -72,10 +72,10 @@ http.route({
 });
 
 const writeTx = httpAction(async (ctx, res) => {
-  console.log('#### >>', res.body);
+  console.log("#### >>", res.body);
 
   return Response.json({ message: "OK" });
-})
+});
 
 http.route({
   method: "POST",

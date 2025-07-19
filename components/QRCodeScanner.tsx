@@ -189,7 +189,10 @@ export default function QRCodeScanner({
                 }}
               >
                 <SelectTrigger className="bg-white w-full">
-                  <SelectValue placeholder="Select camera" className="h-[4rem]" />
+                  <SelectValue
+                    placeholder="Select camera"
+                    className="h-[4rem]"
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {cameras.map((camera) => (

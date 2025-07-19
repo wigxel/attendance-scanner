@@ -304,10 +304,12 @@ export const getAllUsers = query({
 
     const data = await Promise.all(
       profiles.map(async (profile) => {
-
-        const visitCount: number = await ctx.runQuery(api.myFunctions.registrationCount, {
-          userId: profile.id,
-        })
+        const visitCount: number = await ctx.runQuery(
+          api.myFunctions.registrationCount,
+          {
+            userId: profile.id,
+          },
+        );
         const eligible = visitCount >= 20;
 
         return {
@@ -336,10 +338,10 @@ export const registrationCount = query({
   handler: async (ctx, args) => {
     const registrations = await ctx.db
       .query("daily_register")
-      .withIndex('user', q => q.eq('userId', args.userId))
+      .withIndex("user", (q) => q.eq("userId", args.userId))
       .collect();
 
-    return registrations.length
+    return registrations.length;
   },
 });
 
@@ -476,35 +478,37 @@ export const deleteOccupation = mutation({
 
 export const listFeedbacks = query({
   args: {
-    status: v.optional(featureRequestStatus)
+    status: v.optional(featureRequestStatus),
   },
   handler: async (ctx, args) => {
     const status = args.status;
-    const features = (status !== undefined
-      ? ctx.db
-        .query("featureRequest")
-        .withIndex("by_status", (q) => q.eq("status", status))
-      : ctx.db.query("featureRequest"));
+    const features =
+      status !== undefined
+        ? ctx.db
+            .query("featureRequest")
+            .withIndex("by_status", (q) => q.eq("status", status))
+        : ctx.db.query("featureRequest");
     const feedbacks = await features.take(50);
 
     return {
       data: await Promise.all(
         feedbacks.map(async (e) => {
-          const count = await ctx.db.query("featureVotes")
-            .withIndex('request', q => q.eq("entityId", e._id))
+          const count = await ctx.db
+            .query("featureVotes")
+            .withIndex("request", (q) => q.eq("entityId", e._id))
             .collect();
 
-          return { ...e, voteCount: countVotes(count.map(e => e.value)) };
+          return { ...e, voteCount: countVotes(count.map((e) => e.value)) };
         }),
-      )
-    }
+      ),
+    };
   },
 });
 
 export const voteFeatureRequest = mutation({
   args: {
     entityId: v.string(), // featureRequest._id
-    value: v.number(),    // +1 for upvote, -1 for downvote
+    value: v.number(), // +1 for upvote, -1 for downvote
   },
   handler: async (ctx, args) => {
     const userId = await readId(ctx);
@@ -517,11 +521,11 @@ export const voteFeatureRequest = mutation({
     // Check if user already voted on this entity
     const existingVote = await ctx.db
       .query("featureVotes")
-      .filter(q =>
+      .filter((q) =>
         q.and(
           q.eq(q.field("entityId"), args.entityId),
-          q.eq(q.field("userId"), userId)
-        )
+          q.eq(q.field("userId"), userId),
+        ),
       )
       .unique();
 
@@ -544,11 +548,10 @@ export const voteFeatureRequest = mutation({
   },
 });
 
-
 /**
  * @param votes: A array of [1,1,-1,1,-1, 0]
  * @returns
  */
 function countVotes(votes: number[]) {
-  return votes.reduce((a, e) => e + a, 0)
+  return votes.reduce((a, e) => e + a, 0);
 }

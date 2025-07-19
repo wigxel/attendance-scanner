@@ -25,7 +25,7 @@ type FeatureRequestFormData = {
   description: string;
 };
 
-export function FeatureRequestDialog() {
+export function FeatureRequestDialog(props: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const form = useForm<FeatureRequestFormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,17 +55,15 @@ export function FeatureRequestDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">Request a Feature</Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{props.children}</DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Feature Request</DialogTitle>
+            <DialogTitle>Make a suggestion</DialogTitle>
             <DialogDescription>
               We&apos;re continuously improving this app and would love to hear
-              your ideas. Share what features you&apos;d like to see added next!
+              your ideas. Share what features you&apos;d like to see added
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

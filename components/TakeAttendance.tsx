@@ -141,7 +141,6 @@ export function TakeAttendance() {
                 Scan Another Code
               </Button>
             </div>
-
           )}
         </>
 
