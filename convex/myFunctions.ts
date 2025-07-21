@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { components } from "./_generated/api";
-import { TableAggregate } from '@convex-dev/aggregate';
+import { TableAggregate } from "@convex-dev/aggregate";
 import { formatISO, setHours } from "date-fns";
 import type { GenericQueryCtx } from "convex/server";
 import { logger } from "../config/logger";
@@ -487,25 +487,27 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-          .query("featureRequest")
-          .withIndex("by_status", (q) => q.eq("status", status))
+            .query("featureRequest")
+            .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
-    const feedbacks = await features.order('desc').take(50);
+    const feedbacks = await features.order("desc").take(50);
 
     return {
-      data: (await Promise.all(
-        feedbacks.map(async (e) => {
-          const voteCount = await aggregateBySuggestion.sum(ctx, {
-            bounds: {},
-            namespace: e._id,
-          })
+      data: (
+        await Promise.all(
+          feedbacks.map(async (e) => {
+            const voteCount = await aggregateBySuggestion.sum(ctx, {
+              bounds: {},
+              namespace: e._id,
+            });
 
-          return {
-            ...e,
-            voteCount
-          };
-        })
-      )).sort((a, b) => b.voteCount - a.voteCount),
+            return {
+              ...e,
+              voteCount,
+            };
+          }),
+        )
+      ).sort((a, b) => b.voteCount - a.voteCount),
     };
   },
 });
@@ -539,9 +541,9 @@ export const voteFeatureRequest = mutation({
       const new_vote = {
         ...existingVote,
         value: args.value,
-      }
+      };
       await ctx.db.replace(existingVote._id, new_vote);
-      await aggregateBySuggestion.replace(ctx, existingVote, new_vote)
+      await aggregateBySuggestion.replace(ctx, existingVote, new_vote);
       return existingVote._id;
     }
 
@@ -550,22 +552,22 @@ export const voteFeatureRequest = mutation({
       entityId: args.entityId,
       value: args.value,
       userId,
-    }
+    };
     const voteId = await ctx.db.insert("featureVotes", payload);
-    const entry = await ctx.db.get(voteId)
-    if (entry) await aggregateBySuggestion.insert(ctx, entry)
+    const entry = await ctx.db.get(voteId);
+    if (entry) await aggregateBySuggestion.insert(ctx, entry);
 
     return voteId;
   },
 });
 
 const aggregateBySuggestion = new TableAggregate<{
-  Namespace: Id<'featureRequest'>
-  Key: number // [number, string];
+  Namespace: Id<"featureRequest">;
+  Key: number; // [number, string];
   DataModel: DataModel;
   TableName: "featureVotes";
 }>(components.aggregate, {
-  namespace: (doc) => doc.entityId as Id<'featureRequest'>,
+  namespace: (doc) => doc.entityId as Id<"featureRequest">,
   sortKey: (doc) => doc._creationTime, //[doc._creationTime, doc.userId],
-  sumValue: (doc) => doc.value
+  sumValue: (doc) => doc.value,
 });

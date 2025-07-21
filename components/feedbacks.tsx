@@ -13,7 +13,14 @@ import { CustomerAvatar } from "./customers";
 import { useCustomer } from "@/hooks/auth";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowBigDown, ArrowBigUp, ArrowDown, ArrowUp, LightbulbIcon, XIcon } from "lucide-react";
+import {
+  ArrowBigDown,
+  ArrowBigUp,
+  ArrowDown,
+  ArrowUp,
+  LightbulbIcon,
+  XIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { safeArray, serialNo } from "@/lib/data.helpers";
 import { Slot } from "@radix-ui/react-slot";
@@ -76,7 +83,11 @@ function FeedbackItem({
               "font-semibold": e.voteCount > 0,
             })}
           >
-            {e.voteCount < 0 ? <ArrowDown size={'1rem'} className="text-red-500" /> : <ArrowUp size={'1rem'} className="text-green-500" />}
+            {e.voteCount < 0 ? (
+              <ArrowDown size={"1rem"} className="text-red-500" />
+            ) : (
+              <ArrowUp size={"1rem"} className="text-green-500" />
+            )}
             <span>{e.voteCount}</span>
           </div>
         </div>
@@ -146,9 +157,7 @@ export function VotingSection() {
                   </button>
                 </VoteTrigger>
 
-                <span className="font-mono text-[0.8em]">
-                  {e.voteCount}
-                </span>
+                <span className="font-mono text-[0.8em]">{e.voteCount}</span>
 
                 <VoteTrigger value="down" feedbackId={e._id}>
                   <button

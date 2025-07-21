@@ -59,7 +59,6 @@ function Content() {
   );
 }
 
-
 function NotRegistered({ children }: { children: React.ReactNode }) {
   const is_attendance_taken = useQuery(api.myFunctions.isRegisteredForToday);
 
