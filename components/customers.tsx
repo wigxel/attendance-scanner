@@ -37,7 +37,6 @@ export function useUsers() {
   @todo: Add Visit History
   @todo:
 */
-
 export function CustomersTable() {
   const { data: users } = useUsers();
 

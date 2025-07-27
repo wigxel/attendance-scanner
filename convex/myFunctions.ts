@@ -45,6 +45,27 @@ export const getUserById = query({
   },
 });
 
+export const countAttendance = query({
+  args: {
+    start: v.string(), // iso timestamp
+    end: v.string(), // iso timestamp
+  },
+  handler: async (ctx, args) => {
+    // Query attendance records in the date range
+    const count = await ctx.db
+      .query("daily_register")
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("timestamp"), args.start),
+          q.lte(q.field("timestamp"), args.end),
+        ),
+      )
+      .collect();
+
+    return count.length;
+  },
+});
+
 export const getAttendanceByMonth = query({
   args: {
     userId: v.optional(v.string()), // user id
