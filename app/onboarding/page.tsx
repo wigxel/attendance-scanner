@@ -11,7 +11,12 @@ export default async function Onboarding() {
         Please provide the following information to complete your registration.
       </p>
 
-      <OnboardingForm initial={{ firstName: user?.firstName ?? "", lastName: user?.lastName ?? "" }} />
+      <OnboardingForm
+        initial={{
+          firstName: user?.firstName ?? "",
+          lastName: user?.lastName ?? "",
+        }}
+      />
     </div>
   );
 }

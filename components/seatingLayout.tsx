@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { TableCfg } from "@/lib/tableData";
 import TableComponent from "./table";
@@ -18,7 +18,7 @@ const TableWithSeats: React.FC<ExtendedSeatReservationComponentProps> = ({
   setSeat,
   numberOfSeats,
   reservedSeatsFromDb,
-  seatFilter
+  seatFilter,
 }) => (
   <div className={cfg.wrapper}>
     <div className={cfg.container}>
@@ -42,7 +42,9 @@ const TableWithSeats: React.FC<ExtendedSeatReservationComponentProps> = ({
           positionClasses={s.position}
           seatBarPosition={s.bar}
           textAlignment={s.textAlignment}
-          reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined}
+          reservedSeatsFromDb={
+            reservedSeatsFromDb ? reservedSeatsFromDb : undefined
+          }
           seatFilter={seatFilter}
         />
       ))}
@@ -62,18 +64,21 @@ export default function SeatingLayout({
   numberOfSeats,
   TABLE_LAYOUT,
   reservedSeatsFromDb,
-  seatFilter
+  seatFilter,
 }: {
-  seat: { seatAllocation: string; label: string, seatStatus: string}[];
-  setSeat: (s: { seatAllocation: string; label: string, seatStatus: string }[]) => void;
+  seat: { seatAllocation: string; label: string; seatStatus: string }[];
+  setSeat: (
+    s: { seatAllocation: string; label: string; seatStatus: string }[],
+  ) => void;
   table: string[];
-  setTable: Dispatch<SetStateAction<string[]>>
+  setTable: Dispatch<SetStateAction<string[]>>;
   numberOfSeats: number;
-  reservedSeatsFromDb?: {seatReservationStatus: string; allocation: string}[] |undefined
-  TABLE_LAYOUT: TableCfg[]
-  seatFilter?: SeatStatus
+  reservedSeatsFromDb?:
+    | { seatReservationStatus: string; allocation: string }[]
+    | undefined;
+  TABLE_LAYOUT: TableCfg[];
+  seatFilter?: SeatStatus;
 }) {
-    
   return (
     <div className="w-full h-full flex items-center">
       {TABLE_LAYOUT.map((cfg) => (
@@ -84,11 +89,14 @@ export default function SeatingLayout({
           setTable={setTable}
           seat={seat}
           setSeat={setSeat}
-          numberOfSeats={numberOfSeats} 
+          numberOfSeats={numberOfSeats}
           setStep={function (value: SetStateAction<string>): void {
             throw new Error("Function not implemented.");
-          } } TABLE_LAYOUT={[]}   
-          reservedSeatsFromDb={reservedSeatsFromDb ? reservedSeatsFromDb : undefined}
+          }}
+          TABLE_LAYOUT={[]}
+          reservedSeatsFromDb={
+            reservedSeatsFromDb ? reservedSeatsFromDb : undefined
+          }
           seatFilter={seatFilter}
         />
       ))}

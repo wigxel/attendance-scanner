@@ -1,26 +1,26 @@
-'use client';
- 
-import { toast } from 'sonner';
- 
-interface ToastComponentProps{
-    type: string
-    message: string
+"use client";
+
+import { toast } from "sonner";
+
+interface ToastComponentProps {
+  type: string;
+  message: string;
 }
-export default function Toast({type, message}: ToastComponentProps) {
+export default function Toast({ type, message }: ToastComponentProps) {
   switch (type) {
-    case 'success':
+    case "success":
       toast.success(message);
       break;
-    case 'error':
+    case "error":
       toast.error(message);
       break;
-    case 'info':
+    case "info":
       toast.info(message);
       break;
-    case 'warning':
+    case "warning":
       toast.warning(message);
       break;
-    case 'loading':
+    case "loading":
       toast.loading(message);
       break;
     default:
