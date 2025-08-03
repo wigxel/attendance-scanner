@@ -17,7 +17,7 @@ const Page = ({ params }: PageProps) => {
         <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
       </section>
 
-      <div className="grid-cols-1 mt-8 md:grid-cols-4 grid gap-4">
+      <div className="flex px-4 flex-col mt-8 md:grid-cols-4 md:grid gap-4">
         <div className="flex flex-col gap-4">
           <TakeAttendance />
           <TotalVisits />

@@ -9,6 +9,9 @@ import { useRouter } from "next/navigation";
 import { Header } from "../components/header";
 import { Footer } from "@/components/footer";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
+import { If } from "@/components/if";
+import Link from "next/link";
+import { ArrowRightIcon } from "lucide-react";
 
 function greet_time(): string {
   const date = new Date();
@@ -26,18 +29,29 @@ function Content() {
   return (
     <div className="flex flex-col scanline-root max-w-lg mx-auto pt-6 pb-14">
       <section className="min-h-screen gap-[1.6rem] flex flex-col">
-        <h1>
-          <span className="flex text-xs lg:text-base">{greet_time()}</span>
-          <span className="text-2xl lg:text-4xl font-sans tracking-[-1.5px] font-semibold">
-            {profile?.role !== "admin" ? (
-              <>
-                {profile?.firstName} {profile?.lastName}
-              </>
-            ) : (
-              "Administrator"
-            )}
-          </span>
-        </h1>
+        <div className="flex flex-col gap-1">
+          <h1>
+            <span className="flex text-sm lg:text-base">{greet_time()}</span>
+            <span className="text-2xl lg:text-4xl font-sans tracking-[-1.5px] font-semibold">
+              {profile?.role !== "admin" ? (
+                <>
+                  {profile?.firstName} {profile?.lastName}
+                </>
+              ) : (
+                "Administrator"
+              )}
+            </span>
+          </h1>
+
+          <If cond={profile?.role === 'admin'}>
+            <Link href="/admin" className="items-center text-sm font-semibold inline-flex border self-start">
+              <span>
+                Goto Admin
+              </span>
+              <ArrowRightIcon size="1em" />
+            </Link>
+          </If>
+        </div>
 
         <NotRegistered>
           <CheckInCard />
@@ -70,17 +84,9 @@ function NotRegistered({ children }: { children: React.ReactNode }) {
 }
 
 export default function Home() {
-  const profile = useReadProfile();
-  const router = useRouter();
-
-  React.useMemo(() => {
-    if (profile?.role === "admin") {
-      router.push("/admin");
-    }
-  }, [router]);
-
   return (
     <>
+      <title>Customer Account | InSpace</title>
       <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />
       <div className="z-[2] relative">
         <Header />

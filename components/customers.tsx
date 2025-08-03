@@ -74,7 +74,7 @@ export function TodaysCustomers() {
   );
 
   return (
-    <Card>
+    <Card className=" min-h-[32rem]">
       <CardHeader>
         <CardTitle>
           <span>Today&apos;s Scan</span>&nbsp;&nbsp;

@@ -1,5 +1,4 @@
 "use client";
-
 import { Logo } from "@/components/logo";
 import { useReadProfile } from "@/hooks/auth";
 import {
@@ -14,12 +13,11 @@ export function Header() {
   const profile = useReadProfile();
 
   return (
-    <header className="sticky top-0 z-10 p-4 dark:border-slate-800 flex flex-row justify-between items-center">
+    <header className="sticky top-0 z-10 p-4 gap-4 dark:border-slate-800 flex flex-row justify-between items-center">
       <Logo className="w-[7rem] md:w-[9rem]" />
 
       <div className="flex gap-3 items-center">
         <span>{profile?.firstName}</span>
-
         <SignedOut>
           <SignInButton />
           <SignUpButton>
