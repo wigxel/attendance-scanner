@@ -23,7 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import React from "react";
 import { currencyFormatter } from "@/lib/currency.helpers";
 
@@ -69,8 +69,7 @@ export function TotalVisits() {
             <CardDescription className="text-muted-foreground">
               Total visits
             </CardDescription>
-            <RangeDropdown
-              value={filter.filter} onChange={filter.setFilter} />
+            <RangeDropdown value={filter.filter} onChange={filter.setFilter} />
           </div>
 
           <span className="text-3xl font-semibold">
@@ -99,7 +98,9 @@ export function TotalRevenue() {
         <CardContent className="flex pt-4 flex-col gap-2">
           <CardDescription>Estimated Revenue</CardDescription>
           <span className="text-3xl font-semibold">
-            <If cond={!is_nullable}>{currencyFormatter.format(safeNum(count))}</If>
+            <If cond={!is_nullable}>
+              {currencyFormatter.format(safeNum(count))}
+            </If>
             <If cond={is_nullable}>{"--"}</If>
           </span>
         </CardContent>
@@ -213,7 +214,7 @@ const filters: FilterOption[] = [
 
 function useFilter(filter_key: "month" | "week" = "month") {
   const [filter, setFilter] = React.useState(() => {
-    return filters.find(e => e.key === filter_key) ?? filters[0];
+    return filters.find((e) => e.key === filter_key) ?? filters[0];
   });
 
   return { filter, setFilter };

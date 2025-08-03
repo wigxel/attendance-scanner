@@ -4,7 +4,7 @@ import { TableAggregate } from "@convex-dev/aggregate";
 import { formatISO, setHours } from "date-fns";
 import type { GenericQueryCtx } from "convex/server";
 import { logger } from "../config/logger";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { api } from "./_generated/api";
 import type { Profile, User } from "@auth/core/types";
@@ -16,6 +16,46 @@ export const authUser = query({
     const identity = await ctx.auth.getUserIdentity();
 
     return identity;
+  },
+});
+
+export const createUser = internalMutation({
+  args: {
+    email: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+    phone: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // if user exists
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .unique();
+
+    if (user) {
+      return user._id;
+    }
+
+    const user_id = await ctx.db.insert("users", {
+      email: args.email,
+      emailVerificationTime: new Date().getTime(),
+      phone: args.phone,
+      isAnonymous: false,
+      name: `${args.firstName} ${args.lastName}`,
+    });
+
+    await ctx.db.insert("profile", {
+      id: user_id,
+      email: args.email,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      occupation: "None",
+      phoneNumber: args.phone,
+      role: "user",
+    });
+
+    return user_id;
   },
 });
 
