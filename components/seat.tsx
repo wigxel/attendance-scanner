@@ -4,6 +4,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Toast from "./toast";
 import { DateRange } from "react-day-picker";
 import { SeatStatus } from "./filter";
+import { toast } from "sonner";
 
 export interface SeatObject {
   label: string;
@@ -27,8 +28,8 @@ interface SeatComponentProps {
   seatBarPosition: string;
   textAlignment: string;
   reservedSeatsFromDb:
-    | { seatReservationStatus: string; allocation: string }[]
-    | undefined;
+  | { seatReservationStatus: string; allocation: string }[]
+  | undefined;
   seatFilter?: SeatStatus | undefined;
 }
 
@@ -149,7 +150,7 @@ export default function SeatComponent({
         seatId.setSeat([...seat, currentSeat]);
         // No need to call deriveTables here, handled in useEffect
       } else {
-        Toast({ type: "warning", message: "Maximum seat selection reached." });
+        toast.warning("Maximum seat selection reached.");
       }
     }
   };
@@ -195,11 +196,7 @@ export default function SeatComponent({
         // if the seat is available, then handle seat selection
         return !dbSeat
           ? handleSeatSelection()
-          : (Toast({
-              type: "warning",
-              message: "This seat is already selected or reserved.",
-            }),
-            false);
+          : toast.warning("This seat is already selected or reserved.")
       }}
       className={buttonClasses}
     >
