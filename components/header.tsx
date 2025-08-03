@@ -38,3 +38,11 @@ export function Header() {
     </header>
   );
 }
+
+export function PublicHeader() {
+  return (
+    <header className="sticky top-0 bg-white/[0.16] backdrop-blur-xs z-10 p-4 dark:border-slate-800 flex flex-row justify-between items-center">
+      <Logo className="w-[7rem] md:w-[9rem]" />
+    </header>
+  );
+}

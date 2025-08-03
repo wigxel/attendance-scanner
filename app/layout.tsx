@@ -1,21 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/react-query";
 import { ClerkProvider } from "@clerk/nextjs";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { body, mono } from "./font";
 
 export const metadata: Metadata = {
   title: "InSpace",
@@ -40,7 +30,7 @@ export default function RootLayout({
       <QueryProvider>
         <html lang="en" className="scanline-root">
           <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
+            className={`${body.variable} ${mono.variable} antialiased font-sans`}
           >
             <ConvexClientProvider>{children}</ConvexClientProvider>
             <Toaster />

@@ -182,6 +182,7 @@ export function VotingSection() {
         })}
         {/* Add voting controls or content here */}
       </CardContent>
+
       <CardFooter>
         <FeatureRequestDialog>
           <Button variant="outline" className="w-full">
