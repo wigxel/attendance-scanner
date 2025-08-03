@@ -60,11 +60,11 @@ function Content() {
 }
 
 function NotRegistered({ children }: { children: React.ReactNode }) {
-  const is_attendance_taken = useQuery(api.myFunctions.isRegisteredForToday);
+  const is_registered = useQuery(api.myFunctions.isRegisteredForToday);
 
-  if (is_attendance_taken === undefined) return null;
+  if (is_registered === undefined) return null;
 
-  if (is_attendance_taken) return null;
+  if (is_registered) return null;
 
   return <div>{children}</div>;
 }
