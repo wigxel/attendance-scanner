@@ -35,7 +35,7 @@ export function AttendanceCalendar() {
     <section className="space-y-4">
       <DateCalendar days={parsed_dates} month={month} setMonth={setMonth} />
 
-      <p className="text-sm inline-flex justify-center gap-2 text-muted-foreground -mt-4 p-2 w-full rounded-xl items-center px-3">
+      {/*<p className="text-sm inline-flex justify-center gap-2 text-muted-foreground -mt-4 p-2 w-full rounded-xl items-center px-3">
         <InfoIcon size={18} className="opacity-50" />
         <span>
           You are{" "}
@@ -45,7 +45,7 @@ export function AttendanceCalendar() {
           away from getting <span className="font-semibold">2 days</span> free
           this month
         </span>
-      </p>
+      </p>*/}
     </section>
   );
 }
