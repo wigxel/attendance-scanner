@@ -2,7 +2,8 @@ import { z } from "zod";
 import { httpRouter } from "convex/server";
 import { api, internal } from "./_generated/api";
 import crypto from "uncrypto";
-import { httpAction } from "./_generated/server";
+import { httpAction, internalAction } from "./_generated/server";
+import { setExternalId } from "./clerk";
 
 const http = httpRouter();
 
@@ -78,6 +79,10 @@ const writeTx = httpAction(async (ctx, res) => {
   return Response.json({ message: "OK" });
 });
 
+const updateUserRole = internalAction(async (ctx, res) => {
+
+})
+
 http.route({
   method: "POST",
   path: "/integrations/payments",
@@ -116,25 +121,13 @@ const handleEvents = httpAction(async (ctx, res) => {
       },
     );
 
-    // set convex user id
-    const payload = {
-      external_id: convex_user_id,
-    };
-
     console.info("Linking Convex User to Clerk User", clerk_user.id);
-    const response = await fetch(
-      `https://api.clerk.com/v1/users/${clerk_user.id}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.CLERK_API_KEY}`,
-        },
-        body: JSON.stringify(payload),
-      },
-    );
-    console.info("Linked Convex User to Clerk User", await response.json());
+    const response = await setExternalId({
+      clerkUserId: clerk_user.id,
+      convexUserId: convex_user_id
+    });
 
+    console.info("Linked Convex User to Clerk User", await response.json());
     return Response.json({ message: "OK", data: "User linking complete" });
   }
 

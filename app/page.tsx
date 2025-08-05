@@ -1,11 +1,10 @@
 "use client";
 import { useQuery } from "convex/react";
-import React from "react";
+import type React from "react";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 import { useReadProfile } from "@/hooks/auth";
 import { api } from "@/convex/_generated/api";
 import { CheckInCard } from "@/components/CheckInCard";
-import { useRouter } from "next/navigation";
 import { Header } from "../components/header";
 import { Footer } from "@/components/footer";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
@@ -43,11 +42,12 @@ function Content() {
             </span>
           </h1>
 
-          <If cond={profile?.role === 'admin'}>
-            <Link href="/admin" className="items-center text-sm font-semibold inline-flex border self-start">
-              <span>
-                Goto Admin
-              </span>
+          <If cond={profile?.role === "admin"}>
+            <Link
+              href="/admin"
+              className="items-center text-sm font-semibold inline-flex self-start"
+            >
+              <span>Goto Admin</span>
               <ArrowRightIcon size="1em" />
             </Link>
           </If>

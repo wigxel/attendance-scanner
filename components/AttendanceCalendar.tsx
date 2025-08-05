@@ -5,7 +5,7 @@ import { DateCalendar } from "./DateCalendar";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, InfoIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { createStore, useStore } from "zustand";
 import { addDays, addMonths, format, formatISO, parseISO } from "date-fns";
 import { useReadProfile } from "@/hooks/auth";

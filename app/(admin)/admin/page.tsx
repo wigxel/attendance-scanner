@@ -1,10 +1,11 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Admin",
 };
 
-export default function Page() {
+export default async function Page() {
   redirect("/admin/dashboard");
+  return null;
 }
