@@ -62,9 +62,7 @@ const BookingCalendar = () => {
         <div className="bg-gray-50 p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900">
-                Selected Date ({selectedDates.length}):
-              </p>
+              <p className="font-medium text-gray-900">Selected Date:</p>
               <div className="text-sm text-gray-600 mt-1">
                 {selectedDates.map((date, index) => (
                   <div key={index}>{formatDate(date)}</div>
