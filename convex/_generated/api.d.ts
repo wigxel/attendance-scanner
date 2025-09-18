@@ -9,10 +9,13 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as bookings from "../bookings.js";
 import type * as clerk from "../clerk.js";
 import type * as customers from "../customers.js";
 import type * as http from "../http.js";
 import type * as myFunctions from "../myFunctions.js";
+import type * as seats from "../seats.js";
+import type * as seedSeats from "../seedSeats.js";
 import type * as shared from "../shared.js";
 
 import type {
@@ -31,10 +34,13 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  bookings: typeof bookings;
   clerk: typeof clerk;
   customers: typeof customers;
   http: typeof http;
   myFunctions: typeof myFunctions;
+  seats: typeof seats;
+  seedSeats: typeof seedSeats;
   shared: typeof shared;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
@@ -125,6 +131,30 @@ export declare const components: {
         "internal",
         { namespace?: any; node?: string },
         null
+      >;
+      listTreeNodes: FunctionReference<
+        "query",
+        "internal",
+        { take?: number },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          aggregate?: { count: number; sum: number };
+          items: Array<{ k: any; s: number; v: any }>;
+          subtrees: Array<string>;
+        }>
+      >;
+      listTrees: FunctionReference<
+        "query",
+        "internal",
+        { take?: number },
+        Array<{
+          _creationTime: number;
+          _id: string;
+          maxNodeSize: number;
+          namespace?: any;
+          root: string;
+        }>
       >;
     };
     public: {

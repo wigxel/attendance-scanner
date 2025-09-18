@@ -15,8 +15,8 @@ importers:
         specifier: ^6.23.0
         version: 6.23.0(next@15.4.5(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@convex-dev/aggregate':
-        specifier: ^0.1.21
-        version: 0.1.21(convex@1.23.0(@clerk/clerk-react@5.32.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
+        specifier: ^0.1.23
+        version: 0.1.24(convex@1.23.0(@clerk/clerk-react@5.32.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@convex-dev/auth':
         specifier: ^0.0.81
         version: 0.0.81(@auth/core@0.39.1)(convex@1.23.0(@clerk/clerk-react@5.32.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
@@ -298,8 +298,8 @@ packages:
     resolution: {integrity: sha512-SK58IsUIAmmgm8qg63raiZCXvpwKQobpA9/wCOfQj5GgN8CIEuCqGwqLGzk8xkYabLsLTACLs1l9bx38rLMMzQ==}
     engines: {node: '>=18.17.0'}
 
-  '@convex-dev/aggregate@0.1.21':
-    resolution: {integrity: sha512-R14Ztj96H6waUqzyGBjDiw6Bj/hVwu28g4ootQlJB+pQd7mBMt6RGoDjDtQ9JLh3964xul5KqSEyj99n5Xd+0g==}
+  '@convex-dev/aggregate@0.1.24':
+    resolution: {integrity: sha512-7u7kUAvo5IXR1eY/QUpgihV1VZUeM69ZesKZ9D5hqmNzD2LrTUfwWtVXnns3Kzef3CycNaG9NWMO9auU+g5GGg==}
     peerDependencies:
       convex: ~1.16.5 || >=1.17.0 <1.35.0
 
@@ -4172,7 +4172,7 @@ snapshots:
     dependencies:
       csstype: 3.1.3
 
-  '@convex-dev/aggregate@0.1.21(convex@1.23.0(@clerk/clerk-react@5.32.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
+  '@convex-dev/aggregate@0.1.24(convex@1.23.0(@clerk/clerk-react@5.32.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
     dependencies:
       convex: 1.23.0(@clerk/clerk-react@5.32.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
 
