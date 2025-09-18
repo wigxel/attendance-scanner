@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { CheckInCard } from "@/components/CheckInCard";
 import { Header } from "../components/header";
 import { Footer } from "@/components/footer";
+import { Button } from "@/components/ui/button";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
 import { If } from "@/components/if";
 import Link from "next/link";
@@ -58,6 +59,12 @@ function Content() {
         </NotRegistered>
 
         <AttendanceCalendar />
+
+        <Link href="/reserve" className="self-center">
+          <Button variant="outline" className="self-center cursor-pointer">
+            Reserve Seat
+          </Button>
+        </Link>
 
         <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-gray-500">
           <span />
