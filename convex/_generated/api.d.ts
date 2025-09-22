@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as bookings from "../bookings.js";
 import type * as clerk from "../clerk.js";
+import type * as crons from "../crons.js";
 import type * as customers from "../customers.js";
 import type * as http from "../http.js";
 import type * as myFunctions from "../myFunctions.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   bookings: typeof bookings;
   clerk: typeof clerk;
+  crons: typeof crons;
   customers: typeof customers;
   http: typeof http;
   myFunctions: typeof myFunctions;

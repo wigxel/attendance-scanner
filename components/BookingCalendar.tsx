@@ -4,7 +4,11 @@ import { Calendar } from "@demark-pro/react-booking-calendar";
 import "@demark-pro/react-booking-calendar/dist/react-booking-calendar.css";
 import { Calendar as CalendarIcon } from "lucide-react";
 
-const BookingCalendar = () => {
+const BookingCalendar = ({
+  onProceed,
+}: {
+  onProceed: (date: Date) => void;
+}) => {
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
 
   const oneDay = 86400000;
@@ -40,6 +44,8 @@ const BookingCalendar = () => {
         // @ts-expect-error set selected dates
         onChange={setSelectedDates}
         disabled={(date) => date.getDay() === 0}
+        protection={true}
+        range={false}
       />
 
       {/* Date Indicators */}
@@ -69,7 +75,10 @@ const BookingCalendar = () => {
                 ))}
               </div>
             </div>
-            <button className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors">
+            <button
+              onClick={() => onProceed(selectedDates[0])}
+              className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+            >
               Proceed
             </button>
           </div>

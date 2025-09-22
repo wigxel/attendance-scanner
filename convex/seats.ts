@@ -2,8 +2,11 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 export const getAllSeats = query({
+  args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("seats").collect();
+    console.log("Fetching all seats...");
+    const seats = await ctx.db.query("seats").collect();
+    return seats;
   },
 });
 

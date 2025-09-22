@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 
 export const createBooking = mutation({
   /**
@@ -160,8 +161,8 @@ export const createBooking = mutation({
       });
       bookingIds.push(bookingId);
       // mark seat as occupied
-      await ctx.db.patch(seatId, {
-        isOccupied: true,
+      await ctx.runMutation(api.seats.markSeatOccupied, {
+        seatId,
       });
     }
 
@@ -198,5 +199,62 @@ export const getUserBookings = query({
     );
 
     return bookingsWithSeats;
+  },
+});
+
+// Mark seat as available when booking has expired
+export const markExpiredSeatsAvailable = mutation({
+  /**
+   * Marks seats as available when their bookings have expired.
+   *
+   * This mutation:
+   * - Finds all confirmed bookings that have passed their end date
+   * - Updates their status to "expired"
+   * - Marks the associated seats as available
+   *
+   * Is called periodically to automatically handle expired bookings.
+   *
+   * @returns Object containing:
+   * - expiredBookingIds: Array of booking IDs that were marked as expired
+   * - availableSeats: Number of seats marked as available
+   */
+  handler: async (ctx) => {
+    const today = new Date().toISOString().split("T")[0];
+
+    // Find all confirmed bookings that have expired
+    const expiredBookings = await ctx.db
+      .query("bookings")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "confirmed"),
+          q.lt(q.field("endDate"), today),
+        ),
+      )
+      .collect();
+
+    const expiredBookingIds = [];
+    let availableSeats = 0;
+
+    // Update each expired booking and mark seat as available
+    for (const booking of expiredBookings) {
+      // Update booking status to expired
+      await ctx.db.patch(booking._id, {
+        status: "expired",
+        updatedAt: Date.now(),
+      });
+
+      // Mark seat as available
+      await ctx.runMutation(api.seats.markSeatAvailable, {
+        seatId: booking.seatId,
+      });
+
+      expiredBookingIds.push(booking._id);
+      availableSeats++;
+    }
+
+    return {
+      expiredBookingIds,
+      availableSeats,
+    };
   },
 });
