@@ -1,15 +1,37 @@
 "use client";
 import React, { useState } from "react";
+import { calculateEndDate } from "@/lib/utils";
+
 import { Calendar } from "@demark-pro/react-booking-calendar";
 import "@demark-pro/react-booking-calendar/dist/react-booking-calendar.css";
 import { Calendar as CalendarIcon } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const BookingCalendar = ({
   onProceed,
 }: {
-  onProceed: (date: Date) => void;
+  onProceed: (date: Date, endDate: Date) => void;
 }) => {
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [timePeriodString, setTimePeriodString] = useState<string>("day");
+
+  let timePeriod: number;
+
+  if (timePeriodString === "day") {
+    timePeriod = 1;
+  } else if (timePeriodString === "week") {
+    timePeriod = 7;
+  } else if (timePeriodString === "month") {
+    timePeriod = 24;
+  } else {
+    throw Error("Invalid time period");
+  }
 
   const oneDay = 86400000;
   const today = new Date().getTime() + oneDay;
@@ -66,6 +88,21 @@ const BookingCalendar = ({
 
       {selectedDates.length > 0 && (
         <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="mb-6">
+            <Select
+              value={timePeriodString}
+              onValueChange={setTimePeriodString}
+            >
+              <SelectTrigger className="w-full bg-white cursor-pointer">
+                <SelectValue placeholder="Select time period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="day">Day</SelectItem>
+                <SelectItem value="week">Week</SelectItem>
+                <SelectItem value="month">Month</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-gray-900">Selected Date:</p>
@@ -76,7 +113,12 @@ const BookingCalendar = ({
               </div>
             </div>
             <button
-              onClick={() => onProceed(selectedDates[0])}
+              onClick={() =>
+                onProceed(
+                  selectedDates[0],
+                  calculateEndDate(selectedDates[0], timePeriod),
+                )
+              }
               className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
             >
               Proceed

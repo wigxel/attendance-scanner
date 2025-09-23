@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 
 import Chair from "@/public/images/chair.png";
 import Image from "next/image";
@@ -255,15 +255,6 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
           />
         )}
       </div>
-
-      {/* Selection Display */}
-      {selectedSeatId && (
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm font-medium text-blue-900">
-            Selected: Seat {selectedSeatId}
-          </p>
-        </div>
-      )}
     </div>
   );
 };

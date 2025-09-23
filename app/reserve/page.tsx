@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import { ConvexHttpClient } from "convex/browser";
 // import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -20,14 +21,32 @@ const httpClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 function Content() {
   const [activeTab, setActiveTab] = useState("booking");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const currentUser = await httpClient.query(api.auth.getCurrentUser, {});
+        console.log("Current user details:", currentUser);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
-  const handleProceed = (date: Date) => {
+  const handleProceed = (date: Date, endDate: Date) => {
     setActiveTab("choose");
     setSelectedDate(date);
+    setEndDate(endDate);
+  };
+  const handleSeatProceed = () => {
+    setActiveTab("payment");
   };
 
   return (
@@ -56,17 +75,26 @@ function Content() {
           <PickSeatTab
             selectedSeatId={selectedSeatId}
             setSelectedSeatId={setSelectedSeatId}
+            onProceed={handleSeatProceed}
           />
         </TabsContent>
         <TabsContent value="payment">
-          <MakePaymentTab selectedSeatId={selectedSeatId} />
+          <MakePaymentTab
+            selectedSeatId={selectedSeatId}
+            selectedDate={selectedDate}
+            endDate={endDate}
+          />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-function PickScheduleTab({ onProceed }: { onProceed: (date: Date) => void }) {
+function PickScheduleTab({
+  onProceed,
+}: {
+  onProceed: (date: Date, endDate: Date) => void;
+}) {
   return (
     <div>
       <BookingCalendar onProceed={onProceed} />
@@ -77,9 +105,11 @@ function PickScheduleTab({ onProceed }: { onProceed: (date: Date) => void }) {
 function PickSeatTab({
   selectedSeatId,
   setSelectedSeatId,
+  onProceed,
 }: {
   selectedSeatId: string | null;
   setSelectedSeatId: (id: string | null) => void;
+  onProceed: () => void;
 }) {
   /*
   const seats = useQuery(api.seats.getAllSeats);
@@ -116,7 +146,7 @@ function PickSeatTab({
         setSelectedSeatId(null);
       }
     }
-  }, [seats, selectedSeatId]);
+  }, [seats, selectedSeatId, setSelectedSeatId]);
 
   if (loading) {
     return <div>Loading seats...</div>;
@@ -149,15 +179,86 @@ function PickSeatTab({
         onSeatSelect={handleSeatSelect}
         selectedSeatId={selectedSeatId}
       />
+      {selectedSeatId && (
+        <div className="bg-white p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-gray-900">Selected Seat:</p>
+              <div className="text-sm text-gray-600 mt-1">
+                <p>Seat {selectedSeatId}</p>
+              </div>
+            </div>
+            <button
+              onClick={onProceed}
+              className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+            >
+              Proceed
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function MakePaymentTab({ selectedSeatId }: { selectedSeatId: string | null }) {
+function MakePaymentTab({
+  selectedSeatId,
+  selectedDate,
+  endDate,
+}: {
+  selectedSeatId: string | null;
+  selectedDate: Date | null;
+  endDate: Date | null;
+}) {
+  const { user } = useUser();
+  console.log(user);
   return (
-    <div>
-      <p>Make payment here.</p>
-      {selectedSeatId && <p>Selected seat: {selectedSeatId}</p>}
+    <div className="bg-white my-8 flex flex-col gap-6">
+      {user && (
+        <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
+          {user.fullName && (
+            <div>
+              <p className="text-sm text-gray-600">Name</p>
+              <div className="font-medium text-gray-900 mt-1">
+                {user.fullName}
+              </div>
+            </div>
+          )}
+          {user.phoneNumbers.length > 0 && (
+            <div>
+              <p className="text-sm text-gray-600">Phone</p>
+              <div className="font-medium text-gray-900 mt-1">
+                {user.phoneNumbers[0]?.phoneNumber}
+              </div>
+            </div>
+          )}
+          {user.emailAddresses.length > 0 && (
+            <div>
+              <p className="text-sm text-gray-600">Email</p>
+              <div className="font-medium text-gray-900 mt-1">
+                {user.emailAddresses[0].emailAddress}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {selectedSeatId && selectedDate ? (
+        <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
+          <div>
+            <h5>09:00am</h5>
+            <p>{selectedDate.toDateString()}</p>
+            <p>Seat {selectedSeatId}</p>
+          </div>
+          <div>
+            <h5>05:00pm</h5>
+            <p>{endDate?.toDateString()}</p>
+          </div>
+        </div>
+      ) : null}
+      <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
+        {selectedSeatId && <p>Selected seat: {selectedSeatId}</p>}
+        {selectedDate && <p>Selected date: {selectedDate.toDateString()}</p>}
+      </div>
     </div>
   );
 }
