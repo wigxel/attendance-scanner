@@ -5,6 +5,7 @@ import { ConvexHttpClient } from "convex/browser";
 // import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
+import { LucideLoader } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import BookingCalendar from "@/components/BookingCalendar";
@@ -22,6 +23,7 @@ function Content() {
   const [activeTab, setActiveTab] = useState("booking");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [price, setPrice] = useState<number | null>(null);
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,10 +42,11 @@ function Content() {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
-  const handleProceed = (date: Date, endDate: Date) => {
+  const handleProceed = (date: Date, endDate: Date, price: number) => {
     setActiveTab("choose");
     setSelectedDate(date);
     setEndDate(endDate);
+    setPrice(price);
   };
   const handleSeatProceed = () => {
     setActiveTab("payment");
@@ -83,6 +86,7 @@ function Content() {
             selectedSeatId={selectedSeatId}
             selectedDate={selectedDate}
             endDate={endDate}
+            price={price}
           />
         </TabsContent>
       </Tabs>
@@ -93,7 +97,7 @@ function Content() {
 function PickScheduleTab({
   onProceed,
 }: {
-  onProceed: (date: Date, endDate: Date) => void;
+  onProceed: (date: Date, endDate: Date, price: number) => void;
 }) {
   return (
     <div>
@@ -149,7 +153,17 @@ function PickSeatTab({
   }, [seats, selectedSeatId, setSelectedSeatId]);
 
   if (loading) {
-    return <div>Loading seats...</div>;
+    return (
+      <div className="h-96 bg-gray-100 rounded-lg flex justify-center items-center">
+        <div className="bg-white rounded-full p-4">
+          <LucideLoader
+            size={"2rem"}
+            strokeWidth={1}
+            className="animate animate-spin"
+          />
+        </div>
+      </div>
+    );
   }
 
   if (!seats) {
@@ -205,13 +219,18 @@ function MakePaymentTab({
   selectedSeatId,
   selectedDate,
   endDate,
+  price,
 }: {
   selectedSeatId: string | null;
   selectedDate: Date | null;
   endDate: Date | null;
+  price: number | null;
 }) {
   const { user } = useUser();
-  console.log(user);
+  const formatPrice = (price: number | null) => {
+    if (price === null) return "N/A";
+    return `₦${(price / 100).toLocaleString()}`;
+  };
   return (
     <div className="bg-white my-8 flex flex-col gap-6">
       {user && (
@@ -245,19 +264,25 @@ function MakePaymentTab({
       {selectedSeatId && selectedDate ? (
         <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
           <div>
-            <h5>09:00am</h5>
+            <h5 className="text-xl font-bold text-[#72A0A0]">09:00am</h5>
             <p>{selectedDate.toDateString()}</p>
             <p>Seat {selectedSeatId}</p>
           </div>
           <div>
-            <h5>05:00pm</h5>
+            <h5 className="text-xl font-bold text-[#72A0A0]">05:00pm</h5>
             <p>{endDate?.toDateString()}</p>
           </div>
         </div>
       ) : null}
       <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
-        {selectedSeatId && <p>Selected seat: {selectedSeatId}</p>}
-        {selectedDate && <p>Selected date: {selectedDate.toDateString()}</p>}
+        <div className="flex justify-between items-center">
+          <p className="text-[#72A0A0]">Payment Status</p>
+          <p>Not Paid</p>
+        </div>
+        <div className="flex justify-between items-center">
+          <p className="text-[#72A0A0]">Price</p>
+          <p>{formatPrice(price)}</p>
+        </div>
       </div>
     </div>
   );

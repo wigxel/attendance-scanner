@@ -16,19 +16,23 @@ import {
 const BookingCalendar = ({
   onProceed,
 }: {
-  onProceed: (date: Date, endDate: Date) => void;
+  onProceed: (date: Date, endDate: Date, price: number) => void;
 }) => {
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [timePeriodString, setTimePeriodString] = useState<string>("day");
 
   let timePeriod: number;
+  let price: number; // in kobo
 
   if (timePeriodString === "day") {
     timePeriod = 1;
+    price = 150000; // 1,500
   } else if (timePeriodString === "week") {
     timePeriod = 7;
+    price = 600000; // 6,000
   } else if (timePeriodString === "month") {
     timePeriod = 24;
+    price = 2400000; // 24,000
   } else {
     throw Error("Invalid time period");
   }
@@ -117,6 +121,7 @@ const BookingCalendar = ({
                 onProceed(
                   selectedDates[0],
                   calculateEndDate(selectedDates[0], timePeriod),
+                  price,
                 )
               }
               className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
