@@ -16,7 +16,12 @@ import {
 const BookingCalendar = ({
   onProceed,
 }: {
-  onProceed: (date: Date, endDate: Date, price: number) => void;
+  onProceed: (
+    date: Date,
+    endDate: Date,
+    price: number,
+    timePeriod: "day" | "week" | "month",
+  ) => void;
 }) => {
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [timePeriodString, setTimePeriodString] = useState<string>("day");
@@ -122,6 +127,7 @@ const BookingCalendar = ({
                   selectedDates[0],
                   calculateEndDate(selectedDates[0], timePeriod),
                   price,
+                  timePeriodString,
                 )
               }
               className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"

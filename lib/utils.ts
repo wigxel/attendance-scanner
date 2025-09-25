@@ -32,3 +32,18 @@ export const calculateEndDate = (
 
   return currentDate;
 };
+
+export const loadPaystackScript = () => {
+  return new Promise((resolve, reject) => {
+    if (document.getElementById("paystack-js")) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://js.paystack.co/v1/inline.js";
+    script.id = "paystack-js";
+    script.onload = () => resolve(true);
+    script.onerror = () => reject(new Error("Failed to load Paystack script"));
+    document.body.appendChild(script);
+  });
+};

@@ -117,6 +117,8 @@ export const createBooking = mutation({
     const startMs = new Date(args.startDate).getTime();
     if (startMs < Date.now()) throw new Error("Cannot book past dates");
 
+    if (args.seatIds.length === 0) throw new Error("No seats selected");
+
     // Check availability for all requested seats
     for (const seatId of args.seatIds) {
       const conflictingBookings = await ctx.db
@@ -147,6 +149,7 @@ export const createBooking = mutation({
     const now = Date.now();
 
     for (const seatId of args.seatIds) {
+      console.log("Creating booking for seat:", seatId);
       const bookingId = await ctx.db.insert("bookings", {
         userId,
         seatId,
@@ -199,6 +202,37 @@ export const getUserBookings = query({
     );
 
     return bookingsWithSeats;
+  },
+});
+
+export const confirmBooking = mutation({
+  /**
+   * Confirms a booking.
+   *
+   * This mutation:
+   * - Updates the booking status to "confirmed"
+   *
+   * @param bookingId ID of the booking to confirm
+   * @returns Object containing:
+   * - bookingId: ID of the confirmed booking
+   */
+  args: {
+    bookingId: v.id("bookings"),
+  },
+  handler: async (ctx, args) => {
+    const booking = await ctx.db.get(args.bookingId);
+    if (!booking) throw new Error("Booking not found");
+
+    const seat = await ctx.db.get(booking.seatId);
+    if (!seat) throw new Error("Seat not found");
+
+    await ctx.db.patch(args.bookingId, {
+      status: "confirmed",
+    });
+
+    return {
+      bookingId: args.bookingId,
+    };
   },
 });
 

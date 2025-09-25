@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { ConvexHttpClient } from "convex/browser";
-// import { useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { loadPaystackScript } from "@/lib/utils";
 
 import { LucideLoader } from "lucide-react";
 import { Header } from "@/components/header";
@@ -13,6 +15,7 @@ import SeatLayout from "@/components/SeatLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Seat {
+  _id: Id<"seats">;
   seatNumber: string;
   isOccupied: boolean;
 }
@@ -24,7 +27,15 @@ function Content() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [price, setPrice] = useState<number | null>(null);
-  const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
+  const [selectedSeatNumber, setSelectedSeatNumber] = useState<string | null>(
+    null,
+  );
+  const [selectedSeatId, setSelectedSeatId] = useState<Id<"seats"> | null>(
+    null,
+  );
+  const [timePeriodString, setTimePeriodString] = useState<
+    "day" | "week" | "month"
+  >("day");
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -42,11 +53,17 @@ function Content() {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
-  const handleProceed = (date: Date, endDate: Date, price: number) => {
+  const handleProceed = (
+    date: Date,
+    endDate: Date,
+    price: number,
+    timePeriod: "day" | "week" | "month",
+  ) => {
     setActiveTab("choose");
     setSelectedDate(date);
     setEndDate(endDate);
     setPrice(price);
+    setTimePeriodString(timePeriod);
   };
   const handleSeatProceed = () => {
     setActiveTab("payment");
@@ -76,17 +93,20 @@ function Content() {
         </TabsContent>
         <TabsContent value="choose">
           <PickSeatTab
-            selectedSeatId={selectedSeatId}
+            selectedSeatNumber={selectedSeatNumber}
+            setSelectedSeatNumber={setSelectedSeatNumber}
             setSelectedSeatId={setSelectedSeatId}
             onProceed={handleSeatProceed}
           />
         </TabsContent>
         <TabsContent value="payment">
           <MakePaymentTab
+            selectedSeatNumber={selectedSeatNumber}
             selectedSeatId={selectedSeatId}
             selectedDate={selectedDate}
             endDate={endDate}
             price={price}
+            timePeriodString={timePeriodString}
           />
         </TabsContent>
       </Tabs>
@@ -97,7 +117,12 @@ function Content() {
 function PickScheduleTab({
   onProceed,
 }: {
-  onProceed: (date: Date, endDate: Date, price: number) => void;
+  onProceed: (
+    date: Date,
+    endDate: Date,
+    price: number,
+    timePeriod: "day" | "week" | "month",
+  ) => void;
 }) {
   return (
     <div>
@@ -107,12 +132,14 @@ function PickScheduleTab({
 }
 
 function PickSeatTab({
-  selectedSeatId,
+  selectedSeatNumber,
+  setSelectedSeatNumber,
   setSelectedSeatId,
   onProceed,
 }: {
-  selectedSeatId: string | null;
-  setSelectedSeatId: (id: string | null) => void;
+  selectedSeatNumber: string | null;
+  setSelectedSeatNumber: (number: string | null) => void;
+  setSelectedSeatId: (id: Id<"seats"> | null) => void;
   onProceed: () => void;
 }) {
   /*
@@ -141,16 +168,16 @@ function PickSeatTab({
 
   useEffect(() => {
     // Check if the selected seat has become occupied
-    if (selectedSeatId && seats) {
+    if (selectedSeatNumber && seats) {
       // @ts-expect-error test
       const selectedSeat = seats.find(
-        (seat: Seat) => seat.seatNumber === selectedSeatId,
+        (seat: Seat) => seat.seatNumber === selectedSeatNumber,
       );
       if (selectedSeat && selectedSeat.isOccupied) {
-        setSelectedSeatId(null);
+        setSelectedSeatNumber(null);
       }
     }
-  }, [seats, selectedSeatId, setSelectedSeatId]);
+  }, [seats, selectedSeatNumber, setSelectedSeatNumber]);
 
   if (loading) {
     return (
@@ -171,35 +198,26 @@ function PickSeatTab({
   }
 
   const handleSeatSelect = (seat: Seat): void => {
-    const newSeatId = seat.seatNumber;
+    const newSeatNumber = seat.seatNumber;
+    const newSeatId = seat._id;
+    setSelectedSeatNumber(newSeatNumber);
     setSelectedSeatId(newSeatId);
   };
-
-  /*
-  if (seats === undefined) {
-    return <div>Loading seats...</div>;
-  }
-
-  // @ts-expect-error test
-  if (seats === null || seats.length === 0) {
-    return <div>No seats available</div>;
-  }
-  */
 
   return (
     <div className="p-3 bg-gray-100 min-h-screen rounded-lg">
       <SeatLayout
         seats={seats}
         onSeatSelect={handleSeatSelect}
-        selectedSeatId={selectedSeatId}
+        selectedSeatNumber={selectedSeatNumber}
       />
-      {selectedSeatId && (
+      {selectedSeatNumber && (
         <div className="bg-white p-4 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-gray-900">Selected Seat:</p>
               <div className="text-sm text-gray-600 mt-1">
-                <p>Seat {selectedSeatId}</p>
+                <p>Seat {selectedSeatNumber}</p>
               </div>
             </div>
             <button
@@ -216,20 +234,132 @@ function PickSeatTab({
 }
 
 function MakePaymentTab({
+  selectedSeatNumber,
   selectedSeatId,
   selectedDate,
   endDate,
   price,
+  timePeriodString,
 }: {
-  selectedSeatId: string | null;
+  selectedSeatNumber: string | null;
+  selectedSeatId: Id<"seats"> | null;
   selectedDate: Date | null;
   endDate: Date | null;
   price: number | null;
+  timePeriodString: "day" | "week" | "month";
 }) {
+  type PaymentStatus = "pending" | "success" | "failed";
+
+  const [paymentMessage, setPaymentMessage] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("pending");
   const { user } = useUser();
   const formatPrice = (price: number | null) => {
     if (price === null) return "N/A";
     return `₦${(price / 100).toLocaleString()}`;
+  };
+
+  const createBooking = useMutation(api.bookings.createBooking);
+  const confirmBooking = useMutation(api.bookings.confirmBooking);
+
+  const handlePayment = async () => {
+    try {
+      if (!user && !selectedDate && !selectedSeatId && !timePeriodString) {
+        setPaymentMessage("Please select a user, date, seat, and time period.");
+        return;
+      }
+      if (!user) {
+        setPaymentMessage("Please login.");
+        return;
+      }
+      if (!selectedDate) {
+        setPaymentMessage("Please select a date.");
+        return;
+      }
+      if (!selectedSeatId) {
+        setPaymentMessage("Please select a seat.");
+        return;
+      }
+      if (!timePeriodString) {
+        setPaymentMessage("Please select a time period.");
+        return;
+      }
+      const loaded = await loadPaystackScript();
+      if (!loaded) {
+        setPaymentMessage(
+          "Payment service failed to load. Please check your connection and try again.",
+        );
+        console.error(
+          "Payment service failed to load. Please check your connection and try again.",
+        );
+        return;
+      }
+
+      // @ts-expect-error paystack
+      const paystack = window.PaystackPop.setup({
+        key: "pk_test_6a48efde02e1ff0911008c43a201f6a747e39a67",
+        email: user?.emailAddresses[0].emailAddress,
+        amount: price,
+        metadata: {
+          name: user?.fullName,
+          email: user?.emailAddresses[0].emailAddress,
+          seatId: selectedSeatId,
+          date: selectedDate?.toISOString(),
+          endDate: endDate?.toISOString(),
+          price: formatPrice(price),
+        },
+        // @ts-expect-error paystack
+        callback: (response) => {
+          console.log("Paystack callback triggered");
+          console.log("Paystack response:", response);
+
+          if (response.status !== "success") {
+            setPaymentStatus("failed");
+            setPaymentMessage("Payment was not successful");
+            return;
+          }
+
+          console.log({
+            userId: user?.id || "",
+            startDate: selectedDate?.toISOString().split("T")[0] || "",
+            seatIds: selectedSeatId ? [selectedSeatId] : [],
+            durationType: timePeriodString,
+          });
+
+          createBooking({
+            userId: user?.id || "",
+            startDate: selectedDate?.toISOString().split("T")[0] || "",
+            seatIds: selectedSeatId ? [selectedSeatId] : [],
+            durationType: timePeriodString,
+          })
+            .then((result) => {
+              console.log("Booking created:", result);
+              const bookingId = result.bookingIds[0];
+              confirmBooking({ bookingId });
+            })
+            .then(() => {
+              setPaymentStatus("success");
+              setPaymentMessage("Payment successful!");
+              console.log("Payment successful!");
+            })
+            .catch((error: Error) => {
+              setPaymentStatus("failed");
+              setPaymentMessage("Payment failed!");
+              console.error("Payment failed:", error);
+            });
+        },
+        onClose: () => {
+          setPaymentMessage("Transaction was cancelled");
+          console.log("Transaction was cancelled");
+        },
+      });
+
+      paystack.openIframe();
+    } catch (error) {
+      console.error("Payment error:", error);
+    } finally {
+      // setLoading(false);
+      console.log("Payment completed");
+    }
   };
   return (
     <div className="bg-white my-8 flex flex-col gap-6">
@@ -261,12 +391,12 @@ function MakePaymentTab({
           )}
         </div>
       )}
-      {selectedSeatId && selectedDate ? (
+      {selectedSeatNumber && selectedDate ? (
         <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
           <div>
             <h5 className="text-xl font-bold text-[#72A0A0]">09:00am</h5>
             <p>{selectedDate.toDateString()}</p>
-            <p>Seat {selectedSeatId}</p>
+            <p>Seat {selectedSeatNumber}</p>
           </div>
           <div>
             <h5 className="text-xl font-bold text-[#72A0A0]">05:00pm</h5>
@@ -277,13 +407,36 @@ function MakePaymentTab({
       <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <p className="text-[#72A0A0]">Payment Status</p>
-          <p>Not Paid</p>
+          <p>{paymentMessage == "success" ? "Paid" : "Not Paid"}</p>
         </div>
         <div className="flex justify-between items-center">
           <p className="text-[#72A0A0]">Price</p>
           <p>{formatPrice(price)}</p>
         </div>
       </div>
+
+      <div>
+        {paymentMessage && (
+          <div
+            className={`p-3 rounded-lg mb-4 text-center font-medium ${
+              paymentStatus === "success"
+                ? "bg-green-100 text-green-800 border border-green-200"
+                : paymentStatus === "failed"
+                  ? "bg-red-100 text-red-800 border border-red-200"
+                  : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+            }`}
+          >
+            {paymentMessage}
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={handlePayment}
+        className="bg-[#0000FF] font-semibold text-white p-3 w-full rounded-lg cursor-pointer"
+      >
+        Pay Now
+      </button>
     </div>
   );
 }
