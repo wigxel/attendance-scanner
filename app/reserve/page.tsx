@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { ConvexHttpClient } from "convex/browser";
-import { useMutation } from "convex/react";
+// import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { loadPaystackScript } from "@/lib/utils";
@@ -253,13 +253,62 @@ function MakePaymentTab({
   const [paymentMessage, setPaymentMessage] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("pending");
   const { user } = useUser();
+  const { getToken } = useAuth();
   const formatPrice = (price: number | null) => {
     if (price === null) return "N/A";
     return `₦${(price / 100).toLocaleString()}`;
   };
 
-  const createBooking = useMutation(api.bookings.createBooking);
-  const confirmBooking = useMutation(api.bookings.confirmBooking);
+  const handleSuccessfulPayment = async () => {
+    try {
+      const token = await getToken({ template: "convex" });
+      if (!token) {
+        setPaymentMessage("Authentication error. Please log in again.");
+        setPaymentStatus("failed");
+        return;
+      }
+      // https://excited-egret-68.clerk.accounts.dev
+      httpClient.setAuth(token);
+
+      const bookingArgs = {
+        userId: user?.id || "",
+        startDate: selectedDate?.toISOString().split("T")[0] || "",
+        seatIds: selectedSeatId ? [selectedSeatId] : [],
+        durationType: timePeriodString,
+      };
+
+      console.log("Creating booking with args:", bookingArgs);
+
+      const createBooking = httpClient.mutation(
+        api.bookings.createBooking,
+        bookingArgs,
+      );
+
+      console.log("Booking created:", createBooking);
+
+      // @ts-expect-error createBooking returns an object that contains bookingIds
+      if (!createBooking.bookingIds || createBooking.bookingIds.length === 0) {
+        setPaymentMessage("Booking failed after payment.");
+        console.error(
+          "Booking failed after successful payment:",
+          createBooking,
+        );
+        return;
+      }
+
+      // @ts-expect-error createBooking returns an object that contains bookingIds
+      const bookingId = createBooking.bookingIds[0];
+      httpClient.mutation(api.bookings.confirmBooking, { bookingId });
+
+      setPaymentStatus("success");
+      setPaymentMessage("Payment successful!");
+      console.log("Payment and confirmation successful!");
+    } catch (error) {
+      setPaymentStatus("failed");
+      setPaymentMessage("Booking failed after payment.");
+      console.error("Booking failed after successful payment:", error);
+    }
+  };
 
   const handlePayment = async () => {
     try {
@@ -312,40 +361,12 @@ function MakePaymentTab({
           console.log("Paystack callback triggered");
           console.log("Paystack response:", response);
 
-          if (response.status !== "success") {
+          if (response.status === "success") {
+            handleSuccessfulPayment();
+          } else {
             setPaymentStatus("failed");
             setPaymentMessage("Payment was not successful");
-            return;
           }
-
-          console.log({
-            userId: user?.id || "",
-            startDate: selectedDate?.toISOString().split("T")[0] || "",
-            seatIds: selectedSeatId ? [selectedSeatId] : [],
-            durationType: timePeriodString,
-          });
-
-          createBooking({
-            userId: user?.id || "",
-            startDate: selectedDate?.toISOString().split("T")[0] || "",
-            seatIds: selectedSeatId ? [selectedSeatId] : [],
-            durationType: timePeriodString,
-          })
-            .then((result) => {
-              console.log("Booking created:", result);
-              const bookingId = result.bookingIds[0];
-              confirmBooking({ bookingId });
-            })
-            .then(() => {
-              setPaymentStatus("success");
-              setPaymentMessage("Payment successful!");
-              console.log("Payment successful!");
-            })
-            .catch((error: Error) => {
-              setPaymentStatus("failed");
-              setPaymentMessage("Payment failed!");
-              console.error("Payment failed:", error);
-            });
         },
         onClose: () => {
           setPaymentMessage("Transaction was cancelled");
@@ -355,9 +376,10 @@ function MakePaymentTab({
 
       paystack.openIframe();
     } catch (error) {
+      setPaymentStatus("failed");
+      setPaymentMessage("Payment failed!");
       console.error("Payment error:", error);
     } finally {
-      // setLoading(false);
       console.log("Payment completed");
     }
   };
