@@ -51,11 +51,17 @@ function Content() {
     price: number,
     timePeriod: "day" | "week" | "month",
   ) => {
-    setActiveTab("choose");
-    setSelectedDate(date);
-    setEndDate(endDate);
-    setPrice(price);
-    setTimePeriodString(timePeriod);
+    const pickedDate = new Date(date);
+
+    if (pickedDate.getDay() === 0) {
+      alert("Please select another date. We're closed on Sundays");
+    } else {
+      setActiveTab("choose");
+      setSelectedDate(date);
+      setEndDate(endDate);
+      setPrice(price);
+      setTimePeriodString(timePeriod);
+    }
   };
   const handleSeatProceed = () => {
     setActiveTab("payment");

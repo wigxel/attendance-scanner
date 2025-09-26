@@ -42,18 +42,12 @@ const BookingCalendar = ({
     throw Error("Invalid time period");
   }
 
-  const oneDay = 86400000;
-  const today = new Date().getTime() + oneDay;
+  // const oneDay = 86400000;
 
-  const reserved = Array.from({ length: 1 }, (_, i) => {
-    const daysCount = 0;
-    const startDate = new Date(today + oneDay * 8 * i);
-
-    return {
-      startDate,
-      endDate: new Date(startDate.getTime() + oneDay * daysCount),
-    };
-  });
+  const reserved: {
+    startDate: Date;
+    endDate: Date;
+  }[] = [];
 
   const formatDate = (date: Date): string => {
     if (!date) {
@@ -87,7 +81,7 @@ const BookingCalendar = ({
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-gray-100 border rounded"></div>
-          <span className="text-sm text-gray-600">Reserved/Unavailable</span>
+          <span className="text-sm text-gray-600">Fully Booked</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 border border-gray-300 rounded"></div>
