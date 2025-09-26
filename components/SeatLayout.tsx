@@ -6,7 +6,7 @@ import Image from "next/image";
 
 interface SeatData {
   _id: Id<"seats">;
-  seatNumber: string;
+  seatNumber: string | number;
   isOccupied: boolean;
 }
 
@@ -20,7 +20,7 @@ interface SeatProps {
 interface SeatLayoutProps {
   seats: SeatData[];
   onSeatSelect?: (seat: SeatData) => void;
-  selectedSeatNumber?: string | null;
+  selectedSeatNumber?: string | number | null;
 }
 
 // Seat Component

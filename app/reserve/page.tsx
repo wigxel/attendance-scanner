@@ -16,39 +16,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Seat {
   _id: Id<"seats">;
-  seatNumber: string;
+  seatNumber: string | number;
   isOccupied: boolean;
 }
 
-const httpClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const CONFIG = {
+  paystackPublicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
+  convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
+};
+
+const httpClient = new ConvexHttpClient(CONFIG.convexUrl);
 
 function Content() {
   const [activeTab, setActiveTab] = useState("booking");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [price, setPrice] = useState<number | null>(null);
-  const [selectedSeatNumber, setSelectedSeatNumber] = useState<string | null>(
-    null,
-  );
+  const [selectedSeatNumber, setSelectedSeatNumber] = useState<
+    string | number | null
+  >(null);
   const [selectedSeatId, setSelectedSeatId] = useState<Id<"seats"> | null>(
     null,
   );
   const [timePeriodString, setTimePeriodString] = useState<
     "day" | "week" | "month"
   >("day");
-
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const currentUser = await httpClient.query(api.auth.getCurrentUser, {});
-        console.log("Current user details:", currentUser);
-      } catch (error) {
-        console.error("Error fetching current user:", error);
-      }
-    };
-
-    fetchCurrentUser();
-  }, []);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -137,8 +129,8 @@ function PickSeatTab({
   setSelectedSeatId,
   onProceed,
 }: {
-  selectedSeatNumber: string | null;
-  setSelectedSeatNumber: (number: string | null) => void;
+  selectedSeatNumber: string | number | null;
+  setSelectedSeatNumber: (number: string | number | null) => void;
   setSelectedSeatId: (id: Id<"seats"> | null) => void;
   onProceed: () => void;
 }) {
@@ -147,14 +139,14 @@ function PickSeatTab({
   console.log("Seats data:", seats);
   */
 
-  const [seats, setSeats] = useState(null);
+  const [seats, setSeats] = useState<Seat[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSeats = async () => {
       try {
         const result = await httpClient.query(api.seats.getAllSeats, {});
-        // @ts-expect-error test
+
         setSeats(result);
       } catch (error) {
         console.error("Error fetching seats:", error);
@@ -169,7 +161,6 @@ function PickSeatTab({
   useEffect(() => {
     // Check if the selected seat has become occupied
     if (selectedSeatNumber && seats) {
-      // @ts-expect-error test
       const selectedSeat = seats.find(
         (seat: Seat) => seat.seatNumber === selectedSeatNumber,
       );
@@ -241,7 +232,7 @@ function MakePaymentTab({
   price,
   timePeriodString,
 }: {
-  selectedSeatNumber: string | null;
+  selectedSeatNumber: string | number | null;
   selectedSeatId: Id<"seats"> | null;
   selectedDate: Date | null;
   endDate: Date | null;
@@ -277,14 +268,10 @@ function MakePaymentTab({
         durationType: timePeriodString,
       };
 
-      console.log("Creating booking with args:", bookingArgs);
-
       const createBooking = await httpClient.mutation(
         api.bookings.createBooking,
         bookingArgs,
       );
-
-      console.log("Booking created:", createBooking);
 
       if (!createBooking.bookingIds || createBooking.bookingIds.length === 0) {
         setPaymentMessage("Booking failed after payment.");
@@ -300,7 +287,6 @@ function MakePaymentTab({
 
       setPaymentStatus("success");
       setPaymentMessage("Payment successful!");
-      console.log("Payment and confirmation successful!");
     } catch (error) {
       setPaymentStatus("failed");
       setPaymentMessage("Booking failed after payment.");
@@ -343,7 +329,7 @@ function MakePaymentTab({
 
       // @ts-expect-error paystack
       const paystack = window.PaystackPop.setup({
-        key: "pk_test_6a48efde02e1ff0911008c43a201f6a747e39a67",
+        key: CONFIG.paystackPublicKey,
         email: user?.emailAddresses[0].emailAddress,
         amount: price,
         metadata: {
@@ -356,9 +342,6 @@ function MakePaymentTab({
         },
         // @ts-expect-error paystack
         callback: (response) => {
-          console.log("Paystack callback triggered");
-          console.log("Paystack response:", response);
-
           if (response.status === "success") {
             handleSuccessfulPayment();
           } else {
@@ -377,8 +360,6 @@ function MakePaymentTab({
       setPaymentStatus("failed");
       setPaymentMessage("Payment failed!");
       console.error("Payment error:", error);
-    } finally {
-      console.log("Payment completed");
     }
   };
   return (
