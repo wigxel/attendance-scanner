@@ -267,7 +267,7 @@ function MakePaymentTab({
         setPaymentStatus("failed");
         return;
       }
-      // https://excited-egret-68.clerk.accounts.dev
+
       httpClient.setAuth(token);
 
       const bookingArgs = {
@@ -279,14 +279,13 @@ function MakePaymentTab({
 
       console.log("Creating booking with args:", bookingArgs);
 
-      const createBooking = httpClient.mutation(
+      const createBooking = await httpClient.mutation(
         api.bookings.createBooking,
         bookingArgs,
       );
 
       console.log("Booking created:", createBooking);
 
-      // @ts-expect-error createBooking returns an object that contains bookingIds
       if (!createBooking.bookingIds || createBooking.bookingIds.length === 0) {
         setPaymentMessage("Booking failed after payment.");
         console.error(
@@ -296,7 +295,6 @@ function MakePaymentTab({
         return;
       }
 
-      // @ts-expect-error createBooking returns an object that contains bookingIds
       const bookingId = createBooking.bookingIds[0];
       httpClient.mutation(api.bookings.confirmBooking, { bookingId });
 
@@ -429,7 +427,7 @@ function MakePaymentTab({
       <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <p className="text-[#72A0A0]">Payment Status</p>
-          <p>{paymentMessage == "success" ? "Paid" : "Not Paid"}</p>
+          <p>{paymentStatus == "success" ? "Paid" : "Not Paid"}</p>
         </div>
         <div className="flex justify-between items-center">
           <p className="text-[#72A0A0]">Price</p>
