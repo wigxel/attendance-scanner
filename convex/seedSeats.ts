@@ -19,7 +19,7 @@ export const seedSeats = mutation({
     for (let i = 1; i <= args.numberOfSeats; i++) {
       const seatId = await ctx.db.insert("seats", {
         seatNumber: i,
-        isOccupied: false,
+        isBooked: false,
         createdAt: Date.now(),
       });
       seats.push(seatId);

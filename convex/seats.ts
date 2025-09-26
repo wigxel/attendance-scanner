@@ -19,7 +19,7 @@ export const getAvailableSeats = query({
   handler: async (ctx, args) => {
     const allSeats = await ctx.db
       .query("seats")
-      .filter((q) => q.eq(q.field("isOccupied"), false))
+      .filter((q) => q.eq(q.field("isBooked"), false))
       .collect();
 
     const conflictingBookings = await ctx.db
@@ -74,16 +74,13 @@ export const getAllSeatsForDateRange = query({
     const occupiedSeatIds = new Set(overlappingBookings.map((b) => b.seatId));
 
     // Determine the status of each seat for the given date range
-    const seatsWithStatus = allSeats.map((seat) => ({
+    const seats = allSeats.map((seat) => ({
       ...seat,
       // Check if the seat's _id is in the set of occupied IDs
-      isAvailable: !occupiedSeatIds.has(seat._id),
+      isBooked: occupiedSeatIds.has(seat._id),
     }));
 
-    return {
-      allSeats: seatsWithStatus,
-      totalSeats: allSeats.length,
-    };
+    return seats;
   },
 });
 
@@ -94,7 +91,7 @@ export const markSeatOccupied = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.seatId, {
-      isOccupied: true,
+      isBooked: true,
     });
   },
 });
@@ -106,7 +103,7 @@ export const markSeatAvailable = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.seatId, {
-      isOccupied: false,
+      isBooked: false,
     });
   },
 });

@@ -59,7 +59,7 @@ const featureVotes = defineTable({
 
 const seats = defineTable({
   seatNumber: v.number(),
-  isOccupied: v.boolean(),
+  isBooked: v.boolean(),
   createdAt: v.number(),
 }).index("by_seat_number", ["seatNumber"]);
 

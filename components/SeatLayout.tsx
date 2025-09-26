@@ -7,7 +7,7 @@ import Image from "next/image";
 interface SeatData {
   _id: Id<"seats">;
   seatNumber: string | number;
-  isOccupied: boolean;
+  isBooked: boolean;
 }
 
 interface SeatProps {
@@ -31,7 +31,7 @@ const Seat: React.FC<SeatProps> = ({
   className = "",
 }) => {
   const handleClick = (): void => {
-    if (!seatData.isOccupied) {
+    if (!seatData.isBooked) {
       onClick(seatData);
     }
   };
@@ -40,7 +40,7 @@ const Seat: React.FC<SeatProps> = ({
     const baseStyles =
       "rounded-lg p-1 cursor-pointer transition-all duration-200 flex items-center justify-center text-xs font-medium";
 
-    if (seatData.isOccupied) {
+    if (seatData.isBooked) {
       return `${baseStyles} bg-[#9A9A9A] bg-[url('/images/reserved-bg.png')] bg-contain text-gray-800 cursor-not-allowed`;
     }
 
@@ -55,7 +55,7 @@ const Seat: React.FC<SeatProps> = ({
     <div
       className={`${getSeatStyles()} ${className}`}
       onClick={handleClick}
-      title={`Seat ${seatData.seatNumber} - ${seatData.isOccupied ? "Occupied" : isSelected ? "Selected" : "Available"}`}
+      title={`Seat ${seatData.seatNumber} - ${seatData.isBooked ? "Occupied" : isSelected ? "Selected" : "Available"}`}
     >
       <Image src={Chair} alt="Chair" width={32} height={32} />
     </div>

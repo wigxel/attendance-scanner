@@ -11,7 +11,6 @@ export const createBooking = mutation({
    * - Seat availability validation
    * - Pricing calculation based on duration
    * - Booking record creation
-   * - Automatic seat occupation marking
    *
    * @param args.userId - User ID (currently unused, user is determined from auth)
    * @param args.seatIds - Array of seat IDs to book
@@ -163,10 +162,6 @@ export const createBooking = mutation({
         updatedAt: now,
       });
       bookingIds.push(bookingId);
-      // mark seat as occupied
-      await ctx.runMutation(api.seats.markSeatOccupied, {
-        seatId,
-      });
     }
 
     return {

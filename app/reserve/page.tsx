@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface Seat {
   _id: Id<"seats">;
   seatNumber: string | number;
-  isOccupied: boolean;
+  isBooked: boolean;
 }
 
 const CONFIG = {
@@ -140,23 +140,18 @@ function PickSeatTab({
   startDate: Date | null;
   endDate: Date | null;
 }) {
-  const seatsQuery = useQuery(api.seats.getAllSeats);
   const availableSeats = useQuery(api.seats.getAllSeatsForDateRange, {
     startDate: startDate?.toISOString().split("T")[0] || "",
     endDate: endDate?.toISOString().split("T")[0] || "",
   });
 
-  console.log("Start Date:", startDate?.toISOString().split("T")[0]);
-  console.log("End Date:", endDate?.toISOString().split("T")[0]);
-  console.log("Available Seats:", availableSeats);
-
   const [seats, setSeats] = useState<Seat[] | null | undefined>(null);
-  const [_loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSeats = async () => {
       try {
-        setSeats(seatsQuery);
+        setSeats(availableSeats);
       } catch (error) {
         console.error("Error fetching seats:", error);
       } finally {
@@ -165,7 +160,7 @@ function PickSeatTab({
     };
 
     fetchSeats();
-  }, [seatsQuery]);
+  }, [availableSeats]);
 
   useEffect(() => {
     // Check if the selected seat has become occupied
@@ -173,7 +168,7 @@ function PickSeatTab({
       const selectedSeat = seats.find(
         (seat: Seat) => seat.seatNumber === selectedSeatNumber,
       );
-      if (selectedSeat && selectedSeat.isOccupied) {
+      if (selectedSeat && selectedSeat.isBooked) {
         setSelectedSeatNumber(null);
       }
     }
