@@ -50,6 +50,43 @@ export const getAvailableSeats = query({
   },
 });
 
+export const getAllSeatsForDateRange = query({
+  args: {
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const allSeats = await ctx.db.query("seats").collect();
+
+    const conflictingBookings = await ctx.db
+      .query("bookings")
+      .filter((q) => q.eq(q.field("status"), "confirmed"))
+      .collect();
+
+    const overlappingBookings = conflictingBookings.filter((booking) => {
+      // Check if booking dates overlap with requested dates
+      return !(
+        booking.endDate < args.startDate || booking.startDate > args.endDate
+      );
+    });
+
+    // Get seat IDs that are occupied during this period
+    const occupiedSeatIds = new Set(overlappingBookings.map((b) => b.seatId));
+
+    // Determine the status of each seat for the given date range
+    const seatsWithStatus = allSeats.map((seat) => ({
+      ...seat,
+      // Check if the seat's _id is in the set of occupied IDs
+      isAvailable: !occupiedSeatIds.has(seat._id),
+    }));
+
+    return {
+      allSeats: seatsWithStatus,
+      totalSeats: allSeats.length,
+    };
+  },
+});
+
 // Mark seat as occupied
 export const markSeatOccupied = mutation({
   args: {

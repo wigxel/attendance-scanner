@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { ConvexHttpClient } from "convex/browser";
-// import { useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { loadPaystackScript } from "@/lib/utils";
@@ -89,6 +89,8 @@ function Content() {
             setSelectedSeatNumber={setSelectedSeatNumber}
             setSelectedSeatId={setSelectedSeatId}
             onProceed={handleSeatProceed}
+            startDate={selectedDate}
+            endDate={endDate}
           />
         </TabsContent>
         <TabsContent value="payment">
@@ -128,26 +130,33 @@ function PickSeatTab({
   setSelectedSeatNumber,
   setSelectedSeatId,
   onProceed,
+  startDate,
+  endDate,
 }: {
   selectedSeatNumber: string | number | null;
   setSelectedSeatNumber: (number: string | number | null) => void;
   setSelectedSeatId: (id: Id<"seats"> | null) => void;
   onProceed: () => void;
+  startDate: Date | null;
+  endDate: Date | null;
 }) {
-  /*
-  const seats = useQuery(api.seats.getAllSeats);
-  console.log("Seats data:", seats);
-  */
+  const seatsQuery = useQuery(api.seats.getAllSeats);
+  const availableSeats = useQuery(api.seats.getAllSeatsForDateRange, {
+    startDate: startDate?.toISOString().split("T")[0] || "",
+    endDate: endDate?.toISOString().split("T")[0] || "",
+  });
 
-  const [seats, setSeats] = useState<Seat[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  console.log("Start Date:", startDate?.toISOString().split("T")[0]);
+  console.log("End Date:", endDate?.toISOString().split("T")[0]);
+  console.log("Available Seats:", availableSeats);
+
+  const [seats, setSeats] = useState<Seat[] | null | undefined>(null);
+  const [_loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSeats = async () => {
       try {
-        const result = await httpClient.query(api.seats.getAllSeats, {});
-
-        setSeats(result);
+        setSeats(seatsQuery);
       } catch (error) {
         console.error("Error fetching seats:", error);
       } finally {
@@ -156,7 +165,7 @@ function PickSeatTab({
     };
 
     fetchSeats();
-  }, []);
+  }, [seatsQuery]);
 
   useEffect(() => {
     // Check if the selected seat has become occupied
@@ -170,7 +179,7 @@ function PickSeatTab({
     }
   }, [seats, selectedSeatNumber, setSelectedSeatNumber]);
 
-  if (loading) {
+  if (seats === undefined) {
     return (
       <div className="h-96 bg-gray-100 rounded-lg flex justify-center items-center">
         <div className="bg-white rounded-full p-4">
@@ -185,7 +194,11 @@ function PickSeatTab({
   }
 
   if (!seats) {
-    return <div>No seats available</div>;
+    return (
+      <div className="h-96 bg-gray-100 rounded-lg flex justify-center items-center">
+        <p className="text-gray-600">No seats available</p>
+      </div>
+    );
   }
 
   const handleSeatSelect = (seat: Seat): void => {
