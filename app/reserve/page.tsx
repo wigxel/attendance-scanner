@@ -293,6 +293,25 @@ function MakePaymentTab({
     }
   };
 
+  const handleCancelBooking = async (bookingId: Id<"bookings">) => {
+    try {
+      const token = await getToken({ template: "convex" });
+      if (!token) {
+        setPaymentMessage("Authentication error. Please log in again.");
+        setPaymentStatus("failed");
+        return;
+      }
+      httpClient.mutation(api.bookings.cancelBooking, { bookingId });
+
+      setPaymentStatus("success");
+      setPaymentMessage("Booking cancelled!");
+    } catch (error) {
+      setPaymentStatus("failed");
+      setPaymentMessage("Booking cancellation failed.");
+      console.error("Booking cancellation failed:", error);
+    }
+  };
+
   const handlePayment = async () => {
     try {
       if (selectedSeatId && selectedDate) {
@@ -408,8 +427,8 @@ function MakePaymentTab({
           }
         },
         onClose: () => {
-          setPaymentMessage("Transaction was cancelled");
-          console.log("Transaction was cancelled");
+          handleCancelBooking(bookingId);
+          console.log("Booking was cancelled");
         },
       });
 

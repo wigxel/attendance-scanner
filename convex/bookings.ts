@@ -308,3 +308,67 @@ export const markExpiredSeatsAvailable = mutation({
     };
   },
 });
+
+export const cancelBooking = mutation({
+  args: {
+    bookingId: v.id("bookings"),
+  },
+  handler: async (ctx, { bookingId }) => {
+    const booking = await ctx.db.get(bookingId);
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    if (!["pending", "confirmed"].includes(booking.status)) {
+      throw new Error(`Cannot cancel booking with status: ${booking.status}`);
+    }
+
+    await ctx.db.patch(bookingId, {
+      status: "cancelled",
+      updatedAt: Date.now(),
+    });
+
+    return { success: true, bookingId };
+  },
+});
+
+// convex/bookings.ts
+export const markExpiredPendingBookings = mutation({
+  /**
+   * Marks pending bookings as expired if they've been pending too long.
+   * Called periodically by a cron job.
+   */
+  handler: async (ctx) => {
+    const now = Date.now();
+    const expirationTime = 10 * 60 * 1000; // 10 minutes in milliseconds
+    const cutoffTime = now - expirationTime;
+
+    // Find pending bookings older than 10 minutes
+    const expiredBookings = await ctx.db
+      .query("bookings")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "pending"),
+          q.lt(q.field("createdAt"), cutoffTime),
+        ),
+      )
+      .collect();
+
+    const expiredBookingIds = [];
+
+    for (const booking of expiredBookings) {
+      // Mark booking as expired
+      await ctx.db.patch(booking._id, {
+        status: "expired",
+        updatedAt: now,
+      });
+
+      expiredBookingIds.push(booking._id);
+    }
+
+    return {
+      expiredBookingIds,
+      processedAt: now,
+    };
+  },
+});

@@ -4,9 +4,9 @@ import { api } from "./_generated/api";
 const crons = cronJobs();
 
 crons.interval(
-  "mark expired seats available",
-  { hours: 1 },
-  api.bookings.markExpiredSeatsAvailable,
+  "cleanup expired pending bookings",
+  { minutes: 5 },
+  api.bookings.markExpiredPendingBookings,
 );
 
 export default crons;
