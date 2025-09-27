@@ -208,6 +208,8 @@ export const getUserConfirmedBookings = query({
 
     const bookings = await ctx.db
       .query("bookings")
+      .withIndex("by_startDate")
+      .order("asc")
       .filter((q) => q.eq(q.field("userId"), identity.subject))
       .filter((q) => q.eq(q.field("status"), "confirmed"))
       .collect();

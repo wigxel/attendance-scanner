@@ -86,7 +86,8 @@ const bookings = defineTable({
 })
   .index("user_id", ["userId"])
   .index("seat_id", ["seatId"])
-  .index("by_status", ["status"]);
+  .index("by_status", ["status"])
+  .index("by_startDate", ["startDate"]);
 
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
