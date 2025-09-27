@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { calculateEndDate } from "@/lib/utils";
 
 import { Calendar } from "@demark-pro/react-booking-calendar";
@@ -15,6 +15,7 @@ import {
 
 const BookingCalendar = ({
   onProceed,
+  selectedDate,
 }: {
   onProceed: (
     date: Date,
@@ -22,9 +23,16 @@ const BookingCalendar = ({
     price: number,
     timePeriod: "day" | "week" | "month",
   ) => void;
+  selectedDate: Date | null;
 }) => {
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [localSelectedDates, setLocalSelectedDates] = useState<Date[]>(
+    selectedDate ? [selectedDate] : [],
+  );
   const [timePeriodString, setTimePeriodString] = useState<string>("day");
+
+  useEffect(() => {
+    setLocalSelectedDates(selectedDate ? [selectedDate] : []);
+  }, [selectedDate]);
 
   let timePeriod: number;
   let price: number; // in kobo
@@ -64,10 +72,10 @@ const BookingCalendar = ({
   return (
     <div>
       <Calendar
-        selected={selectedDates}
+        selected={localSelectedDates}
         reserved={reserved}
         // @ts-expect-error set selected dates
-        onChange={setSelectedDates}
+        onChange={setLocalSelectedDates}
         disabled={(date) => date.getDay() === 0}
         protection={true}
         range={false}
@@ -89,7 +97,7 @@ const BookingCalendar = ({
         </div>
       </div>
 
-      {selectedDates.length > 0 && (
+      {localSelectedDates.length > 0 && (
         <div className="bg-gray-50 p-4 rounded-lg">
           <div className="mb-6">
             <Select
@@ -110,7 +118,7 @@ const BookingCalendar = ({
             <div>
               <p className="font-medium text-gray-900">Selected Date:</p>
               <div className="text-sm text-gray-600 mt-1">
-                {selectedDates.map((date, index) => (
+                {localSelectedDates.map((date, index) => (
                   <div key={index}>{formatDate(date)}</div>
                 ))}
               </div>
@@ -118,8 +126,8 @@ const BookingCalendar = ({
             <button
               onClick={() =>
                 onProceed(
-                  selectedDates[0],
-                  calculateEndDate(selectedDates[0], timePeriod),
+                  localSelectedDates[0],
+                  calculateEndDate(localSelectedDates[0], timePeriod),
                   price,
                   timePeriodString,
                 )
@@ -132,7 +140,7 @@ const BookingCalendar = ({
         </div>
       )}
 
-      {selectedDates.length === 0 && (
+      {localSelectedDates.length === 0 && (
         <div className="text-center py-8">
           <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600">Select one or more dates to continue</p>

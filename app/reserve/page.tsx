@@ -87,7 +87,10 @@ function Content() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="booking">
-          <PickScheduleTab onProceed={handleProceed} />
+          <PickScheduleTab
+            onProceed={handleProceed}
+            selectedDate={selectedDate}
+          />
         </TabsContent>
         <TabsContent value="choose">
           <PickSeatTab
@@ -116,6 +119,7 @@ function Content() {
 
 function PickScheduleTab({
   onProceed,
+  selectedDate,
 }: {
   onProceed: (
     date: Date,
@@ -123,10 +127,11 @@ function PickScheduleTab({
     price: number,
     timePeriod: "day" | "week" | "month",
   ) => void;
+  selectedDate: Date | null;
 }) {
   return (
     <div>
-      <BookingCalendar onProceed={onProceed} />
+      <BookingCalendar onProceed={onProceed} selectedDate={selectedDate} />
     </div>
   );
 }
@@ -324,31 +329,38 @@ function MakePaymentTab({
     try {
       // Handle unavailable seat
       if (checkSeatAvailability?.isAvailable === false) {
+        setPaymentStatus("pending");
         setPaymentMessage("Seat is no longer available for selected period");
         return;
       }
       if (!user && !selectedDate && !selectedSeatId && !timePeriodString) {
+        setPaymentStatus("pending");
         setPaymentMessage("Please select a user, date, seat, and time period.");
         return;
       }
       if (!user) {
+        setPaymentStatus("pending");
         setPaymentMessage("Please login.");
         return;
       }
       if (!selectedDate) {
+        setPaymentStatus("pending");
         setPaymentMessage("Please select a date.");
         return;
       }
       if (!selectedSeatId) {
+        setPaymentStatus("pending");
         setPaymentMessage("Please select a seat.");
         return;
       }
       if (!timePeriodString) {
+        setPaymentStatus("pending");
         setPaymentMessage("Please select a time period.");
         return;
       }
       const loaded = await loadPaystackScript();
       if (!loaded) {
+        setPaymentStatus("pending");
         setPaymentMessage(
           "Payment service failed to load. Please check your connection and try again.",
         );
