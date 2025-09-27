@@ -274,7 +274,7 @@ function MakePaymentTab({
     return `₦${(price / 100).toLocaleString()}`;
   };
 
-  const handleSuccessfulPayment = async () => {
+  const handleSuccessfulPayment = async (bookingId: Id<"bookings">) => {
     try {
       const token = await getToken({ template: "convex" });
       if (!token) {
@@ -282,59 +282,41 @@ function MakePaymentTab({
         setPaymentStatus("failed");
         return;
       }
-
-      httpClient.setAuth(token);
-
-      const bookingArgs = {
-        userId: user?.id || "",
-        startDate: formatDateToLocalISO(selectedDate) || "",
-        seatIds: selectedSeatId ? [selectedSeatId] : [],
-        durationType: timePeriodString,
-      };
-
-      const createBooking = await httpClient.mutation(
-        api.bookings.createBooking,
-        bookingArgs,
-      );
-
-      console.log("Booking created:", createBooking);
-
-      if (!createBooking.bookingIds || createBooking.bookingIds.length === 0) {
-        setPaymentMessage("Booking failed after payment.");
-        console.error(
-          "Booking failed after successful payment:",
-          createBooking,
-        );
-        return;
-      }
-
-      const bookingId = createBooking.bookingIds[0];
       httpClient.mutation(api.bookings.confirmBooking, { bookingId });
 
       setPaymentStatus("success");
       setPaymentMessage("Payment successful!");
     } catch (error) {
       setPaymentStatus("failed");
-      setPaymentMessage("Booking failed after payment.");
-      console.error("Booking failed after successful payment:", error);
+      setPaymentMessage("Booking failed.");
+      console.error("Booking failed:", error);
     }
   };
 
-  const checkSeatAvailability = useQuery(api.seats.checkSeatAvailability, {
-    // @ts-expect-error seatId is required
-    seatId: selectedSeatId,
-    startDate: formatDateToLocalISO(selectedDate) || "",
-    durationType: timePeriodString,
-  });
-
   const handlePayment = async () => {
-    console.log("Seat availability:", checkSeatAvailability);
     try {
-      // Handle unavailable seat
-      if (checkSeatAvailability?.isAvailable === false) {
-        setPaymentStatus("pending");
-        setPaymentMessage("Seat is no longer available for selected period");
-        return;
+      if (selectedSeatId && selectedDate) {
+        const token = await getToken({ template: "convex" });
+        if (token) {
+          httpClient.setAuth(token);
+
+          const seatAvailability = await httpClient.query(
+            api.seats.checkSeatAvailability,
+            {
+              seatId: selectedSeatId,
+              startDate: formatDateToLocalISO(selectedDate) || "",
+              durationType: timePeriodString,
+            },
+          );
+
+          if (seatAvailability?.isAvailable === false) {
+            setPaymentStatus("pending");
+            setPaymentMessage(
+              "Seat is no longer available for selected period",
+            );
+            return;
+          }
+        }
       }
       if (!user && !selectedDate && !selectedSeatId && !timePeriodString) {
         setPaymentStatus("pending");
@@ -361,6 +343,36 @@ function MakePaymentTab({
         setPaymentMessage("Please select a time period.");
         return;
       }
+
+      const token = await getToken({ template: "convex" });
+      if (!token) {
+        setPaymentMessage("Authentication error. Please log in again.");
+        setPaymentStatus("failed");
+        return;
+      }
+
+      httpClient.setAuth(token);
+
+      const bookingArgs = {
+        userId: user?.id || "",
+        startDate: formatDateToLocalISO(selectedDate) || "",
+        seatIds: selectedSeatId ? [selectedSeatId] : [],
+        durationType: timePeriodString,
+      };
+
+      const createBooking = await httpClient.mutation(
+        api.bookings.createBooking,
+        bookingArgs,
+      );
+
+      if (!createBooking.bookingIds || createBooking.bookingIds.length === 0) {
+        setPaymentMessage("Failed to create booking.");
+        setPaymentStatus("failed");
+        return;
+      }
+
+      const bookingId = createBooking.bookingIds[0];
+
       const loaded = await loadPaystackScript();
       if (!loaded) {
         setPaymentStatus("pending");
@@ -389,7 +401,7 @@ function MakePaymentTab({
         // @ts-expect-error paystack
         callback: (response) => {
           if (response.status === "success") {
-            handleSuccessfulPayment();
+            handleSuccessfulPayment(bookingId);
           } else {
             setPaymentStatus("failed");
             setPaymentMessage("Payment was not successful");
@@ -464,7 +476,7 @@ function MakePaymentTab({
             </div>
             <button
               onClick={() => router.push("/")}
-              className="bg-[#0000FF] text-white font-semibold px-4 py-2 rounded-md hover:bg-[#568888] transition-colors duration-300 cursor-pointer"
+              className="bg-[#0000FF] text-white font-semibold px-4 py-2 rounded-md hover:bg-[#3333FF] transition-colors duration-300 cursor-pointer"
             >
               Return to Homepage
             </button>
@@ -547,7 +559,7 @@ function MakePaymentTab({
 
           <button
             onClick={handlePayment}
-            className="bg-[#0000FF] font-semibold text-white p-3 w-full rounded-lg cursor-pointer"
+            className="bg-[#0000FF] hover:bg-[#3333FF] transition-colors duration-300 font-semibold text-white p-3 w-full rounded-lg cursor-pointer"
           >
             Pay Now
           </button>

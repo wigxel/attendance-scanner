@@ -156,7 +156,7 @@ export const createBooking = mutation({
         startDate: args.startDate,
         endDate: endDate,
         durationType: args.durationType,
-        status: "confirmed",
+        status: "pending",
         amount,
         createdAt: now,
         updatedAt: now,

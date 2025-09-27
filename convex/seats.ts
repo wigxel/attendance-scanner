@@ -111,10 +111,6 @@ export const checkSeatAvailability = query({
       )
       .collect();
 
-    if (args.startDate === "") {
-      throw new Error("StartDate is required");
-    }
-
     const calculateEndDate = (
       startDate: string,
       workingDays: number,
