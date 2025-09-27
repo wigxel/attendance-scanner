@@ -200,6 +200,33 @@ export const getUserBookings = query({
   },
 });
 
+// Get current user's confirmed bookings
+export const getUserConfirmedBookings = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Must be logged in");
+
+    const bookings = await ctx.db
+      .query("bookings")
+      .filter((q) => q.eq(q.field("userId"), identity.subject))
+      .filter((q) => q.eq(q.field("status"), "confirmed"))
+      .collect();
+
+    // Get seat details for each booking
+    const bookingsWithSeats = await Promise.all(
+      bookings.map(async (booking) => {
+        const seat = await ctx.db.get(booking.seatId);
+        return {
+          ...booking,
+          seat,
+        };
+      }),
+    );
+
+    return bookingsWithSeats;
+  },
+});
+
 export const confirmBooking = mutation({
   /**
    * Confirms a booking.
