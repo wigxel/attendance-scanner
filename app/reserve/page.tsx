@@ -6,6 +6,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { loadPaystackScript, formatDateToLocalISO } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 import { LucideLoader } from "lucide-react";
 import { Header } from "@/components/header";
@@ -13,6 +14,8 @@ import { Footer } from "@/components/footer";
 import BookingCalendar from "@/components/BookingCalendar";
 import SeatLayout from "@/components/SeatLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CheckMark from "@/public/checkmark.svg";
+import Image from "next/image";
 
 interface Seat {
   _id: Id<"seats">;
@@ -405,83 +408,152 @@ function MakePaymentTab({
       console.error("Payment error:", error);
     }
   };
+
+  const router = useRouter();
+
   return (
-    <div className="bg-white my-8 flex flex-col gap-6">
-      {user && (
-        <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
-          {user.fullName && (
-            <div>
-              <p className="text-sm text-gray-600">Name</p>
-              <div className="font-medium text-gray-900 mt-1">
-                {user.fullName}
-              </div>
+    <>
+      {paymentStatus === "success" ? (
+        // payment success page
+        <div className="mt-3 pt-6">
+          <div className="flex flex-col items-center gap-3">
+            <span className="flex items-center justify-center bg-[#0000FF] w-16 h-16 rounded-full">
+              <Image src={CheckMark} alt="Checkmark" className="w-7 h-5" />
+            </span>
+            <h2 className="text-center font-bold text-3xl px-3">
+              You have successfully reserved your seat
+            </h2>
+          </div>
+          <div className="mt-6 p-6 flex flex-col gap-6 shadow rounded-md">
+            <div className="flex flex-col gap-3">
+              <span className="flex items-center justify-between">
+                <p className="text-[#72A0A0]">Name</p>
+                <p>{user?.fullName}</p>
+              </span>
+              <span className="flex items-center justify-between">
+                <p className="text-[#72A0A0]">Email</p>
+                <p>{user?.emailAddresses[0].emailAddress}</p>
+              </span>
+            </div>
+            <hr className="border-t-2 border-gray-300 w-full border-dashed" />
+            <div className="flex flex-col gap-3">
+              <span className="flex items-center justify-between">
+                <p className="text-[#72A0A0]">Duration</p>
+                <span>
+                  <p>{timePeriodString === "day" && "1 day"}</p>
+                  <p>{timePeriodString === "week" && "6 days"}</p>
+                  <p>{timePeriodString === "month" && "24 days"}</p>
+                </span>
+              </span>
+              <span className="flex items-center justify-between">
+                <p className="text-[#72A0A0]">Seat No.</p>
+                <p>Seat {selectedSeatNumber}</p>
+              </span>
+              <span className="flex items-center justify-between">
+                <p className="text-[#72A0A0]">Reservation Start Date</p>
+                <p>{selectedDate?.toDateString()}</p>
+              </span>
+              <span className="flex items-center justify-between">
+                <p className="text-[#72A0A0]">Reservation End Date</p>
+                <p>{endDate?.toDateString()}</p>
+              </span>
+              <span className="flex items-center justify-between">
+                <p className="text-[#72A0A0]">Amount</p>
+                <p>{formatPrice(price)}</p>
+              </span>
+            </div>
+            <button
+              onClick={() => router.push("/")}
+              className="bg-[#0000FF] text-white font-semibold px-4 py-2 rounded-md hover:bg-[#568888] transition-colors duration-300 cursor-pointer"
+            >
+              Return to Homepage
+            </button>
+          </div>
+          {/* payment success page end */}
+        </div>
+      ) : (
+        <div className="bg-white my-8 flex flex-col gap-6">
+          {user && (
+            <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
+              {user.fullName && (
+                <div>
+                  <p className="text-sm text-gray-600">Name</p>
+                  <div className="font-medium text-gray-900 mt-1">
+                    {user.fullName}
+                  </div>
+                </div>
+              )}
+              {user.phoneNumbers.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600">Phone</p>
+                  <div className="font-medium text-gray-900 mt-1">
+                    {user.phoneNumbers[0]?.phoneNumber}
+                  </div>
+                </div>
+              )}
+              {user.emailAddresses.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600">Email</p>
+                  <div className="font-medium text-gray-900 mt-1">
+                    {user.emailAddresses[0].emailAddress}
+                  </div>
+                </div>
+              )}
             </div>
           )}
-          {user.phoneNumbers.length > 0 && (
-            <div>
-              <p className="text-sm text-gray-600">Phone</p>
-              <div className="font-medium text-gray-900 mt-1">
-                {user.phoneNumbers[0]?.phoneNumber}
+          {selectedSeatNumber && selectedDate ? (
+            <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
+              <div>
+                <h5 className="text-xl font-bold text-[#72A0A0]">09:00am</h5>
+                <p>{selectedDate.toDateString()}</p>
+                <p>Seat {selectedSeatNumber}</p>
+              </div>
+              <div>
+                <h5 className="text-xl font-bold text-[#72A0A0]">05:00pm</h5>
+                <p>{endDate?.toDateString()}</p>
               </div>
             </div>
-          )}
-          {user.emailAddresses.length > 0 && (
-            <div>
-              <p className="text-sm text-gray-600">Email</p>
-              <div className="font-medium text-gray-900 mt-1">
-                {user.emailAddresses[0].emailAddress}
-              </div>
+          ) : null}
+          <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
+            <div className="flex justify-between items-center">
+              <p className="text-[#72A0A0]">Payment Status</p>
+              <p>
+                {paymentStatus == "pending" || paymentStatus == "failed"
+                  ? "Not Paid"
+                  : "Paid"}
+              </p>
             </div>
-          )}
+            <div className="flex justify-between items-center">
+              <p className="text-[#72A0A0]">Price</p>
+              <p>{formatPrice(price)}</p>
+            </div>
+          </div>
+
+          <div>
+            {paymentMessage && (
+              <div
+                className={`p-3 rounded-lg mb-4 text-center font-medium ${
+                  paymentStatus != "pending" && paymentStatus != "failed"
+                    ? "bg-green-100 text-green-800 border border-green-200"
+                    : paymentStatus === "failed"
+                      ? "bg-red-100 text-red-800 border border-red-200"
+                      : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                }`}
+              >
+                {paymentMessage}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handlePayment}
+            className="bg-[#0000FF] font-semibold text-white p-3 w-full rounded-lg cursor-pointer"
+          >
+            Pay Now
+          </button>
         </div>
       )}
-      {selectedSeatNumber && selectedDate ? (
-        <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
-          <div>
-            <h5 className="text-xl font-bold text-[#72A0A0]">09:00am</h5>
-            <p>{selectedDate.toDateString()}</p>
-            <p>Seat {selectedSeatNumber}</p>
-          </div>
-          <div>
-            <h5 className="text-xl font-bold text-[#72A0A0]">05:00pm</h5>
-            <p>{endDate?.toDateString()}</p>
-          </div>
-        </div>
-      ) : null}
-      <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
-        <div className="flex justify-between items-center">
-          <p className="text-[#72A0A0]">Payment Status</p>
-          <p>{paymentStatus == "success" ? "Paid" : "Not Paid"}</p>
-        </div>
-        <div className="flex justify-between items-center">
-          <p className="text-[#72A0A0]">Price</p>
-          <p>{formatPrice(price)}</p>
-        </div>
-      </div>
-
-      <div>
-        {paymentMessage && (
-          <div
-            className={`p-3 rounded-lg mb-4 text-center font-medium ${
-              paymentStatus === "success"
-                ? "bg-green-100 text-green-800 border border-green-200"
-                : paymentStatus === "failed"
-                  ? "bg-red-100 text-red-800 border border-red-200"
-                  : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-            }`}
-          >
-            {paymentMessage}
-          </div>
-        )}
-      </div>
-
-      <button
-        onClick={handlePayment}
-        className="bg-[#0000FF] font-semibold text-white p-3 w-full rounded-lg cursor-pointer"
-      >
-        Pay Now
-      </button>
-    </div>
+    </>
   );
 }
 

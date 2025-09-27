@@ -55,7 +55,7 @@ const Seat: React.FC<SeatProps> = ({
     <div
       className={`${getSeatStyles()} ${className}`}
       onClick={handleClick}
-      title={`Seat ${seatData.seatNumber} - ${seatData.isBooked ? "Occupied" : isSelected ? "Selected" : "Available"}`}
+      title={`Seat ${seatData.seatNumber} - ${seatData.isBooked ? "Reserved" : isSelected ? "Selected" : "Available"}`}
     >
       <Image src={Chair} alt="Chair" width={32} height={32} />
     </div>
