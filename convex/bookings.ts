@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { api } from "./_generated/api";
+import { formatDateToLocalISO } from "../lib/utils";
 
 export const createBooking = mutation({
   /**
@@ -85,7 +85,7 @@ export const createBooking = mutation({
         }
       }
 
-      return currentDate.toISOString().split("T")[0];
+      return formatDateToLocalISO(currentDate);
     };
 
     // Calculate duration
@@ -98,7 +98,7 @@ export const createBooking = mutation({
       amount = 150000; // 1,500 per day
       const startMs = new Date(args.startDate).getTime();
       const endMs = startMs + duration * 24 * 60 * 60 * 1000;
-      endDate = new Date(endMs).toISOString().split("T")[0];
+      endDate = formatDateToLocalISO(new Date(endMs));
     } else if (args.durationType === "week") {
       duration = 6;
       amount = 600000; // 6,000 per week
@@ -234,21 +234,18 @@ export const confirmBooking = mutation({
 // Mark seat as available when booking has expired
 export const markExpiredSeatsAvailable = mutation({
   /**
-   * Marks seats as available when their bookings have expired.
    *
    * This mutation:
    * - Finds all confirmed bookings that have passed their end date
    * - Updates their status to "expired"
-   * - Marks the associated seats as available
    *
    * Is called periodically to automatically handle expired bookings.
    *
    * @returns Object containing:
    * - expiredBookingIds: Array of booking IDs that were marked as expired
-   * - availableSeats: Number of seats marked as available
    */
   handler: async (ctx) => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = formatDateToLocalISO(new Date());
 
     // Find all confirmed bookings that have expired
     const expiredBookings = await ctx.db
@@ -270,11 +267,6 @@ export const markExpiredSeatsAvailable = mutation({
       await ctx.db.patch(booking._id, {
         status: "expired",
         updatedAt: Date.now(),
-      });
-
-      // Mark seat as available
-      await ctx.runMutation(api.seats.markSeatAvailable, {
-        seatId: booking.seatId,
       });
 
       expiredBookingIds.push(booking._id);

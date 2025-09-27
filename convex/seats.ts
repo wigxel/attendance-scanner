@@ -1,5 +1,6 @@
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 import { v } from "convex/values";
+import { formatDateToLocalISO } from "../lib/utils";
 
 export const getAllSeats = query({
   args: {},
@@ -84,26 +85,97 @@ export const getAllSeatsForDateRange = query({
   },
 });
 
-// Mark seat as occupied
-export const markSeatOccupied = mutation({
+export const checkSeatAvailability = query({
   args: {
     seatId: v.id("seats"),
+    startDate: v.string(),
+    durationType: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.seatId, {
-      isBooked: true,
-    });
-  },
-});
+    const seat = await ctx.db
+      .query("seats")
+      .filter((q) => q.eq(q.field("_id"), args.seatId))
+      .first();
 
-// Mark seat as available
-export const markSeatAvailable = mutation({
-  args: {
-    seatId: v.id("seats"),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.seatId, {
-      isBooked: false,
-    });
+    if (!seat) {
+      throw new Error(`Seat with ID ${args.seatId} not found`);
+    }
+
+    const conflictingBookings = await ctx.db
+      .query("bookings")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("seatId"), args.seatId),
+          q.eq(q.field("status"), "confirmed"),
+        ),
+      )
+      .collect();
+
+    if (args.startDate === "") {
+      throw new Error("StartDate is required");
+    }
+
+    const calculateEndDate = (
+      startDate: string,
+      workingDays: number,
+    ): string => {
+      const start = new Date(startDate);
+      const currentDate = new Date(start);
+      let daysAdded = 0;
+
+      // Count the start date if it's not a Sunday
+      if (currentDate.getDay() !== 0) {
+        daysAdded++;
+      }
+
+      while (daysAdded < workingDays) {
+        currentDate.setDate(currentDate.getDate() + 1);
+        // skip Sundays (0 = Sunday)
+        if (currentDate.getDay() !== 0) {
+          daysAdded++;
+        }
+      }
+
+      return formatDateToLocalISO(currentDate);
+    };
+
+    if (!args.durationType) throw new Error("Duration type is required");
+    let duration: number;
+    let endDate: string;
+    if (args.durationType === "day") {
+      duration = 1;
+      const startMs = new Date(args.startDate).getTime();
+      const endMs = startMs + duration * 24 * 60 * 60 * 1000;
+      endDate = formatDateToLocalISO(new Date(endMs));
+    } else if (args.durationType === "week") {
+      duration = 6;
+      endDate = calculateEndDate(args.startDate, duration);
+    } else if (args.durationType === "month") {
+      duration = 24;
+      endDate = calculateEndDate(args.startDate, duration);
+    } else {
+      throw new Error("Invalid duration type");
+    }
+
+    const hasConflict = conflictingBookings.some(
+      (booking) =>
+        !(booking.endDate < args.startDate || booking.startDate > endDate),
+    );
+
+    // if (hasConflict) {
+    //   const seat = await ctx.db.get(args.seatId);
+    //   throw new Error(
+    //     `Seat ${seat?.seatNumber} is not available for selected dates`,
+    //   );
+    // }
+
+    const isAvailable = !hasConflict;
+
+    return {
+      isAvailable,
+      hasConflict,
+      startDate: args.startDate,
+      endDate,
+    };
   },
 });

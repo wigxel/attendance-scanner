@@ -5,7 +5,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { loadPaystackScript } from "@/lib/utils";
+import { loadPaystackScript, formatDateToLocalISO } from "@/lib/utils";
 
 import { LucideLoader } from "lucide-react";
 import { Header } from "@/components/header";
@@ -146,9 +146,11 @@ function PickSeatTab({
   startDate: Date | null;
   endDate: Date | null;
 }) {
+  console.log("Start Date:", formatDateToLocalISO(startDate));
+  console.log("End Date:", formatDateToLocalISO(endDate));
   const availableSeats = useQuery(api.seats.getAllSeatsForDateRange, {
-    startDate: startDate?.toISOString().split("T")[0] || "",
-    endDate: endDate?.toISOString().split("T")[0] || "",
+    startDate: formatDateToLocalISO(startDate) || "",
+    endDate: formatDateToLocalISO(endDate) || "",
   });
 
   const [seats, setSeats] = useState<Seat[] | null | undefined>(null);
@@ -277,7 +279,7 @@ function MakePaymentTab({
 
       const bookingArgs = {
         userId: user?.id || "",
-        startDate: selectedDate?.toISOString().split("T")[0] || "",
+        startDate: formatDateToLocalISO(selectedDate) || "",
         seatIds: selectedSeatId ? [selectedSeatId] : [],
         durationType: timePeriodString,
       };
@@ -286,6 +288,8 @@ function MakePaymentTab({
         api.bookings.createBooking,
         bookingArgs,
       );
+
+      console.log("Booking created:", createBooking);
 
       if (!createBooking.bookingIds || createBooking.bookingIds.length === 0) {
         setPaymentMessage("Booking failed after payment.");
@@ -308,8 +312,21 @@ function MakePaymentTab({
     }
   };
 
+  const checkSeatAvailability = useQuery(api.seats.checkSeatAvailability, {
+    // @ts-expect-error seatId is required
+    seatId: selectedSeatId,
+    startDate: formatDateToLocalISO(selectedDate) || "",
+    durationType: timePeriodString,
+  });
+
   const handlePayment = async () => {
+    console.log("Seat availability:", checkSeatAvailability);
     try {
+      // Handle unavailable seat
+      if (checkSeatAvailability?.isAvailable === false) {
+        setPaymentMessage("Seat is no longer available for selected period");
+        return;
+      }
       if (!user && !selectedDate && !selectedSeatId && !timePeriodString) {
         setPaymentMessage("Please select a user, date, seat, and time period.");
         return;
