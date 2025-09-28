@@ -1,0 +1,12 @@
+# Coming Features
+- ![HIGH PRIORITY] Booking Feature (WIP — Total Refactor)
+- Customer Information
+  - Attendance ✅
+  - Scanning
+    - We want to dispute between Staff, Students and Customer
+  - How much was paid for each attendance. (Everytime we scan a user, we only take in attendance)
+  - Customer Activities
+- Cafeteria
+  - Inventory System.
+  - Buy Drinks and Snacks.
+  - Enable Customer Pay for Snacks using our POS.
