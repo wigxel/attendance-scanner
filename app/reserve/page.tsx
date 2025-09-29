@@ -1,21 +1,26 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useAuth, useUser } from "@clerk/nextjs";
-import { ConvexHttpClient } from "convex/browser";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
-import { loadPaystackScript, formatDateToLocalISO } from "@/lib/utils";
-import { useRouter } from "next/navigation";
-
-import { LucideLoader } from "lucide-react";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
 import BookingCalendar from "@/components/BookingCalendar";
-import SeatLayout from "@/components/SeatLayout";
+import type SeatLayout from "@/components/SeatLayout";
+import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { safeArray } from "@/lib/data.helpers";
+import { formatDateToLocalISO, loadPaystackScript } from "@/lib/utils";
 import CheckMark from "@/public/checkmark.svg";
+import { useAuth, useUser } from "@clerk/nextjs";
+import * as tanstack from "@tanstack/react-query";
+import { ConvexHttpClient } from "convex/browser";
+import { useMutation, useQuery } from "convex/react";
+import { LucideLoader } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useStore } from "zustand";
+import { bookingStore } from "./store";
 
 interface Seat {
   _id: Id<"seats">;
@@ -30,45 +35,45 @@ const CONFIG = {
 
 const httpClient = new ConvexHttpClient(CONFIG.convexUrl);
 
+const handleTabChange = (value: string) => {
+  setActiveTab(value);
+};
+
+const handleProceed = (
+  date: Date,
+  endDate: Date,
+  price: number,
+  timePeriod: "day" | "week" | "month",
+) => {
+  const pickedDate = new Date(date);
+
+  if (pickedDate.getDay() === 0) {
+    alert("Please select another date. We're closed on Sundays");
+  } else {
+    bookingStore.setState({
+      activeTab: "choose",
+      selectedDate: date,
+      endDate: endDate,
+      price: price,
+      timePeriodString: timePeriod,
+    });
+  }
+};
+
+const handleSeatProceed = () => {
+  setActiveTab("payment");
+};
+
 function Content() {
-  const [activeTab, setActiveTab] = useState("booking");
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [price, setPrice] = useState<number | null>(null);
-  const [selectedSeatNumber, setSelectedSeatNumber] = useState<
-    string | number | null
-  >(null);
-  const [selectedSeatId, setSelectedSeatId] = useState<Id<"seats"> | null>(
-    null,
-  );
-  const [timePeriodString, setTimePeriodString] = useState<
-    "day" | "week" | "month"
-  >("day");
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-  const handleProceed = (
-    date: Date,
-    endDate: Date,
-    price: number,
-    timePeriod: "day" | "week" | "month",
-  ) => {
-    const pickedDate = new Date(date);
-
-    if (pickedDate.getDay() === 0) {
-      alert("Please select another date. We're closed on Sundays");
-    } else {
-      setActiveTab("choose");
-      setSelectedDate(date);
-      setEndDate(endDate);
-      setPrice(price);
-      setTimePeriodString(timePeriod);
-    }
-  };
-  const handleSeatProceed = () => {
-    setActiveTab("payment");
-  };
+  const {
+    activeTab,
+    selectedDate,
+    endDate,
+    price,
+    selectedSeatNumber,
+    selectedSeatId,
+    timePeriodString,
+  } = useStore(bookingStore);
 
   return (
     <div className="bg-white flex flex-col scanline-root max-w-lg mx-auto p-6 pb-14 rounded-2xl">
@@ -89,12 +94,14 @@ function Content() {
             Make Payment
           </TabsTrigger>
         </TabsList>
+
         <TabsContent value="booking">
           <PickScheduleTab
             onProceed={handleProceed}
             selectedDate={selectedDate}
           />
         </TabsContent>
+
         <TabsContent value="choose">
           <PickSeatTab
             selectedSeatNumber={selectedSeatNumber}
@@ -105,6 +112,7 @@ function Content() {
             endDate={endDate}
           />
         </TabsContent>
+
         <TabsContent value="payment">
           <MakePaymentTab
             selectedSeatNumber={selectedSeatNumber}
@@ -144,8 +152,6 @@ function PickSeatTab({
   setSelectedSeatNumber,
   setSelectedSeatId,
   onProceed,
-  startDate,
-  endDate,
 }: {
   selectedSeatNumber: string | number | null;
   setSelectedSeatNumber: (number: string | number | null) => void;
@@ -154,43 +160,61 @@ function PickSeatTab({
   startDate: Date | null;
   endDate: Date | null;
 }) {
-  console.log("Start Date:", formatDateToLocalISO(startDate));
-  console.log("End Date:", formatDateToLocalISO(endDate));
+  const handleSeatSelect = (seat: Seat): void => {
+    const newSeatNumber = seat.seatNumber;
+    const newSeatId = seat._id;
+    setSelectedSeatNumber(newSeatNumber);
+    setSelectedSeatId(newSeatId);
+  };
+
+  return (
+    <div className="p-3 bg-gray-100 min-h-screen rounded-lg">
+      <SeatLayoutCentre
+        selectedSeatNumber={selectedSeatNumber}
+        onSeatSelect={handleSeatSelect}
+      // onDelete={() => {
+      // setSelectedSeatNumber(null);
+      // setSelectedSeatId(null);
+      // }}
+      />
+
+      {selectedSeatNumber && (
+        <div className="bg-white p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-gray-900">Selected Seat:</p>
+              <div className="text-sm text-gray-600 mt-1">
+                <p>Seat {selectedSeatNumber}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onProceed}
+              className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+            >
+              Proceed
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SeatLayoutCentre(
+  props: Omit<React.ComponentProps<typeof SeatLayout>, 'seats'>
+) {
+  const { selectedSeatNumber, onSeatSelect } = props;
+  const { selectedDate: startDate, endDate } = useStore(bookingStore);
+
   const availableSeats = useQuery(api.seats.getAllSeatsForDateRange, {
     startDate: formatDateToLocalISO(startDate) || "",
     endDate: formatDateToLocalISO(endDate) || "",
   });
 
-  const [seats, setSeats] = useState<Seat[] | null | undefined>(null);
-  const [, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchSeats = async () => {
-      try {
-        setSeats(availableSeats);
-      } catch (error) {
-        console.error("Error fetching seats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSeats();
-  }, [availableSeats]);
-
-  useEffect(() => {
-    // Check if the selected seat has become occupied
-    if (selectedSeatNumber && seats) {
-      const selectedSeat = seats.find(
-        (seat: Seat) => seat.seatNumber === selectedSeatNumber,
-      );
-      if (selectedSeat && selectedSeat.isBooked) {
-        setSelectedSeatNumber(null);
-      }
-    }
-  }, [seats, selectedSeatNumber, setSelectedSeatNumber]);
-
-  if (seats === undefined) {
+  // Loading state
+  if (availableSeats === undefined) {
     return (
       <div className="h-96 bg-gray-100 rounded-lg flex justify-center items-center">
         <div className="bg-white rounded-full p-4">
@@ -204,7 +228,9 @@ function PickSeatTab({
     );
   }
 
-  if (!seats) {
+  const seats = safeArray(availableSeats);
+
+  if (seats.length === 0) {
     return (
       <div className="h-96 bg-gray-100 rounded-lg flex justify-center items-center">
         <p className="text-gray-600">No seats available</p>
@@ -212,38 +238,46 @@ function PickSeatTab({
     );
   }
 
-  const handleSeatSelect = (seat: Seat): void => {
-    const newSeatNumber = seat.seatNumber;
-    const newSeatId = seat._id;
-    setSelectedSeatNumber(newSeatNumber);
-    setSelectedSeatId(newSeatId);
-  };
+  return <SeatLayoutCentre
+    seats={seats}
+    selectedSeatNumber={selectedSeatNumber}
+    onSeatSelect={(seat) => {
+      console.assert(seat, "Always expecting a Seat object");
+
+      // Check if the selected seat has become occupied
+      if (selectedSeatNumber && seats) {
+
+        const known_seats = seats.find((seat: Seat) => seat.seatNumber === selectedSeatNumber);
+        if (!known_seats?.isBooked) {
+          onSeatSelect?.(seat);
+        }
+      }
+    }}
+  />;
+}
+
+function Devtools() {
+  const seedSeats = useMutation(api.seeders.seedSeats);
+
+  const mutation = tanstack.useMutation({
+    mutationFn: seedSeats,
+    onError: (error) => {
+      console.error(error);
+      toast.error("Error seeding seats");
+    },
+  });
 
   return (
-    <div className="p-3 bg-gray-100 min-h-screen rounded-lg">
-      <SeatLayout
-        seats={seats}
-        onSeatSelect={handleSeatSelect}
-        selectedSeatNumber={selectedSeatNumber}
-      />
-      {selectedSeatNumber && (
-        <div className="bg-white p-4 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">Selected Seat:</p>
-              <div className="text-sm text-gray-600 mt-1">
-                <p>Seat {selectedSeatNumber}</p>
-              </div>
-            </div>
-            <button
-              onClick={onProceed}
-              className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
-            >
-              Proceed
-            </button>
-          </div>
-        </div>
-      )}
+    <div>
+      <Button
+        type="button"
+        disabled={mutation.isPending}
+        onClick={() => {
+          seedSeats({ numberOfSeats: 12 });
+        }}
+      >
+        Seed seats
+      </Button>
     </div>
   );
 }
@@ -563,13 +597,12 @@ function MakePaymentTab({
           <div>
             {paymentMessage && (
               <div
-                className={`p-3 rounded-lg mb-4 text-center font-medium ${
-                  paymentStatus != "pending" && paymentStatus != "failed"
-                    ? "bg-green-100 text-green-800 border border-green-200"
-                    : paymentStatus === "failed"
-                      ? "bg-red-100 text-red-800 border border-red-200"
-                      : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                }`}
+                className={`p-3 rounded-lg mb-4 text-center font-medium ${paymentStatus != "pending" && paymentStatus != "failed"
+                  ? "bg-green-100 text-green-800 border border-green-200"
+                  : paymentStatus === "failed"
+                    ? "bg-red-100 text-red-800 border border-red-200"
+                    : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                  }`}
               >
                 {paymentMessage}
               </div>
@@ -599,6 +632,8 @@ export default function ReservePage() {
         <main className="px-4">
           <Content />
         </main>
+
+        <Devtools />
 
         <Footer />
       </div>
