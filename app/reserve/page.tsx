@@ -48,7 +48,7 @@ function Content() {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
-  const handleProceed = (
+  const handleDateProceed = (
     date: Date,
     endDate: Date,
     price: number,
@@ -91,7 +91,7 @@ function Content() {
         </TabsList>
         <TabsContent value="booking">
           <PickScheduleTab
-            onProceed={handleProceed}
+            onProceed={handleDateProceed}
             selectedDate={selectedDate}
           />
         </TabsContent>
@@ -120,10 +120,7 @@ function Content() {
   );
 }
 
-function PickScheduleTab({
-  onProceed,
-  selectedDate,
-}: {
+interface PickScheduleTabProps {
   onProceed: (
     date: Date,
     endDate: Date,
@@ -131,12 +128,23 @@ function PickScheduleTab({
     timePeriod: "day" | "week" | "month",
   ) => void;
   selectedDate: Date | null;
-}) {
+}
+
+function PickScheduleTab({ onProceed, selectedDate }: PickScheduleTabProps) {
   return (
     <div>
       <BookingCalendar onProceed={onProceed} selectedDate={selectedDate} />
     </div>
   );
+}
+
+interface PickSeatTabProps {
+  selectedSeatNumber: string | number | null;
+  setSelectedSeatNumber: (number: string | number | null) => void;
+  setSelectedSeatId: (id: Id<"seats"> | null) => void;
+  onProceed: () => void;
+  startDate: Date | null;
+  endDate: Date | null;
 }
 
 function PickSeatTab({
@@ -146,51 +154,25 @@ function PickSeatTab({
   onProceed,
   startDate,
   endDate,
-}: {
-  selectedSeatNumber: string | number | null;
-  setSelectedSeatNumber: (number: string | number | null) => void;
-  setSelectedSeatId: (id: Id<"seats"> | null) => void;
-  onProceed: () => void;
-  startDate: Date | null;
-  endDate: Date | null;
-}) {
-  console.log("Start Date:", formatDateToLocalISO(startDate));
-  console.log("End Date:", formatDateToLocalISO(endDate));
+}: PickSeatTabProps) {
   const availableSeats = useQuery(api.seats.getAllSeatsForDateRange, {
     startDate: formatDateToLocalISO(startDate) || "",
     endDate: formatDateToLocalISO(endDate) || "",
   });
 
-  const [seats, setSeats] = useState<Seat[] | null | undefined>(null);
-  const [, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchSeats = async () => {
-      try {
-        setSeats(availableSeats);
-      } catch (error) {
-        console.error("Error fetching seats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSeats();
-  }, [availableSeats]);
-
   useEffect(() => {
     // Check if the selected seat has become occupied
-    if (selectedSeatNumber && seats) {
-      const selectedSeat = seats.find(
+    if (selectedSeatNumber && availableSeats) {
+      const selectedSeat = availableSeats.find(
         (seat: Seat) => seat.seatNumber === selectedSeatNumber,
       );
       if (selectedSeat && selectedSeat.isBooked) {
         setSelectedSeatNumber(null);
       }
     }
-  }, [seats, selectedSeatNumber, setSelectedSeatNumber]);
+  }, [availableSeats, selectedSeatNumber, setSelectedSeatNumber]);
 
-  if (seats === undefined) {
+  if (availableSeats === undefined) {
     return (
       <div className="h-96 bg-gray-100 rounded-lg flex justify-center items-center">
         <div className="bg-white rounded-full p-4">
@@ -204,7 +186,7 @@ function PickSeatTab({
     );
   }
 
-  if (!seats) {
+  if (!availableSeats) {
     return (
       <div className="h-96 bg-gray-100 rounded-lg flex justify-center items-center">
         <p className="text-gray-600">No seats available</p>
@@ -222,7 +204,7 @@ function PickSeatTab({
   return (
     <div className="p-3 bg-gray-100 min-h-screen rounded-lg">
       <SeatLayout
-        seats={seats}
+        seats={availableSeats}
         onSeatSelect={handleSeatSelect}
         selectedSeatNumber={selectedSeatNumber}
       />
@@ -248,6 +230,25 @@ function PickSeatTab({
   );
 }
 
+interface MakePaymentTabProps {
+  selectedSeatNumber: string | number | null;
+  selectedSeatId: Id<"seats"> | null;
+  selectedDate: Date | null;
+  endDate: Date | null;
+  price: number | null;
+  timePeriodString: "day" | "week" | "month";
+}
+
+interface PaystackResponse {
+  reference: string;
+  trans: string;
+  status: string;
+  message: string;
+  transaction: string;
+  trxref: string;
+  redirecturl: string;
+}
+
 function MakePaymentTab({
   selectedSeatNumber,
   selectedSeatId,
@@ -255,14 +256,7 @@ function MakePaymentTab({
   endDate,
   price,
   timePeriodString,
-}: {
-  selectedSeatNumber: string | number | null;
-  selectedSeatId: Id<"seats"> | null;
-  selectedDate: Date | null;
-  endDate: Date | null;
-  price: number | null;
-  timePeriodString: "day" | "week" | "month";
-}) {
+}: MakePaymentTabProps) {
   type PaymentStatus = "pending" | "success" | "failed";
 
   const [paymentMessage, setPaymentMessage] = useState("");
@@ -417,8 +411,7 @@ function MakePaymentTab({
           endDate: endDate?.toISOString(),
           price: formatPrice(price),
         },
-        // @ts-expect-error paystack
-        callback: (response) => {
+        callback: (response: PaystackResponse) => {
           if (response.status === "success") {
             handleSuccessfulPayment(bookingId);
           } else {
@@ -457,11 +450,11 @@ function MakePaymentTab({
           </div>
           <div className="mt-6 p-6 flex flex-col gap-6 shadow rounded-md">
             <div className="flex flex-col gap-3">
-              <span className="flex items-center justify-between">
+              <span className="flex flex-wrap items-center justify-between">
                 <p className="text-[#72A0A0]">Name</p>
                 <p>{user?.fullName}</p>
               </span>
-              <span className="flex items-center justify-between">
+              <span className="flex flex-wrap items-center justify-between">
                 <p className="text-[#72A0A0]">Email</p>
                 <p>{user?.emailAddresses[0].emailAddress}</p>
               </span>
@@ -478,19 +471,19 @@ function MakePaymentTab({
               </span>
               <span className="flex items-center justify-between">
                 <p className="text-[#72A0A0]">Seat No.</p>
-                <p>Seat {selectedSeatNumber}</p>
+                <p className="text-right">Seat {selectedSeatNumber}</p>
               </span>
               <span className="flex items-center justify-between">
                 <p className="text-[#72A0A0]">Reservation Start Date</p>
-                <p>{selectedDate?.toDateString()}</p>
+                <p className="text-right">{selectedDate?.toDateString()}</p>
               </span>
               <span className="flex items-center justify-between">
                 <p className="text-[#72A0A0]">Reservation End Date</p>
-                <p>{endDate?.toDateString()}</p>
+                <p className="text-right">{endDate?.toDateString()}</p>
               </span>
               <span className="flex items-center justify-between">
                 <p className="text-[#72A0A0]">Amount</p>
-                <p>{formatPrice(price)}</p>
+                <p className="text-right">{formatPrice(price)}</p>
               </span>
             </div>
             <button

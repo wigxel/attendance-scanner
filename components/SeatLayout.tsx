@@ -97,18 +97,24 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <div className="my-6 flex justify-center gap-4 text-xs">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-white border rounded"></div>
-          <span className="text-gray-600">Available</span>
+      <div className="my-6">
+        <div className="mb-3 flex justify-center gap-4 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-white border rounded"></div>
+            <span className="text-gray-600">Available</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-[#FFF2CC80] border-[#FF9900] border rounded"></div>
+            <span className="text-gray-600">Selected</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-[#9A9A9A] bg-[url('/images/reserved-bg.png')] bg-contain rounded"></div>
+            <span className="text-gray-600">Occupied</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-[#FFF2CC80] border-[#FF9900] border rounded"></div>
-          <span className="text-gray-600">Selected</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-[#9A9A9A] bg-[url('/images/reserved-bg.png')] bg-contain rounded"></div>
-          <span className="text-gray-600">Occupied</span>
+
+        <div className="text-gray-600 text-xs text-center">
+          <p>Click proceed to select your seat</p>
         </div>
       </div>
 

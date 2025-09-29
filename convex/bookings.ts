@@ -204,7 +204,9 @@ export const getUserBookings = query({
 export const getUserConfirmedBookings = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Must be logged in");
+    if (!identity) {
+      return "Must be logged in";
+    }
 
     const bookings = await ctx.db
       .query("bookings")
