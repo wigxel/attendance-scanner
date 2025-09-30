@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { loadPaystackScript, formatDateToLocalISO } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useBookingStore, setActiveTab, setSelectedSeatNumber } from "./store";
 
 import { LucideLoader } from "lucide-react";
 import { Header } from "@/components/header";
@@ -31,50 +32,13 @@ const CONFIG = {
 const httpClient = new ConvexHttpClient(CONFIG.convexUrl);
 
 function Content() {
-  const [activeTab, setActiveTab] = useState("booking");
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [price, setPrice] = useState<number | null>(null);
-  const [selectedSeatNumber, setSelectedSeatNumber] = useState<
-    string | number | null
-  >(null);
-  const [selectedSeatId, setSelectedSeatId] = useState<Id<"seats"> | null>(
-    null,
-  );
-  const [timePeriodString, setTimePeriodString] = useState<
-    "day" | "week" | "month"
-  >("day");
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-  const handleDateProceed = (
-    date: Date,
-    endDate: Date,
-    price: number,
-    timePeriod: "day" | "week" | "month",
-  ) => {
-    const pickedDate = new Date(date);
-
-    if (pickedDate.getDay() === 0) {
-      alert("Please select another date. We're closed on Sundays");
-    } else {
-      setActiveTab("choose");
-      setSelectedDate(date);
-      setEndDate(endDate);
-      setPrice(price);
-      setTimePeriodString(timePeriod);
-    }
-  };
-  const handleSeatProceed = () => {
-    setActiveTab("payment");
-  };
+  const { activeTab } = useBookingStore();
 
   return (
     <div className="bg-white flex flex-col scanline-root max-w-lg mx-auto p-6 pb-14 rounded-2xl">
       <Tabs
         value={activeTab}
-        onValueChange={handleTabChange}
+        onValueChange={setActiveTab}
         defaultValue="booking"
         className="w-full"
       >
@@ -90,73 +54,31 @@ function Content() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="booking">
-          <PickScheduleTab
-            onProceed={handleDateProceed}
-            selectedDate={selectedDate}
-          />
+          <PickScheduleTab />
         </TabsContent>
         <TabsContent value="choose">
-          <PickSeatTab
-            selectedSeatNumber={selectedSeatNumber}
-            setSelectedSeatNumber={setSelectedSeatNumber}
-            setSelectedSeatId={setSelectedSeatId}
-            onProceed={handleSeatProceed}
-            startDate={selectedDate}
-            endDate={endDate}
-          />
+          <PickSeatTab />
         </TabsContent>
         <TabsContent value="payment">
-          <MakePaymentTab
-            selectedSeatNumber={selectedSeatNumber}
-            selectedSeatId={selectedSeatId}
-            selectedDate={selectedDate}
-            endDate={endDate}
-            price={price}
-            timePeriodString={timePeriodString}
-          />
+          <MakePaymentTab />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-interface PickScheduleTabProps {
-  onProceed: (
-    date: Date,
-    endDate: Date,
-    price: number,
-    timePeriod: "day" | "week" | "month",
-  ) => void;
-  selectedDate: Date | null;
-}
-
-function PickScheduleTab({ onProceed, selectedDate }: PickScheduleTabProps) {
+function PickScheduleTab() {
   return (
     <div>
-      <BookingCalendar onProceed={onProceed} selectedDate={selectedDate} />
+      <BookingCalendar />
     </div>
   );
 }
 
-interface PickSeatTabProps {
-  selectedSeatNumber: string | number | null;
-  setSelectedSeatNumber: (number: string | number | null) => void;
-  setSelectedSeatId: (id: Id<"seats"> | null) => void;
-  onProceed: () => void;
-  startDate: Date | null;
-  endDate: Date | null;
-}
-
-function PickSeatTab({
-  selectedSeatNumber,
-  setSelectedSeatNumber,
-  setSelectedSeatId,
-  onProceed,
-  startDate,
-  endDate,
-}: PickSeatTabProps) {
+function PickSeatTab() {
+  const { selectedDate, endDate, selectedSeatNumber } = useBookingStore();
   const availableSeats = useQuery(api.seats.getAllSeatsForDateRange, {
-    startDate: formatDateToLocalISO(startDate) || "",
+    startDate: formatDateToLocalISO(selectedDate) || "",
     endDate: formatDateToLocalISO(endDate) || "",
   });
 
@@ -170,7 +92,7 @@ function PickSeatTab({
         setSelectedSeatNumber(null);
       }
     }
-  }, [availableSeats, selectedSeatNumber, setSelectedSeatNumber]);
+  }, [availableSeats, selectedSeatNumber]);
 
   if (availableSeats === undefined) {
     return (
@@ -194,20 +116,9 @@ function PickSeatTab({
     );
   }
 
-  const handleSeatSelect = (seat: Seat): void => {
-    const newSeatNumber = seat.seatNumber;
-    const newSeatId = seat._id;
-    setSelectedSeatNumber(newSeatNumber);
-    setSelectedSeatId(newSeatId);
-  };
-
   return (
     <div className="p-3 bg-gray-100 min-h-screen rounded-lg">
-      <SeatLayout
-        seats={availableSeats}
-        onSeatSelect={handleSeatSelect}
-        selectedSeatNumber={selectedSeatNumber}
-      />
+      <SeatLayout seats={availableSeats} />
       {selectedSeatNumber && (
         <div className="bg-white p-4 rounded-lg">
           <div className="flex items-center justify-between">
@@ -218,7 +129,7 @@ function PickSeatTab({
               </div>
             </div>
             <button
-              onClick={onProceed}
+              onClick={() => setActiveTab("payment")}
               className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
             >
               Proceed
@@ -228,15 +139,6 @@ function PickSeatTab({
       )}
     </div>
   );
-}
-
-interface MakePaymentTabProps {
-  selectedSeatNumber: string | number | null;
-  selectedSeatId: Id<"seats"> | null;
-  selectedDate: Date | null;
-  endDate: Date | null;
-  price: number | null;
-  timePeriodString: "day" | "week" | "month";
 }
 
 interface PaystackResponse {
@@ -249,14 +151,15 @@ interface PaystackResponse {
   redirecturl: string;
 }
 
-function MakePaymentTab({
-  selectedSeatNumber,
-  selectedSeatId,
-  selectedDate,
-  endDate,
-  price,
-  timePeriodString,
-}: MakePaymentTabProps) {
+function MakePaymentTab() {
+  const {
+    selectedSeatNumber,
+    selectedSeatId,
+    selectedDate,
+    endDate,
+    price,
+    timePeriodString,
+  } = useBookingStore();
   type PaymentStatus = "pending" | "success" | "failed";
 
   const [paymentMessage, setPaymentMessage] = useState("");

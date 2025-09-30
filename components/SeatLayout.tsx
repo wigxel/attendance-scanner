@@ -1,5 +1,10 @@
 import React from "react";
 import { Id } from "@/convex/_generated/dataModel";
+import {
+  useBookingStore,
+  setSelectedSeatId,
+  setSelectedSeatNumber,
+} from "@/app/reserve/store";
 
 import Chair from "@/public/images/chair.png";
 import Image from "next/image";
@@ -20,7 +25,6 @@ interface SeatProps {
 interface SeatLayoutProps {
   seats: SeatData[];
   onSeatSelect?: (seat: SeatData) => void;
-  selectedSeatNumber?: string | number | null;
 }
 
 // Seat Component
@@ -73,13 +77,12 @@ const Table: React.FC<{
   );
 };
 
-const SeatLayout: React.FC<SeatLayoutProps> = ({
-  seats,
-  onSeatSelect,
-  selectedSeatNumber,
-}) => {
+const SeatLayout: React.FC<SeatLayoutProps> = ({ seats }) => {
+  const { selectedSeatNumber } = useBookingStore();
+
   const handleSeatClick = (seat: SeatData): void => {
-    onSeatSelect?.(seat);
+    setSelectedSeatNumber(seat.seatNumber);
+    setSelectedSeatId(seat._id);
   };
 
   // map for quick seat lookup

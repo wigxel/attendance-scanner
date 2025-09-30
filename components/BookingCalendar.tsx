@@ -1,6 +1,14 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { calculateEndDate } from "@/lib/utils";
+import {
+  useBookingStore,
+  setSelectedDate,
+  setTimePeriodString,
+  setEndDate,
+  setPrice,
+  setActiveTab,
+} from "@/app/reserve/store";
 
 import { Calendar } from "@demark-pro/react-booking-calendar";
 import "@demark-pro/react-booking-calendar/dist/react-booking-calendar.css";
@@ -13,26 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const BookingCalendar = ({
-  onProceed,
-  selectedDate,
-}: {
-  onProceed: (
-    date: Date,
-    endDate: Date,
-    price: number,
-    timePeriod: "day" | "week" | "month",
-  ) => void;
-  selectedDate: Date | null;
-}) => {
-  const [localSelectedDates, setLocalSelectedDates] = useState<Date[]>(
-    selectedDate ? [selectedDate] : [],
-  );
-  const [timePeriodString, setTimePeriodString] = useState<string>("day");
-
-  useEffect(() => {
-    setLocalSelectedDates(selectedDate ? [selectedDate] : []);
-  }, [selectedDate]);
+const BookingCalendar = () => {
+  const { selectedDate, timePeriodString } = useBookingStore();
 
   let timePeriod: number;
   let price: number; // in kobo
@@ -47,10 +37,8 @@ const BookingCalendar = ({
     timePeriod = 24;
     price = 2400000; // 24,000
   } else {
-    throw Error("Invalid time period");
+    throw new Error("Invalid time period");
   }
-
-  // const oneDay = 86400000;
 
   const reserved: {
     startDate: Date;
@@ -69,19 +57,33 @@ const BookingCalendar = ({
     });
   };
 
+  const handleProceed = () => {
+    if (!selectedDate) return;
+
+    const pickedDate = selectedDate;
+
+    if (pickedDate.getDay() === 0) {
+      alert("Please select another date. We're closed on Sundays");
+    } else {
+      const calculatedEndDate = calculateEndDate(selectedDate, timePeriod);
+
+      setEndDate(calculatedEndDate);
+      setPrice(price);
+      setActiveTab("choose");
+    }
+  };
+
   return (
     <div>
       <Calendar
-        selected={localSelectedDates}
+        selected={selectedDate ? [selectedDate] : []}
         reserved={reserved}
         // @ts-expect-error set selected dates
-        onChange={setLocalSelectedDates}
-        disabled={(date) => date.getDay() === 0}
+        onChange={(dates: Date[]) => setSelectedDate(dates[0] || null)}
         protection={true}
         range={false}
       />
 
-      {/* Date Indicators */}
       <div className="flex gap-6 mt-4 mb-6">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-black rounded"></div>
@@ -97,7 +99,7 @@ const BookingCalendar = ({
         </div>
       </div>
 
-      {localSelectedDates.length > 0 && (
+      {selectedDate && (
         <div className="bg-gray-50 p-4 rounded-lg">
           <div className="mb-6">
             <Select
@@ -118,20 +120,11 @@ const BookingCalendar = ({
             <div>
               <p className="font-medium text-gray-900">Selected Date:</p>
               <div className="text-sm text-gray-600 mt-1">
-                {localSelectedDates.map((date, index) => (
-                  <div key={index}>{formatDate(date)}</div>
-                ))}
+                <div>{formatDate(selectedDate)}</div>
               </div>
             </div>
             <button
-              onClick={() =>
-                onProceed(
-                  localSelectedDates[0],
-                  calculateEndDate(localSelectedDates[0], timePeriod),
-                  price,
-                  timePeriodString,
-                )
-              }
+              onClick={handleProceed}
               className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
             >
               Proceed
@@ -140,10 +133,10 @@ const BookingCalendar = ({
         </div>
       )}
 
-      {localSelectedDates.length === 0 && (
+      {!selectedDate && (
         <div className="text-center py-8">
           <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Select one or more dates to continue</p>
+          <p className="text-gray-600">Select a date to continue</p>
         </div>
       )}
     </div>
