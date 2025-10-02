@@ -58,7 +58,13 @@ function PickScheduleTab() {
 }
 
 function PickSeatTab() {
-  const { seats, isLoading, handleSeatClick, selectedSeatNumber } = useSeats();
+  const {
+    seats,
+    isLoading,
+    handleSeatClick,
+    selectedSeatNumber,
+    proceedToPayment,
+  } = useSeats();
 
   if (isLoading) {
     return (
@@ -99,7 +105,7 @@ function PickSeatTab() {
               </div>
             </div>
             <button
-              onClick={() => setActiveTab("payment")}
+              onClick={proceedToPayment}
               className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
             >
               Proceed
