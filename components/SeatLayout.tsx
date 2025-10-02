@@ -24,7 +24,8 @@ interface SeatProps {
 
 interface SeatLayoutProps {
   seats: SeatData[];
-  onSeatSelect?: (seat: SeatData) => void;
+  selectedSeatNumber: string | number | null;
+  onSeatClick: (seat: SeatData) => void;
 }
 
 // Seat Component
@@ -77,14 +78,11 @@ const Table: React.FC<{
   );
 };
 
-const SeatLayout: React.FC<SeatLayoutProps> = ({ seats }) => {
-  const { selectedSeatNumber } = useBookingStore();
-
-  const handleSeatClick = (seat: SeatData): void => {
-    setSelectedSeatNumber(seat.seatNumber);
-    setSelectedSeatId(seat._id);
-  };
-
+const SeatLayout: React.FC<SeatLayoutProps> = ({
+  seats,
+  selectedSeatNumber,
+  onSeatClick,
+}) => {
   // map for quick seat lookup
   const seatMap: Record<string, SeatData> = seats.reduce(
     (map, seat) => {
@@ -126,16 +124,16 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats }) => {
         {getSeat("1") && (
           <Seat
             seatData={getSeat("1")!}
-            isSelected={selectedSeatNumber == "1"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 1}
+            onClick={onSeatClick}
             className="col-start-2"
           />
         )}
         {getSeat("2") && (
           <Seat
             seatData={getSeat("2")!}
-            isSelected={selectedSeatNumber == "2"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 2}
+            onClick={onSeatClick}
           />
         )}
         <Table className="col-span-2 col-start-2" />
@@ -145,16 +143,16 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats }) => {
         {getSeat("3") && (
           <Seat
             seatData={getSeat("3")!}
-            isSelected={selectedSeatNumber == "3"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 3}
+            onClick={onSeatClick}
             className="col-start-9"
           />
         )}
         {getSeat("4") && (
           <Seat
             seatData={getSeat("4")!}
-            isSelected={selectedSeatNumber == "4"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 4}
+            onClick={onSeatClick}
             className="col-start-9"
           />
         )}
@@ -163,16 +161,16 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats }) => {
         {getSeat("5") && (
           <Seat
             seatData={getSeat("5")!}
-            isSelected={selectedSeatNumber == "5"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 5}
+            onClick={onSeatClick}
             className="col-start-3 row-start-5"
           />
         )}
         {getSeat("6") && (
           <Seat
             seatData={getSeat("6")!}
-            isSelected={selectedSeatNumber == "6"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 6}
+            onClick={onSeatClick}
             className="col-start-4 row-start-5"
           />
         )}
@@ -181,32 +179,32 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats }) => {
         {getSeat("7") && (
           <Seat
             seatData={getSeat("7")!}
-            isSelected={selectedSeatNumber == "7"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 7}
+            onClick={onSeatClick}
             className="col-start-1 -translate-y-5"
           />
         )}
         {getSeat("8") && (
           <Seat
             seatData={getSeat("8")!}
-            isSelected={selectedSeatNumber == "8"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 8}
+            onClick={onSeatClick}
             className="col-start-6 -translate-y-5"
           />
         )}
         {getSeat("9") && (
           <Seat
             seatData={getSeat("9")!}
-            isSelected={selectedSeatNumber == "9"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 9}
+            onClick={onSeatClick}
             className="col-start-3"
           />
         )}
         {getSeat("10") && (
           <Seat
             seatData={getSeat("10")!}
-            isSelected={selectedSeatNumber == "10"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 10}
+            onClick={onSeatClick}
             className="col-start-4"
           />
         )}
@@ -215,16 +213,16 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats }) => {
         {getSeat("11") && (
           <Seat
             seatData={getSeat("11")!}
-            isSelected={selectedSeatNumber == "11"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 11}
+            onClick={onSeatClick}
             className="col-start-3 row-start-10"
           />
         )}
         {getSeat("12") && (
           <Seat
             seatData={getSeat("12")!}
-            isSelected={selectedSeatNumber == "12"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 12}
+            onClick={onSeatClick}
             className="col-start-4 row-start-10"
           />
         )}
@@ -233,16 +231,16 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats }) => {
         {getSeat("13") && (
           <Seat
             seatData={getSeat("13")!}
-            isSelected={selectedSeatNumber == "13"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 13}
+            onClick={onSeatClick}
             className="col-start-3"
           />
         )}
         {getSeat("14") && (
           <Seat
             seatData={getSeat("14")!}
-            isSelected={selectedSeatNumber == "14"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 14}
+            onClick={onSeatClick}
             className="col-start-4"
           />
         )}
@@ -252,16 +250,16 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats }) => {
         {getSeat("15") && (
           <Seat
             seatData={getSeat("15")!}
-            isSelected={selectedSeatNumber == "15"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 15}
+            onClick={onSeatClick}
             className="col-start-9 row-start-11"
           />
         )}
         {getSeat("16") && (
           <Seat
             seatData={getSeat("16")!}
-            isSelected={selectedSeatNumber == "16"}
-            onClick={handleSeatClick}
+            isSelected={selectedSeatNumber == 16}
+            onClick={onSeatClick}
             className="col-start-9 row-start-12"
           />
         )}
