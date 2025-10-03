@@ -374,6 +374,38 @@ export const markExpiredPendingBookings = mutation({
   },
 });
 
+export const markCompletedBookingsAsExpired = mutation({
+  handler: async (ctx) => {
+    const now = Date.now();
+    const nowISO = new Date(now).toISOString();
+
+    const completedBookings = await ctx.db
+      .query("bookings")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "confirmed"),
+          q.lt(q.field("endDate"), nowISO),
+        ),
+      )
+      .collect();
+
+    const expiredBookings = [];
+
+    for (const booking of completedBookings) {
+      await ctx.db.patch(booking._id, {
+        status: "expired",
+        updatedAt: now,
+      });
+
+      expiredBookings.push(booking._id);
+    }
+    return {
+      expiredBookings,
+      processedAt: now,
+    };
+  },
+});
+
 export const getBookingById = query({
   args: {
     bookingId: v.id("bookings"),
