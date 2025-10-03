@@ -159,7 +159,7 @@ function ActiveBookings() {
                 <Calendar className="w-4 h-4 text-gray-600" />
                 <span className="font-medium text-gray-900">
                   {formatDate(booking.startDate)}
-                  {booking.startDate !== booking.endDate && (
+                  {booking.durationType !== "day" && (
                     <span className="text-gray-500">
                       {" "}
                       - {formatDate(booking.endDate)}
