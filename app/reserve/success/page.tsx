@@ -78,7 +78,11 @@ export default function SuccessPage() {
           </span>
           <span className="flex items-center justify-between">
             <p className="text-[#72A0A0]">Reservation End Date</p>
-            <p className="text-right">{endDate?.toDateString()}</p>
+            {timePeriodString === "day" ? (
+              <p className="text-right">{selectedDate?.toDateString()}</p>
+            ) : (
+              <p className="text-right">{endDate?.toDateString()}</p>
+            )}
           </span>
           <span className="flex items-center justify-between">
             <p className="text-[#72A0A0]">Amount</p>
