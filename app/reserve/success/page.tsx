@@ -1,6 +1,5 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -16,22 +15,25 @@ export default function SuccessPage() {
   const bookingId = searchParams.get("booking-id") as Id<"bookings">;
 
   const bookingDetails = useQuery(api.bookings.getBookingById, { bookingId });
+
+  const userId = bookingDetails?.userId || "";
   const seatId = bookingDetails?.seatId as Id<"seats">;
+
+  const user = useQuery(api.auth.getUserProfile, { userId });
   const seat = useQuery(api.seats.getSeatById, { seatId });
+
   const timePeriodString = bookingDetails?.durationType;
   const selectedDate = new Date(bookingDetails?.startDate || "");
   const endDate = new Date(bookingDetails?.endDate || "");
   const price = bookingDetails?.amount || null;
-  const { user } = useUser();
 
-  if (user)
-    if (bookingDetails === undefined) {
-      return (
-        <div className="flex justify-center items-center h-screen">
-          <LucideLoader className="animate-spin" />
-        </div>
-      );
-    }
+  if (bookingDetails === undefined && user === undefined) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <LucideLoader className="animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-10/12 min-w-[340px] max-w-xl mx-auto mt-3 pt-6">
@@ -47,11 +49,13 @@ export default function SuccessPage() {
         <div className="flex flex-col gap-3">
           <span className="flex flex-wrap items-center justify-between">
             <p className="text-[#72A0A0]">Name</p>
-            <p>{user?.fullName}</p>
+            <p>
+              {user?.firstName} {user?.lastName}
+            </p>
           </span>
           <span className="flex flex-wrap items-center justify-between">
             <p className="text-[#72A0A0]">Email</p>
-            <p>{user?.emailAddresses[0].emailAddress}</p>
+            <p>{user?.email}</p>
           </span>
         </div>
         <hr className="border-t-2 border-gray-300 w-full border-dashed" />
