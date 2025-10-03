@@ -9,6 +9,7 @@ interface BookingState {
   selectedSeatNumber: string | number | null;
   selectedSeatId: Id<"seats"> | null;
   timePeriodString: "day" | "week" | "month";
+  bookingId: Id<"bookings"> | null;
 }
 
 export const useBookingStore = create<BookingState>(() => ({
@@ -19,6 +20,7 @@ export const useBookingStore = create<BookingState>(() => ({
   selectedSeatNumber: null,
   selectedSeatId: null,
   timePeriodString: "day",
+  bookingId: null,
 }));
 
 export const setActiveTab = (tab: BookingState["activeTab"]) => {
@@ -51,4 +53,21 @@ export const setTimePeriodString = (
   period: BookingState["timePeriodString"],
 ) => {
   useBookingStore.setState({ timePeriodString: period });
+};
+
+export const setBookingId = (bookingId: BookingState["bookingId"]) => {
+  useBookingStore.setState({ bookingId: bookingId });
+};
+
+export const resetBookingState = () => {
+  useBookingStore.setState({
+    activeTab: "booking",
+    selectedDate: null,
+    endDate: null,
+    price: null,
+    selectedSeatNumber: null,
+    selectedSeatId: null,
+    timePeriodString: "day",
+    bookingId: null,
+  });
 };

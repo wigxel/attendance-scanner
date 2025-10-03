@@ -334,7 +334,6 @@ export const cancelBooking = mutation({
   },
 });
 
-// convex/bookings.ts
 export const markExpiredPendingBookings = mutation({
   /**
    * Marks pending bookings as expired if they've been pending too long.
@@ -372,5 +371,19 @@ export const markExpiredPendingBookings = mutation({
       expiredBookingIds,
       processedAt: now,
     };
+  },
+});
+
+export const getBookingById = query({
+  args: {
+    bookingId: v.id("bookings"),
+  },
+  handler: async (ctx, { bookingId }) => {
+    const booking = await ctx.db.get(bookingId);
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    return booking;
   },
 });

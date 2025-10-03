@@ -4,7 +4,7 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { ConvexHttpClient } from "convex/browser";
-import { useBookingStore } from "@/app/reserve/store";
+import { useBookingStore, setBookingId } from "@/app/reserve/store";
 import { CONFIG } from "@/app/reserve/constants";
 import { loadPaystackScript, formatDateToLocalISO } from "@/lib/utils";
 
@@ -19,8 +19,14 @@ interface PaystackResponse {
 }
 
 export const usePaymentHandler = () => {
-  const { selectedSeatId, selectedDate, endDate, price, timePeriodString } =
-    useBookingStore();
+  const {
+    selectedSeatId,
+    selectedDate,
+    endDate,
+    price,
+    timePeriodString,
+    bookingId,
+  } = useBookingStore();
   type PaymentStatus = "pending" | "success" | "failed";
 
   const router = useRouter();
@@ -151,6 +157,7 @@ export const usePaymentHandler = () => {
       }
 
       const bookingId = createBooking.bookingIds[0];
+      setBookingId(bookingId);
 
       const loaded = await loadPaystackScript();
       if (!loaded) {
@@ -201,7 +208,7 @@ export const usePaymentHandler = () => {
 
   const returnToHomepage = () => {
     router.push("/");
-    // Consider resetting the booking store state here if needed
+    // Consider resetting the booking store state here
   };
 
   return {
@@ -211,5 +218,6 @@ export const usePaymentHandler = () => {
     handlePayment,
     returnToHomepage,
     formatPrice,
+    bookingId,
   };
 };

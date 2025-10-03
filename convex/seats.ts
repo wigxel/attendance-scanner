@@ -175,3 +175,14 @@ export const checkSeatAvailability = query({
     };
   },
 });
+
+export const getSeatById = query({
+  args: {
+    seatId: v.id("seats"),
+  },
+  handler: async (ctx, args) => {
+    const seat = await ctx.db.get(args.seatId);
+    if (!seat) throw new Error(`Seat ${args.seatId} not found`);
+    return seat;
+  },
+});
