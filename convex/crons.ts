@@ -9,4 +9,10 @@ crons.interval(
   api.bookings.markExpiredPendingBookings,
 );
 
+crons.interval(
+  "mark completed bookings as expired",
+  { minutes: 5 },
+  api.bookings.markCompletedBookingsAsExpired,
+);
+
 export default crons;
