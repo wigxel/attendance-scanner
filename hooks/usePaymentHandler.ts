@@ -59,7 +59,9 @@ export const usePaymentHandler = () => {
     }
   };
 
-  const handleCancelBooking = async (bookingId: Id<"bookings">) => {
+  const handleCancelBooking: (
+    bookingId: Id<"bookings">,
+  ) => Promise<void> = async (bookingId: Id<"bookings">) => {
     try {
       const token = await getToken({ template: "convex" });
       if (!token) {
@@ -69,7 +71,7 @@ export const usePaymentHandler = () => {
       }
       httpClient.mutation(api.bookings.cancelBooking, { bookingId });
 
-      setPaymentStatus("success");
+      setPaymentStatus("failed");
       setPaymentMessage("Booking cancelled!");
     } catch (error) {
       setPaymentStatus("failed");
