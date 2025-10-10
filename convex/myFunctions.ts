@@ -1,13 +1,13 @@
-import { v } from "convex/values";
-import { components } from "./_generated/api";
-import { TableAggregate } from "@convex-dev/aggregate";
-import { formatISO, setHours } from "date-fns";
-import type { GenericQueryCtx } from "convex/server";
-import { logger } from "../config/logger";
-import { internalMutation, mutation, query } from "./_generated/server";
-import type { DataModel, Id } from "./_generated/dataModel";
-import { api } from "./_generated/api";
 import type { Profile, User } from "@auth/core/types";
+import { TableAggregate } from "@convex-dev/aggregate";
+import type { GenericQueryCtx } from "convex/server";
+import { v } from "convex/values";
+import { formatISO, setHours } from "date-fns";
+import { logger } from "../config/logger";
+import { components } from "./_generated/api";
+import { api } from "./_generated/api";
+import type { DataModel, Id } from "./_generated/dataModel";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { featureRequestStatus } from "./shared";
 
 export const authUser = query({
@@ -229,8 +229,8 @@ export const getDailyRegister = query({
           q.lte(q.field("timestamp"), args.end),
         ),
       )
-      .order("desc")
-      .take(6);
+      .order("desc").collect();
+
 
     return registers;
   },
@@ -548,8 +548,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-            .query("featureRequest")
-            .withIndex("by_status", (q) => q.eq("status", status))
+          .query("featureRequest")
+          .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 

@@ -1,23 +1,26 @@
 "use client";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { columns } from "@/components/columns";
 import { DataTableDemo } from "@/components/DataTable";
-import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import React from "react";
+import { columns } from "@/components/columns";
+import { api } from "@/convex/_generated/api";
 import { useCustomer } from "@/hooks/auth";
+import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
+import { DateParse } from "@/lib/date.helpers";
+import { O } from "@/lib/fp.helpers";
+import { useQuery } from "convex/react";
 import {
   differenceInDays,
   differenceInHours,
   differenceInMinutes,
   differenceInSeconds,
   formatISO,
+  isToday,
   parseISO,
   setHours,
 } from "date-fns";
-import { pipe, Option } from "effect";
+import { Option, pipe } from "effect";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import React from "react";
+import useEvent from "react-use-event-hook";
 import {
   EmptyState,
   EmptyStateConceal,
@@ -25,6 +28,10 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "./empty-state";
+import { If } from "./if";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
 
 export function useUsers() {
@@ -58,8 +65,8 @@ export function CustomersTable() {
   );
 }
 
-export function TodaysCustomers() {
-  const date = React.useMemo(() => {
+function useAttendanceRegister() {
+  const today = React.useMemo(() => {
     const today = new Date();
     const start = formatISO(setHours(today, 0));
     const end = formatISO(setHours(today, 23));
@@ -67,21 +74,79 @@ export function TodaysCustomers() {
     return { start, end };
   }, []);
 
+  const [current, setCurrent] = React.useState(() => today);
+
+  const createDateRange = useEvent((date: Date) => ({
+    start: formatISO(setHours(date, 0)),
+    end: formatISO(setHours(date, 23)),
+  }));
+
+  const adjustDate = React.useCallback((days: number) => {
+    setCurrent(prev => {
+      const newDate = new Date(parseISO(prev.start));
+      newDate.setDate(newDate.getDate() + days);
+      return createDateRange(newDate);
+    });
+  }, [createDateRange]);
+
+  const incrementBy = React.useCallback((days: number) => adjustDate(days), [adjustDate]);
+  const decrementBy = React.useCallback((days: number) => adjustDate(-days), [adjustDate]);
+
+  return {
+    isToday: isToday(current.start),
+    current: current,
+    incrementBy,
+    decrementBy
+  }
+}
+
+export function TodaysCustomers() {
+  const attendanceHandler = useAttendanceRegister();
+
   const records = safeArray(
     useQuery(api.myFunctions.getDailyRegister, {
-      ...date,
+      ...attendanceHandler.current
     }),
   );
 
   return (
-    <Card className=" min-h-[32rem]">
-      <CardHeader>
-        <CardTitle>
-          <span>Today&apos;s Scan</span>&nbsp;&nbsp;
+    <Card className="min-h-[32rem]">
+      <CardHeader className="flex flex-row items-center space-y-0">
+        <CardTitle className="flex-1">
+          <span>
+            <If cond={attendanceHandler.isToday}>
+              Today&apos;s Scan
+            </If>
+
+            <If cond={!attendanceHandler.isToday}>
+              {DateParse.presets.dateOnly(attendanceHandler.current.start).pipe(
+                O.getOrElse(() => '--')
+              )}
+            </If>
+          </span>
           <span className="section-record-count">
-            {serialNo(records.length)}
+            &nbsp;— {serialNo(records.length)}
           </span>
         </CardTitle>
+
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => attendanceHandler.decrementBy(1)}
+            className="h-8 w-8 rounded-full"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => attendanceHandler.incrementBy(1)}
+            className="h-8 w-8 rounded-full"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
 
       <EmptyState isEmpty={records.length === 0}>
