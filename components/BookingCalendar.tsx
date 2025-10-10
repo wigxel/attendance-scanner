@@ -35,15 +35,15 @@ const BookingCalendar = () => {
       />
 
       <div className="flex gap-6 mt-4 mb-6">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <div className="w-4 h-4 bg-black rounded"></div>
           <span className="text-sm text-gray-600">Selected</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <div className="w-4 h-4 bg-gray-100 border rounded"></div>
           <span className="text-sm text-gray-600">Fully Booked</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <div className="w-4 h-4 border border-gray-300 rounded"></div>
           <span className="text-sm text-gray-600">Available</span>
         </div>

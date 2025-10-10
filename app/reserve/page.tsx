@@ -5,12 +5,15 @@ import { useBookingStore, setActiveTab } from "./store";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
 import { useSeats } from "@/hooks/useSeats";
 
+import Image from "next/image";
 import { LucideLoader } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import BookingCalendar from "@/components/BookingCalendar";
 import SeatLayout from "@/components/SeatLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import DurationSymbol from "@/public/duration-symbol.svg";
 
 function Content() {
   const { activeTab } = useBookingStore();
@@ -159,15 +162,20 @@ function MakePaymentTab() {
         </div>
       )}
       {selectedSeatNumber && selectedDate ? (
-        <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
-          <div>
-            <h5 className="text-xl font-bold text-[#72A0A0]">09:00am</h5>
-            <p>{selectedDate.toDateString()}</p>
-            <p>Seat {selectedSeatNumber}</p>
+        <div className="border-gray-200 border shadow rounded-lg p-4 flex gap-3">
+          <div className="pt-3">
+            <Image src={DurationSymbol} alt="" />
           </div>
-          <div>
-            <h5 className="text-xl font-bold text-[#72A0A0]">05:00pm</h5>
-            <p>{endDate?.toDateString()}</p>
+          <div className="flex flex-col gap-6">
+            <div>
+              <h5 className="text-xl font-bold text-[#72A0A0]">09:00am</h5>
+              <p>{selectedDate.toDateString()}</p>
+              <p>Seat {selectedSeatNumber}</p>
+            </div>
+            <div>
+              <h5 className="text-xl font-bold text-[#72A0A0]">05:00pm</h5>
+              <p>{endDate?.toDateString()}</p>
+            </div>
           </div>
         </div>
       ) : null}
@@ -220,7 +228,7 @@ export default function ReservePage() {
       <div className="z-[2] relative">
         <Header />
 
-        <main className="px-4">
+        <main className="">
           <Content />
         </main>
 
