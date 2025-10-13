@@ -6,7 +6,7 @@ import { formatISO, setHours } from "date-fns";
 import { logger } from "../config/logger";
 import { components } from "./_generated/api";
 import { api } from "./_generated/api";
-import type { DataModel, Id } from "./_generated/dataModel";
+import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { featureRequestStatus } from "./shared";
 
@@ -177,18 +177,27 @@ export const registerUser = mutation({
     customerId: v.string(),
     visitorId: v.string(),
     browser: v.string(),
+    plan: v.string()
   },
   handler: async (ctx, args) => {
     const userId = await readId(ctx);
-
-    const customer = await ctx.runQuery(api.myFunctions.getUserById, {
-      userId: args.customerId,
-    });
 
     if (!userId) {
       logger.warn("User not authenticated");
       return null;
     }
+
+    const plan = await ctx.db.query('accessPlans')
+      .withIndex('plan_key', gt => gt.eq('key', args.plan))
+      .first();
+
+    if (!plan) {
+      throw new Error("Invalid plan provided. Registration rejected. Please provide a valid plan ");
+    }
+
+    const customer = await ctx.runQuery(api.myFunctions.getUserById, {
+      userId: args.customerId,
+    });
 
     if (!customer) {
       return null;
@@ -204,9 +213,22 @@ export const registerUser = mutation({
       source: "web",
       admitted_by: userId as Id<"profile">,
       timestamp: new Date().toISOString(),
+      access: buildAccessPayloadFromPlan(plan)
     });
   },
 });
+
+function buildAccessPayloadFromPlan(plan: Doc<'accessPlans'>) {
+  if (plan.key === 'free') {
+    return { kind: "free" as const };
+  }
+
+  return {
+    kind: "paid" as const,
+    planId: plan.key,
+    amount: Math.max(0, plan.price / plan.no_of_days)
+  };
+}
 
 export const getDailyRegister = query({
   args: {

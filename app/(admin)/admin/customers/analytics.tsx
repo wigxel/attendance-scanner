@@ -1,31 +1,29 @@
 "use client";
-import {
-  startOfMonth,
-  endOfMonth,
-  startOfDay,
-  subMonths,
-  format,
-  startOfWeek,
-  endOfWeek,
-  addDays,
-  addMonths,
-  addYears,
-} from "date-fns";
 import { If } from "@/components/if";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
-import { api } from "@/convex/_generated/api";
-import { safeNum, serialNo } from "@/lib/data.helpers";
-import { useQuery } from "convex/react";
-import { isNullable } from "effect/Predicate";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { api } from "@/convex/_generated/api";
+import { currencyFormatter } from "@/lib/currency.helpers";
+import { safeNum, serialNo } from "@/lib/data.helpers";
+import { useQuery } from "convex/react";
+import {
+  addDays,
+  addMonths,
+  addYears,
+  endOfMonth,
+  endOfWeek,
+  format,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
+import { isNullable } from "effect/Predicate";
 import { ChevronDown } from "lucide-react";
 import React from "react";
-import { currencyFormatter } from "@/lib/currency.helpers";
 
 export function Analytics() {
   const count = useQuery(api.customers.countCustomers);
@@ -89,8 +87,13 @@ export function TotalVisits() {
 }
 
 export function TotalRevenue() {
-  const count = useQuery(api.customers.countCustomers);
+  const count = useQuery(api.myFunctions.countAttendance, {
+    start: startOfMonth(today).toISOString(),
+    end: endOfMonth(today).toISOString(),
+  });
+
   const is_nullable = isNullable(count);
+  const base_fee = 1000;
 
   return (
     <div className="@container">
@@ -99,7 +102,7 @@ export function TotalRevenue() {
           <CardDescription>Estimated Revenue</CardDescription>
           <span className="text-3xl font-semibold">
             <If cond={!is_nullable}>
-              {currencyFormatter.format(safeNum(count))}
+              {currencyFormatter.format(safeNum(count) * base_fee)}
             </If>
             <If cond={is_nullable}>{"--"}</If>
           </span>

@@ -1,7 +1,17 @@
 import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { featureRequestStatus } from "./shared";
+import { accessPlanSchema, featureRequestStatus } from "./shared";
+
+const accessPlans = defineTable({
+  key: v.string(),
+  name: v.string(),
+  price: v.number(),
+  no_of_days: v.number(),
+  description: v.string(),
+  features: v.array(v.string()),
+})
+  .index("plan_key", ['key'])
 
 const daily_register = defineTable({
   userId: v.string(), // v.id("profile"),
@@ -12,10 +22,12 @@ const daily_register = defineTable({
     name: v.string(),
     visitorId: v.string(),
   }),
+  access: accessPlanSchema,
   admitted_by: v.string(), // v.id("profile"),
 })
   .index("admitted_by", ["admitted_by"])
   .index("unique_visitor", ["device.visitorId"])
+  .index("access_plan", ['access.kind'])
   .index("user", ["userId"]);
 
 const featureRequest = defineTable({
@@ -72,6 +84,7 @@ export default defineSchema({
   profile,
   featureRequest,
   stats,
+  accessPlans,
   occupations,
   featureVotes,
   dailyAttendanceMetrics,

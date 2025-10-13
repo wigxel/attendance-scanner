@@ -1,3 +1,4 @@
+import { v } from "convex/values";
 import { endOfDay, format, startOfDay, subDays } from "date-fns";
 import { internalMutation } from "./_generated/server";
 
@@ -41,3 +42,23 @@ export const saveCount = internalMutation(async ({ db }) => {
     });
   }
 });
+
+export const setFreeAccess = internalMutation({
+  args: {
+    are_you_sure: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const proceed = args.are_you_sure ?? false;
+
+    if (!proceed) {
+      console.log("Dangerous action. Are you sure you want to do this? Change argument to `true` if you are certain");
+      return
+    }
+
+    const registers = await ctx.db.query("daily_register").collect();
+
+    for (const register of registers) {
+      await ctx.db.patch(register._id, { access: { kind: "free" } });
+    }
+  }
+})
