@@ -1,7 +1,8 @@
 "use client";
+import { TakeAttendance } from "@/components/TakeAttendance";
 import { TodaysCustomers } from "@/components/customers";
 import { Feedbacks } from "@/components/feedbacks";
-import { TakeAttendance } from "@/components/TakeAttendance";
+import { MetricsChart } from "@/components/metrics";
 import { TotalRevenue, TotalVisits } from "../customers/analytics";
 
 type PageProps = {
@@ -9,6 +10,7 @@ type PageProps = {
     id: string;
   }>;
 };
+
 
 const Page = ({ params }: PageProps) => {
   return (
@@ -18,6 +20,9 @@ const Page = ({ params }: PageProps) => {
       </section>
 
       <div className="flex px-4 flex-col mt-8 md:grid-cols-4 md:grid gap-4">
+        <div className="col-span-full">
+          <MetricsChart />
+        </div>
         <div className="flex flex-col gap-4">
           <TakeAttendance />
           <TotalVisits />

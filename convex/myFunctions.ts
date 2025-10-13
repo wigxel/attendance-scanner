@@ -229,7 +229,8 @@ export const getDailyRegister = query({
           q.lte(q.field("timestamp"), args.end),
         ),
       )
-      .order("desc").collect();
+      .order("desc")
+      .collect();
 
 
     return registers;

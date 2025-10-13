@@ -1,6 +1,6 @@
+import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { authTables } from "@convex-dev/auth/server";
 import { featureRequestStatus } from "./shared";
 
 const daily_register = defineTable({
@@ -60,6 +60,11 @@ const featureVotes = defineTable({
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
 // The schema provides more precise TypeScript types.
+const dailyAttendanceMetrics = defineTable({
+  date: v.string(),
+  totalUsers: v.number(),
+}).index("by_date", ["date"]);
+
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
   users: authTables.users,
@@ -69,4 +74,5 @@ export default defineSchema({
   stats,
   occupations,
   featureVotes,
+  dailyAttendanceMetrics,
 });
