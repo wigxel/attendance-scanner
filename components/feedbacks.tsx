@@ -1,17 +1,11 @@
-import { useMutation, useQuery } from "convex/react";
-import Image from "next/image";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "./ui/card";
 import { api } from "@/convex/_generated/api";
-import { CustomerAvatar } from "./customers";
-import { useCustomer } from "@/hooks/auth";
 import type { Doc } from "@/convex/_generated/dataModel";
+import { useCustomer } from "@/hooks/auth";
+import { useAsyncLoader } from "@/hooks/use-loader";
+import { safeArray, serialNo } from "@/lib/data.helpers";
+import { cn } from "@/lib/utils";
+import { Slot } from "@radix-ui/react-slot";
+import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import {
   ArrowBigDown,
@@ -21,20 +15,26 @@ import {
   LightbulbIcon,
   XIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { safeArray, serialNo } from "@/lib/data.helpers";
-import { Slot } from "@radix-ui/react-slot";
-import { useAsyncLoader } from "@/hooks/use-loader";
-import { FeatureRequestDialog } from "./FeatureRequestDialog";
-import { Button } from "./ui/button";
 import { motion } from "motion/react";
+import Image from "next/image";
 import React from "react";
+import { FeatureRequestDialog } from "./FeatureRequestDialog";
+import { CustomerAvatar } from "./customers";
+import { Button } from "./ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 
 export function Feedbacks() {
   const record = useQuery(api.myFunctions.listSuggestions, {});
 
   return (
-    <Card className="col-span-2">
+    <Card>
       <CardHeader>
         <CardTitle>Customer Suggestions</CardTitle>
       </CardHeader>

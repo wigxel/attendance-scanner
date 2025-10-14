@@ -6,6 +6,7 @@ import { useCustomer } from "@/hooks/auth";
 import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
 import { DateParse } from "@/lib/date.helpers";
 import { O } from "@/lib/fp.helpers";
+import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import {
   differenceInDays,
@@ -30,6 +31,7 @@ import {
 } from "./empty-state";
 import { If } from "./if";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Badge, badgeVariants } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
@@ -201,9 +203,17 @@ export function CustomerAvatar({
   );
 }
 
+type AccessPlan = { kind: "free" } | { kind: "paid"; amount: number } | undefined;
+
 function RegisteredUserEntry({
   entry,
-}: { entry: { userId: string; timestamp: string } }) {
+}: {
+  entry: {
+    userId: string;
+    timestamp: string;
+    access?: AccessPlan
+  };
+}) {
   const user = useCustomer({ userId: entry.userId }) ?? {
     firstName: "",
     lastName: "",
@@ -223,19 +233,23 @@ function RegisteredUserEntry({
             {user.firstName} {user.lastName}
           </div>
 
-          <div className="text-sm text-gray-500 font-mono">
-            {pipe(
-              visitCount,
-              Option.map(safeNum),
-              Option.map((visitCount) => {
-                return (
-                  <React.Fragment key={"visit"}>
-                    {serialNo(visitCount ?? 0)} visit{visitCount < 2 ? "" : "s"}
-                  </React.Fragment>
-                );
-              }),
-              Option.getOrElse(() => <>-- visits</>),
-            )}
+          <div className="flex gap-2 text-sm text-gray-500 font-mono">
+            <PaymentBadge data={entry.access} />
+            •
+            <div>
+              {pipe(
+                visitCount,
+                Option.map(safeNum),
+                Option.map((visitCount) => {
+                  return (
+                    <React.Fragment key={"visit"}>
+                      {serialNo(visitCount ?? 0)} visit{visitCount < 2 ? "" : "s"}
+                    </React.Fragment>
+                  );
+                }),
+                Option.getOrElse(() => <>-- visits</>),
+              )}
+            </div>
           </div>
         </div>
 
@@ -245,6 +259,20 @@ function RegisteredUserEntry({
       </div>
     </li>
   );
+}
+
+const map = {
+  "paid": "text-[oklch(0.44_0.3_264.05)]",
+  "free": "text-foreground",
+  "--": "destructive"
+} as const;
+
+function PaymentBadge({ data }: { data: AccessPlan }) {
+  const _kind = data?.kind ?? "--";
+
+  return <span className={cn(map[_kind], "capitalize")}>
+    {_kind ?? "--"}
+  </span>
 }
 
 export const CustomerImpl = {
