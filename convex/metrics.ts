@@ -4,13 +4,13 @@ import { query } from "./_generated/server";
 export const metricsDailyAttendance = query({
   args: {
     start: v.string(), // ISO date string
-    end: v.string(),   // ISO date string
+    end: v.string(), // ISO date string
   },
   handler: async (ctx, args) => {
     const metrics = await ctx.db
       .query("dailyAttendanceMetrics")
       .withIndex("by_date", (q) =>
-        q.gte("date", args.start).lte("date", args.end)
+        q.gte("date", args.start).lte("date", args.end),
       )
       .collect();
 
@@ -18,5 +18,34 @@ export const metricsDailyAttendance = query({
       date: metric.date,
       users: metric.totalUsers,
     }));
+  },
+});
+
+export const sumPaidAccess = query({
+  args: {
+    start: v.string(), // iso timestamp
+    end: v.string(), // iso timestamp
+  },
+  handler: async (ctx, args) => {
+    const registers = await ctx.db
+      .query("daily_register")
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("timestamp"), args.start),
+          q.lte(q.field("timestamp"), args.end),
+        ),
+      )
+      .collect();
+
+    const paidRegisters = registers.filter((r) => r.access?.kind === "paid");
+
+    const total = paidRegisters.reduce((acc, r) => {
+      if (r.access?.kind === "paid") {
+        return acc + r.access.amount;
+      }
+      return acc;
+    }, 0);
+
+    return total;
   },
 });

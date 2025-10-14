@@ -83,23 +83,32 @@ function useAttendanceRegister() {
     end: formatISO(setHours(date, 23)),
   }));
 
-  const adjustDate = React.useCallback((days: number) => {
-    setCurrent(prev => {
-      const newDate = new Date(parseISO(prev.start));
-      newDate.setDate(newDate.getDate() + days);
-      return createDateRange(newDate);
-    });
-  }, [createDateRange]);
+  const adjustDate = React.useCallback(
+    (days: number) => {
+      setCurrent((prev) => {
+        const newDate = new Date(parseISO(prev.start));
+        newDate.setDate(newDate.getDate() + days);
+        return createDateRange(newDate);
+      });
+    },
+    [createDateRange],
+  );
 
-  const incrementBy = React.useCallback((days: number) => adjustDate(days), [adjustDate]);
-  const decrementBy = React.useCallback((days: number) => adjustDate(-days), [adjustDate]);
+  const incrementBy = React.useCallback(
+    (days: number) => adjustDate(days),
+    [adjustDate],
+  );
+  const decrementBy = React.useCallback(
+    (days: number) => adjustDate(-days),
+    [adjustDate],
+  );
 
   return {
     isToday: isToday(current.start),
     current: current,
     incrementBy,
-    decrementBy
-  }
+    decrementBy,
+  };
 }
 
 export function TodaysCustomers() {
@@ -107,7 +116,7 @@ export function TodaysCustomers() {
 
   const records = safeArray(
     useQuery(api.myFunctions.getDailyRegister, {
-      ...attendanceHandler.current
+      ...attendanceHandler.current,
     }),
   );
 
@@ -116,14 +125,12 @@ export function TodaysCustomers() {
       <CardHeader className="flex flex-row items-center space-y-0">
         <CardTitle className="flex-1">
           <span>
-            <If cond={attendanceHandler.isToday}>
-              Today&apos;s Scan
-            </If>
+            <If cond={attendanceHandler.isToday}>Today&apos;s Scan</If>
 
             <If cond={!attendanceHandler.isToday}>
-              {DateParse.presets.dateOnly(attendanceHandler.current.start).pipe(
-                O.getOrElse(() => '--')
-              )}
+              {DateParse.presets
+                .dateOnly(attendanceHandler.current.start)
+                .pipe(O.getOrElse(() => "--"))}
             </If>
           </span>
           <span className="section-record-count">
@@ -203,7 +210,10 @@ export function CustomerAvatar({
   );
 }
 
-type AccessPlan = { kind: "free" } | { kind: "paid"; amount: number } | undefined;
+type AccessPlan =
+  | { kind: "free" }
+  | { kind: "paid"; amount: number }
+  | undefined;
 
 function RegisteredUserEntry({
   entry,
@@ -211,7 +221,7 @@ function RegisteredUserEntry({
   entry: {
     userId: string;
     timestamp: string;
-    access?: AccessPlan
+    access?: AccessPlan;
   };
 }) {
   const user = useCustomer({ userId: entry.userId }) ?? {
@@ -234,8 +244,7 @@ function RegisteredUserEntry({
           </div>
 
           <div className="flex gap-2 text-sm text-gray-500 font-mono">
-            <PaymentBadge data={entry.access} />
-            •
+            <PaymentBadge data={entry.access} />•
             <div>
               {pipe(
                 visitCount,
@@ -243,7 +252,8 @@ function RegisteredUserEntry({
                 Option.map((visitCount) => {
                   return (
                     <React.Fragment key={"visit"}>
-                      {serialNo(visitCount ?? 0)} visit{visitCount < 2 ? "" : "s"}
+                      {serialNo(visitCount ?? 0)} visit
+                      {visitCount < 2 ? "" : "s"}
                     </React.Fragment>
                   );
                 }),
@@ -262,17 +272,15 @@ function RegisteredUserEntry({
 }
 
 const map = {
-  "paid": "text-[oklch(0.44_0.3_264.05)]",
-  "free": "text-foreground",
-  "--": "destructive"
+  paid: "text-[oklch(0.44_0.3_264.05)]",
+  free: "text-foreground",
+  "--": "destructive",
 } as const;
 
 function PaymentBadge({ data }: { data: AccessPlan }) {
   const _kind = data?.kind ?? "--";
 
-  return <span className={cn(map[_kind], "capitalize")}>
-    {_kind ?? "--"}
-  </span>
+  return <span className={cn(map[_kind], "capitalize")}>{_kind ?? "--"}</span>;
 }
 
 export const CustomerImpl = {

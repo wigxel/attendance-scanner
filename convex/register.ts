@@ -4,7 +4,9 @@ import { internalMutation } from "./_generated/server";
 
 export const saveCount = internalMutation(async ({ db }) => {
   const now = new Date();
-  const nowWAT = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Lagos" }));
+  const nowWAT = new Date(
+    now.toLocaleString("en-US", { timeZone: "Africa/Lagos" }),
+  );
 
   const yesterday = subDays(nowWAT, 1);
   const startOfYesterday = startOfDay(yesterday);
@@ -15,8 +17,8 @@ export const saveCount = internalMutation(async ({ db }) => {
     .filter((q) =>
       q.and(
         q.gte(q.field("timestamp"), startOfYesterday.toISOString()),
-        q.lte(q.field("timestamp"), endOfYesterday.toISOString())
-      )
+        q.lte(q.field("timestamp"), endOfYesterday.toISOString()),
+      ),
     )
     .collect();
 
@@ -51,8 +53,10 @@ export const setFreeAccess = internalMutation({
     const proceed = args.are_you_sure ?? false;
 
     if (!proceed) {
-      console.log("Dangerous action. Are you sure you want to do this? Change argument to `true` if you are certain");
-      return
+      console.log(
+        "Dangerous action. Are you sure you want to do this? Change argument to `true` if you are certain",
+      );
+      return;
     }
 
     const registers = await ctx.db.query("daily_register").collect();
@@ -60,5 +64,5 @@ export const setFreeAccess = internalMutation({
     for (const register of registers) {
       await ctx.db.patch(register._id, { access: { kind: "free" } });
     }
-  }
-})
+  },
+});

@@ -177,7 +177,7 @@ export const registerUser = mutation({
     customerId: v.string(),
     visitorId: v.string(),
     browser: v.string(),
-    plan: v.string()
+    plan: v.string(),
   },
   handler: async (ctx, args) => {
     const userId = await readId(ctx);
@@ -187,12 +187,15 @@ export const registerUser = mutation({
       return null;
     }
 
-    const plan = await ctx.db.query('accessPlans')
-      .withIndex('plan_key', gt => gt.eq('key', args.plan))
+    const plan = await ctx.db
+      .query("accessPlans")
+      .withIndex("plan_key", (gt) => gt.eq("key", args.plan))
       .first();
 
     if (!plan) {
-      throw new Error("Invalid plan provided. Registration rejected. Please provide a valid plan ");
+      throw new Error(
+        "Invalid plan provided. Registration rejected. Please provide a valid plan ",
+      );
     }
 
     const customer = await ctx.runQuery(api.myFunctions.getUserById, {
@@ -213,20 +216,20 @@ export const registerUser = mutation({
       source: "web",
       admitted_by: userId as Id<"profile">,
       timestamp: new Date().toISOString(),
-      access: buildAccessPayloadFromPlan(plan)
+      access: buildAccessPayloadFromPlan(plan),
     });
   },
 });
 
-function buildAccessPayloadFromPlan(plan: Doc<'accessPlans'>) {
-  if (plan.key === 'free') {
+function buildAccessPayloadFromPlan(plan: Doc<"accessPlans">) {
+  if (plan.key === "free") {
     return { kind: "free" as const };
   }
 
   return {
     kind: "paid" as const,
     planId: plan.key,
-    amount: Math.max(0, plan.price / plan.no_of_days)
+    amount: Math.max(0, plan.price / plan.no_of_days),
   };
 }
 
@@ -253,7 +256,6 @@ export const getDailyRegister = query({
       )
       .order("desc")
       .collect();
-
 
     return registers;
   },
@@ -571,8 +573,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-          .query("featureRequest")
-          .withIndex("by_status", (q) => q.eq("status", status))
+            .query("featureRequest")
+            .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 

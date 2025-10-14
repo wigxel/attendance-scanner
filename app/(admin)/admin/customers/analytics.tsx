@@ -1,28 +1,13 @@
 "use client";
 import { If } from "@/components/if";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { api } from "@/convex/_generated/api";
 import { currencyFormatter } from "@/lib/currency.helpers";
 import { safeNum, serialNo } from "@/lib/data.helpers";
+import { O, pipe } from "@/lib/fp.helpers";
 import { useQuery } from "convex/react";
-import {
-  addDays,
-  addMonths,
-  addYears,
-  endOfMonth,
-  endOfWeek,
-  format,
-  startOfMonth,
-  startOfWeek,
-} from "date-fns";
+import { endOfMonth, format, startOfMonth } from "date-fns";
 import { isNullable } from "effect/Predicate";
-import { ChevronDown } from "lucide-react";
 import React from "react";
 
 export function Analytics() {
@@ -46,12 +31,22 @@ export function Analytics() {
 
 const today = Date.now();
 
+import { DateRange } from "@/components/DateRange";
+
 export function TotalVisits() {
-  const filter = useFilter();
+  return (
+    <DateRange.Provider>
+      <TotalVisitsCard />
+    </DateRange.Provider>
+  );
+}
+
+function TotalVisitsCard() {
+  const { filter } = DateRange.useState();
 
   const [start, end] = React.useMemo(() => {
-    return filter.filter.get_range(today);
-  }, [filter.filter]);
+    return filter.get_range(today);
+  }, [filter]);
 
   const count = useQuery(api.myFunctions.countAttendance, {
     start: start.toISOString(),
@@ -67,7 +62,7 @@ export function TotalVisits() {
             <CardDescription className="text-muted-foreground">
               Total visits
             </CardDescription>
-            <RangeDropdown value={filter.filter} onChange={filter.setFilter} />
+            <DateRange.Dropdown />
           </div>
 
           <span className="text-3xl font-semibold">
@@ -87,17 +82,39 @@ export function TotalVisits() {
 }
 
 export function TotalRevenue() {
-  const count = useQuery(api.myFunctions.countAttendance, {
+  const range = {
     start: startOfMonth(today).toISOString(),
     end: endOfMonth(today).toISOString(),
-  });
+  };
+
+  const count = useQuery(api.myFunctions.countAttendance, range);
+  const total = useQuery(api.metrics.sumPaidAccess, range);
 
   const is_nullable = isNullable(count);
   const base_fee = 1000;
 
   return (
-    <div className="@container">
-      <Card className="aspect-[3/1.5] w-full">
+    <div className="@container flex flex-col gap-4">
+      <Card className="aspect-[3/1.5] w-full relative">
+        <CardContent className="flex pt-4 flex-col gap-2">
+          <CardDescription>Actual Revenue</CardDescription>
+          <span className="text-3xl font-semibold">
+            <If cond={!is_nullable}>
+              {pipe(
+                O.fromNullable(total),
+                O.map((value) => currencyFormatter.format(value)),
+                O.getOrElse(() => "--"),
+              )}
+            </If>
+            <If cond={is_nullable}>{"--"}</If>
+          </span>
+          <div className="p-4 text-xs text-muted-foreground absolute bottom-0 right-0">
+            Area is for graph
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="aspect-[3/1.5] w-full relative">
         <CardContent className="flex pt-4 flex-col gap-2">
           <CardDescription>Estimated Revenue</CardDescription>
           <span className="text-3xl font-semibold">
@@ -106,119 +123,12 @@ export function TotalRevenue() {
             </If>
             <If cond={is_nullable}>{"--"}</If>
           </span>
+
+          <div className="p-4 text-xs text-muted-foreground absolute bottom-0 right-0">
+            Area is for graph
+          </div>
         </CardContent>
       </Card>
     </div>
   );
-}
-
-function RangeDropdown(props: {
-  value: FilterOption;
-  onChange: (filter: FilterOption) => void;
-}) {
-  return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground focus:outline-none hover:underline focus:text-primary">
-          <span>{props.value.label} </span>
-          <ChevronDown size="1em" />
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent align="end">
-          {filters.map((filter) => {
-            return (
-              <DropdownMenuItem
-                key={filter.label}
-                className="text-xs"
-                onClick={() => {
-                  props.onChange(filter);
-                }}
-              >
-                {filter.label}
-              </DropdownMenuItem>
-            );
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  );
-}
-
-type FilterOption = {
-  key: string;
-  label: string;
-  get_range: (date: Date | number) => [Date, Date];
-};
-
-const filters: FilterOption[] = [
-  {
-    key: "week",
-    label: "Last 7 days",
-    get_range: (today) => {
-      const start = startOfWeek(today);
-      const end = endOfWeek(today);
-
-      return [start, end];
-    },
-  },
-  {
-    key: "month",
-    label: "This Month",
-    get_range: (today) => {
-      const start = startOfMonth(today);
-      const end = endOfMonth(today);
-      return [start, end];
-    },
-  },
-  {
-    key: "last_month",
-    label: "Last Month",
-    get_range: (today) => {
-      const date_ = addDays(startOfMonth(today), -1);
-      const start = date_;
-      const end = endOfMonth(today);
-
-      return [start, end];
-    },
-  },
-  {
-    key: "last_3_month",
-    label: "Last 3 months",
-    get_range: (today) => {
-      const date_ = addMonths(today, -3);
-      const start = startOfMonth(date_);
-      const end = endOfMonth(today);
-
-      return [start, end];
-    },
-  },
-  {
-    key: "last_6_month",
-    label: "Last 6 months",
-    get_range: (today) => {
-      const date_ = addMonths(today, -6);
-      const start = startOfMonth(date_);
-      const end = endOfMonth(today);
-
-      return [start, end];
-    },
-  },
-  {
-    key: "last_year",
-    label: "Last Year",
-    get_range: (today) => {
-      const start = addYears(today, -1);
-      const end_date = new Date();
-
-      return [start, end_date];
-    },
-  },
-] as const;
-
-function useFilter(filter_key: "month" | "week" = "month") {
-  const [filter, setFilter] = React.useState(() => {
-    return filters.find((e) => e.key === filter_key) ?? filters[0];
-  });
-
-  return { filter, setFilter };
 }

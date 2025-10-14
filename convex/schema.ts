@@ -10,8 +10,7 @@ const accessPlans = defineTable({
   no_of_days: v.number(),
   description: v.string(),
   features: v.array(v.string()),
-})
-  .index("plan_key", ['key'])
+}).index("plan_key", ["key"]);
 
 const daily_register = defineTable({
   userId: v.string(), // v.id("profile"),
@@ -27,7 +26,7 @@ const daily_register = defineTable({
 })
   .index("admitted_by", ["admitted_by"])
   .index("unique_visitor", ["device.visitorId"])
-  .index("access_plan", ['access.kind'])
+  .index("access_plan", ["access.kind"])
   .index("user", ["userId"]);
 
 const featureRequest = defineTable({

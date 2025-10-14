@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/chart";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { addDays, endOfMonth, format, startOfMonth } from "date-fns";
+import { addDays, format } from "date-fns";
 import * as React from "react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { DateRange } from "./DateRange";
 
 const chartConfig = {
   users: {
@@ -25,41 +26,57 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-type TParams = {
-  from: Date | undefined;
-  to: Date | undefined;
-};
-
-const setDefault = {
-  from: startOfMonth(new Date()),
-  to: endOfMonth(new Date())
+export function MetricsChart() {
+  return (
+    <DateRange.Provider
+      filters={DateRange.filters.filter(
+        (e) => e.key === "week" || e.key === "month",
+      )}
+    >
+      <MetricsChartChild />
+    </DateRange.Provider>
+  );
 }
 
-export function MetricsChart() {
-  const dateRange = React.useRef<TParams>(setDefault).current;
+function MetricsChartChild() {
+  const { filter } = DateRange.useState();
+
+  const [from, to] = filter.get_range(new Date());
 
   const metrics = useQuery(api.metrics.metricsDailyAttendance, {
-    start: dateRange.from ? format(dateRange.from, "yyyy-MM-dd") : "",
-    end: format(dateRange.to ?? addDays(dateRange.from ?? setDefault.from, 30), "yyyy-MM-dd")
+    start: format(from, "yyyy-MM-dd"),
+    end: format(to, "yyyy-MM-dd"),
   });
 
   const chartData = React.useMemo(() => {
-    return padRecords(30, dateRange.from ?? new Date(), metrics || []);
-  }, [metrics, dateRange.from]);
-
+    return padRecords(
+      filter.key === "week" ? 7 : 30,
+      new Date(),
+      metrics || [],
+    );
+  }, [metrics, filter.key]);
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Daily Attendance Metrics</CardTitle>
-        <CardDescription>
-          Showing total users for the selected date range
-        </CardDescription>
+      <CardHeader className="flex relative flex-row justify-between">
+        <div className="flex gap-1 flex-col flex-1">
+          <CardTitle>Daily Attendance Metrics</CardTitle>
+          <CardDescription>
+            Showing total users for the selected date range
+          </CardDescription>
+        </div>
+
+        <div>
+          <DateRange.Dropdown />
+        </div>
       </CardHeader>
 
       <CardContent>
         <div className="gap-4 flex items-end">
-          <ChartContainer config={chartConfig} className="flex-1 h-[250px] w-full">
+          <ChartContainer
+            config={chartConfig}
+            className="flex-1 h-[250px] w-full"
+          >
             <BarChart accessibilityLayer data={chartData}>
               <CartesianGrid vertical={false} />
               <XAxis
@@ -100,9 +117,10 @@ export function MetricsChart() {
 function padRecords(
   length: number,
   startDate: Date,
-  arr: { date: string; users: number }[]
+  arr: { date: string; users: number }[],
 ) {
   const currentLength = arr.length;
+
   if (currentLength >= length) {
     return arr;
   }
@@ -111,6 +129,7 @@ function padRecords(
   const paddedEntries = [];
 
   const firstDate = arr.length > 0 ? new Date(arr[0].date) : startDate;
+
   for (let i = 1; i <= padCount; i++) {
     paddedEntries.push({
       date: format(addDays(firstDate, 0 - i), "yyyy-MM-dd"),

@@ -19,12 +19,15 @@ const Page = ({ params }: PageProps) => {
       </section>
 
       <div className="flex px-4 flex-col mt-8 md:grid-cols-6 md:grid gap-4">
-        <div className="col-span-full">
+        <div className="flex *:w-full items-stretch col-span-2">
+          <TakeAttendance />
+        </div>
+
+        <div className="col-span-4">
           <MetricsChart />
         </div>
 
         <div className="flex flex-col gap-4 col-span-2">
-          <TakeAttendance />
           <TotalVisits />
           <TotalRevenue />
         </div>

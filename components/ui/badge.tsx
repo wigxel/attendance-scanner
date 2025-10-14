@@ -19,15 +19,14 @@ const badgeVariants = cva(
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         success:
           "border-transparent bg-green-500 text-white [a&]:hover:bg-green-500/90",
-        info:
-          "border-transparent bg-purple-500 text-white [a&]:hover:bg-purple-500/90",
+        info: "border-transparent bg-purple-500 text-white [a&]:hover:bg-purple-500/90",
       },
       defaultVariants: {
         variant: "default",
       },
-    }
-  }
-)
+    },
+  },
+);
 
 function Badge({
   className,

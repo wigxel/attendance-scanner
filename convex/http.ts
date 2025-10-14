@@ -79,9 +79,7 @@ const writeTx = httpAction(async (ctx, res) => {
   return Response.json({ message: "OK" });
 });
 
-const updateUserRole = internalAction(async (ctx, res) => {
-
-})
+const updateUserRole = internalAction(async (ctx, res) => {});
 
 http.route({
   method: "POST",
@@ -124,7 +122,7 @@ const handleEvents = httpAction(async (ctx, res) => {
     console.info("Linking Convex User to Clerk User", clerk_user.id);
     const response = await setExternalId({
       clerkUserId: clerk_user.id,
-      convexUserId: convex_user_id
+      convexUserId: convex_user_id,
     });
 
     console.info("Linked Convex User to Clerk User", await response.json());
