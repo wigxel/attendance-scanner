@@ -23,6 +23,7 @@ export const getAvailableSeats = query({
       .filter((q) => q.eq(q.field("isBooked"), false))
       .collect();
 
+    // Get all confirmed bookings that overlap with the requested date range
     const conflictingBookings = await ctx.db
       .query("bookings")
       .filter((q) => q.eq(q.field("status"), "confirmed"))
@@ -35,18 +36,31 @@ export const getAvailableSeats = query({
       );
     });
 
-    // Get seat IDs that are occupied during this period
-    const occupiedSeatIds = new Set(overlappingBookings.map((b) => b.seatId));
+    // Get all bookedSeats records for overlapping bookings
+    const bookedSeatIds = new Set<string>();
+    for (const booking of overlappingBookings) {
+      const bookedSeats = await ctx.db
+        .query("bookedSeats")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("bookingId"), booking._id),
+            q.eq(q.field("status"), "confirmed"),
+          ),
+        )
+        .collect();
+
+      bookedSeats.forEach((bs) => bookedSeatIds.add(bs.seatId));
+    }
 
     // Return seats that are NOT occupied
     const availableSeats = allSeats.filter(
-      (seat) => !occupiedSeatIds.has(seat._id),
+      (seat) => !bookedSeatIds.has(seat._id),
     );
 
     return {
       availableSeats,
       totalSeats: allSeats.length,
-      occupiedSeats: occupiedSeatIds.size,
+      occupiedSeats: bookedSeatIds.size,
     };
   },
 });
@@ -59,6 +73,7 @@ export const getAllSeatsForDateRange = query({
   handler: async (ctx, args) => {
     const allSeats = await ctx.db.query("seats").collect();
 
+    // Get all confirmed bookings that overlap with the requested date range
     const conflictingBookings = await ctx.db
       .query("bookings")
       .filter((q) => q.eq(q.field("status"), "confirmed"))
@@ -71,14 +86,27 @@ export const getAllSeatsForDateRange = query({
       );
     });
 
-    // Get seat IDs that are occupied during this period
-    const occupiedSeatIds = new Set(overlappingBookings.map((b) => b.seatId));
+    // Get all bookedSeats records for overlapping bookings
+    const bookedSeatIds = new Set<string>();
+    for (const booking of overlappingBookings) {
+      const bookedSeats = await ctx.db
+        .query("bookedSeats")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("bookingId"), booking._id),
+            q.eq(q.field("status"), "confirmed"),
+          ),
+        )
+        .collect();
+
+      bookedSeats.forEach((bs) => bookedSeatIds.add(bs.seatId));
+    }
 
     // Determine the status of each seat for the given date range
     const seats = allSeats.map((seat) => ({
       ...seat,
       // Check if the seat's _id is in the set of occupied IDs
-      isBooked: occupiedSeatIds.has(seat._id),
+      isBooked: bookedSeatIds.has(seat._id),
     }));
 
     return seats;
@@ -92,24 +120,10 @@ export const checkSeatAvailability = query({
     durationType: v.string(),
   },
   handler: async (ctx, args) => {
-    const seat = await ctx.db
-      .query("seats")
-      .filter((q) => q.eq(q.field("_id"), args.seatId))
-      .first();
-
+    const seat = await ctx.db.get(args.seatId);
     if (!seat) {
       throw new Error(`Seat with ID ${args.seatId} not found`);
     }
-
-    const conflictingBookings = await ctx.db
-      .query("bookings")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("seatId"), args.seatId),
-          q.eq(q.field("status"), "confirmed"),
-        ),
-      )
-      .collect();
 
     const calculateEndDate = (
       startDate: string,
@@ -136,6 +150,7 @@ export const checkSeatAvailability = query({
     };
 
     if (!args.durationType) throw new Error("Duration type is required");
+
     let duration: number;
     let endDate: string;
     if (args.durationType === "day") {
@@ -153,17 +168,24 @@ export const checkSeatAvailability = query({
       throw new Error("Invalid duration type");
     }
 
-    const hasConflict = conflictingBookings.some(
-      (booking) =>
-        !(booking.endDate < args.startDate || booking.startDate > endDate),
-    );
+    // Get all confirmed bookedSeats for this seat
+    const confirmedBookedSeats = await ctx.db
+      .query("bookedSeats")
+      .withIndex("by_seat_and_status", (q) =>
+        q.eq("seatId", args.seatId).eq("status", "confirmed"),
+      )
+      .collect();
 
-    // if (hasConflict) {
-    //   const seat = await ctx.db.get(args.seatId);
-    //   throw new Error(
-    //     `Seat ${seat?.seatNumber} is not available for selected dates`,
-    //   );
-    // }
+    // Check if any of the confirmed bookings overlap with the requested date range
+    const hasConflict = await Promise.all(
+      confirmedBookedSeats.map(async (bookedSeat) => {
+        const booking = await ctx.db.get(bookedSeat.bookingId);
+        if (!booking) return false;
+        return !(
+          booking.endDate < args.startDate || booking.startDate > endDate
+        );
+      }),
+    ).then((conflicts) => conflicts.some((c) => c));
 
     const isAvailable = !hasConflict;
 
@@ -176,13 +198,14 @@ export const checkSeatAvailability = query({
   },
 });
 
-export const getSeatById = query({
+export const getSeatsById = query({
   args: {
-    seatId: v.id("seats"),
+    seatIds: v.array(v.id("seats")),
   },
   handler: async (ctx, args) => {
-    const seat = await ctx.db.get(args.seatId);
-    if (!seat) throw new Error(`Seat ${args.seatId} not found`);
-    return seat;
+    const seats = await Promise.all(
+      args.seatIds.map((seatId) => ctx.db.get(seatId)),
+    );
+    return seats.filter(Boolean);
   },
 });

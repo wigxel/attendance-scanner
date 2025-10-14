@@ -64,7 +64,7 @@ function PickSeatTab() {
     seats,
     isLoading,
     handleSeatClick,
-    selectedSeatNumber,
+    selectedSeatNumbers,
     proceedToPayment,
   } = useSeats();
 
@@ -94,16 +94,22 @@ function PickSeatTab() {
     <div className="p-3 bg-gray-100 min-h-screen rounded-lg">
       <SeatLayout
         seats={seats}
-        selectedSeatNumber={selectedSeatNumber}
+        selectedSeatNumbers={selectedSeatNumbers}
         onSeatClick={handleSeatClick}
       />
-      {selectedSeatNumber && (
-        <div className="bg-white p-4 rounded-lg">
+      {selectedSeatNumbers.length > 0 && (
+        <div className="bg-white p-4 rounded-lg mt-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900">Selected Seat:</p>
+              <p className="font-medium text-gray-900">Selected Seats:</p>
               <div className="text-sm text-gray-600 mt-1">
-                <p>Seat {selectedSeatNumber}</p>
+                <p className="font-semibold text-gray-900">
+                  {selectedSeatNumbers.join(", ")}
+                </p>
+                <p className="text-xs mt-1 text-gray-500">
+                  {selectedSeatNumbers.length} seat
+                  {selectedSeatNumbers.length !== 1 ? "s" : ""} selected
+                </p>
               </div>
             </div>
             <button
@@ -121,7 +127,7 @@ function PickSeatTab() {
 
 function MakePaymentTab() {
   const router = useRouter();
-  const { selectedSeatNumber, selectedDate, endDate, price, bookingId } =
+  const { selectedSeatNumbers, selectedDate, endDate, price, bookingId } =
     useBookingStore();
   const { paymentMessage, paymentStatus, handlePayment, formatPrice } =
     usePaymentHandler();
@@ -130,6 +136,8 @@ function MakePaymentTab() {
   if (paymentStatus === "success") {
     router.push(`/reserve/success?booking-id=${bookingId}`);
   }
+
+  const totalPrice = price ? price * selectedSeatNumbers.length : 0;
 
   return (
     <div className="bg-white my-8 flex flex-col gap-6">
@@ -161,7 +169,7 @@ function MakePaymentTab() {
           )}
         </div>
       )}
-      {selectedSeatNumber && selectedDate ? (
+      {selectedSeatNumbers.length > 0 && selectedDate ? (
         <div className="border-gray-200 border shadow rounded-lg p-4 flex gap-3">
           <div className="pt-3">
             <Image src={DurationSymbol} alt="" />
@@ -170,7 +178,7 @@ function MakePaymentTab() {
             <div>
               <h5 className="text-xl font-bold text-[#72A0A0]">09:00am</h5>
               <p>{selectedDate.toDateString()}</p>
-              <p>Seat {selectedSeatNumber}</p>
+              <p>Seat {selectedSeatNumbers.join(", ")}</p>
             </div>
             <div>
               <h5 className="text-xl font-bold text-[#72A0A0]">05:00pm</h5>
@@ -189,8 +197,12 @@ function MakePaymentTab() {
           </p>
         </div>
         <div className="flex justify-between items-center">
-          <p className="text-[#72A0A0]">Price</p>
+          <p className="text-[#72A0A0]">Price per seat</p>
           <p>{formatPrice(price)}</p>
+        </div>
+        <div className="flex justify-between items-center">
+          <p className="text-[#72A0A0]">Total Price</p>
+          <p>{formatPrice(totalPrice)}</p>
         </div>
       </div>
 

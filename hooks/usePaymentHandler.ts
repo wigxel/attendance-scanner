@@ -20,7 +20,8 @@ interface PaystackResponse {
 
 export const usePaymentHandler = () => {
   const {
-    selectedSeatId,
+    selectedSeatIds,
+    selectedSeatNumbers,
     selectedDate,
     endDate,
     price,
@@ -82,30 +83,12 @@ export const usePaymentHandler = () => {
 
   const handlePayment = async () => {
     try {
-      if (selectedSeatId && selectedDate) {
-        const token = await getToken({ template: "convex" });
-        if (token) {
-          httpClient.setAuth(token);
-
-          const seatAvailability = await httpClient.query(
-            api.seats.checkSeatAvailability,
-            {
-              seatId: selectedSeatId,
-              startDate: formatDateToLocalISO(selectedDate) || "",
-              durationType: timePeriodString,
-            },
-          );
-
-          if (seatAvailability?.isAvailable === false) {
-            setPaymentStatus("pending");
-            setPaymentMessage(
-              "Seat is no longer available for selected period",
-            );
-            return;
-          }
-        }
-      }
-      if (!user && !selectedDate && !selectedSeatId && !timePeriodString) {
+      if (
+        !user &&
+        !selectedDate &&
+        selectedSeatIds.length === 0 &&
+        !timePeriodString
+      ) {
         setPaymentStatus("pending");
         setPaymentMessage("Please select a user, date, seat, and time period.");
         return;
@@ -120,7 +103,7 @@ export const usePaymentHandler = () => {
         setPaymentMessage("Please select a date.");
         return;
       }
-      if (!selectedSeatId) {
+      if (selectedSeatIds.length === 0) {
         setPaymentStatus("pending");
         setPaymentMessage("Please select a seat.");
         return;
@@ -129,6 +112,32 @@ export const usePaymentHandler = () => {
         setPaymentStatus("pending");
         setPaymentMessage("Please select a time period.");
         return;
+      }
+
+      if (selectedSeatIds.length > 0 && selectedDate) {
+        const token = await getToken({ template: "convex" });
+        if (token) {
+          httpClient.setAuth(token);
+
+          for (const seatId of selectedSeatIds) {
+            const seatAvailability = await httpClient.query(
+              api.seats.checkSeatAvailability,
+              {
+                seatId,
+                startDate: formatDateToLocalISO(selectedDate) || "",
+                durationType: timePeriodString,
+              },
+            );
+
+            if (seatAvailability?.isAvailable === false) {
+              setPaymentStatus("pending");
+              setPaymentMessage(
+                "One or more seats are no longer available for the selected period",
+              );
+              return;
+            }
+          }
+        }
       }
 
       const token = await getToken({ template: "convex" });
@@ -143,7 +152,7 @@ export const usePaymentHandler = () => {
       const bookingArgs = {
         userId: user?.id || "",
         startDate: formatDateToLocalISO(selectedDate) || "",
-        seatIds: selectedSeatId ? [selectedSeatId] : [],
+        seatIds: selectedSeatIds,
         durationType: timePeriodString,
       };
 
@@ -173,18 +182,21 @@ export const usePaymentHandler = () => {
         return;
       }
 
+      const totalPrice = price ? price * selectedSeatIds.length : 0;
+
       // @ts-expect-error paystack
       const paystack = window.PaystackPop.setup({
         key: CONFIG.paystackPublicKey,
         email: user?.emailAddresses[0].emailAddress,
-        amount: price,
+        amount: totalPrice,
         metadata: {
           name: user?.fullName,
           email: user?.emailAddresses[0].emailAddress,
-          seatId: selectedSeatId,
+          seatId: selectedSeatIds,
+          seatNumbers: selectedSeatNumbers.join(", "),
           date: selectedDate?.toISOString(),
           endDate: endDate?.toISOString(),
-          price: formatPrice(price),
+          price: formatPrice(totalPrice),
         },
         callback: (response: PaystackResponse) => {
           if (response.status === "success") {

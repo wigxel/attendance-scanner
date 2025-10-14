@@ -174,7 +174,13 @@ function ActiveBookings() {
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">
-                Seat {booking.seat?.seatNumber || "N/A"}
+                Seat{" "}
+                {booking.seats?.map((seat, index) => (
+                  <span key={index}>
+                    {seat?.seatNumber}
+                    {index < booking.seats.length - 1 && ", "}
+                  </span>
+                ))}
               </span>
               <span className="text-xs text-gray-500">09:00 AM - 05:00 PM</span>
             </div>

@@ -120,52 +120,58 @@ export const createBooking = mutation({
 
     // Check availability for all requested seats
     for (const seatId of args.seatIds) {
-      const conflictingBookings = await ctx.db
-        .query("bookings")
-        .filter((q) =>
-          q.and(
-            q.eq(q.field("seatId"), seatId),
-            q.eq(q.field("status"), "confirmed"),
-          ),
+      const conflictingBookedSeats = await ctx.db
+        .query("bookedSeats")
+        .withIndex("by_seat_and_status", (q) =>
+          q.eq("seatId", seatId).eq("status", "confirmed"),
         )
         .collect();
 
-      const hasConflict = conflictingBookings.some(
-        (booking) =>
-          !(booking.endDate < args.startDate || booking.startDate > endDate),
-      );
+      for (const bookedSeat of conflictingBookedSeats) {
+        // get the associated booking to check date overlap
+        const booking = await ctx.db.get(bookedSeat.bookingId);
+        if (!booking) continue;
 
-      if (hasConflict) {
-        const seat = await ctx.db.get(seatId);
-        throw new Error(
-          `Seat ${seat?.seatNumber} is not available for selected dates`,
+        const datesOverlap = !(
+          booking.endDate < args.startDate || booking.startDate > endDate
         );
+        if (datesOverlap) {
+          const seat = await ctx.db.get(seatId);
+          throw new Error(
+            `Seat ${seat?.seatNumber} is not available for selected dates`,
+          );
+        }
       }
     }
 
     // Create booking records
-    const bookingIds = [];
     const now = Date.now();
+    amount = amount * args.seatIds.length; // price per seat multiplied by number of seats
 
+    const bookingId = await ctx.db.insert("bookings", {
+      userId,
+      seatIds: args.seatIds,
+      duration,
+      startDate: args.startDate,
+      endDate: endDate,
+      durationType: args.durationType,
+      status: "pending",
+      amount,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Create bookedSeats entries for each seat
     for (const seatId of args.seatIds) {
-      console.log("Creating booking for seat:", seatId);
-      const bookingId = await ctx.db.insert("bookings", {
-        userId,
+      await ctx.db.insert("bookedSeats", {
+        bookingId,
         seatId,
-        duration,
-        startDate: args.startDate,
-        endDate: endDate,
-        durationType: args.durationType,
         status: "pending",
-        amount,
-        createdAt: now,
-        updatedAt: now,
       });
-      bookingIds.push(bookingId);
     }
 
     return {
-      bookingIds,
+      bookingIds: [bookingId],
       amount,
       duration,
       userInfo: { userId, userEmail, userName },
@@ -188,10 +194,13 @@ export const getUserBookings = query({
     // Get seat details for each booking
     const bookingsWithSeats = await Promise.all(
       bookings.map(async (booking) => {
-        const seat = await ctx.db.get(booking.seatId);
+        // fetch all seats for this booking
+        const seats = await Promise.all(
+          booking.seatIds.map((seatId) => ctx.db.get(seatId)),
+        );
         return {
           ...booking,
-          seat,
+          seats: seats.filter((seat) => seat !== null), // filter out any null values
         };
       }),
     );
@@ -219,10 +228,13 @@ export const getUserConfirmedBookings = query({
     // Get seat details for each booking
     const bookingsWithSeats = await Promise.all(
       bookings.map(async (booking) => {
-        const seat = await ctx.db.get(booking.seatId);
+        // fetch all seats for this booking
+        const seats = await Promise.all(
+          booking.seatIds.map((seatId) => ctx.db.get(seatId)),
+        );
         return {
           ...booking,
-          seat,
+          seats: seats.filter((seat) => seat !== null),
         };
       }),
     );
@@ -233,10 +245,11 @@ export const getUserConfirmedBookings = query({
 
 export const confirmBooking = mutation({
   /**
-   * Confirms a booking.
+   * Confirms a booking and updates bookedSeats status.
    *
    * This mutation:
    * - Updates the booking status to "confirmed"
+   * - Updates all associated bookedSeats records to "confirmed"
    *
    * @param bookingId ID of the booking to confirm
    * @returns Object containing:
@@ -249,12 +262,31 @@ export const confirmBooking = mutation({
     const booking = await ctx.db.get(args.bookingId);
     if (!booking) throw new Error("Booking not found");
 
-    const seat = await ctx.db.get(booking.seatId);
-    if (!seat) throw new Error("Seat not found");
+    // Verify all seats exist
+    const seats = await Promise.all(
+      booking.seatIds.map((seatId) => ctx.db.get(seatId)),
+    );
 
+    if (seats.some((seat) => seat === null)) {
+      throw new Error("One or more seats not found");
+    }
+
+    // update booking status
     await ctx.db.patch(args.bookingId, {
       status: "confirmed",
     });
+
+    // update all bookedSeats records to confirmed
+    const bookedSeats = await ctx.db
+      .query("bookedSeats")
+      .filter((q) => q.eq(q.field("bookingId"), args.bookingId))
+      .collect();
+
+    for (const bookedSeat of bookedSeats) {
+      await ctx.db.patch(bookedSeat._id, {
+        status: "confirmed",
+      });
+    }
 
     return {
       bookingId: args.bookingId,

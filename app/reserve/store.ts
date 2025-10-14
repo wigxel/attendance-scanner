@@ -6,8 +6,8 @@ interface BookingState {
   selectedDate: Date | null;
   endDate: Date | null;
   price: number | null;
-  selectedSeatNumber: string | number | null;
-  selectedSeatId: Id<"seats"> | null;
+  selectedSeatNumbers: (string | number)[];
+  selectedSeatIds: Id<"seats">[];
   timePeriodString: "day" | "week" | "month";
   bookingId: Id<"bookings"> | null;
 }
@@ -17,8 +17,8 @@ export const useBookingStore = create<BookingState>(() => ({
   selectedDate: null,
   endDate: null,
   price: null,
-  selectedSeatNumber: null,
-  selectedSeatId: null,
+  selectedSeatNumbers: [],
+  selectedSeatIds: [],
   timePeriodString: "day",
   bookingId: null,
 }));
@@ -39,14 +39,35 @@ export const setPrice = (price: BookingState["price"]) => {
   useBookingStore.setState({ price: price });
 };
 
-export const setSelectedSeatNumber = (
-  seatNumber: BookingState["selectedSeatNumber"],
-) => {
-  useBookingStore.setState({ selectedSeatNumber: seatNumber });
+export const setSelectedSeatNumbers = (seats: (string | number)[]) => {
+  useBookingStore.setState({ selectedSeatNumbers: seats });
 };
 
-export const setSelectedSeatId = (seatId: BookingState["selectedSeatId"]) => {
-  useBookingStore.setState({ selectedSeatId: seatId });
+export const addSelectedSeat = (
+  seatNumber: string | number,
+  seatId: Id<"seats">,
+) => {
+  useBookingStore.setState((state) => ({
+    selectedSeatNumbers: [...state.selectedSeatNumbers, seatNumber],
+    selectedSeatIds: [...state.selectedSeatIds, seatId],
+  }));
+};
+
+export const removeSelectedSeat = (seatNumber: string | number) => {
+  useBookingStore.setState((state) => ({
+    selectedSeatNumbers: state.selectedSeatNumbers.filter(
+      (seat) => seat !== seatNumber,
+    ),
+    selectedSeatIds: state.selectedSeatIds.filter(
+      (_, idx) => state.selectedSeatNumbers[idx] !== seatNumber,
+    ),
+  }));
+};
+
+export const setSelectedSeatId = (seatId: Id<"seats">) => {
+  useBookingStore.setState((state) => ({
+    selectedSeatIds: [...state.selectedSeatIds, seatId],
+  }));
 };
 
 export const setTimePeriodString = (
@@ -65,8 +86,8 @@ export const resetBookingState = () => {
     selectedDate: null,
     endDate: null,
     price: null,
-    selectedSeatNumber: null,
-    selectedSeatId: null,
+    selectedSeatNumbers: [],
+    selectedSeatIds: [],
     timePeriodString: "day",
     bookingId: null,
   });

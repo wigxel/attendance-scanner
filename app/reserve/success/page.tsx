@@ -1,15 +1,21 @@
 "use client";
+import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
+import { resetBookingState } from "../store";
 
 import Image from "next/image";
 import CheckMark from "@/public/checkmark.svg";
 import { LucideLoader } from "lucide-react";
 
 export default function SuccessPage() {
+  useEffect(() => {
+    resetBookingState();
+  }, []);
+
   const { formatPrice, returnToHomepage } = usePaymentHandler();
   const searchParams = useSearchParams();
   const bookingId = searchParams.get("booking-id") as Id<"bookings">;
@@ -17,10 +23,10 @@ export default function SuccessPage() {
   const bookingDetails = useQuery(api.bookings.getBookingById, { bookingId });
 
   const userId = bookingDetails?.userId || "";
-  const seatId = bookingDetails?.seatId as Id<"seats">;
+  const seatIds = bookingDetails ? bookingDetails?.seatIds : [];
 
   const user = useQuery(api.auth.getUserProfile, { userId });
-  const seat = useQuery(api.seats.getSeatById, { seatId });
+  const seats = useQuery(api.seats.getSeatsById, { seatIds }) || [];
 
   const timePeriodString = bookingDetails?.durationType;
   const selectedDate = new Date(bookingDetails?.startDate || "");
@@ -70,7 +76,18 @@ export default function SuccessPage() {
           </span>
           <span className="flex items-center justify-between">
             <p className="text-[#72A0A0]">Seat No.</p>
-            <p className="text-right">Seat {seat?.seatNumber}</p>
+
+            <div className="text-right">
+              <p>
+                Seat{" "}
+                {seats.map((seat, index) => (
+                  <span key={index}>
+                    {seat?.seatNumber}
+                    {index < seats.length - 1 && ", "}
+                  </span>
+                ))}
+              </p>
+            </div>
           </span>
           <span className="flex items-center justify-between">
             <p className="text-[#72A0A0]">Reservation Start Date</p>

@@ -65,7 +65,7 @@ const seats = defineTable({
 
 const bookings = defineTable({
   userId: v.string(),
-  seatId: v.id("seats"),
+  seatIds: v.array(v.id("seats")),
   duration: v.number(),
   startDate: v.string(),
   endDate: v.string(),
@@ -85,9 +85,19 @@ const bookings = defineTable({
   updatedAt: v.number(),
 })
   .index("user_id", ["userId"])
-  .index("seat_id", ["seatId"])
   .index("by_status", ["status"])
   .index("by_startDate", ["startDate"]);
+
+const bookedSeats = defineTable({
+  bookingId: v.id("bookings"),
+  seatId: v.id("seats"),
+  status: v.union(
+    v.literal("pending"),
+    v.literal("confirmed"),
+    v.literal("cancelled"),
+    v.literal("expired"),
+  ),
+}).index("by_seat_and_status", ["seatId", "status"]);
 
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
@@ -103,4 +113,5 @@ export default defineSchema({
   featureVotes,
   seats,
   bookings,
+  bookedSeats,
 });

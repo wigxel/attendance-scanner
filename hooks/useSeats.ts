@@ -5,8 +5,8 @@ import { Id } from "@/convex/_generated/dataModel";
 import { formatDateToLocalISO } from "@/lib/utils";
 import {
   useBookingStore,
-  setSelectedSeatId,
-  setSelectedSeatNumber,
+  addSelectedSeat,
+  removeSelectedSeat,
   setActiveTab,
 } from "@/app/reserve/store";
 
@@ -17,7 +17,7 @@ interface Seat {
 }
 
 export const useSeats = () => {
-  const { selectedDate, endDate, selectedSeatNumber } = useBookingStore();
+  const { selectedDate, endDate, selectedSeatNumbers } = useBookingStore();
 
   const availableSeats = useQuery(api.seats.getAllSeatsForDateRange, {
     startDate: selectedDate ? formatDateToLocalISO(selectedDate) : "",
@@ -27,20 +27,33 @@ export const useSeats = () => {
   const isLoading = availableSeats === undefined;
 
   useEffect(() => {
-    // Check if the selected seat has become occupied
-    if (selectedSeatNumber && availableSeats) {
-      const selectedSeat = availableSeats.find(
-        (seat: Seat) => seat.seatNumber === selectedSeatNumber,
-      );
-      if (selectedSeat && selectedSeat.isBooked) {
-        setSelectedSeatNumber(null);
-      }
+    // check if any selected seats have become occupied
+    if (selectedSeatNumbers.length > 0 && availableSeats) {
+      const seatsToRemove: (string | number)[] = [];
+
+      selectedSeatNumbers.forEach((seatNumber) => {
+        const selectedSeat = availableSeats.find(
+          (seat: Seat) => seat.seatNumber === seatNumber,
+        );
+        if (selectedSeat && selectedSeat.isBooked) {
+          seatsToRemove.push(seatNumber);
+        }
+      });
+
+      // remove any seats that became booked
+      seatsToRemove.forEach((seatNumber) => {
+        removeSelectedSeat(seatNumber);
+      });
     }
-  }, [availableSeats, selectedSeatNumber]);
+  }, [availableSeats, selectedSeatNumbers]);
 
   const handleSeatClick = (seat: Seat): void => {
-    setSelectedSeatNumber(seat.seatNumber);
-    setSelectedSeatId(seat._id);
+    // Toggle seat selection
+    if (selectedSeatNumbers.includes(seat.seatNumber)) {
+      removeSelectedSeat(seat.seatNumber);
+    } else {
+      addSelectedSeat(seat.seatNumber, seat._id);
+    }
   };
 
   const proceedToPayment = () => {
@@ -50,7 +63,7 @@ export const useSeats = () => {
   return {
     seats: availableSeats || [],
     handleSeatClick,
-    selectedSeatNumber,
+    selectedSeatNumbers,
     isLoading,
     proceedToPayment,
   };
