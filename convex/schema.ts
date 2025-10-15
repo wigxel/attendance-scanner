@@ -21,7 +21,7 @@ const daily_register = defineTable({
     name: v.string(),
     visitorId: v.string(),
   }),
-  access: accessPlanSchema,
+  access: v.optional(accessPlanSchema),
   admitted_by: v.string(), // v.id("profile"),
 })
   .index("admitted_by", ["admitted_by"])
