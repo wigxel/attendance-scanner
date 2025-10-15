@@ -11,6 +11,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import BookingCalendar from "@/components/BookingCalendar";
 import SeatLayout from "@/components/SeatLayout";
+import PendingBookingsModal from "@/components/PendingBookingsModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import DurationSymbol from "@/public/duration-symbol.svg";
@@ -265,6 +266,8 @@ export default function ReservePage() {
     <>
       <title>Reserve | InSpace</title>
       <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />
+
+      <PendingBookingsModal />
       <div className="z-[2] relative">
         <Header />
 

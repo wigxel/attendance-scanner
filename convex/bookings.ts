@@ -211,6 +211,11 @@ export const getUserBookings = query({
 
 // Get current user's confirmed bookings
 export const getUserConfirmedBookings = query({
+  /**
+   * Retrieves all confirmed bookings for the current user.
+   *
+   * @returns Array of confirmed bookings for the current user.
+   */
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -223,6 +228,44 @@ export const getUserConfirmedBookings = query({
       .order("asc")
       .filter((q) => q.eq(q.field("userId"), identity.subject))
       .filter((q) => q.eq(q.field("status"), "confirmed"))
+      .collect();
+
+    // Get seat details for each booking
+    const bookingsWithSeats = await Promise.all(
+      bookings.map(async (booking) => {
+        // fetch all seats for this booking
+        const seats = await Promise.all(
+          booking.seatIds.map((seatId) => ctx.db.get(seatId)),
+        );
+        return {
+          ...booking,
+          seats: seats.filter((seat) => seat !== null),
+        };
+      }),
+    );
+
+    return bookingsWithSeats;
+  },
+});
+
+export const getUserPendingBookings = query({
+  /**
+   * Retrieves all pending bookings for the current user.
+   *
+   * @returns Array of pending bookings for the current user.
+   */
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_startDate")
+      .order("asc")
+      .filter((q) => q.eq(q.field("userId"), identity.subject))
+      .filter((q) => q.eq(q.field("status"), "pending"))
       .collect();
 
     // Get seat details for each booking
@@ -397,6 +440,18 @@ export const markExpiredPendingBookings = mutation({
       });
 
       expiredBookingIds.push(booking._id);
+
+      const bookedSeats = await ctx.db
+        .query("bookedSeats")
+        .filter((q) => q.eq(q.field("bookingId"), booking._id))
+        .collect();
+
+      // mark associated bookedSeats as expired
+      for (const bookedSeat of bookedSeats) {
+        await ctx.db.patch(bookedSeat._id, {
+          status: "expired",
+        });
+      }
     }
 
     return {
@@ -430,6 +485,18 @@ export const markCompletedBookingsAsExpired = mutation({
       });
 
       expiredBookings.push(booking._id);
+
+      const bookedSeats = await ctx.db
+        .query("bookedSeats")
+        .filter((q) => q.eq(q.field("bookingId"), booking._id))
+        .collect();
+
+      // mark associated bookedSeats as expired
+      for (const bookedSeat of bookedSeats) {
+        await ctx.db.patch(bookedSeat._id, {
+          status: "expired",
+        });
+      }
     }
     return {
       expiredBookings,
@@ -449,5 +516,39 @@ export const getBookingById = query({
     }
 
     return booking;
+  },
+});
+
+export const markBookingAsExpired = mutation({
+  args: {
+    bookingId: v.id("bookings"),
+  },
+  handler: async (ctx, { bookingId }) => {
+    const booking = await ctx.db.get(bookingId);
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    await ctx.db.patch(bookingId, {
+      status: "expired",
+      updatedAt: Date.now(),
+    });
+
+    const bookedSeats = await ctx.db
+      .query("bookedSeats")
+      .filter((q) => q.eq(q.field("bookingId"), bookingId))
+      .collect();
+
+    // mark associated bookedSeats as expired
+    for (const bookedSeat of bookedSeats) {
+      await ctx.db.patch(bookedSeat._id, {
+        status: "expired",
+      });
+    }
+
+    return {
+      success: true,
+      booking,
+    };
   },
 });

@@ -1,7 +1,7 @@
 import type { Id } from "@/convex/_generated/dataModel";
 import { create } from "zustand";
 
-interface BookingState {
+export interface BookingState {
   activeTab: string;
   selectedDate: Date | null;
   endDate: Date | null;

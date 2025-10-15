@@ -1,5 +1,6 @@
 import React from "react";
 import { Id } from "@/convex/_generated/dataModel";
+import { useBookingStore } from "@/app/reserve/store";
 
 import Chair from "@/public/images/chair.png";
 import Image from "next/image";
@@ -73,11 +74,9 @@ const Table: React.FC<{
   );
 };
 
-const SeatLayout: React.FC<SeatLayoutProps> = ({
-  seats,
-  selectedSeatNumbers,
-  onSeatClick,
-}) => {
+const SeatLayout: React.FC<SeatLayoutProps> = ({ seats, onSeatClick }) => {
+  const { selectedSeatNumbers } = useBookingStore();
+
   // map for quick seat lookup
   const seatMap: Record<string, SeatData> = seats.reduce(
     (map, seat) => {
@@ -89,6 +88,12 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
 
   const getSeat = (seatNumber: string): SeatData | null => {
     return seatMap[seatNumber] || null;
+  };
+
+  const isSeatSelected = (seatNumber: string | number): boolean => {
+    return selectedSeatNumbers.some(
+      (selectedSeat) => Number(selectedSeat) === Number(seatNumber),
+    );
   };
 
   return (
@@ -108,10 +113,6 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
             <span className="text-gray-600">Occupied</span>
           </div>
         </div>
-
-        <div className="text-gray-600 text-xs text-center">
-          <p>Click proceed to select your seat</p>
-        </div>
       </div>
 
       <div className="grid grid-cols-9 grid-rows-15 gap-1 text-[10px] w-full max-w-md">
@@ -119,7 +120,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("1") && (
           <Seat
             seatData={getSeat("1")!}
-            isSelected={selectedSeatNumbers.includes(1)}
+            isSelected={isSeatSelected(1)}
             onClick={onSeatClick}
             className="col-start-2"
           />
@@ -127,7 +128,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("2") && (
           <Seat
             seatData={getSeat("2")!}
-            isSelected={selectedSeatNumbers.includes(2)}
+            isSelected={isSeatSelected(2)}
             onClick={onSeatClick}
           />
         )}
@@ -138,7 +139,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("3") && (
           <Seat
             seatData={getSeat("3")!}
-            isSelected={selectedSeatNumbers.includes(3)}
+            isSelected={isSeatSelected(3)}
             onClick={onSeatClick}
             className="col-start-9"
           />
@@ -146,7 +147,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("4") && (
           <Seat
             seatData={getSeat("4")!}
-            isSelected={selectedSeatNumbers.includes(4)}
+            isSelected={isSeatSelected(4)}
             onClick={onSeatClick}
             className="col-start-9"
           />
@@ -156,7 +157,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("5") && (
           <Seat
             seatData={getSeat("5")!}
-            isSelected={selectedSeatNumbers.includes(5)}
+            isSelected={isSeatSelected(5)}
             onClick={onSeatClick}
             className="col-start-3 row-start-5"
           />
@@ -164,7 +165,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("6") && (
           <Seat
             seatData={getSeat("6")!}
-            isSelected={selectedSeatNumbers.includes(6)}
+            isSelected={isSeatSelected(6)}
             onClick={onSeatClick}
             className="col-start-4 row-start-5"
           />
@@ -174,7 +175,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("7") && (
           <Seat
             seatData={getSeat("7")!}
-            isSelected={selectedSeatNumbers.includes(7)}
+            isSelected={isSeatSelected(7)}
             onClick={onSeatClick}
             className="col-start-1 -translate-y-5"
           />
@@ -182,7 +183,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("8") && (
           <Seat
             seatData={getSeat("8")!}
-            isSelected={selectedSeatNumbers.includes(8)}
+            isSelected={isSeatSelected(8)}
             onClick={onSeatClick}
             className="col-start-6 -translate-y-5"
           />
@@ -190,7 +191,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("9") && (
           <Seat
             seatData={getSeat("9")!}
-            isSelected={selectedSeatNumbers.includes(9)}
+            isSelected={isSeatSelected(9)}
             onClick={onSeatClick}
             className="col-start-3"
           />
@@ -198,7 +199,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("10") && (
           <Seat
             seatData={getSeat("10")!}
-            isSelected={selectedSeatNumbers.includes(10)}
+            isSelected={isSeatSelected(10)}
             onClick={onSeatClick}
             className="col-start-4"
           />
@@ -208,7 +209,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("11") && (
           <Seat
             seatData={getSeat("11")!}
-            isSelected={selectedSeatNumbers.includes(11)}
+            isSelected={isSeatSelected(11)}
             onClick={onSeatClick}
             className="col-start-3 row-start-10"
           />
@@ -216,7 +217,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("12") && (
           <Seat
             seatData={getSeat("12")!}
-            isSelected={selectedSeatNumbers.includes(12)}
+            isSelected={isSeatSelected(12)}
             onClick={onSeatClick}
             className="col-start-4 row-start-10"
           />
@@ -226,7 +227,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("13") && (
           <Seat
             seatData={getSeat("13")!}
-            isSelected={selectedSeatNumbers.includes(13)}
+            isSelected={isSeatSelected(13)}
             onClick={onSeatClick}
             className="col-start-3"
           />
@@ -234,7 +235,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("14") && (
           <Seat
             seatData={getSeat("14")!}
-            isSelected={selectedSeatNumbers.includes(14)}
+            isSelected={isSeatSelected(14)}
             onClick={onSeatClick}
             className="col-start-4"
           />
@@ -245,7 +246,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("15") && (
           <Seat
             seatData={getSeat("15")!}
-            isSelected={selectedSeatNumbers.includes(15)}
+            isSelected={isSeatSelected(15)}
             onClick={onSeatClick}
             className="col-start-9 row-start-11"
           />
@@ -253,7 +254,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({
         {getSeat("16") && (
           <Seat
             seatData={getSeat("16")!}
-            isSelected={selectedSeatNumbers.includes(16)}
+            isSelected={isSeatSelected(16)}
             onClick={onSeatClick}
             className="col-start-9 row-start-12"
           />
