@@ -7,7 +7,7 @@ import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
 import { DateParse } from "@/lib/date.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   differenceInDays,
   differenceInHours,
@@ -19,7 +19,8 @@ import {
   setHours,
 } from "date-fns";
 import { Option, pipe } from "effect";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Crown, Gift } from "lucide-react";
+import { motion } from "motion/react";
 import React from "react";
 import useEvent from "react-use-event-hook";
 import {
@@ -230,11 +231,12 @@ function RegisteredUserEntry({
   };
   const visitCount = useVisitCount({ userId: entry.userId });
   const diffFromNow = format_time_to_now(entry.timestamp);
+  const can_modify_plan = differenceInHours(Date.now(), entry.timestamp) < 24;
 
   if (!user) return null;
 
   return (
-    <li className="flex items-center group gap-4 pt-2 px-4">
+    <li className="flex group items-center group gap-4 pt-2 px-4">
       <CustomerAvatar userId={entry.userId} className="w-10 h-10" />
 
       <div className="group-last:border-none border-b flex items-center flex-1 pb-2">
@@ -263,12 +265,49 @@ function RegisteredUserEntry({
           </div>
         </div>
 
-        <div className="text-sm font-semibold text-foreground">
+
+        <If cond={can_modify_plan}>
+          <RoleChangingButton id={entry.userId} />
+        </If>
+
+        <div className={cn("inline-block text-sm font-semibold text-foreground", {
+          "group-hover:hidden": can_modify_plan
+        })}>
           {diffFromNow}
         </div>
       </div>
     </li>
   );
+}
+
+function RoleChangingButton({ id }: { id: string }) {
+  const changePlan = useMutation(api.register.updateTodaysRegisterAccess);
+
+  return <div className="hidden group-hover:flex items-center gap-1">
+    <Button
+      title="Mark as Paying customer"
+      size="icon"
+      variant="secondary"
+      onClick={() => {
+        changePlan({ userId: id, plan: "daily" }).then((res) => {
+          debugger
+        }).catch((err) => {
+          debugger
+        })
+      }}>
+      <Crown className="h-4 w-4" />
+    </Button>
+
+    <Button title="Mark as Free customer" size="icon" variant="outline" onClick={() => {
+      changePlan({ userId: id, plan: "free" }).then((res) => {
+        debugger
+      }).catch((err) => {
+        debugger
+      })
+    }}>
+      <Gift className="h-4 w-4" />
+    </Button>
+  </div>
 }
 
 const map = {

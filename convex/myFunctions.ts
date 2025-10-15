@@ -6,9 +6,9 @@ import { formatISO, setHours } from "date-fns";
 import { logger } from "../config/logger";
 import { components } from "./_generated/api";
 import { api } from "./_generated/api";
-import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import type { DataModel, Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { featureRequestStatus } from "./shared";
+import { PlanImpl, featureRequestStatus } from "./shared";
 
 export const authUser = query({
   args: {},
@@ -187,16 +187,7 @@ export const registerUser = mutation({
       return null;
     }
 
-    const plan = await ctx.db
-      .query("accessPlans")
-      .withIndex("plan_key", (gt) => gt.eq("key", args.plan))
-      .first();
-
-    if (!plan) {
-      throw new Error(
-        "Invalid plan provided. Registration rejected. Please provide a valid plan ",
-      );
-    }
+    const plan = await PlanImpl.validatePlan(ctx.db, args.plan);
 
     const customer = await ctx.runQuery(api.myFunctions.getUserById, {
       userId: args.customerId,
@@ -216,22 +207,10 @@ export const registerUser = mutation({
       source: "web",
       admitted_by: userId as Id<"profile">,
       timestamp: new Date().toISOString(),
-      access: buildAccessPayloadFromPlan(plan),
+      access: PlanImpl.toStruct(plan),
     });
   },
 });
-
-function buildAccessPayloadFromPlan(plan: Doc<"accessPlans">) {
-  if (plan.key === "free") {
-    return { kind: "free" as const };
-  }
-
-  return {
-    kind: "paid" as const,
-    planId: plan.key,
-    amount: Math.max(0, plan.price / plan.no_of_days),
-  };
-}
 
 export const getDailyRegister = query({
   args: {
@@ -573,8 +552,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-            .query("featureRequest")
-            .withIndex("by_status", (q) => q.eq("status", status))
+          .query("featureRequest")
+          .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 

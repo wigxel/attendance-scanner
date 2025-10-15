@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { endOfDay, format, startOfDay, subDays } from "date-fns";
-import { internalMutation } from "./_generated/server";
+import { internalMutation, mutation } from "./_generated/server";
+import { PlanImpl } from "./shared";
 
 export const saveCount = internalMutation(async ({ db }) => {
   const now = new Date();
@@ -64,5 +65,45 @@ export const setFreeAccess = internalMutation({
     for (const register of registers) {
       await ctx.db.patch(register._id, { access: { kind: "free" } });
     }
+  },
+});
+
+/**
+ * Searches for a user in today's record in the daily_register and updates their access plan.
+ *
+ * @param userId - The ID of the user to search for.
+ * @param plan - The access plan to update to.
+ * @returns The updated user's record if found, otherwise null.
+ */
+export const updateTodaysRegisterAccess = mutation({
+  args: {
+    userId: v.string(),
+    plan: v.string()
+  },
+  handler: async (ctx, args) => {
+    const today = new Date();
+    const start = startOfDay(today).toISOString();
+    const end = endOfDay(today).toISOString();
+
+    const plan = await PlanImpl.validatePlan(ctx.db, args.plan);
+
+    const record = await ctx.db
+      .query("daily_register")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), args.userId),
+          q.gte(q.field("timestamp"), start),
+          q.lte(q.field("timestamp"), end)
+        )
+      )
+      .first();
+
+    if (!record) {
+      throw new Error(`User ${args.userId} not found in today's register`);
+    }
+
+    await ctx.db.patch(record._id, { access: PlanImpl.toStruct(plan) });
+
+    return "success" as const;
   },
 });
