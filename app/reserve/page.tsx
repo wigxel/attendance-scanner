@@ -27,13 +27,25 @@ function Content() {
         className="w-full"
       >
         <TabsList className="w-full">
-          <TabsTrigger value="booking" className="cursor-pointer">
+          <TabsTrigger
+            value="booking"
+            className="cursor-pointer disabled:opacity-100"
+            disabled
+          >
             Pick a Date
           </TabsTrigger>
-          <TabsTrigger value="choose" className="cursor-pointer">
+          <TabsTrigger
+            value="choose"
+            className="cursor-pointer disabled:opacity-100"
+            disabled
+          >
             Choose Seat
           </TabsTrigger>
-          <TabsTrigger value="payment" className="cursor-pointer">
+          <TabsTrigger
+            value="payment"
+            className="cursor-pointer disabled:opacity-100"
+            disabled
+          >
             Make Payment
           </TabsTrigger>
         </TabsList>
@@ -169,6 +181,7 @@ function MakePaymentTab() {
           )}
         </div>
       )}
+
       {selectedSeatNumbers.length > 0 && selectedDate ? (
         <div className="border-gray-200 border shadow rounded-lg p-4 flex gap-3">
           <div className="pt-3">
@@ -187,6 +200,21 @@ function MakePaymentTab() {
           </div>
         </div>
       ) : null}
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => setActiveTab("booking")}
+          className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          Change Date
+        </button>
+        <button
+          onClick={() => setActiveTab("choose")}
+          className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          Change Seats
+        </button>
+      </div>
       <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <p className="text-[#72A0A0]">Payment Status</p>
