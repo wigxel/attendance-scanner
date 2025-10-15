@@ -289,21 +289,13 @@ function RoleChangingButton({ id }: { id: string }) {
       size="icon"
       variant="secondary"
       onClick={() => {
-        changePlan({ userId: id, plan: "daily" }).then((res) => {
-          debugger
-        }).catch((err) => {
-          debugger
-        })
+        changePlan({ userId: id, plan: "daily" });
       }}>
       <Crown className="h-4 w-4" />
     </Button>
 
     <Button title="Mark as Free customer" size="icon" variant="outline" onClick={() => {
-      changePlan({ userId: id, plan: "free" }).then((res) => {
-        debugger
-      }).catch((err) => {
-        debugger
-      })
+      changePlan({ userId: id, plan: "free" })
     }}>
       <Gift className="h-4 w-4" />
     </Button>
