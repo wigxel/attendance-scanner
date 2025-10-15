@@ -1,17 +1,33 @@
 "use client";
-import { useState } from "react";
-import QRCodeScanner from "@/components/QRCodeScanner";
-import { toast } from "sonner";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Button } from "@/components/ui/button";
 import { decodeQRCodeData } from "@/app/actions/encrypt";
-import type { Id } from "@/convex/_generated/dataModel";
-import { convex } from "./ConvexClientProvider";
-import { getErrorMessage } from "@/lib/error.helpers";
+import QRCodeScanner from "@/components/QRCodeScanner";
+import { Button } from "@/components/ui/button";
 import { isDevelopment } from "@/config/constants";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { getErrorMessage } from "@/lib/error.helpers";
+import { useMutation } from "convex/react";
+import { format, isToday, isValid } from "date-fns";
+import { useState } from "react";
+import { toast } from "sonner";
+import { convex } from "./ConvexClientProvider";
 import { If } from "./if";
 import { Card } from "./ui/card";
+
+export const ScanTimeCodec = {
+  encode(date: Date) {
+    return format(date, "dd-MM-yyyy-hh")
+  },
+
+  decode(time_str?: string) {
+    const [d, m, y, h] = String(time_str).split('-');
+
+    const date = new Date(+y, +m - 1, +d, +h);
+    const is_valid_date = isValid(date) && isToday(date);
+
+    return { success: is_valid_date, value: date };
+  }
+}
 
 export function TakeAttendance() {
   const [scannedData, setScannedData] = useState<string | null>(null);
@@ -29,9 +45,20 @@ export function TakeAttendance() {
       const encoded_data = url.pathname.split("/").at(-1);
 
       // Validate the QR data format
-      const [customer_id, visitor_id, browser] = await decodeQRCodeData(
+      const [customer_id, visitor_id, browser, plan, time] = await decodeQRCodeData(
         encoded_data ?? "none",
       );
+
+      if (!plan) {
+        throw new Error("A plan is required to proceed. Please ensure you're scanning the latest QR Code");
+      }
+
+      const result = ScanTimeCodec.decode(time)
+
+      // scans must happen on the the day and time
+      if (!result.success) {
+        throw new Error("Invalid scan date. Scans must happen on the same day");
+      }
 
       if (!customer_id) {
         toast.error("User doesn't exist or isn't registered");
@@ -56,6 +83,7 @@ export function TakeAttendance() {
         browser: browser ?? "unknown",
         visitorId: visitor_id ?? "unknown",
         customerId: customer_id as Id<"profile">,
+        plan: plan,
       });
 
       const customer_info = await convex.query(api.myFunctions.getUserById, {
@@ -106,43 +134,43 @@ export function TakeAttendance() {
   return (
     <Card>
       <div className="p-4 flex flex-col gap-2">
-        <>
-          {scanningEnabled ? (
-            <QRCodeScanner
-              onScan={(data) => {
-                setScanningEnabled(false); // Disable scanning after successful scan
-                handleScan(data);
-              }}
-              onError={handleError}
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-4">
-              {processing ? (
-                <div className="text-center p-4">
-                  <div className="animate-pulse mb-2">Processing...</div>
-                  <p className="text-sm text-muted-foreground">
-                    Recording attendance data
-                  </p>
-                </div>
-              ) : (
-                <div className="text-center p-4">
-                  <div className="text-green-500 mb-2">Scan Complete</div>
-                  <p className="text-sm text-muted-foreground">
-                    QR code processed successfully
-                  </p>
-                </div>
-              )}
 
-              <Button
-                onClick={resetScanner}
-                disabled={processing}
-                className="w-full"
-              >
-                Scan Another Code
-              </Button>
-            </div>
-          )}
-        </>
+        {scanningEnabled ? (
+          <QRCodeScanner
+            onScan={(data) => {
+              setScanningEnabled(false); // Disable scanning after successful scan
+              handleScan(data);
+            }}
+            onError={handleError}
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-4">
+            {processing ? (
+              <div className="text-center p-4">
+                <div className="animate-pulse mb-2">Processing...</div>
+                <p className="text-sm text-muted-foreground">
+                  Recording attendance data
+                </p>
+              </div>
+            ) : (
+              <div className="text-center p-4">
+                <div className="text-green-500 mb-2">Scan Complete</div>
+                <p className="text-sm text-muted-foreground">
+                  QR code processed successfully
+                </p>
+              </div>
+            )}
+
+            <Button
+              onClick={resetScanner}
+              disabled={processing}
+              className="w-full"
+            >
+              Scan Another Code
+            </Button>
+          </div>
+        )}
+
 
         <If cond={isDevelopment}>
           {scannedData && (

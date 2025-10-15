@@ -1,29 +1,40 @@
 "use client";
-import React from "react";
-import { QRCodeSVG } from "qrcode.react";
+import { APP_URL } from "@/config/constants";
+import { useProfile } from "@/hooks/auth";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
 import { LucideLoader } from "lucide-react";
 import { motion as m } from "motion/react";
-import { useProfile } from "@/hooks/auth";
-import { APP_URL } from "@/config/constants";
+import { QRCodeSVG } from "qrcode.react";
+import React from "react";
+import { ScanTimeCodec } from "./TakeAttendance";
 
-function QRCode() {
-  const [size, setSize] = React.useState<number | null>(null);
-  const ref = React.useRef<HTMLDivElement>(null);
-  const device_meta = useDeviceMeta();
+function useDo() {
   const profile = useProfile();
-  const qr_hash = useQueryHash(
+  const device_meta = useDeviceMeta();
+
+  return useQueryHash(
     [
       profile.data?.id,
       // @ts-expect-error Not important
       device_meta?.data?.visitorId,
       // @ts-expect-error Not important
       device_meta?.data?.browser,
+      "free",
+      ScanTimeCodec.encode(new Date())
     ],
     {
       enabled: Boolean(profile),
     },
   );
+}
+
+function QRCode() {
+  const [size, setSize] = React.useState<number | null>(null);
+  const ref = React.useRef<HTMLDivElement>(null);
+  const device_meta = useDeviceMeta();
+  const profile = useProfile();
+  const qr_hash = useDo();
+
 
   const isLoading =
     device_meta.isLoading || profile.isLoading || qr_hash.isLoading;
@@ -92,7 +103,6 @@ export function CheckInCard() {
   return (
     <div className="border overflow-hidden rounded-2xl bg-background dark:bg-gray-950">
       <QRCode />
-
       <p className="p-4 text-center border-t font-mono text-xs">
         Present QR Code to Staff at Check-in Counter
       </p>

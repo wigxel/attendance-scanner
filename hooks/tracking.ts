@@ -1,8 +1,8 @@
+import { encodeQRCodeData } from "@/app/actions/encrypt";
 import { safeArray } from "@/lib/data.helpers";
 import { load } from "@fingerprintjs/fingerprintjs";
-import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { encodeQRCodeData } from "@/app/actions/encrypt";
+import React from "react";
 
 type A = Partial<{ browser: string; visitorId: string }>;
 type Result<A, E> =
@@ -52,6 +52,8 @@ export type CustomerRegisterTuple = [
   string | undefined, // customer id
   string | undefined, // browser fingerprint
   string | undefined, // browser name
+  string | undefined, // access plan
+  string | undefined, // date-month-year
 ];
 
 export function useQueryHash(
@@ -62,5 +64,7 @@ export function useQueryHash(
     queryKey: data,
     queryFn: () => encodeQRCodeData(data),
     enabled: opts.enabled,
+    retryDelay: 3000,
+    retry: 3
   });
 }
