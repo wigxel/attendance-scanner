@@ -158,7 +158,7 @@ function MakePaymentTab() {
     }
   }, [paymentStatus, bookingId, router]);
 
-  const pricePerSeat = price ? price / selectedSeatNumbers.length : 0;
+  const totalPrice = price ? price * selectedSeatNumbers.length : 0;
 
   return (
     <>
@@ -242,11 +242,11 @@ function MakePaymentTab() {
           </div>
           <div className="flex justify-between items-center">
             <p className="text-[#72A0A0]">Price per seat</p>
-            <p>{formatPrice(pricePerSeat)}</p>
+            <p>{formatPrice(price)}</p>
           </div>
           <div className="flex justify-between items-center">
             <p className="text-[#72A0A0]">Total Price</p>
-            <p>{formatPrice(price)}</p>
+            <p>{formatPrice(totalPrice)}</p>
           </div>
         </div>
 

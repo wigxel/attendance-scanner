@@ -91,21 +91,21 @@ export const createBooking = mutation({
     // Calculate duration
     if (!args.durationType) throw new Error("Duration type is required");
     let duration: number;
-    let amount: number; // in kobo
+    let pricePerSeat: number; // in kobo
     let endDate: string;
     if (args.durationType === "day") {
       duration = 1;
-      amount = 150000; // 1,500 per day
+      pricePerSeat = 150000; // 1,500 per day
       const startMs = new Date(args.startDate).getTime();
       const endMs = startMs + duration * 24 * 60 * 60 * 1000;
       endDate = formatDateToLocalISO(new Date(endMs));
     } else if (args.durationType === "week") {
       duration = 6;
-      amount = 600000; // 6,000 per week
+      pricePerSeat = 600000; // 6,000 per week
       endDate = calculateEndDate(args.startDate, duration);
     } else if (args.durationType === "month") {
       duration = 24;
-      amount = 2400000; // 24,000 per month
+      pricePerSeat = 2400000; // 24,000 per month
       endDate = calculateEndDate(args.startDate, duration);
     } else {
       throw new Error("Invalid duration type");
@@ -146,7 +146,7 @@ export const createBooking = mutation({
 
     // Create booking records
     const now = Date.now();
-    amount = amount * args.seatIds.length; // price per seat multiplied by number of seats
+    const amount = pricePerSeat * args.seatIds.length; // price per seat multiplied by number of seats
 
     const bookingId = await ctx.db.insert("bookings", {
       userId,
@@ -156,6 +156,7 @@ export const createBooking = mutation({
       endDate: endDate,
       durationType: args.durationType,
       status: "pending",
+      pricePerSeat,
       amount,
       createdAt: now,
       updatedAt: now,
@@ -177,6 +178,94 @@ export const createBooking = mutation({
       userInfo: { userId, userEmail, userName },
       message: "Bookings created. Please complete payment within 10 minutes.",
     };
+  },
+});
+
+export const updateBooking = mutation({
+  args: {
+    bookingId: v.id("bookings"),
+    startDate: v.string(),
+    seatIds: v.array(v.id("seats")),
+    durationType: v.union(
+      v.literal("day"),
+      v.literal("week"),
+      v.literal("month"),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Must be logged in");
+    const userId = identity.subject;
+
+    const existingBooking = await ctx.db.get(args.bookingId);
+
+    if (
+      !existingBooking ||
+      existingBooking.userId !== userId ||
+      existingBooking.status !== "pending"
+    ) {
+      throw new Error("Booking cannot be updated.");
+    }
+
+    const calculateEndDate = (
+      startDate: string,
+      workingDays: number,
+    ): string => {
+      const start = new Date(startDate);
+      const currentDate = new Date(start);
+      let daysAdded = 0;
+
+      // Count the start date if it's not a Sunday
+      if (currentDate.getDay() !== 0) {
+        daysAdded++;
+      }
+
+      while (daysAdded < workingDays) {
+        currentDate.setDate(currentDate.getDate() + 1);
+        // skip Sundays (0 = Sunday)
+        if (currentDate.getDay() !== 0) {
+          daysAdded++;
+        }
+      }
+
+      return formatDateToLocalISO(currentDate);
+    };
+
+    if (!args.durationType) throw new Error("Duration type is required");
+    let duration: number;
+    let pricePerSeat: number; // in kobo
+    let endDate: string;
+    if (args.durationType === "day") {
+      duration = 1;
+      pricePerSeat = 150000; // 1,500 per day
+      const startMs = new Date(args.startDate).getTime();
+      const endMs = startMs + duration * 24 * 60 * 60 * 1000;
+      endDate = formatDateToLocalISO(new Date(endMs));
+    } else if (args.durationType === "week") {
+      duration = 6;
+      pricePerSeat = 600000; // 6,000 per week
+      endDate = calculateEndDate(args.startDate, duration);
+    } else if (args.durationType === "month") {
+      duration = 24;
+      pricePerSeat = 2400000; // 24,000 per month
+      endDate = calculateEndDate(args.startDate, duration);
+    } else {
+      throw new Error("Invalid duration type");
+    }
+
+    const amount = pricePerSeat * args.seatIds.length; // price per seat multiplied by number of seats
+
+    await ctx.db.patch(args.bookingId, {
+      startDate: args.startDate,
+      endDate,
+      seatIds: args.seatIds,
+      durationType: args.durationType,
+      duration,
+      pricePerSeat,
+      amount,
+    });
+
+    return { success: true, bookingId: args.bookingId };
   },
 });
 

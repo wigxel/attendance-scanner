@@ -17,6 +17,7 @@ interface PendingBooking {
     isBooked: boolean;
   }[];
   seatIds: Id<"seats">[];
+  pricePerSeat: number;
   amount: number;
   durationType: "day" | "week" | "month" | undefined;
 }
@@ -86,7 +87,7 @@ const PendingBookingsModal = () => {
           : new Date(booking.endDate), // day bookings should end same day
       selectedSeatNumbers: booking.seats.map((s) => s.seatNumber.toString()),
       selectedSeatIds: booking.seatIds,
-      price: booking.amount,
+      price: booking.pricePerSeat,
       bookingId: booking._id,
       timePeriodString: booking.durationType,
     });
@@ -170,11 +171,7 @@ const PendingBookingsModal = () => {
             <div className="mb-4">
               <p className="text-sm text-gray-600">Amount</p>
               <p className="font-medium">
-                ₦
-                {(
-                  (booking.amount * booking.seatIds.length) /
-                  100
-                ).toLocaleString()}
+                ₦{(booking.amount / 100).toLocaleString()}
               </p>
             </div>
 

@@ -74,6 +74,7 @@ const bookings = defineTable({
     v.literal("week"),
     v.literal("month"),
   ),
+  pricePerSeat: v.number(),
   amount: v.number(),
   status: v.union(
     v.literal("pending"),

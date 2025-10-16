@@ -28,6 +28,7 @@ export const usePaymentHandler = () => {
     timePeriodString,
     bookingId,
   } = useBookingStore();
+
   type PaymentStatus = "pending" | "success" | "failed";
 
   const router = useRouter();
@@ -37,12 +38,15 @@ export const usePaymentHandler = () => {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const { user } = useUser();
   const { getToken } = useAuth();
+
   const formatPrice = (price: number | null) => {
     if (price === null) return "N/A";
     return `₦${(price / 100).toLocaleString()}`;
   };
 
-  const handleSuccessfulPayment = async (bookingId: Id<"bookings">) => {
+  const handleSuccessfulPayment = async (
+    bookingIdToConfirm: Id<"bookings">,
+  ) => {
     try {
       const token = await getToken({ template: "convex" });
       if (!token) {
@@ -50,20 +54,22 @@ export const usePaymentHandler = () => {
         setPaymentStatus("failed");
         return;
       }
-      httpClient.mutation(api.bookings.confirmBooking, { bookingId });
+
+      httpClient.setAuth(token);
+      await httpClient.mutation(api.bookings.confirmBooking, {
+        bookingId: bookingIdToConfirm,
+      });
 
       setPaymentStatus("success");
       setPaymentMessage("Payment successful!");
     } catch (error) {
       setPaymentStatus("failed");
-      setPaymentMessage("Booking failed.");
-      console.error("Booking failed:", error);
+      setPaymentMessage("Booking confirmation failed.");
+      console.error("Booking confirmation failed:", error);
     }
   };
 
-  const handleCancelBooking: (
-    bookingId: Id<"bookings">,
-  ) => Promise<void> = async (bookingId: Id<"bookings">) => {
+  const handleCancelBooking = async (bookingIdToCancel: Id<"bookings">) => {
     try {
       const token = await getToken({ template: "convex" });
       if (!token) {
@@ -71,7 +77,11 @@ export const usePaymentHandler = () => {
         setPaymentStatus("failed");
         return;
       }
-      httpClient.mutation(api.bookings.cancelBooking, { bookingId });
+
+      httpClient.setAuth(token);
+      await httpClient.mutation(api.bookings.cancelBooking, {
+        bookingId: bookingIdToCancel,
+      });
 
       setPaymentStatus("failed");
       setPaymentMessage("Booking cancelled!");
@@ -85,92 +95,104 @@ export const usePaymentHandler = () => {
   const handlePayment = async () => {
     try {
       setPaymentLoading(true);
-      if (
-        !user &&
-        !selectedDate &&
-        selectedSeatIds.length === 0 &&
-        !timePeriodString
-      ) {
-        setPaymentStatus("pending");
-        setPaymentMessage("Please select a user, date, seat, and time period.");
-        return;
-      }
+
+      // Validation
       if (!user) {
         setPaymentStatus("pending");
         setPaymentMessage("Please login.");
+        setPaymentLoading(false);
         return;
       }
+
       if (!selectedDate) {
         setPaymentStatus("pending");
         setPaymentMessage("Please select a date.");
+        setPaymentLoading(false);
         return;
       }
-      if (selectedSeatIds.length === 0) {
+
+      if (!selectedSeatIds || selectedSeatIds.length === 0) {
         setPaymentStatus("pending");
-        setPaymentMessage("Please select a seat.");
+        setPaymentMessage("Please select at least one seat.");
+        setPaymentLoading(false);
         return;
       }
+
       if (!timePeriodString) {
         setPaymentStatus("pending");
         setPaymentMessage("Please select a time period.");
+        setPaymentLoading(false);
         return;
-      }
-
-      if (selectedSeatIds.length > 0 && selectedDate) {
-        const token = await getToken({ template: "convex" });
-        if (token) {
-          httpClient.setAuth(token);
-
-          for (const seatId of selectedSeatIds) {
-            const seatAvailability = await httpClient.query(
-              api.seats.checkSeatAvailability,
-              {
-                seatId,
-                startDate: formatDateToLocalISO(selectedDate) || "",
-                durationType: timePeriodString,
-              },
-            );
-
-            if (seatAvailability?.isAvailable === false) {
-              setPaymentStatus("pending");
-              setPaymentMessage(
-                "One or more seats are no longer available for the selected period",
-              );
-              return;
-            }
-          }
-        }
       }
 
       const token = await getToken({ template: "convex" });
       if (!token) {
         setPaymentMessage("Authentication error. Please log in again.");
         setPaymentStatus("failed");
+        setPaymentLoading(false);
         return;
       }
 
       httpClient.setAuth(token);
 
-      const bookingArgs = {
-        userId: user?.id || "",
-        startDate: formatDateToLocalISO(selectedDate) || "",
-        seatIds: selectedSeatIds,
-        durationType: timePeriodString,
-      };
+      // Check availability for all seats
+      for (const seatId of selectedSeatIds) {
+        const seatAvailability = await httpClient.query(
+          api.seats.checkSeatAvailability,
+          {
+            seatId,
+            startDate: formatDateToLocalISO(selectedDate) || "",
+            durationType: timePeriodString,
+          },
+        );
 
-      const createBooking = await httpClient.mutation(
-        api.bookings.createBooking,
-        bookingArgs,
-      );
-
-      if (!createBooking.bookingIds || createBooking.bookingIds.length === 0) {
-        setPaymentMessage("Failed to create booking.");
-        setPaymentStatus("failed");
-        return;
+        if (seatAvailability?.isAvailable === false) {
+          setPaymentStatus("pending");
+          setPaymentMessage(
+            "One or more seats are no longer available for the selected period",
+          );
+          setPaymentLoading(false);
+          return;
+        }
       }
 
-      const bookingId = createBooking.bookingIds[0];
-      setBookingId(bookingId);
+      let bookingIdToUse = bookingId;
+
+      // If bookingId exists, update the booking
+      if (bookingId) {
+        await httpClient.mutation(api.bookings.updateBooking, {
+          bookingId,
+          startDate: formatDateToLocalISO(selectedDate) || "",
+          seatIds: selectedSeatIds,
+          durationType: timePeriodString,
+        });
+      } else {
+        // If bookingId doesn't exist, create a new booking
+        const bookingArgs = {
+          userId: user?.id || "",
+          startDate: formatDateToLocalISO(selectedDate) || "",
+          seatIds: selectedSeatIds,
+          durationType: timePeriodString,
+        };
+
+        const createBooking = await httpClient.mutation(
+          api.bookings.createBooking,
+          bookingArgs,
+        );
+
+        if (
+          !createBooking.bookingIds ||
+          createBooking.bookingIds.length === 0
+        ) {
+          setPaymentMessage("Failed to create booking.");
+          setPaymentStatus("failed");
+          setPaymentLoading(false);
+          return;
+        }
+
+        bookingIdToUse = createBooking.bookingIds[0];
+        setBookingId(bookingIdToUse);
+      }
 
       const loaded = await loadPaystackScript();
       if (!loaded) {
@@ -195,28 +217,41 @@ export const usePaymentHandler = () => {
         metadata: {
           name: user?.fullName,
           email: user?.emailAddresses[0].emailAddress,
-          seatId: selectedSeatIds,
+          bookingId: bookingIdToUse,
+          seatIds: selectedSeatIds,
           seatNumbers: selectedSeatNumbers.join(", "),
           date: selectedDate?.toISOString(),
           endDate: endDate?.toISOString(),
           price: formatPrice(totalPrice),
+          bookingCount: selectedSeatIds.length,
         },
         callback: (response: PaystackResponse) => {
+          if (!bookingIdToUse) {
+            console.error("Cannot confirm payment: bookingId is missing.");
+            setPaymentMessage(
+              "A critical error occurred. Booking ID is missing.",
+            );
+            setPaymentStatus("failed");
+            setPaymentLoading(false);
+            return;
+          }
           if (response.status === "success") {
-            handleSuccessfulPayment(bookingId);
+            handleSuccessfulPayment(bookingIdToUse);
           } else {
             setPaymentStatus("failed");
             setPaymentMessage("Payment was not successful");
           }
+          setPaymentLoading(false);
         },
         onClose: () => {
-          handleCancelBooking(bookingId);
-          console.log("Booking was cancelled");
+          if (bookingIdToUse) {
+            handleCancelBooking(bookingIdToUse);
+          }
+          setPaymentLoading(false);
         },
       });
 
       paystack.openIframe();
-      setPaymentLoading(false);
     } catch (error) {
       setPaymentStatus("failed");
       setPaymentMessage("Payment failed!");
