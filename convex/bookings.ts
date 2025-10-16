@@ -405,6 +405,18 @@ export const cancelBooking = mutation({
       updatedAt: Date.now(),
     });
 
+    const bookedSeats = await ctx.db
+      .query("bookedSeats")
+      .filter((q) => q.eq(q.field("bookingId"), booking._id))
+      .collect();
+
+    // mark associated bookedSeats as expired
+    for (const bookedSeat of bookedSeats) {
+      await ctx.db.patch(bookedSeat._id, {
+        status: "cancelled",
+      });
+    }
+
     return { success: true, bookingId };
   },
 });

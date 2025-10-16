@@ -34,6 +34,7 @@ export const usePaymentHandler = () => {
   const httpClient = new ConvexHttpClient(CONFIG.convexUrl);
   const [paymentMessage, setPaymentMessage] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("pending");
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const { user } = useUser();
   const { getToken } = useAuth();
   const formatPrice = (price: number | null) => {
@@ -83,6 +84,7 @@ export const usePaymentHandler = () => {
 
   const handlePayment = async () => {
     try {
+      setPaymentLoading(true);
       if (
         !user &&
         !selectedDate &&
@@ -179,6 +181,7 @@ export const usePaymentHandler = () => {
         console.error(
           "Payment service failed to load. Please check your connection and try again.",
         );
+        setPaymentLoading(false);
         return;
       }
 
@@ -213,16 +216,17 @@ export const usePaymentHandler = () => {
       });
 
       paystack.openIframe();
+      setPaymentLoading(false);
     } catch (error) {
       setPaymentStatus("failed");
       setPaymentMessage("Payment failed!");
       console.error("Payment error:", error);
+      setPaymentLoading(false);
     }
   };
 
   const returnToHomepage = () => {
     router.push("/");
-    // Consider resetting the booking store state here
   };
 
   return {
@@ -233,5 +237,6 @@ export const usePaymentHandler = () => {
     returnToHomepage,
     formatPrice,
     bookingId,
+    paymentLoading,
   };
 };
