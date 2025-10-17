@@ -35,12 +35,12 @@ export const setActiveTab = (tab: BookingState["activeTab"]) => {
   useBookingStore.setState({ activeTab: tab });
 };
 
-export const setSelectedDate = (date: BookingState["selectedDate"]) => {
-  useBookingStore.setState({ selectedDate: date ? date.toString() : null });
+export const setSelectedDate = (date: Date | null) => {
+  useBookingStore.setState({ selectedDate: date ? date.toISOString() : null });
 };
 
-export const setEndDate = (date: Date) => {
-  useBookingStore.setState({ endDate: date ? date.toString() : null });
+export const setEndDate = (date: Date | null) => {
+  useBookingStore.setState({ endDate: date ? date.toISOString() : null });
 };
 
 export const setPrice = (price: BookingState["price"]) => {

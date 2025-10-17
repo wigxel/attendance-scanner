@@ -34,12 +34,11 @@ export const useBookingCalendarLogic = () => {
     endDate: Date;
   }[] = [];
 
-  const formatDate = (date: string): string => {
-    const dateObj = new Date(date);
-    if (!dateObj) {
+  const formatDate = (date: Date): string => {
+    if (!date) {
       return "";
     }
-    return dateObj.toLocaleDateString("en-US", {
+    return date.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -51,8 +50,7 @@ export const useBookingCalendarLogic = () => {
     setTimePeriodString(value);
   };
 
-  const handleDateChange = (dates: string[]) =>
-    setSelectedDate(dates[0] || null);
+  const handleDateChange = (dates: Date[]) => setSelectedDate(dates[0] || null);
 
   const handleProceed = () => {
     if (!selectedDate) return;
