@@ -20,7 +20,7 @@ import DurationSymbol from "@/public/duration-symbol.svg";
 function Content() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { activeTab, selectedDate, selectedSeatNumbers } = useBookingStore();
+  const { activeTab } = useBookingStore();
   const [isReady, setIsReady] = useState(false);
 
   // Sync URL with active tab
@@ -72,21 +72,21 @@ function Content() {
           <TabsTrigger
             value="booking"
             className="cursor-pointer disabled:opacity-100"
-            disabled={false}
+            disabled
           >
             Pick a Date
           </TabsTrigger>
           <TabsTrigger
             value="choose"
             className="cursor-pointer disabled:opacity-100"
-            disabled={!selectedDate}
+            disabled
           >
             Choose Seat
           </TabsTrigger>
           <TabsTrigger
             value="payment"
             className="cursor-pointer disabled:opacity-100"
-            disabled={selectedSeatNumbers.length === 0}
+            disabled
           >
             Make Payment
           </TabsTrigger>
