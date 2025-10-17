@@ -10,8 +10,9 @@ import {
 
 export const useBookingCalendarLogic = () => {
   const router = useRouter();
-  const { selectedDate, timePeriodString } = useBookingStore();
-
+  const { timePeriodString } = useBookingStore();
+  const selectedDateString = useBookingStore((state) => state.selectedDate);
+  const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
   let timePeriod: number;
   let price: number; // in kobo
 
@@ -33,11 +34,12 @@ export const useBookingCalendarLogic = () => {
     endDate: Date;
   }[] = [];
 
-  const formatDate = (date: Date): string => {
-    if (!date) {
+  const formatDate = (date: string): string => {
+    const dateObj = new Date(date);
+    if (!dateObj) {
       return "";
     }
-    return date.toLocaleDateString("en-US", {
+    return dateObj.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -49,7 +51,8 @@ export const useBookingCalendarLogic = () => {
     setTimePeriodString(value);
   };
 
-  const handleDateChange = (dates: Date[]) => setSelectedDate(dates[0] || null);
+  const handleDateChange = (dates: string[]) =>
+    setSelectedDate(dates[0] || null);
 
   const handleProceed = () => {
     if (!selectedDate) return;

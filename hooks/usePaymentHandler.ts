@@ -22,12 +22,14 @@ export const usePaymentHandler = () => {
   const {
     selectedSeatIds,
     selectedSeatNumbers,
-    selectedDate,
-    endDate,
     price,
     timePeriodString,
     bookingId,
   } = useBookingStore();
+  const selectedDateString = useBookingStore((state) => state.selectedDate);
+  const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
+  const endDateString = useBookingStore((state) => state.endDate);
+  const endDate = endDateString ? new Date(endDateString) : null;
 
   type PaymentStatus = "pending" | "success" | "failed";
 

@@ -1,10 +1,11 @@
 import type { Id } from "@/convex/_generated/dataModel";
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface BookingState {
   activeTab: string;
-  selectedDate: Date | null;
-  endDate: Date | null;
+  selectedDate: string | null;
+  endDate: string | null;
   price: number | null;
   selectedSeatNumbers: (string | number)[];
   selectedSeatIds: Id<"seats">[];
@@ -12,27 +13,34 @@ export interface BookingState {
   bookingId: Id<"bookings"> | null;
 }
 
-export const useBookingStore = create<BookingState>(() => ({
-  activeTab: "booking",
-  selectedDate: null,
-  endDate: null,
-  price: null,
-  selectedSeatNumbers: [],
-  selectedSeatIds: [],
-  timePeriodString: "day",
-  bookingId: null,
-}));
+export const useBookingStore = create<BookingState>()(
+  persist(
+    (set) => ({
+      activeTab: "booking",
+      selectedDate: null,
+      endDate: null,
+      price: null,
+      selectedSeatNumbers: [],
+      selectedSeatIds: [],
+      timePeriodString: "day",
+      bookingId: null,
+    }),
+    {
+      name: "booking-store",
+    },
+  ),
+);
 
 export const setActiveTab = (tab: BookingState["activeTab"]) => {
   useBookingStore.setState({ activeTab: tab });
 };
 
 export const setSelectedDate = (date: BookingState["selectedDate"]) => {
-  useBookingStore.setState({ selectedDate: date });
+  useBookingStore.setState({ selectedDate: date ? date.toString() : null });
 };
 
 export const setEndDate = (date: Date) => {
-  useBookingStore.setState({ endDate: date });
+  useBookingStore.setState({ endDate: date ? date.toString() : null });
 };
 
 export const setPrice = (price: BookingState["price"]) => {

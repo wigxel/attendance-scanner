@@ -176,8 +176,11 @@ function PickSeatTab() {
 
 function MakePaymentTab() {
   const router = useRouter();
-  const { selectedSeatNumbers, selectedDate, endDate, price, bookingId } =
-    useBookingStore();
+  const { selectedSeatNumbers, price, bookingId } = useBookingStore();
+  const selectedDateString = useBookingStore((state) => state.selectedDate);
+  const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
+  const endDateString = useBookingStore((state) => state.endDate);
+  const endDate = endDateString ? new Date(endDateString) : null;
   const {
     paymentMessage,
     paymentStatus,
@@ -248,12 +251,16 @@ function MakePaymentTab() {
             </div>
             <div className="flex flex-col gap-6">
               <div>
-                <h5 className="text-xl font-bold text-[#72A0A0]">09:00am</h5>
+                <h5 className="text-xl font-bold text-muted-foreground">
+                  09:00am
+                </h5>
                 <p>{selectedDate.toDateString()}</p>
                 <p>Seat {selectedSeatNumbers.join(", ")}</p>
               </div>
               <div>
-                <h5 className="text-xl font-bold text-[#72A0A0]">05:00pm</h5>
+                <h5 className="text-xl font-bold text-muted-foreground">
+                  05:00pm
+                </h5>
                 <p>{endDate?.toDateString()}</p>
               </div>
             </div>
@@ -277,7 +284,7 @@ function MakePaymentTab() {
 
         <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
           <div className="flex justify-between items-center">
-            <p className="text-[#72A0A0]">Payment Status</p>
+            <p className="text-muted-foreground">Payment Status</p>
             <p>
               {paymentStatus == "pending" || paymentStatus == "failed"
                 ? "Not Paid"
@@ -285,11 +292,11 @@ function MakePaymentTab() {
             </p>
           </div>
           <div className="flex justify-between items-center">
-            <p className="text-[#72A0A0]">Price per seat</p>
+            <p className="text-muted-foreground">Price per seat</p>
             <p>{formatPrice(price)}</p>
           </div>
           <div className="flex justify-between items-center">
-            <p className="text-[#72A0A0]">Total Price</p>
+            <p className="text-muted-foreground">Total Price</p>
             <p>{formatPrice(totalPrice)}</p>
           </div>
         </div>

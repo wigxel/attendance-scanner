@@ -18,7 +18,11 @@ interface Seat {
 
 export const useSeats = () => {
   const router = useRouter();
-  const { selectedDate, endDate, selectedSeatNumbers } = useBookingStore();
+  const { selectedSeatNumbers } = useBookingStore();
+  const selectedDateString = useBookingStore((state) => state.selectedDate);
+  const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
+  const endDateString = useBookingStore((state) => state.endDate);
+  const endDate = endDateString ? new Date(endDateString) : null;
 
   const availableSeats = useQuery(api.seats.getAllSeatsForDateRange, {
     startDate: selectedDate ? formatDateToLocalISO(selectedDate) : "",

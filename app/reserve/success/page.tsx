@@ -54,20 +54,20 @@ export default function SuccessPage() {
       <div className="mt-6 p-6 flex flex-col gap-6 shadow rounded-md">
         <div className="flex flex-col gap-3">
           <span className="flex flex-wrap items-center justify-between">
-            <p className="text-[#72A0A0]">Name</p>
+            <p className="text-muted-foreground">Name</p>
             <p>
               {user?.firstName} {user?.lastName}
             </p>
           </span>
           <span className="flex flex-wrap items-center justify-between">
-            <p className="text-[#72A0A0]">Email</p>
+            <p className="text-muted-foreground">Email</p>
             <p>{user?.email}</p>
           </span>
         </div>
         <hr className="border-t-2 border-gray-300 w-full border-dashed" />
         <div className="flex flex-col gap-3">
           <span className="flex items-center justify-between">
-            <p className="text-[#72A0A0]">Duration</p>
+            <p className="text-muted-foreground">Duration</p>
             <span>
               <p>{timePeriodString === "day" && "1 day"}</p>
               <p>{timePeriodString === "week" && "6 days"}</p>
@@ -75,7 +75,7 @@ export default function SuccessPage() {
             </span>
           </span>
           <span className="flex items-center justify-between">
-            <p className="text-[#72A0A0]">Seat No.</p>
+            <p className="text-muted-foreground">Seat No.</p>
 
             <div className="text-right">
               <p>
@@ -90,11 +90,11 @@ export default function SuccessPage() {
             </div>
           </span>
           <span className="flex items-center justify-between">
-            <p className="text-[#72A0A0]">Reservation Start Date</p>
+            <p className="text-muted-foreground">Reservation Start Date</p>
             <p className="text-right">{selectedDate?.toDateString()}</p>
           </span>
           <span className="flex items-center justify-between">
-            <p className="text-[#72A0A0]">Reservation End Date</p>
+            <p className="text-muted-foreground">Reservation End Date</p>
             {timePeriodString === "day" ? (
               <p className="text-right">{selectedDate?.toDateString()}</p>
             ) : (
@@ -102,7 +102,7 @@ export default function SuccessPage() {
             )}
           </span>
           <span className="flex items-center justify-between">
-            <p className="text-[#72A0A0]">Amount</p>
+            <p className="text-muted-foreground">Amount</p>
             <p className="text-right">{formatPrice(price)}</p>
           </span>
         </div>
