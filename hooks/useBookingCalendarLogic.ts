@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import { calculateEndDate } from "@/lib/utils";
 import {
   useBookingStore,
@@ -5,10 +6,10 @@ import {
   setTimePeriodString,
   setEndDate,
   setPrice,
-  setActiveTab,
 } from "@/app/reserve/store";
 
 export const useBookingCalendarLogic = () => {
+  const router = useRouter();
   const { selectedDate, timePeriodString } = useBookingStore();
 
   let timePeriod: number;
@@ -60,7 +61,7 @@ export const useBookingCalendarLogic = () => {
 
       setEndDate(calculatedEndDate);
       setPrice(price);
-      setActiveTab("choose");
+      router.push("?tab=choose");
     }
   };
   return {

@@ -62,7 +62,7 @@ function Content() {
 
         <ActiveBookings />
 
-        <Link href="/reserve" className="self-center">
+        <Link href="/reserve?tab=booking" className="self-center">
           <Button variant="outline" className="self-center cursor-pointer">
             Reserve Seat
           </Button>

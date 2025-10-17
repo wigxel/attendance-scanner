@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -7,7 +8,6 @@ import {
   useBookingStore,
   addSelectedSeat,
   removeSelectedSeat,
-  setActiveTab,
 } from "@/app/reserve/store";
 
 interface Seat {
@@ -17,6 +17,7 @@ interface Seat {
 }
 
 export const useSeats = () => {
+  const router = useRouter();
   const { selectedDate, endDate, selectedSeatNumbers } = useBookingStore();
 
   const availableSeats = useQuery(api.seats.getAllSeatsForDateRange, {
@@ -57,7 +58,7 @@ export const useSeats = () => {
   };
 
   const proceedToPayment = () => {
-    setActiveTab("payment");
+    router.push("?tab=payment");
   };
 
   return {

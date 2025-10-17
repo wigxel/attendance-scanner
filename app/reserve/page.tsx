@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useBookingStore, setActiveTab } from "./store";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
@@ -18,13 +18,48 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DurationSymbol from "@/public/duration-symbol.svg";
 
 function Content() {
-  const { activeTab } = useBookingStore();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { activeTab, selectedDate, selectedSeatNumbers } = useBookingStore();
+
+  // Sync URL with active tab
+  const handleTabChange = (newTab: string) => {
+    // Allow moving back to booking tab anytime
+    if (newTab === "booking") {
+      setActiveTab(newTab);
+      router.push(`?tab=${newTab}`, { scroll: false });
+      return;
+    }
+
+    // Prevent moving to "choose" tab without a date
+    if (newTab === "choose" && !selectedDate) {
+      alert("Please select a date first");
+      return;
+    }
+
+    // Prevent moving to "payment" tab without seats selected
+    if (newTab === "payment" && selectedSeatNumbers.length === 0) {
+      alert("Please select at least one seat");
+      return;
+    }
+
+    setActiveTab(newTab);
+    router.push(`?tab=${newTab}`, { scroll: false });
+  };
+
+  // Initialize tab from URL on mount
+  useEffect(() => {
+    const tabFromUrl = searchParams.get("tab");
+    if (tabFromUrl && ["booking", "choose", "payment"].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
 
   return (
     <div className="bg-white flex flex-col scanline-root max-w-lg mx-auto p-6 pb-14 rounded-2xl">
       <Tabs
         value={activeTab}
-        onValueChange={setActiveTab}
+        onValueChange={handleTabChange}
         defaultValue="booking"
         className="w-full"
       >
@@ -158,6 +193,14 @@ function MakePaymentTab() {
     }
   }, [paymentStatus, bookingId, router]);
 
+  const handleChangeDate = () => {
+    router.push("?tab=booking", { scroll: false });
+  };
+
+  const handleChangeSeats = () => {
+    router.push("?tab=choose", { scroll: false });
+  };
+
   const totalPrice = price ? price * selectedSeatNumbers.length : 0;
 
   return (
@@ -219,18 +262,19 @@ function MakePaymentTab() {
 
         <div className="flex gap-3">
           <button
-            onClick={() => setActiveTab("booking")}
+            onClick={handleChangeDate}
             className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
           >
             Change Date
           </button>
           <button
-            onClick={() => setActiveTab("choose")}
+            onClick={handleChangeSeats}
             className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
           >
             Change Seats
           </button>
         </div>
+
         <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <p className="text-[#72A0A0]">Payment Status</p>
