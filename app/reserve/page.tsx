@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useBookingStore, setActiveTab } from "./store";
@@ -21,28 +21,10 @@ function Content() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { activeTab, selectedDate, selectedSeatNumbers } = useBookingStore();
+  const [isReady, setIsReady] = useState(false);
 
   // Sync URL with active tab
   const handleTabChange = (newTab: string) => {
-    // Allow moving back to booking tab anytime
-    if (newTab === "booking") {
-      setActiveTab(newTab);
-      router.push(`?tab=${newTab}`, { scroll: false });
-      return;
-    }
-
-    // Prevent moving to "choose" tab without a date
-    if (newTab === "choose" && !selectedDate) {
-      alert("Please select a date first");
-      return;
-    }
-
-    // Prevent moving to "payment" tab without seats selected
-    if (newTab === "payment" && selectedSeatNumbers.length === 0) {
-      alert("Please select at least one seat");
-      return;
-    }
-
     setActiveTab(newTab);
     router.push(`?tab=${newTab}`, { scroll: false });
   };
@@ -50,10 +32,33 @@ function Content() {
   // Initialize tab from URL on mount
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
-    if (tabFromUrl && ["booking", "choose", "payment"].includes(tabFromUrl)) {
-      setActiveTab(tabFromUrl);
+
+    if (!tabFromUrl) {
+      router.push("?tab=booking", { scroll: false });
+      return;
     }
-  }, [searchParams]);
+
+    if (!["booking", "choose", "payment"].includes(tabFromUrl)) return;
+
+    const { selectedDate, selectedSeatNumbers } = useBookingStore.getState();
+
+    if (tabFromUrl === "choose" && !selectedDate) {
+      router.push("?tab=booking", { scroll: false });
+      return;
+    }
+
+    if (tabFromUrl === "payment" && selectedSeatNumbers.length === 0) {
+      router.push("?tab=booking", { scroll: false });
+      return;
+    }
+
+    setActiveTab(tabFromUrl);
+    setIsReady(true);
+  }, [searchParams, router]);
+
+  if (!isReady) {
+    return null;
+  }
 
   return (
     <div className="bg-white flex flex-col scanline-root max-w-lg mx-auto p-6 pb-14 rounded-2xl">
@@ -67,21 +72,21 @@ function Content() {
           <TabsTrigger
             value="booking"
             className="cursor-pointer disabled:opacity-100"
-            disabled
+            disabled={false}
           >
             Pick a Date
           </TabsTrigger>
           <TabsTrigger
             value="choose"
             className="cursor-pointer disabled:opacity-100"
-            disabled
+            disabled={!selectedDate}
           >
             Choose Seat
           </TabsTrigger>
           <TabsTrigger
             value="payment"
             className="cursor-pointer disabled:opacity-100"
-            disabled
+            disabled={selectedSeatNumbers.length === 0}
           >
             Make Payment
           </TabsTrigger>
@@ -215,7 +220,7 @@ function MakePaymentTab() {
         </p>
       </div>
       <div className="bg-white mb-8 flex flex-col gap-6">
-        {user && (
+        {user ? (
           <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
             {user.fullName && (
               <div>
@@ -241,6 +246,11 @@ function MakePaymentTab() {
                 </div>
               </div>
             )}
+          </div>
+        ) : (
+          <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
+            <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse mb-2"></div>
+            <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse"></div>
           </div>
         )}
 
@@ -346,7 +356,7 @@ export default function ReservePage() {
       <div className="z-[2] relative">
         <Header />
 
-        <main className="">
+        <main className="min-h-screen">
           <Content />
         </main>
 
