@@ -8,6 +8,8 @@ import { useBookingStore, setBookingId } from "@/app/reserve/store";
 import { CONFIG } from "@/app/reserve/constants";
 import { loadPaystackScript, formatDateToLocalISO } from "@/lib/utils";
 
+import { toast } from "sonner";
+
 interface PaystackResponse {
   reference: string;
   trans: string;
@@ -246,17 +248,13 @@ export const usePaymentHandler = () => {
           setPaymentLoading(false);
         },
         onClose: () => {
-          if (bookingIdToUse) {
-            handleCancelBooking(bookingIdToUse);
-          }
           setPaymentLoading(false);
         },
       });
 
       paystack.openIframe();
     } catch (error) {
-      setPaymentStatus("failed");
-      setPaymentMessage("Payment failed!");
+      toast.error("Payment error");
       console.error("Payment error:", error);
       setPaymentLoading(false);
     }
