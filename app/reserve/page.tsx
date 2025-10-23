@@ -7,7 +7,7 @@ import { usePaymentHandler } from "@/hooks/usePaymentHandler";
 import { useSeats } from "@/hooks/useSeats";
 
 import Image from "next/image";
-import { LucideLoader } from "lucide-react";
+import { LucideLoader, Check } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import BookingCalendar from "@/components/BookingCalendar";
@@ -20,7 +20,7 @@ import DurationSymbol from "@/public/duration-symbol.svg";
 function Content() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { activeTab } = useBookingStore();
+  const { activeTab, selectedSeatIds, selectedDate } = useBookingStore();
   const [isReady, setIsReady] = useState(false);
 
   // Sync URL with active tab
@@ -56,6 +56,15 @@ function Content() {
     setIsReady(true);
   }, [searchParams, router]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeTab]);
+
+  const isBookingActive = activeTab === "booking";
+  const isBookingCompleted = selectedDate && !isBookingActive;
+  const isChooseActive = activeTab === "choose";
+  const isChooseCompleted = selectedSeatIds.length > 0 && !isChooseActive;
+
   if (!isReady) {
     return null;
   }
@@ -66,38 +75,49 @@ function Content() {
         value={activeTab}
         onValueChange={handleTabChange}
         defaultValue="booking"
-        className="w-full"
+        className="w-full gap-4"
       >
-        <TabsList className="relative w-full bg-transparent">
+        <TabsList className="relative w-full bg-transparent flex items-center justify-center pb-2">
           <TabsTrigger
             value="booking"
-            className="disabled:opacity-100 data-[state=active]:shadow-none"
+            className="disabled:opacity-100 data-[state=active]:shadow-none flex-1 flex items-center justify-center gap-1 md:gap-2 text-xs md:text-base leading-0"
             disabled
           >
+            <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300 text-[#0000FF] border-2 border-solid border-[#0000FF]">
+              {isBookingCompleted ? <Check strokeWidth={3} /> : "1"}
+            </span>
             Pick a Date
           </TabsTrigger>
           <TabsTrigger
             value="choose"
-            className="disabled:opacity-100 data-[state=active]:shadow-none"
+            className="disabled:opacity-100 data-[state=active]:shadow-none  flex-1 flex items-center justify-center gap-1 md:gap-2 text-xs md:text-base leading-0"
             disabled
           >
+            <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300 text-[#0000FF] border-2 border-solid border-[#0000FF]">
+              {isChooseCompleted ? <Check strokeWidth={3} /> : "2"}
+            </span>
             Choose Seat
           </TabsTrigger>
           <TabsTrigger
             value="payment"
-            className="disabled:opacity-100 data-[state=active]:shadow-none"
+            className="disabled:opacity-100 data-[state=active]:shadow-none flex-1 flex items-center justify-center gap-1 md:gap-2 text-xs md:text-base leading-0"
             disabled
           >
+            <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300 text-[#0000FF] border-2 border-solid border-[#0000FF]">
+              3
+            </span>
             Make Payment
           </TabsTrigger>
-          <div className="absolute bottom-[-2px] left-0 h-0.5 w-full bg-gray-200" />
+          {/* progress bar */}
+          <div className="absolute bottom-[-2px] left-0 h-1 w-full bg-gray-200" />
           <div
-            className={`absolute bottom-[-2px] left-0 h-0.5 bg-blue-600 transition-all duration-300 ease-in-out
+            className={`absolute bottom-[-2px] left-0 h-1 bg-[#0000FF] transition-all duration-300 ease-in-out rounded-r-full
               ${activeTab === "booking" && "w-1/3"}
               ${activeTab === "choose" && "w-2/3"}
               ${activeTab === "payment" && "w-full"}
             `}
           />
+          {/**/}
         </TabsList>
         <TabsContent value="booking" className="px-6">
           <PickScheduleTab />
@@ -264,8 +284,32 @@ function MakePaymentTab() {
 
         {selectedSeatNumbers.length > 0 && selectedDate ? (
           <div className="border-gray-200 border shadow rounded-lg p-4 flex gap-3">
-            <div className="pt-3">
-              <Image src={DurationSymbol} alt="" />
+            <div className="pt-2.5">
+              <svg
+                width="9"
+                height="110"
+                viewBox="0 0 9 110"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="4.5"
+                  cy="4"
+                  r="4"
+                  className="fill-muted-foreground"
+                />
+                <path
+                  d="M4.5 8L4.5 102"
+                  strokeDasharray="2 2"
+                  className="stroke-muted-foreground"
+                />
+                <circle
+                  cx="4.5"
+                  cy="106"
+                  r="4"
+                  className="fill-muted-foreground"
+                />
+              </svg>
             </div>
             <div className="flex flex-col gap-6">
               <div>
