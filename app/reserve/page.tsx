@@ -61,43 +61,51 @@ function Content() {
   }
 
   return (
-    <div className="bg-white flex flex-col scanline-root max-w-lg mx-auto p-6 pb-14 rounded-2xl">
+    <div className="bg-white flex flex-col scanline-root max-w-lg mx-auto py-6 pb-14 rounded-2xl">
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
         defaultValue="booking"
         className="w-full"
       >
-        <TabsList className="w-full">
+        <TabsList className="relative w-full bg-transparent">
           <TabsTrigger
             value="booking"
-            className="cursor-pointer disabled:opacity-100"
+            className="disabled:opacity-100 data-[state=active]:shadow-none"
             disabled
           >
             Pick a Date
           </TabsTrigger>
           <TabsTrigger
             value="choose"
-            className="cursor-pointer disabled:opacity-100"
+            className="disabled:opacity-100 data-[state=active]:shadow-none"
             disabled
           >
             Choose Seat
           </TabsTrigger>
           <TabsTrigger
             value="payment"
-            className="cursor-pointer disabled:opacity-100"
+            className="disabled:opacity-100 data-[state=active]:shadow-none"
             disabled
           >
             Make Payment
           </TabsTrigger>
+          <div className="absolute bottom-[-2px] left-0 h-0.5 w-full bg-gray-200" />
+          <div
+            className={`absolute bottom-[-2px] left-0 h-0.5 bg-blue-600 transition-all duration-300 ease-in-out
+              ${activeTab === "booking" && "w-1/3"}
+              ${activeTab === "choose" && "w-2/3"}
+              ${activeTab === "payment" && "w-full"}
+            `}
+          />
         </TabsList>
-        <TabsContent value="booking">
+        <TabsContent value="booking" className="px-6">
           <PickScheduleTab />
         </TabsContent>
-        <TabsContent value="choose">
+        <TabsContent value="choose" className="px-6">
           <PickSeatTab />
         </TabsContent>
-        <TabsContent value="payment">
+        <TabsContent value="payment" className="px-6">
           <MakePaymentTab />
         </TabsContent>
       </Tabs>
