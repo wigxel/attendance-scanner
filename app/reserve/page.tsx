@@ -61,6 +61,7 @@ function Content() {
   const isBookingCompleted = selectedDate && !isBookingActive;
   const isChooseActive = activeTab === "choose";
   const isChooseCompleted = selectedSeatIds.length > 0 && !isChooseActive;
+  const isPaymentActive = activeTab === "payment";
 
   if (!isReady) {
     return null;
@@ -90,17 +91,21 @@ function Content() {
             className="disabled:opacity-100 data-[state=active]:shadow-none  flex-1 flex items-center justify-center gap-1 md:gap-2 text-xs md:text-base leading-0"
             disabled
           >
-            <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300 text-[#0000FF] border-2 border-solid border-[#0000FF]">
+            <span
+              className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300 border-2 border-solid ${isChooseActive || isChooseCompleted ? "text-[#0000FF] border-[#0000FF]" : "text-muted-foreground border-muted-foreground"}`}
+            >
               {isChooseCompleted ? <Check strokeWidth={3} /> : "2"}
             </span>
             Choose Seat
           </TabsTrigger>
           <TabsTrigger
             value="payment"
-            className="disabled:opacity-100 data-[state=active]:shadow-none flex-1 flex items-center justify-center gap-1 md:gap-2 text-xs md:text-base leading-0"
+            className={`disabled:opacity-100 data-[state=active]:shadow-none flex-1 flex items-center justify-center gap-1 md:gap-2 text-xs md:text-base leading-0`}
             disabled
           >
-            <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300 text-[#0000FF] border-2 border-solid border-[#0000FF]">
+            <span
+              className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300 border-2 border-solid ${isPaymentActive ? "text-[#0000FF] border-[#0000FF]" : "text-muted-foreground border-muted-foreground"}`}
+            >
               3
             </span>
             Make Payment
