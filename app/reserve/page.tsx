@@ -6,7 +6,6 @@ import { useBookingStore, setActiveTab } from "./store";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
 import { useSeats } from "@/hooks/useSeats";
 
-import Image from "next/image";
 import { LucideLoader, Check } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -14,8 +13,6 @@ import BookingCalendar from "@/components/BookingCalendar";
 import SeatLayout from "@/components/SeatLayout";
 import PendingBookingsModal from "@/components/PendingBookingsModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import DurationSymbol from "@/public/duration-symbol.svg";
 
 function Content() {
   const router = useRouter();

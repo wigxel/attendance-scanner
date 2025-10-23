@@ -658,3 +658,52 @@ export const markBookingAsExpired = mutation({
     };
   },
 });
+
+export const getFullyBookedDates = query({
+  handler: async (ctx) => {
+    // Get total number of seats
+    const allSeats = await ctx.db.query("seats").collect();
+    const totalSeats = allSeats.length;
+
+    // Get all confirmed bookings
+    const confirmedBookings = await ctx.db
+      .query("bookings")
+      .filter((q) => q.eq(q.field("status"), "confirmed"))
+      .collect();
+
+    // Group bookings by date and count seats
+    const dateSeatsMap = new Map<string, Set<string>>();
+
+    for (const booking of confirmedBookings) {
+      // Get all dates in the booking range
+      const startDate = new Date(booking.startDate);
+      const endDate = new Date(booking.endDate);
+
+      const currentDate = new Date(startDate);
+      while (currentDate <= endDate) {
+        const dateKey = currentDate.toISOString().split("T")[0];
+
+        if (!dateSeatsMap.has(dateKey)) {
+          dateSeatsMap.set(dateKey, new Set());
+        }
+
+        // Add all seats from this booking
+        booking.seatIds.forEach((seatId) => {
+          dateSeatsMap.get(dateKey)!.add(seatId);
+        });
+
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    }
+
+    // Find dates where all seats are booked
+    const fullyBookedDates: string[] = [];
+    dateSeatsMap.forEach((seats, date) => {
+      if (seats.size === totalSeats) {
+        fullyBookedDates.push(date);
+      }
+    });
+
+    return fullyBookedDates;
+  },
+});

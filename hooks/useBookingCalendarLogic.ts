@@ -1,4 +1,6 @@
 import { useRouter } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { calculateEndDate } from "@/lib/utils";
 import {
   useBookingStore,
@@ -13,6 +15,9 @@ export const useBookingCalendarLogic = () => {
   const { timePeriodString } = useBookingStore();
   const selectedDateString = useBookingStore((state) => state.selectedDate);
   const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
+
+  const fullyBookedDates = useQuery(api.bookings.getFullyBookedDates);
+
   let timePeriod: number;
   let price: number; // in kobo
 
@@ -32,7 +37,11 @@ export const useBookingCalendarLogic = () => {
   const reserved: {
     startDate: Date;
     endDate: Date;
-  }[] = [];
+  }[] =
+    fullyBookedDates?.map((dateStr: string) => ({
+      startDate: new Date(dateStr),
+      endDate: new Date(dateStr),
+    })) || [];
 
   const formatDate = (date: Date): string => {
     if (!date) {
