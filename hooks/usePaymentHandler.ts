@@ -73,6 +73,7 @@ export const usePaymentHandler = () => {
     }
   };
 
+  /*
   const handleCancelBooking = async (bookingIdToCancel: Id<"bookings">) => {
     try {
       const token = await getToken({ template: "convex" });
@@ -95,7 +96,7 @@ export const usePaymentHandler = () => {
       console.error("Booking cancellation failed:", error);
     }
   };
-
+ */
   const handlePayment = async () => {
     try {
       setPaymentLoading(true);
