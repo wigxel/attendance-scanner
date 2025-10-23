@@ -2,6 +2,20 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { formatDateToLocalISO } from "../lib/utils";
 
+export const getBooking = query({
+  args: {
+    bookingId: v.id("bookings"),
+  },
+  handler: async (ctx, { bookingId }) => {
+    const booking = await ctx.db.get(bookingId);
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    return booking;
+  },
+});
+
 export const createBooking = mutation({
   /**
    * Creates a new seat booking for the authenticated user.
@@ -199,12 +213,17 @@ export const updateBooking = mutation({
 
     const existingBooking = await ctx.db.get(args.bookingId);
 
-    if (
-      !existingBooking ||
-      existingBooking.userId !== userId ||
-      existingBooking.status !== "pending"
-    ) {
-      throw new Error("Booking cannot be updated.");
+    if (!existingBooking) {
+      throw new Error("Booking not found.");
+    }
+
+    if (existingBooking.userId !== userId) {
+      throw new Error("You are not authorized to update this booking.");
+    }
+
+    if (existingBooking.status !== "pending") {
+      console.log("Booking Id: ", existingBooking._id);
+      throw new Error("Only pending bookings can be updated.");
     }
 
     const calculateEndDate = (
@@ -603,20 +622,6 @@ export const markCompletedBookingsAsExpired = mutation({
       expiredBookings,
       processedAt: now,
     };
-  },
-});
-
-export const getBookingById = query({
-  args: {
-    bookingId: v.id("bookings"),
-  },
-  handler: async (ctx, { bookingId }) => {
-    const booking = await ctx.db.get(bookingId);
-    if (!booking) {
-      throw new Error("Booking not found");
-    }
-
-    return booking;
   },
 });
 

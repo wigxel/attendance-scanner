@@ -162,16 +162,58 @@ export const usePaymentHandler = () => {
 
       let bookingIdToUse = bookingId;
 
-      // If bookingId exists, update the booking
+      // Check if booking exists and its status
       if (bookingId) {
-        await httpClient.mutation(api.bookings.updateBooking, {
-          bookingId,
-          startDate: formatDateToLocalISO(selectedDate) || "",
-          seatIds: selectedSeatIds,
-          durationType: timePeriodString,
-        });
+        const existingBooking = await httpClient.query(
+          api.bookings.getBooking,
+          { bookingId },
+        );
+
+        // If booking is expired or doesn't exist, create a new one
+        if (!existingBooking || existingBooking.status === "expired") {
+          const bookingArgs = {
+            userId: user?.id || "",
+            startDate: formatDateToLocalISO(selectedDate) || "",
+            seatIds: selectedSeatIds,
+            durationType: timePeriodString,
+          };
+
+          const createBooking = await httpClient.mutation(
+            api.bookings.createBooking,
+            bookingArgs,
+          );
+
+          if (
+            !createBooking.bookingIds ||
+            createBooking.bookingIds.length === 0
+          ) {
+            setPaymentMessage("Failed to create booking.");
+            setPaymentStatus("failed");
+            setPaymentLoading(false);
+            return;
+          }
+
+          bookingIdToUse = createBooking.bookingIds[0];
+          setBookingId(bookingIdToUse);
+        } else if (existingBooking.status === "pending") {
+          // Update existing pending booking
+          await httpClient.mutation(api.bookings.updateBooking, {
+            bookingId,
+            startDate: formatDateToLocalISO(selectedDate) || "",
+            seatIds: selectedSeatIds,
+            durationType: timePeriodString,
+          });
+        } else {
+          // Booking is confirmed or cancelled, can't proceed
+          setPaymentMessage(
+            `Cannot proceed. Booking is already ${existingBooking.status}.`,
+          );
+          setPaymentStatus("failed");
+          setPaymentLoading(false);
+          return;
+        }
       } else {
-        // If bookingId doesn't exist, create a new booking
+        // No bookingId exists, create a new booking
         const bookingArgs = {
           userId: user?.id || "",
           startDate: formatDateToLocalISO(selectedDate) || "",

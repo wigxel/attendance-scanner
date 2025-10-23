@@ -20,7 +20,7 @@ export default function SuccessPage() {
   const searchParams = useSearchParams();
   const bookingId = searchParams.get("booking-id") as Id<"bookings">;
 
-  const bookingDetails = useQuery(api.bookings.getBookingById, { bookingId });
+  const bookingDetails = useQuery(api.bookings.getBooking, { bookingId });
 
   const userId = bookingDetails?.userId || "";
   const seatIds = bookingDetails ? bookingDetails?.seatIds : [];
