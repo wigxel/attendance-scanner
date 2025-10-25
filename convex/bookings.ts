@@ -130,6 +130,11 @@ export const createBooking = mutation({
     const startMs = new Date(args.startDate).getTime();
     if (startMs < Date.now()) throw new Error("Cannot book past dates");
 
+    const startDate = new Date(args.startDate);
+    if (startDate.getDay() === 0) {
+      throw new Error("Cannot book on Sundays. Please select another date.");
+    }
+
     if (args.seatIds.length === 0) throw new Error("No seats selected");
 
     // Check availability for all requested seats
