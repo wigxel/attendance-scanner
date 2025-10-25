@@ -1,8 +1,10 @@
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useBookingStore, setActiveTab } from "@/app/reserve/store";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { formatTime } from "@/lib/utils";
 
 interface PendingBooking {
   _id: Id<"bookings">;
@@ -23,42 +25,51 @@ interface PendingBooking {
 }
 
 const PendingBookingsModal = () => {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
-  const { bookingId, activeTab } = useBookingStore();
+  const { bookingId } = useBookingStore();
   const pendingBookings = useQuery(api.bookings.getUserPendingBookings);
   const expireBooking = useMutation(api.bookings.markBookingAsExpired);
 
-  // Calculate time remaining based on booking creation time
+  // Track if this is the initial load
+  const hasCheckedInitialBookings = useRef(false);
+  const initialBookingIdRef = useRef<string | null>(null);
+
+  // Only check for pending bookings on initial page load
   useEffect(() => {
     if (
+      !hasCheckedInitialBookings.current &&
       pendingBookings &&
-      pendingBookings.length > 0 &&
-      activeTab !== "payment" &&
-      !bookingId
+      pendingBookings.length > 0
     ) {
+      hasCheckedInitialBookings.current = true;
+      initialBookingIdRef.current = pendingBookings[0]._id;
       setIsOpen(true);
 
+      // Calculate time remaining based on booking creation time
       const booking = pendingBookings[0];
       const createdTime = booking.createdAt;
-      const expiryTime = createdTime + 10 * 60 * 1000; // 10 minutes
+      const expiryTime = createdTime + 10 * 60 * 1000;
       const now = Date.now();
       const remaining = Math.max(0, Math.floor((expiryTime - now) / 1000));
       setTimeRemaining(remaining);
-    } else {
-      setIsOpen(false);
+    } else if (
+      pendingBookings &&
+      pendingBookings.length === 0 &&
+      !hasCheckedInitialBookings.current
+    ) {
+      // No pending bookings found on initial load
+      hasCheckedInitialBookings.current = true;
     }
-  }, [pendingBookings, activeTab, bookingId]);
+  }, [pendingBookings, bookingId]);
 
   useEffect(() => {
     if (!isOpen || timeRemaining <= 0) {
-      if (
-        timeRemaining === 0 &&
-        pendingBookings &&
-        pendingBookings.length > 0
-      ) {
-        // expire immediately when timer reaches 0
-        expireBooking({ bookingId: pendingBookings[0]._id });
+      if (timeRemaining === 0 && initialBookingIdRef.current) {
+        expireBooking({
+          bookingId: initialBookingIdRef.current as Id<"bookings">,
+        });
       }
       return;
     }
@@ -75,16 +86,15 @@ const PendingBookingsModal = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isOpen, timeRemaining, pendingBookings, expireBooking]);
+  }, [isOpen, timeRemaining, expireBooking]);
 
   const handleResume = (booking: PendingBooking) => {
-    // Restore booking state to the store
     useBookingStore.setState({
-      selectedDate: new Date(booking.startDate),
+      selectedDate: new Date(booking.startDate).toISOString(),
       endDate:
         booking.durationType === "day"
-          ? new Date(booking.startDate)
-          : new Date(booking.endDate), // day bookings should end same day
+          ? new Date(booking.startDate).toISOString()
+          : new Date(booking.endDate).toISOString(),
       selectedSeatNumbers: booking.seats.map((s) => s.seatNumber.toString()),
       selectedSeatIds: booking.seatIds,
       price: booking.pricePerSeat,
@@ -92,20 +102,15 @@ const PendingBookingsModal = () => {
       timePeriodString: booking.durationType,
     });
 
-    // Navigate to payment tab
     setActiveTab("payment");
+    router.push(`?tab=payment`, { scroll: false });
+
     setIsOpen(false);
   };
 
   const handleCancel = async (bookingId: Id<"bookings">) => {
     await expireBooking({ bookingId });
     setIsOpen(false);
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const isExpiringSoon = timeRemaining < 60; // Less than 1 minute
@@ -134,7 +139,6 @@ const PendingBookingsModal = () => {
           You have an incomplete booking. Complete payment before it expires.
         </p>
 
-        {/* Progress bar */}
         <div className="mb-6 h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
             className={`h-full transition-all duration-1000 ${

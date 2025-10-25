@@ -1,10 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useBookingStore, setActiveTab } from "./store";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
 import { useSeats } from "@/hooks/useSeats";
+import { formatTime } from "@/lib/utils";
 
 import { LucideLoader, Check } from "lucide-react";
 import { Header } from "@/components/header";
@@ -224,12 +227,45 @@ function MakePaymentTab() {
     paymentLoading,
   } = usePaymentHandler();
   const { user } = useUser();
+  const [showTimer, setShowTimer] = useState(false);
+  const pendingBookings = useQuery(api.bookings.getUserPendingBookings);
+  const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+
+  useEffect(() => {
+    if (pendingBookings && pendingBookings.length > 0) {
+      setShowTimer(true);
+      const booking = pendingBookings[0];
+      const createdTime = booking.createdAt;
+      const expiryTime = createdTime + 10 * 60 * 1000;
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((expiryTime - now) / 1000));
+      setTimeRemaining(remaining);
+    }
+  }, [pendingBookings]);
 
   useEffect(() => {
     if (paymentStatus === "success") {
       router.push(`/reserve/success?booking-id=${bookingId}`);
     }
   }, [paymentStatus, bookingId, router]);
+
+  useEffect(() => {
+    if (!showTimer || timeRemaining <= 0) {
+      if (timeRemaining <= 0) setShowTimer(false); // Hide timer when it hits 0
+      return;
+    }
+
+    if (paymentStatus === "failed" || paymentStatus === "success") {
+      setShowTimer(false);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [showTimer, timeRemaining, paymentStatus]);
 
   const handleChangeDate = () => {
     router.push("?tab=booking", { scroll: false });
@@ -239,6 +275,13 @@ function MakePaymentTab() {
     router.push("?tab=choose", { scroll: false });
   };
 
+  const handlePayNowClick = async () => {
+    await handlePayment();
+    setTimeRemaining(600);
+    setShowTimer(true);
+  };
+
+  const isExpiringSoon = timeRemaining < 60;
   const totalPrice = price ? price * selectedSeatNumbers.length : 0;
 
   return (
@@ -380,9 +423,34 @@ function MakePaymentTab() {
             </div>
           )}
         </div>
+        {showTimer && (
+          <div className="border border-gray-200 rounded-lg p-4 mb-2">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-gray-700">Time Remaining</h3>
+              <div
+                className={`text-lg font-bold px-3 py-1 rounded-full ${
+                  isExpiringSoon
+                    ? "bg-red-100 text-red-700"
+                    : "bg-blue-100 text-[#0000FF]"
+                }`}
+              >
+                {formatTime(timeRemaining)}
+              </div>
+            </div>
+            {/* Progress bar */}
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all duration-1000 ${
+                  isExpiringSoon ? "bg-red-500" : "bg-[#0000FF]"
+                }`}
+                style={{ width: `${(timeRemaining / 600) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         <button
-          onClick={handlePayment}
+          onClick={handlePayNowClick}
           className="bg-[#0000FF] hover:bg-[#3333FF] transition-colors duration-300 font-semibold text-white p-3 w-full rounded-lg cursor-pointer flex items-center justify-center"
         >
           {paymentLoading ? (
