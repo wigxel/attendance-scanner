@@ -277,6 +277,7 @@ function MakePaymentTab() {
 
   const handlePayNowClick = async () => {
     await handlePayment();
+    if (pendingBookings && pendingBookings.length > 0) return;
     setTimeRemaining(600);
     setShowTimer(true);
   };
