@@ -111,7 +111,7 @@ export const createBooking = mutation({
       duration = 1;
       pricePerSeat = 150000; // 1,500 per day
       const startMs = new Date(args.startDate).getTime();
-      const endMs = startMs + duration * 24 * 60 * 60 * 1000;
+      const endMs = startMs; // end date should be the same as start date
       endDate = formatDateToLocalISO(new Date(endMs));
     } else if (args.durationType === "week") {
       duration = 6;
