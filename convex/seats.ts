@@ -156,7 +156,7 @@ export const checkSeatAvailability = query({
     if (args.durationType === "day") {
       duration = 1;
       const startMs = new Date(args.startDate).getTime();
-      const endMs = startMs + duration * 24 * 60 * 60 * 1000;
+      const endMs = startMs; // end date should be the same as start date for day booking
       endDate = formatDateToLocalISO(new Date(endMs));
     } else if (args.durationType === "week") {
       duration = 6;

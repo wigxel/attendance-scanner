@@ -670,21 +670,29 @@ export const getFullyBookedDates = query({
     const allSeats = await ctx.db.query("seats").collect();
     const totalSeats = allSeats.length;
 
-    // Get all confirmed bookings
-    const confirmedBookings = await ctx.db
-      .query("bookings")
-      .filter((q) => q.eq(q.field("status"), "confirmed"))
+    // Get all confirmed bookedSeats
+    const confirmedBookedSeats = await ctx.db
+      .query("bookedSeats")
+      .withIndex("by_status", (q) => q.eq("status", "confirmed"))
       .collect();
 
-    // Group bookings by date and count seats
+    // Group by date
     const dateSeatsMap = new Map<string, Set<string>>();
 
-    for (const booking of confirmedBookings) {
-      // Get all dates in the booking range
+    for (const bookedSeat of confirmedBookedSeats) {
+      // Get the booking to check date range
+      const booking = await ctx.db.get(bookedSeat.bookingId);
+      if (!booking) continue;
+
       const startDate = new Date(booking.startDate);
       const endDate = new Date(booking.endDate);
 
+      // Normalize to midnight
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+
       const currentDate = new Date(startDate);
+
       while (currentDate <= endDate) {
         const dateKey = currentDate.toISOString().split("T")[0];
 
@@ -692,16 +700,12 @@ export const getFullyBookedDates = query({
           dateSeatsMap.set(dateKey, new Set());
         }
 
-        // Add all seats from this booking
-        booking.seatIds.forEach((seatId) => {
-          dateSeatsMap.get(dateKey)!.add(seatId);
-        });
-
+        dateSeatsMap.get(dateKey)!.add(bookedSeat.seatId);
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
 
-    // Find dates where all seats are booked
+    // Find fully booked dates
     const fullyBookedDates: string[] = [];
     dateSeatsMap.forEach((seats, date) => {
       if (seats.size === totalSeats) {

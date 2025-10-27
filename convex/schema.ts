@@ -98,7 +98,9 @@ const bookedSeats = defineTable({
     v.literal("cancelled"),
     v.literal("expired"),
   ),
-}).index("by_seat_and_status", ["seatId", "status"]);
+})
+  .index("by_seat_and_status", ["seatId", "status"])
+  .index("by_status", ["status"]);
 
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
