@@ -8,6 +8,7 @@ import { useBookingStore, setActiveTab } from "./store";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
 import { useSeats } from "@/hooks/useSeats";
 import { formatTime } from "@/lib/utils";
+import { DestroyFutureStateOnReserve } from "@/components/DestroyFutureState";
 
 import { LucideLoader, Check } from "lucide-react";
 import { Header } from "@/components/header";
@@ -472,6 +473,7 @@ function MakePaymentTab() {
 export default function ReservePage() {
   return (
     <>
+      <DestroyFutureStateOnReserve />
       <title>Reserve | InSpace</title>
       <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />
 
