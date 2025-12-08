@@ -1,7 +1,8 @@
-import { z } from "zod";
 import { httpRouter } from "convex/server";
-import { api, internal } from "./_generated/api";
+import { isRecord } from 'effect/Predicate';
 import crypto from "uncrypto";
+import { z } from "zod";
+import { api, internal } from "./_generated/api";
 import { httpAction, internalAction } from "./_generated/server";
 import { setExternalId } from "./clerk";
 
@@ -79,7 +80,7 @@ const writeTx = httpAction(async (ctx, res) => {
   return Response.json({ message: "OK" });
 });
 
-const updateUserRole = internalAction(async (ctx, res) => {});
+const updateUserRole = internalAction(async (ctx, res) => { });
 
 http.route({
   method: "POST",
@@ -125,7 +126,8 @@ const handleEvents = httpAction(async (ctx, res) => {
       convexUserId: convex_user_id,
     });
 
-    console.info("Linked Convex User to Clerk User", await response.json());
+    console.assert(isRecord(response), "Expecting an object but got a `Response` Object");
+    console.info("Linked Convex User to Clerk User");
     return Response.json({ message: "OK", data: "User linking complete" });
   }
 
