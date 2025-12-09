@@ -121,12 +121,13 @@ const handleEvents = httpAction(async (ctx, res) => {
     );
 
     console.info("Linking Convex User to Clerk User", clerk_user.id);
+
     const response = await setExternalId({
       clerkUserId: clerk_user.id,
       convexUserId: convex_user_id,
     });
 
-    console.assert(isRecord(response), "Expecting an object but got a `Response` Object");
+    console.info({ isRecord: isRecord(response) }, "Expecting an object but got a `Response` Object");
     console.info("Linked Convex User to Clerk User");
     return Response.json({ message: "OK", data: "User linking complete" });
   }

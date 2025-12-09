@@ -1,21 +1,23 @@
 "use client";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Input } from "./ui/input";
-import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useReadProfile } from "@/hooks/auth";
+import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
+import React from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import * as z from "zod";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
-  FormMessage,
   FormLabel,
+  FormMessage,
 } from "./ui/form";
+import { Input } from "./ui/input";
 import {
   Select,
   SelectContent,
@@ -23,8 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import React from "react";
-import { useReadProfile } from "@/hooks/auth";
 
 // Zod schema for form validation
 const onboardingSchema = z.object({
@@ -211,7 +211,7 @@ export default function OnboardingForm_(
   props: React.ComponentProps<typeof OnboardingForm>,
 ) {
   const router = useRouter();
-  const profile = useReadProfile();
+  const profile = useQuery(api.myFunctions.getProfile);
 
   React.useEffect(() => {
     if (!profile) return;

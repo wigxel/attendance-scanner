@@ -32,3 +32,27 @@ export async function setExternalId(params: {
     body: payload,
   });
 }
+
+export async function deleteClerkUser(params: {
+  clerkUserId: string
+}) {
+  return clerkFetch(`https://api.clerk.com/v1/users/${params.clerkUserId}`, {
+    method: "DELETE"
+  });
+}
+
+export async function updateClerkUser(params: {
+  userId: string;
+  firstName: string;
+  lastName: string;
+}) {
+  const body = {
+    "first_name": params.firstName,
+    "last_name": params.firstName,
+  }
+
+  return clerkFetch(`https://api.clerk.com/v1/users/${params.userId}`, {
+    method: "PATCH",
+    body
+  });
+}

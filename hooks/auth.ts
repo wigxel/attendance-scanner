@@ -1,21 +1,19 @@
 import { api } from "@/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
 import { useUser } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export function useReadProfile() {
   const { user, isSignedIn } = useUser();
+  const router = useRouter();
   const profile = useQuery(api.myFunctions.getProfile);
-  const autoCreateProfile = useMutation(api.auth.autoCreateProfile);
 
-  // Auto-create profile when user signs in but doesn't have a profile
   useEffect(() => {
     if (isSignedIn && user && profile === null) {
-      autoCreateProfile().catch((error) => {
-        console.error("Failed to auto-create profile:", error);
-      });
+      router.replace('/onboarding')
     }
-  }, [isSignedIn, user, profile, autoCreateProfile]);
+  }, [isSignedIn, user, profile, router]);
 
   return profile;
 }
@@ -29,16 +27,13 @@ export function useCustomer({ userId }: { userId: string }) {
 export function useProfile() {
   const { user, isSignedIn, isLoaded } = useUser();
   const profile = useQuery(api.myFunctions.getProfile);
-  const autoCreateProfile = useMutation(api.auth.autoCreateProfile);
+  const router = useRouter();
 
-  // Auto-create profile when user signs in but doesn't have a profile
   useEffect(() => {
-    if (isSignedIn && user && profile === null) {
-      autoCreateProfile().catch((error) => {
-        console.error("Failed to auto-create profile:", error);
-      });
+    if (isSignedIn && user && profile?.occupation && profile.occupation === 'None') {
+      router.push('/onboarding')
     }
-  }, [isSignedIn, user, profile, autoCreateProfile]);
+  }, [isSignedIn, user, profile]);
 
   return {
     isLoading: !isLoaded || (isSignedIn && profile === undefined),

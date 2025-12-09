@@ -1,13 +1,14 @@
 import type { Profile, User } from "@auth/core/types";
 import { TableAggregate } from "@convex-dev/aggregate";
 import type { GenericQueryCtx } from "convex/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { formatISO, setHours } from "date-fns";
 import { logger } from "../config/logger";
-import { components } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import { api } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
-import { internalMutation, mutation, query } from "./_generated/server";
+import { action, internalMutation, mutation, query } from "./_generated/server";
+import { updateClerkUser } from "./clerk";
 import { PlanImpl, featureRequestStatus } from "./shared";
 
 export const authUser = query({
@@ -242,12 +243,13 @@ export const getDailyRegister = query({
 
 async function readId(ctx: any): Promise<string | null> {
   const identity = await ctx.auth.getUserIdentity();
+
   const userId = identity?.profile_id ?? null;
 
   return String(userId) || null;
 }
 
-export const updateUser = mutation({
+export const updateUser = action({
   args: {
     firstName: v.string(),
     lastName: v.string(),
@@ -264,14 +266,47 @@ export const updateUser = mutation({
     }
 
     const profile = await ctx.runQuery(api.myFunctions.getProfile);
-    if (!profile) return;
 
-    await ctx.db.replace(profile._id, {
-      id: userId as Id<"profile">,
+    if (!profile) {
+      throw new ConvexError("Update failed. Profile data missing");
+    }
+
+    await updateClerkUser({
+      userId: userId,
+      firstName: args.firstName,
+      lastName: args.lastName,
+    })
+
+    await ctx.runMutation(internal.myFunctions.updateProfile, {
+      _id: profile._id,
       firstName: args.firstName,
       lastName: args.lastName,
       phoneNumber: args.phoneNumber,
-      role: "user",
+      occupation: args.occupation,
+    })
+  },
+});
+
+export const updateProfile = internalMutation({
+  args: {
+    _id: v.id('profile'),
+    firstName: v.string(),
+    lastName: v.string(),
+    phoneNumber: v.string(),
+    occupation: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const record = await ctx.db.get(args._id);
+
+    if (!record) {
+      throw new ConvexError("Profile update failed!");
+    }
+
+    return await ctx.db.replace(args._id, {
+      ...record,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      phoneNumber: args.phoneNumber,
       occupation: args.occupation ?? "None",
     });
   },

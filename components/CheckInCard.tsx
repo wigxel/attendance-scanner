@@ -2,6 +2,7 @@
 import { APP_URL } from "@/config/constants";
 import { useProfile } from "@/hooks/auth";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
+import { safeObj } from "@/lib/data.helpers";
 import { LucideLoader } from "lucide-react";
 import { motion as m } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
@@ -34,7 +35,6 @@ function QRCode() {
   const device_meta = useDeviceMeta();
   const profile = useProfile();
   const qr_hash = useDo();
-
 
   const isLoading =
     device_meta.isLoading || profile.isLoading || qr_hash.isLoading;
