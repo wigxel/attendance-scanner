@@ -102,6 +102,17 @@ const bookedSeats = defineTable({
   .index("by_seat_and_status", ["seatId", "status"])
   .index("by_status", ["status"]);
 
+const tickets = defineTable({
+  bookingId: v.id("bookings"),
+  seatId: v.id("seats"),
+  holderUserId: v.optional(v.string()), // null if unclaimed
+  status: v.union(v.literal("reserved"), v.literal("claimed")),
+  claimedAt: v.optional(v.number()),
+})
+  .index("by_booking", ["bookingId"])
+  .index("by_holder", ["holderUserId"])
+  .index("by_booking_and_holder", ["bookingId", "holderUserId"]);
+
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
 // The schema provides more precise TypeScript types.
@@ -117,4 +128,5 @@ export default defineSchema({
   seats,
   bookings,
   bookedSeats,
+  tickets,
 });

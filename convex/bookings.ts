@@ -335,29 +335,69 @@ export const getUserConfirmedBookings = query({
       return [];
     }
 
-    const bookings = await ctx.db
+    const userId = identity.subject;
+
+    const purchasedBookings = await ctx.db
       .query("bookings")
       .withIndex("by_startDate")
-      .order("asc")
-      .filter((q) => q.eq(q.field("userId"), identity.subject))
+      .filter((q) => q.eq(q.field("userId"), userId))
       .filter((q) => q.eq(q.field("status"), "confirmed"))
       .collect();
 
-    // Get seat details for each booking
-    const bookingsWithSeats = await Promise.all(
-      bookings.map(async (booking) => {
-        // fetch all seats for this booking
+    const purchasedBookingsWithSeats = await Promise.all(
+      purchasedBookings.map(async (booking) => {
         const seats = await Promise.all(
           booking.seatIds.map((seatId) => ctx.db.get(seatId)),
         );
         return {
           ...booking,
           seats: seats.filter((seat) => seat !== null),
+          role: "purchaser",
         };
       }),
     );
 
-    return bookingsWithSeats;
+    const myTickets = await ctx.db
+      .query("tickets")
+      .withIndex("by_holder", (q) => q.eq("holderUserId", userId))
+      .collect();
+
+    const claimedBookingsWithSeats = await Promise.all(
+      myTickets.map(async (ticket) => {
+        const booking = await ctx.db.get(ticket.bookingId);
+
+        // if booking doesn't exist or isn't confirmed
+        if (!booking || booking.status !== "confirmed") return null;
+
+        // if user is the purchaser of this booking, it is already included
+        // in list 1 above
+        // Skip it here to avoid showing it twice.
+        if (booking.userId === userId) return null;
+
+        // fetch the specific seat for this ticket
+        const seat = await ctx.db.get(ticket.seatId);
+
+        // Return a structure matching the "purchased" one,
+        // but 'seats' array only contains the ONE seat I claimed.
+        return {
+          ...booking,
+          seats: seat ? [seat] : [],
+          role: "guest",
+        };
+      }),
+    );
+
+    // filter out duplicates or invalid bookings
+    const validClaimedBookings = claimedBookingsWithSeats.filter(
+      (bookings) => bookings !== null,
+    );
+
+    const allBookings = [
+      ...purchasedBookingsWithSeats,
+      ...validClaimedBookings,
+    ];
+
+    return allBookings;
   },
 });
 
@@ -714,5 +754,98 @@ export const getFullyBookedDates = query({
     });
 
     return fullyBookedDates;
+  },
+});
+
+export const generateTickets = mutation({
+  args: { bookingId: v.id("bookings") },
+  handler: async (ctx, args) => {
+    const booking = await ctx.db.get(args.bookingId);
+    if (!booking || booking.status !== "confirmed") {
+      throw new Error("Booking not found or not confirmed");
+    }
+
+    // check if tickets already exist to prevent duplicates
+    const existingTickets = await ctx.db
+      .query("tickets")
+      .withIndex("by_booking", (q) => q.eq("bookingId", args.bookingId))
+      .collect();
+
+    if (existingTickets.length > 0) return;
+
+    // create a ticket for each seat
+    for (let i = 0; i < booking.seatIds.length; i++) {
+      const seat = booking.seatIds[i];
+
+      // automatically assign the FIRST seat to the purchaser
+      const isFirstSeat = i === 0;
+
+      await ctx.db.insert("tickets", {
+        bookingId: booking._id,
+        seatId: seat,
+        holderUserId: isFirstSeat ? booking.userId : undefined,
+        status: isFirstSeat ? "claimed" : "reserved",
+        claimedAt: isFirstSeat ? Date.now() : undefined,
+      });
+    }
+  },
+});
+
+export const getBookingWithTickets = query({
+  args: { bookingId: v.id("bookings") },
+  handler: async (ctx, args) => {
+    const booking = await ctx.db.get(args.bookingId);
+    if (!booking) return null;
+
+    const tickets = await ctx.db
+      .query("tickets")
+      .withIndex("by_booking", (q) => q.eq("bookingId", args.bookingId))
+      .collect();
+
+    const ticketsWithSeatData = await Promise.all(
+      tickets.map(async (ticket) => {
+        const seat = await ctx.db.get(ticket.seatId);
+        return {
+          ...ticket,
+          seatNumber: seat?.seatNumber,
+        };
+      }),
+    );
+
+    return {
+      ...booking,
+      tickets: ticketsWithSeatData,
+    };
+  },
+});
+
+export const claimTicket = mutation({
+  args: { ticketId: v.id("tickets") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const ticket = await ctx.db.get(args.ticketId);
+    if (!ticket) throw new Error("Ticket not found");
+    if (ticket.holderUserId) throw new Error("Seat already claimed");
+
+    // prevent a user from claiming multiple seats in the same booking
+    const alreadyClaimed = await ctx.db
+      .query("tickets")
+      .withIndex("by_booking_and_holder", (q) =>
+        q
+          .eq("bookingId", ticket.bookingId)
+          .eq("holderUserId", identity.subject),
+      )
+      .first();
+
+    if (alreadyClaimed)
+      throw new Error("You have already claimed a seat in this booking.");
+
+    await ctx.db.patch(args.ticketId, {
+      holderUserId: identity.subject,
+      status: "claimed",
+      claimedAt: Date.now(),
+    });
   },
 });

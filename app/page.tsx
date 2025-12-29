@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
 import { If } from "@/components/if";
 import Link from "next/link";
-import { ArrowRightIcon, Calendar } from "lucide-react";
+import { ArrowRightIcon, Calendar, Clock, Users } from "lucide-react";
 
 function greet_time(): string {
   const date = new Date();
@@ -152,37 +152,88 @@ function ActiveBookings() {
         {bookings.map((booking) => (
           <div
             key={booking._id}
-            className="border border-gray-200 rounded-lg p-4 bg-green-50 border-l-4 border-l-gray-500"
+            className="py-4 border-b border-gray-100 last:border-0 flex flex-col gap-3"
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-600" />
-                <span className="font-medium text-gray-900">
-                  {formatDate(booking.startDate)}
-                  {booking.durationType !== "day" && (
-                    <span className="text-gray-500">
-                      {" "}
-                      - {formatDate(booking.endDate)}
-                    </span>
+            <div className="group flex flex-col md:flex-row sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
+              {/* LEFT: Date and Time */}
+              <div className="flex items-center gap-3 min-w-[180px]">
+                {/* Calendar Box */}
+                <div className="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg shrink-0 border border-gray-200">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">
+                    {new Date(booking.startDate).toLocaleString("default", {
+                      month: "short",
+                    })}
+                  </span>
+                  <span className="text-lg font-bold text-gray-900 leading-none">
+                    {new Date(booking.startDate).getDate()}
+                  </span>
+                </div>
+
+                {/* Date/Time Text Info */}
+                <div className="flex flex-col">
+                  {booking.durationType === "day" ? (
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                      <Clock className="w-3.5 h-3.5 text-gray-400" />
+                      <p>09:00 AM - 05:00 PM</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                      <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                      {/*if not a day booking, show the date range*/}
+                      <span>
+                        {formatDate(booking.startDate)} -{" "}
+                        {formatDate(booking.endDate)}
+                      </span>
+                    </div>
                   )}
-                </span>
+                  <span className="text-xs text-gray-500">
+                    {getDurationText(booking.durationType)}
+                  </span>
+                </div>
               </div>
-              <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
-                {getDurationText(booking.durationType)}
-              </span>
+
+              {/* RIGHT: Action Button / Status Badge */}
+              <div className="flex items-center md:justify-end sm:min-w-[140px]">
+                {booking.role === "purchaser" && booking.seats.length > 1 ? (
+                  // Purchaser with multiple seats: Share Button
+                  <Link
+                    href={`/share/${booking._id}`}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-black hover:bg-gray-800 text-white text-xs font-medium rounded-full transition-all shadow-sm hover:shadow"
+                  >
+                    <Users className="w-3 h-3" />
+                    <span>Manage Group</span>
+                  </Link>
+                ) : booking.role === "guest" ? (
+                  // Guest: Guest Badge
+                  <div className="flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                    Guest
+                  </div>
+                ) : (
+                  // Purchaser with single seat: Confirmed Badge
+                  <div className="flex items-center gap-1 text-xs font-medium text-[#0000FF] bg-blue-50 px-2 py-1 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0000FF]" />
+                    Confirmed
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">
-                Seat{" "}
+            {/* Seat Numbers */}
+            <div className="flex flex-col gap-1 justify-between">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">
+                {booking.seats.length > 1 ? "Seats Reserved" : "Seat Number"}
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
                 {booking.seats?.map((seat, index) => (
-                  <span key={index}>
+                  <span
+                    key={index}
+                    className="text-sm font-mono font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200"
+                  >
                     {seat?.seatNumber}
-                    {index < booking.seats.length - 1 && ", "}
                   </span>
                 ))}
-              </span>
-              <span className="text-xs text-gray-500">09:00 AM - 05:00 PM</span>
+              </div>
             </div>
           </div>
         ))}

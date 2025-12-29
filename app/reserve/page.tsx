@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useBookingStore, setActiveTab } from "./store";
@@ -244,9 +244,16 @@ function MakePaymentTab() {
     }
   }, [pendingBookings]);
 
+  const generateTicketsMutation = useMutation(api.bookings.generateTickets);
   useEffect(() => {
-    if (paymentStatus === "success") {
-      router.push(`/reserve/success?booking-id=${bookingId}`);
+    if (paymentStatus === "success" && bookingId) {
+      generateTicketsMutation({ bookingId })
+        .then(() => {
+          router.push(`/reserve/success?booking-id=${bookingId}`);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     }
   }, [paymentStatus, bookingId, router]);
 
