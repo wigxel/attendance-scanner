@@ -1,5 +1,5 @@
 "use client";
-import { APP_URL } from "@/config/constants";
+import { APP_URL, isDevelopment } from "@/config/constants";
 import { useProfile } from "@/hooks/auth";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
 import { safeObj } from "@/lib/data.helpers";
@@ -8,6 +8,7 @@ import { motion as m } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
 import React from "react";
 import { ScanTimeCodec } from "./TakeAttendance";
+import { If } from "./if";
 
 function useDo() {
   const profile = useProfile();
@@ -95,6 +96,12 @@ function QRCode() {
           />
         )}
       </div>
+
+      <If cond={isDevelopment}>
+        <p>
+          ProfileId: {JSON.stringify(Object.keys(safeObj(profile.data)))}
+        </p>
+      </If>
     </m.div>
   );
 }
