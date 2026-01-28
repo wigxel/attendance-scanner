@@ -52,7 +52,7 @@ function OnboardingForm({
   initial,
 }: { initial: Partial<OnboardingFormValues> }) {
   const router = useRouter();
-  const updateUser = useMutation(api.myFunctions.updateUser);
+  const updateUser = useMutation(api.myFunctions.updateUserApp);
 
   //Fetch occupations from the database
   const occupations = useQuery(api.myFunctions.listOccupations) ?? [];

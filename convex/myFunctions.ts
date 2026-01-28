@@ -249,6 +249,37 @@ async function readId(ctx: any): Promise<string | null> {
   return String(userId) || null;
 }
 
+export const updateUserApp = mutation({
+  args: {
+    firstName: v.string(),
+    lastName: v.string(),
+    phoneNumber: v.string(),
+    occupation: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await readId(ctx);
+
+    if (!userId) {
+      logger.warn("User not authenticated");
+      return null;
+    }
+
+    const profile = await ctx.runQuery(api.myFunctions.getProfile);
+
+    if (!profile) {
+      throw new ConvexError("Update failed. Profile data missing");
+    }
+
+    await ctx.runMutation(internal.myFunctions.updateProfile, {
+      _id: profile._id,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      phoneNumber: args.phoneNumber,
+      occupation: args.occupation,
+    })
+  },
+});
+
 export const updateUser = action({
   args: {
     firstName: v.string(),
