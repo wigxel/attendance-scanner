@@ -1,4 +1,5 @@
 "use client";
+import posthog from 'posthog-js';
 import { decodeQRCodeData } from "@/app/actions/encrypt";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,8 @@ import { toast } from "sonner";
 import { convex } from "./ConvexClientProvider";
 import { If } from "./if";
 import { Card } from "./ui/card";
+import { Bug } from 'lucide-react';
+import { DebugProfile } from './forms/debug-profile';
 
 export const ScanTimeCodec = {
   encode(date: Date) {
@@ -47,7 +50,12 @@ export function TakeAttendance() {
       // Validate the QR data format
       const [customer_id, visitor_id, browser, plan, time] = await decodeQRCodeData(
         encoded_data ?? "none",
-      );
+      ).catch((err) => {
+        posthog.captureException(err, {
+          arguments: [encoded_data]
+        });
+        throw err;
+      })
 
       if (!plan) {
         throw new Error("A plan is required to proceed. Please ensure you're scanning the latest QR Code");
@@ -196,6 +204,14 @@ export function TakeAttendance() {
             <li>You can scan multiple codes in succession</li>
           </ul>
         </div>
+      </div>
+
+      <div className='flex justify-end px-4'>
+        <DebugProfile>
+          <Button variant={'outline'} size="lg">
+            <Bug />
+          </Button>
+        </DebugProfile>
       </div>
     </Card>
   );

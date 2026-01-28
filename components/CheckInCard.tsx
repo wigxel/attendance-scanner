@@ -3,20 +3,27 @@ import { APP_URL, isDevelopment } from "@/config/constants";
 import { useProfile } from "@/hooks/auth";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
 import { safeObj } from "@/lib/data.helpers";
-import { LucideLoader } from "lucide-react";
+import { LucideLoader, XIcon } from "lucide-react";
 import { motion as m } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
 import React from "react";
 import { ScanTimeCodec } from "./TakeAttendance";
 import { If } from "./if";
+import { cn } from "@/lib/utils";
 
 function useDo() {
   const profile = useProfile();
   const device_meta = useDeviceMeta();
 
+  return useGetProfileHash(profile.data)
+}
+
+export function useGetProfileHash(profile?: { id: string } | null) {
+  const device_meta = useDeviceMeta();
+
   return useQueryHash(
     [
-      profile.data?.id,
+      profile?.id,
       // @ts-expect-error Not important
       device_meta?.data?.visitorId,
       // @ts-expect-error Not important
@@ -30,15 +37,59 @@ function useDo() {
   );
 }
 
+
 function QRCode() {
-  const [size, setSize] = React.useState<number | null>(null);
-  const ref = React.useRef<HTMLDivElement>(null);
   const device_meta = useDeviceMeta();
   const profile = useProfile();
   const qr_hash = useDo();
 
   const isLoading =
     device_meta.isLoading || profile.isLoading || qr_hash.isLoading;
+
+  return (
+    <m.div
+      initial={{ height: 150 }}
+      animate={isLoading ? { height: 150 } : { height: "100%" }}
+      className={"relative overflow-hidden"}
+    >
+      {isLoading ? (
+        <div className="absolute inset-0 bg-white/[0.3] z-20 backdrop-blur-lg flex justify-center items-center">
+          <div className="bg-white rounded-full p-4">
+            <LucideLoader
+              size={"2rem"}
+              strokeWidth={1}
+              className="animate animate-spin"
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <ResizeableQRCode hash={qr_hash.data} />
+
+      <If cond={isDevelopment}>
+        <p>
+          ProfileId: {JSON.stringify(Object.keys(safeObj(profile.data)))}
+        </p>
+      </If>
+    </m.div>
+  );
+}
+
+export function CheckInCard() {
+  return (
+    <div className="border overflow-hidden rounded-2xl bg-background dark:bg-gray-950">
+      <QRCode />
+      <p className="p-4 text-center border-t font-mono text-xs">
+        Present QR Code to Staff at Check-in Counter
+      </p>
+    </div>
+  );
+}
+
+export function ResizeableQRCode({ hash, className }: { hash?: string, className?: string }) {
+  const [size, setSize] = React.useState<number | null>(null);
+  const ref = React.useRef<HTMLDivElement>(null);
+
 
   React.useEffect(() => {
     const abortController = new AbortController();
@@ -64,55 +115,27 @@ function QRCode() {
     };
   }, []);
 
-  return (
-    <m.div
-      initial={{ height: 150 }}
-      animate={isLoading ? { height: 150 } : { height: "100%" }}
-      className={"relative overflow-hidden"}
-    >
-      {isLoading ? (
-        <div className="absolute inset-0 bg-white/[0.3] z-20 backdrop-blur-lg flex justify-center items-center">
-          <div className="bg-white rounded-full p-4">
-            <LucideLoader
-              size={"2rem"}
-              strokeWidth={1}
-              className="animate animate-spin"
-            />
-          </div>
-        </div>
-      ) : null}
+  const qr_view_component = <QRCodeSVG
+    size={size ?? 0}
+    fgColor={"#111"}
+    value={
+      hash
+        ? new URL(`/scan/${hash}`, APP_URL).toString()
+        : "nice-try-nothing-to-see-here"
+    }
+    className={"px-4 rounded-lg shadow-lg border w-full"}
+  />;
 
-      <div ref={ref} className={"w-full aspect-square p-2 relative"}>
-        {size === null ? null : (
-          <QRCodeSVG
-            size={size}
-            fgColor={"#111"}
-            value={
-              qr_hash.data
-                ? new URL(`/scan/${qr_hash.data}`, APP_URL).toString()
-                : "nice-try-nothing-to-see-here"
-            }
-            className="px-4 rounded-lg shadow-lg border w-full"
-          />
-        )}
-      </div>
+  return <div ref={ref} className={cn("w-full aspect-square p-2 flex relative", className)}>
+    {size === null ? null : (
+      <>
+        {!hash ? <span className="absolute place-self-center border border-red-500 bg-red-500/20 backdrop-blur-lg rounded-full flex items-center justify-center">
+          <XIcon />
+        </span> : null}
 
-      <If cond={isDevelopment}>
-        <p>
-          ProfileId: {JSON.stringify(Object.keys(safeObj(profile.data)))}
-        </p>
-      </If>
-    </m.div>
-  );
-}
+        {qr_view_component}
+      </>
+    )}
+  </div>
 
-export function CheckInCard() {
-  return (
-    <div className="border overflow-hidden rounded-2xl bg-background dark:bg-gray-950">
-      <QRCode />
-      <p className="p-4 text-center border-t font-mono text-xs">
-        Present QR Code to Staff at Check-in Counter
-      </p>
-    </div>
-  );
 }
