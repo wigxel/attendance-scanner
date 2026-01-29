@@ -1,89 +1,89 @@
 "use client";
-import { AttendanceCalendar } from "@/components/AttendanceCalendar";
-import { CheckInCard } from "@/components/CheckInCard";
-import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
 import { Footer } from "@/components/footer";
-import { If } from "@/components/if";
+import { Header } from "@/components/header";
 import { api } from "@/convex/_generated/api";
-import { useProfile } from "@/hooks/auth";
-import { useQuery } from "convex/react";
-import { ArrowRightIcon } from "lucide-react";
-import Link from "next/link";
-import type React from "react";
-import { Header } from "../components/header";
+import { safeStr } from "@/lib/data.helpers";
+import { getErrorMessage } from "@/lib/error.helpers";
+import { useUser } from "@clerk/nextjs";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { LucideLoader } from "lucide-react";
+import { useRouter } from "next/navigation";
+import React from "react";
+import useEffectEvent from "react-use-event-hook";
+import { toast } from "sonner";
 
-function greet_time(): string {
-  const date = new Date();
-  const hour = date.getHours();
+function ValidateConvexProfile() {
+  const user = useUser();
+  const profile_info = useQuery(api.myFunctions.getAccountMeta);
+  const createAccount = useMutation(api.myFunctions.createUser);
+  const updateConvexExternalId = useAction(
+    api.myFunctions.setAccountExternalId,
+  );
+  const processing = React.useRef(false);
+  const router = useRouter();
 
-  if (hour < 12) return "Good morning ☀️";
-  if (hour < 18) return "Good afternoon 🌤️";
+  const automaticallyCreateAccount = useEffectEvent(async () => {
+    if (processing.current) return;
+    processing.current = true;
+    const _user = user.user;
 
-  return "Good evening 🌙";
-}
+    if (!_user) {
+      throw new Error("Invalid user");
+    }
 
-function Content() {
-  const { data: profile } = useProfile();
+    const user_id = await createAccount({
+      email: _user?.emailAddresses[0].emailAddress,
+      firstName: safeStr(_user?.firstName),
+      lastName: safeStr(_user?.lastName),
+    });
+
+    await updateConvexExternalId({
+      clerk_user_id: _user.id,
+      convex_user_id: user_id,
+    });
+
+    processing.current = false;
+
+    window.location.reload();
+  });
+
+  const once = useEffectEvent(() => {
+    if (profile_info?.user && profile_info?.profile) {
+      router.push("/account");
+      return;
+    }
+  });
+
+  React.useEffect(() => {
+    once();
+  }, [once]);
+
+  React.useEffect(() => {
+    if (profile_info) {
+      if (profile_info.user && profile_info.profile) {
+        return;
+      }
+
+      automaticallyCreateAccount().catch((err) => {
+        toast.error(getErrorMessage(err));
+      });
+    }
+  }, [profile_info, automaticallyCreateAccount]);
 
   return (
-    <div className="flex flex-col scanline-root max-w-lg mx-auto pt-6 pb-14">
-      <section className="min-h-screen gap-[1.6rem] flex flex-col">
-        <div className="flex flex-col gap-1">
-          <h1>
-            <span className="flex text-sm lg:text-base">{greet_time()}</span>
-            <span className="text-2xl lg:text-4xl font-sans tracking-[-1.5px] font-semibold">
-              {profile?.role !== "admin" ? (
-                <>
-                  {profile?.firstName} {profile?.lastName}
-                </>
-              ) : (
-                "Administrator"
-              )}
-            </span>
-          </h1>
-
-          <If cond={profile?.role === "admin"}>
-            <Link
-              href="/admin"
-              className="items-center text-sm font-semibold inline-flex self-start"
-            >
-              <span>Goto Admin</span>
-              <ArrowRightIcon size="1em" />
-            </Link>
-          </If>
-        </div>
-
-        <NotRegistered>
-          <CheckInCard />
-        </NotRegistered>
-
-        <AttendanceCalendar />
-
-        <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-gray-500">
-          <span />
-          <span />
-          <span />
-        </div>
-
-        <VotingSection />
-
-        <SuggestionsFAB />
-      </section>
+    <div className="flex h-full items-center justify-center">
+      <div className="bg-white rounded-full p-4">
+        <LucideLoader
+          size={"2rem"}
+          strokeWidth={1}
+          className="animate animate-spin"
+        />
+      </div>
     </div>
   );
 }
 
-function NotRegistered({ children }: { children: React.ReactNode }) {
-  const is_registered = useQuery(api.myFunctions.isRegisteredForToday);
-
-  if (is_registered === undefined) return null;
-
-  if (is_registered) return null;
-
-  return <div>{children}</div>;
-}
-
-export default function Home() {
+export default function AccountValidationPage() {
   return (
     <>
       <title>Customer Account | InSpace</title>
@@ -91,8 +91,8 @@ export default function Home() {
       <div className="z-[2] relative">
         <Header />
 
-        <main className="px-4">
-          <Content />
+        <main className="px-4 min-h-[calc(100svh-var(--header-height)*2)]">
+          <ValidateConvexProfile />
         </main>
 
         <Footer />

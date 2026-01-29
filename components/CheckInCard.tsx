@@ -11,13 +11,6 @@ import React from "react";
 import { ScanTimeCodec } from "./TakeAttendance";
 import { If } from "./if";
 
-function useDo() {
-  const profile = useProfile();
-  const device_meta = useDeviceMeta();
-
-  return useGetProfileHash(profile.data);
-}
-
 export function useGetProfileHash(profile?: { id: string } | null) {
   const device_meta = useDeviceMeta();
 
@@ -38,12 +31,10 @@ export function useGetProfileHash(profile?: { id: string } | null) {
 }
 
 function QRCode() {
-  const device_meta = useDeviceMeta();
   const profile = useProfile();
-  const qr_hash = useDo();
+  const qr_hash = useGetProfileHash(profile.data);
 
-  const isLoading =
-    device_meta.isLoading || profile.isLoading || qr_hash.isLoading;
+  const isLoading = profile.isLoading || qr_hash.isLoading;
 
   return (
     <m.div
@@ -139,7 +130,9 @@ export function ResizeableQRCode({
               <span className="text-red-500 bg-white w-16 aspect-square backdrop-blur-lg rounded-full flex items-center justify-center">
                 <XIcon strokeWidth={2} />
               </span>
-              <span className="bg-white text-red-500 font-mono px-4 py-2 rounded-full text-xs mt-2">Invalid QR Code</span>
+              <span className="bg-white text-red-500 font-mono px-4 py-2 rounded-full text-xs mt-2">
+                Invalid QR Code
+              </span>
             </div>
           ) : null}
 

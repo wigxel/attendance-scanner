@@ -108,15 +108,12 @@ const handleEvents = httpAction(async (ctx, res) => {
     const clerk_user = await schema.parseAsync(event?.data);
 
     console.info("Updating Convex user database");
-    const convex_user_id = await ctx.runMutation(
-      internal.myFunctions.createUser,
-      {
-        email: clerk_user.email_addresses[0].email_address,
-        firstName: clerk_user.first_name,
-        lastName: clerk_user.last_name,
-        phone: clerk_user.phone_numbers?.[0]?.phone_number ?? undefined,
-      },
-    );
+    const convex_user_id = await ctx.runMutation(api.myFunctions.createUser, {
+      email: clerk_user.email_addresses[0].email_address,
+      firstName: clerk_user.first_name,
+      lastName: clerk_user.last_name,
+      phone: clerk_user.phone_numbers?.[0]?.phone_number ?? undefined,
+    });
 
     console.info("Linking Convex User to Clerk User", clerk_user.id);
 

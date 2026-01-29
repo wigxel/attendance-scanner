@@ -132,6 +132,10 @@
   }
 }
 
+:root {
+  --header-height: 60px;
+}
+
 .scanline-root {
   /*--scanline-image: "";*/
 }

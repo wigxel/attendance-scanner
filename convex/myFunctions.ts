@@ -4,11 +4,11 @@ import type { GenericQueryCtx } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { formatISO, setHours } from "date-fns";
 import { logger } from "../config/logger";
-import { components, internal } from "./_generated/api";
+import { components } from "./_generated/api";
 import { api } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { action, internalMutation, mutation, query } from "./_generated/server";
-import { updateClerkUser } from "./clerk";
+import { setExternalId, updateClerkUser } from "./clerk";
 import { PlanImpl, featureRequestStatus } from "./shared";
 
 export const authUser = query({
@@ -20,7 +20,20 @@ export const authUser = query({
   },
 });
 
-export const createUser = internalMutation({
+export const setAccountExternalId = action({
+  args: {
+    clerk_user_id: v.string(),
+    convex_user_id: v.string(),
+  },
+  async handler(ctx, args) {
+    const response = await setExternalId({
+      clerkUserId: args.clerk_user_id,
+      convexUserId: args.convex_user_id,
+    });
+  },
+});
+
+export const createUser = mutation({
   args: {
     email: v.string(),
     firstName: v.string(),
@@ -57,6 +70,25 @@ export const createUser = internalMutation({
     });
 
     return user_id;
+  },
+});
+
+export const getAccountMeta = query({
+  handler: async (ctx) => {
+    const ident = await ctx.auth.getUserIdentity();
+
+    if (!ident?.email) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), ident.email))
+      .unique();
+    const profile = await ctx.db
+      .query("profile")
+      .filter((q) => q.eq(q.field("id"), user?._id))
+      .unique();
+
+    return { user, profile };
   },
 });
 
@@ -590,8 +622,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-            .query("featureRequest")
-            .withIndex("by_status", (q) => q.eq("status", status))
+          .query("featureRequest")
+          .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 
