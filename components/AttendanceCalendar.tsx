@@ -1,14 +1,14 @@
 "use client";
+import { Button } from "@/components/ui/button";
+import { api } from "@/convex/_generated/api";
+import { useProfile } from "@/hooks/auth";
+import { useQuery } from "convex/react";
+import { addDays, addMonths, format, formatISO, parseISO } from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion as m } from "motion/react";
 import React from "react";
-import { DateCalendar } from "./DateCalendar";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { createStore, useStore } from "zustand";
-import { addDays, addMonths, format, formatISO, parseISO } from "date-fns";
-import { useReadProfile } from "@/hooks/auth";
+import { DateCalendar } from "./DateCalendar";
 
 interface StoreState {
   month: Date;
@@ -52,7 +52,7 @@ export function AttendanceCalendar() {
 
 function useAttendanceList() {
   const { month } = useStore(store);
-  const profile = useReadProfile();
+  const { data: profile } = useProfile();
 
   return (
     useQuery(api.myFunctions.getAttendanceByMonth, {

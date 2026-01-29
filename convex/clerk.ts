@@ -48,7 +48,7 @@ export async function updateClerkUser(params: {
 }) {
   const body = {
     "first_name": params.firstName,
-    "last_name": params.firstName,
+    "last_name": params.lastName,
   }
 
   return clerkFetch(`https://api.clerk.com/v1/users/${params.userId}`, {

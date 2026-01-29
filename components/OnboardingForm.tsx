@@ -1,9 +1,9 @@
 "use client";
 import { api } from "@/convex/_generated/api";
-import { useReadProfile } from "@/hooks/auth";
+import { getErrorMessage } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -52,7 +52,7 @@ function OnboardingForm({
   initial,
 }: { initial: Partial<OnboardingFormValues> }) {
   const router = useRouter();
-  const updateUser = useMutation(api.myFunctions.updateUserApp);
+  const updateUser = useAction(api.myFunctions.updateUser);
 
   //Fetch occupations from the database
   const occupations = useQuery(api.myFunctions.listOccupations) ?? [];
@@ -85,7 +85,7 @@ function OnboardingForm({
       router.push("/");
     } catch (error) {
       const errorMessage = (error as Error).message;
-      toast.error(`Profile creation failed: ${errorMessage}`);
+      toast.error(`Profile creation failed: ${getErrorMessage(errorMessage)}`);
     }
   };
 

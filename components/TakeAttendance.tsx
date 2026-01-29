@@ -1,5 +1,4 @@
 "use client";
-import posthog from 'posthog-js';
 import { decodeQRCodeData } from "@/app/actions/encrypt";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { Button } from "@/components/ui/button";
@@ -9,13 +8,14 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { useMutation } from "convex/react";
 import { format, isToday, isValid } from "date-fns";
+import { Bug } from 'lucide-react';
+import posthog from 'posthog-js';
 import { useState } from "react";
 import { toast } from "sonner";
 import { convex } from "./ConvexClientProvider";
+import { DebugProfile } from './forms/debug-profile';
 import { If } from "./if";
 import { Card } from "./ui/card";
-import { Bug } from 'lucide-react';
-import { DebugProfile } from './forms/debug-profile';
 
 export const ScanTimeCodec = {
   encode(date: Date) {

@@ -1,22 +1,8 @@
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-
-export function useReadProfile() {
-  const { user, isSignedIn } = useUser();
-  const router = useRouter();
-  const profile = useQuery(api.myFunctions.getProfile);
-
-  useEffect(() => {
-    if (isSignedIn && user && profile === null) {
-      router.replace('/onboarding')
-    }
-  }, [isSignedIn, user, profile, router]);
-
-  return profile;
-}
 
 export function useCustomer({ userId }: { userId: string }) {
   const profile = useQuery(api.myFunctions.getUserById, { userId });
@@ -28,12 +14,24 @@ export function useProfile() {
   const { user, isSignedIn, isLoaded } = useUser();
   const profile = useQuery(api.myFunctions.getProfile);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
+    console.assert(pathname !== '/onboarding', "Never use this hook useProfile in the onboarding screen");
+
+    if (pathname === '/onboarding') {
+      return;
+    }
+
+    if (isSignedIn && user && profile?.id?.startsWith('user_')) {
+      router.replace('/onboarding');
+      return
+    }
+
     if (isSignedIn && user && profile?.occupation && profile.occupation === 'None') {
       router.push('/onboarding')
     }
-  }, [isSignedIn, user, profile]);
+  }, [isSignedIn, user, profile, router, pathname]);
 
   return {
     isLoading: !isLoaded || (isSignedIn && profile === undefined),

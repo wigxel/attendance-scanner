@@ -1,16 +1,16 @@
 "use client";
-import { useQuery } from "convex/react";
-import type React from "react";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
-import { useReadProfile } from "@/hooks/auth";
-import { api } from "@/convex/_generated/api";
 import { CheckInCard } from "@/components/CheckInCard";
-import { Header } from "../components/header";
-import { Footer } from "@/components/footer";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
+import { Footer } from "@/components/footer";
 import { If } from "@/components/if";
-import Link from "next/link";
+import { api } from "@/convex/_generated/api";
+import { useProfile } from "@/hooks/auth";
+import { useQuery } from "convex/react";
 import { ArrowRightIcon } from "lucide-react";
+import Link from "next/link";
+import type React from "react";
+import { Header } from "../components/header";
 
 function greet_time(): string {
   const date = new Date();
@@ -23,7 +23,7 @@ function greet_time(): string {
 }
 
 function Content() {
-  const profile = useReadProfile();
+  const { data: profile } = useProfile();
 
   return (
     <div className="flex flex-col scanline-root max-w-lg mx-auto pt-6 pb-14">

@@ -241,6 +241,11 @@ export const getDailyRegister = query({
   },
 });
 
+/**
+ * Returns the convex `user` table id. Not to be mistaken for the Clerk user Id
+ * @param ctx
+ * @returns
+ */
 async function readId(ctx: any): Promise<string | null> {
   const identity = await ctx.auth.getUserIdentity();
 
@@ -248,37 +253,6 @@ async function readId(ctx: any): Promise<string | null> {
 
   return String(userId) || null;
 }
-
-export const updateUserApp = mutation({
-  args: {
-    firstName: v.string(),
-    lastName: v.string(),
-    phoneNumber: v.string(),
-    occupation: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await readId(ctx);
-
-    if (!userId) {
-      logger.warn("User not authenticated");
-      return null;
-    }
-
-    const profile = await ctx.runQuery(api.myFunctions.getProfile);
-
-    if (!profile) {
-      throw new ConvexError("Update failed. Profile data missing");
-    }
-
-    await ctx.runMutation(internal.myFunctions.updateProfile, {
-      _id: profile._id,
-      firstName: args.firstName,
-      lastName: args.lastName,
-      phoneNumber: args.phoneNumber,
-      occupation: args.occupation,
-    })
-  },
-});
 
 export const updateUser = action({
   args: {
@@ -289,29 +263,27 @@ export const updateUser = action({
     // email: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await readId(ctx);
+    const identity = await ctx.auth.getUserIdentity();
 
-    if (!userId) {
+    if (!identity) {
       logger.warn("User not authenticated");
       return null;
     }
 
-    const profile = await ctx.runQuery(api.myFunctions.getProfile);
-
-    if (!profile) {
-      throw new ConvexError("Update failed. Profile data missing");
-    }
-
     await updateClerkUser({
-      userId: userId,
+      userId: identity.subject,
       firstName: args.firstName,
       lastName: args.lastName,
     })
 
-    await ctx.runMutation(internal.myFunctions.updateProfile, {
-      _id: profile._id,
+    if (!identity.email) {
+      throw new ConvexError("Email required to update account");
+    }
+
+    await ctx.runMutation(api.auth.createOrUpdateProfile, {
       firstName: args.firstName,
       lastName: args.lastName,
+      email: identity.email,
       phoneNumber: args.phoneNumber,
       occupation: args.occupation,
     })

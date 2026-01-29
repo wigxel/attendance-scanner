@@ -1,6 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { api, internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { deleteClerkUser } from "./clerk";
@@ -70,27 +69,47 @@ export const createOrUpdateProfile = mutation({
       throw new Error("User must be authenticated");
     }
 
+    const find_convex_user_id = async () => await ctx.db.query('users').filter(e => e.eq(e.field('email'), identity.email)).unique();
+
+    // Never use the clerk user for `profile`.`id` column
+    const new_id = String(identity?.profile_id).startsWith('user_')
+      ? await find_convex_user_id().then(e => e?._id)
+      : identity?.profile_id as string;
+
+    if (!new_id) {
+      throw new ConvexError("Error finding User unique id");
+    }
+
     const userId = identity.subject;
-    const existingProfile = await ctx.db
+    const existingClerkProfile = await ctx.db
       .query("profile")
       .filter((q) => q.eq(q.field("id"), userId))
       .first();
 
-    if (existingProfile) {
+    const existingProfile = await ctx.db
+      .query("profile")
+      .filter((q) => q.eq(q.field("id"), new_id))
+      .first();
+
+    const existing_record_id = existingClerkProfile?._id || existingProfile?._id;
+
+    if (existing_record_id) {
       // Update existing profile
-      await ctx.db.patch(existingProfile._id, {
+      await ctx.db.patch(existing_record_id, {
+        id: new_id,
         firstName: args.firstName,
         lastName: args.lastName,
         email: args.email,
         phoneNumber: args.phoneNumber,
         occupation: args.occupation || "None",
       });
-      return existingProfile._id;
+
+      return existing_record_id;
     }
 
     // Create new profile
     const profileId = await ctx.db.insert("profile", {
-      id: userId as Id<"profile">,
+      id: String(new_id),
       firstName: args.firstName,
       lastName: args.lastName,
       email: args.email,

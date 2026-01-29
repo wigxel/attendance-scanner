@@ -80,8 +80,6 @@ const writeTx = httpAction(async (ctx, res) => {
   return Response.json({ message: "OK" });
 });
 
-const updateUserRole = internalAction(async (ctx, res) => { });
-
 http.route({
   method: "POST",
   path: "/integrations/payments",

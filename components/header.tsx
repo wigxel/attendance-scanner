@@ -1,16 +1,16 @@
 "use client";
 import { Logo } from "@/components/logo";
-import { useReadProfile } from "@/hooks/auth";
+import { useProfile } from "@/hooks/auth";
 import {
-  SignedOut,
   SignInButton,
   SignUpButton,
   SignedIn,
+  SignedOut,
   UserButton,
 } from "@clerk/nextjs";
 
 export function Header() {
-  const profile = useReadProfile();
+  const { data: profile } = useProfile();
 
   return (
     <header className="sticky top-0 z-10 p-4 gap-4 dark:border-slate-800 flex flex-row justify-between items-center">
