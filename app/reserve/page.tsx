@@ -1,22 +1,70 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
+import { DestroyFutureStateOnReserve } from "@/components/DestroyFutureState";
 import { api } from "@/convex/_generated/api";
-import { useUser } from "@clerk/nextjs";
-import { useBookingStore, setActiveTab } from "./store";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
 import { useSeats } from "@/hooks/useSeats";
-import { formatTime } from "@/lib/utils";
-import { DestroyFutureStateOnReserve } from "@/components/DestroyFutureState";
+import { cn, formatTime } from "@/lib/utils";
+import { useUser } from "@clerk/nextjs";
+import { useMutation, useQuery } from "convex/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { setActiveTab, useBookingStore } from "./store";
 
-import { LucideLoader, Check } from "lucide-react";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
 import BookingCalendar from "@/components/BookingCalendar";
-import SeatLayout from "@/components/SeatLayout";
 import PendingBookingsModal from "@/components/PendingBookingsModal";
+import SeatLayout from "@/components/SeatLayout";
+import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Check, LucideLoader } from "lucide-react";
+
+function BookingStepTrigger({
+  value,
+  label,
+  stepNumber,
+  isCompleted,
+  isActive,
+  alwaysBlue,
+  canShowCheckmark = true,
+}: {
+  value: string;
+  label: string;
+  stepNumber: number;
+  isCompleted: boolean;
+  isActive: boolean;
+  alwaysBlue?: boolean;
+  canShowCheckmark?: boolean;
+}) {
+  const isCurrentlyActive = isActive;
+  const showCheckmark = isCompleted && canShowCheckmark;
+
+  return (
+    <TabsTrigger
+      value={value}
+      className="flex-1 data-[state=active]:bg-transparent !shadow-none data-[state=inactive]:bg-transparent flex flex-col items-center justify-center p-0 gap-2 relative z-10"
+    >
+      <div
+        className={cn(
+          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors duration-300",
+          showCheckmark
+            ? "text-muted-foreground border"
+            : "bg-gray-200 text-gray-500",
+          isCurrentlyActive ? "bg-[#0000FF] text-white" : ""
+        )}
+      >
+        {showCheckmark ? <Check size={16} /> : stepNumber}
+      </div>
+      <span
+        className={`text-xs font-medium transition-colors duration-300
+          ${isCurrentlyActive ? "text-gray-900" : "text-gray-500"}
+        `}
+      >
+        {label}
+      </span>
+    </TabsTrigger>
+  );
+}
 
 function Content() {
   const router = useRouter();
@@ -72,70 +120,62 @@ function Content() {
   }
 
   return (
-    <div className="bg-white flex flex-col scanline-root max-w-lg mx-auto py-6 pb-14 rounded-2xl">
+    <Card className="flex flex-col scanline-root max-w-lg mx-auto">
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
         defaultValue="booking"
-        className="w-full gap-4"
+        className="w-full gap-4 mt-4"
       >
         <TabsList className="relative w-full bg-transparent flex items-center justify-center pb-2">
-          <TabsTrigger
+          <BookingStepTrigger
             value="booking"
-            className="disabled:opacity-100 data-[state=active]:shadow-none flex-1 flex items-center justify-center gap-1 md:gap-2 text-xs md:text-base leading-0"
-            disabled
-          >
-            <span className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300 text-[#0000FF] border-2 border-solid border-[#0000FF]">
-              {isBookingCompleted ? <Check strokeWidth={3} /> : "1"}
-            </span>
-            Pick a Date
-          </TabsTrigger>
-          <TabsTrigger
+            label="Pick a Date"
+            stepNumber={1}
+            isCompleted={isBookingCompleted}
+            isActive={isBookingActive}
+            alwaysBlue={true} // First step always has active colors
+          />
+          <BookingStepTrigger
             value="choose"
-            className="disabled:opacity-100 data-[state=active]:shadow-none  flex-1 flex items-center justify-center gap-1 md:gap-2 text-xs md:text-base leading-0"
-            disabled
-          >
-            <span
-              className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300 border-2 border-solid ${isChooseActive || isChooseCompleted ? "text-[#0000FF] border-[#0000FF]" : "text-muted-foreground border-muted-foreground"}`}
-            >
-              {isChooseCompleted ? <Check strokeWidth={3} /> : "2"}
-            </span>
-            Choose Seat
-          </TabsTrigger>
-          <TabsTrigger
+            label="Choose Seat"
+            stepNumber={2}
+            isCompleted={isChooseCompleted}
+            isActive={isChooseActive}
+          />
+          <BookingStepTrigger
             value="payment"
-            className={`disabled:opacity-100 data-[state=active]:shadow-none flex-1 flex items-center justify-center gap-1 md:gap-2 text-xs md:text-base leading-0`}
-            disabled
-          >
-            <span
-              className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300 border-2 border-solid ${isPaymentActive ? "text-[#0000FF] border-[#0000FF]" : "text-muted-foreground border-muted-foreground"}`}
-            >
-              3
-            </span>
-            Make Payment
-          </TabsTrigger>
+            label="Make Payment"
+            stepNumber={3}
+            isCompleted={false} // Payment step never shows a checkmark
+            isActive={isPaymentActive}
+            canShowCheckmark={false}
+          />
           {/* progress bar */}
-          <div className="absolute bottom-[-2px] left-0 h-1 w-full bg-gray-200" />
+          <div className="absolute bottom-[-2px] left-0 h-px w-full bg-gray-200" />
+
           <div
-            className={`absolute bottom-[-2px] left-0 h-1 bg-[#0000FF] transition-all duration-300 ease-in-out rounded-r-full
+            className={`absolute bottom-[-2px] left-0 h-px bg-[#0000FF] transition-all duration-300 ease-in-out rounded-r-full
               ${activeTab === "booking" && "w-1/3"}
               ${activeTab === "choose" && "w-2/3"}
               ${activeTab === "payment" && "w-full"}
             `}
           />
-          {/**/}
         </TabsList>
+
         <TabsContent value="booking" className="px-6">
           <PickScheduleTab />
         </TabsContent>
+
         <TabsContent value="choose" className="px-6">
           <PickSeatTab />
         </TabsContent>
+
         <TabsContent value="payment" className="px-6">
           <MakePaymentTab />
         </TabsContent>
       </Tabs>
-    </div>
+    </Card>
   );
 }
 
@@ -420,13 +460,12 @@ function MakePaymentTab() {
         <div>
           {paymentMessage && (
             <div
-              className={`p-3 rounded-lg mb-4 text-center font-medium ${
-                paymentStatus != "pending" && paymentStatus != "failed"
-                  ? "bg-green-100 text-green-800 border border-green-200"
-                  : paymentStatus === "failed"
-                    ? "bg-red-100 text-red-800 border border-red-200"
-                    : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-              }`}
+              className={`p-3 rounded-lg mb-4 text-center font-medium ${paymentStatus != "pending" && paymentStatus != "failed"
+                ? "bg-green-100 text-green-800 border border-green-200"
+                : paymentStatus === "failed"
+                  ? "bg-red-100 text-red-800 border border-red-200"
+                  : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                }`}
             >
               {paymentMessage}
             </div>
@@ -437,11 +476,10 @@ function MakePaymentTab() {
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-700">Time Remaining</h3>
               <div
-                className={`text-lg font-bold px-3 py-1 rounded-full ${
-                  isExpiringSoon
-                    ? "bg-red-100 text-red-700"
-                    : "bg-blue-100 text-[#0000FF]"
-                }`}
+                className={`text-lg font-bold px-3 py-1 rounded-full ${isExpiringSoon
+                  ? "bg-red-100 text-red-700"
+                  : "bg-blue-100 text-[#0000FF]"
+                  }`}
               >
                 {formatTime(timeRemaining)}
               </div>
@@ -449,9 +487,8 @@ function MakePaymentTab() {
             {/* Progress bar */}
             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all duration-1000 ${
-                  isExpiringSoon ? "bg-red-500" : "bg-[#0000FF]"
-                }`}
+                className={`h-full transition-all duration-1000 ${isExpiringSoon ? "bg-red-500" : "bg-[#0000FF]"
+                  }`}
                 style={{ width: `${(timeRemaining / 600) * 100}%` }}
               />
             </div>

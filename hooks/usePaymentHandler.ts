@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth, useUser } from "@clerk/nextjs";
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
-import { ConvexHttpClient } from "convex/browser";
-import { useBookingStore, setBookingId } from "@/app/reserve/store";
 import { CONFIG } from "@/app/reserve/constants";
-import { loadPaystackScript, formatDateToLocalISO } from "@/lib/utils";
+import { setBookingId, useBookingStore } from "@/app/reserve/store";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { formatDateToLocalISO, loadPaystackScript } from "@/lib/utils";
+import { useAuth, useUser } from "@clerk/nextjs";
+import { ConvexHttpClient } from "convex/browser";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { toast } from "sonner";
 

@@ -42,25 +42,17 @@ function ValidateConvexProfile() {
       convex_user_id: user_id,
     });
 
-    processing.current = false;
-
     window.location.reload();
   });
 
-  const once = useEffectEvent(() => {
-    if (profile_info?.user && profile_info?.profile) {
-      router.push("/account");
-      return;
-    }
-  });
-
-  React.useEffect(() => {
-    once();
-  }, [once]);
-
   React.useEffect(() => {
     if (profile_info) {
-      if (profile_info.user && profile_info.profile) {
+      if (
+        profile_info.user &&
+        profile_info.profile &&
+        processing.current === false
+      ) {
+        router.push("/account");
         return;
       }
 
@@ -68,7 +60,7 @@ function ValidateConvexProfile() {
         toast.error(getErrorMessage(err));
       });
     }
-  }, [profile_info, automaticallyCreateAccount]);
+  }, [profile_info, router, automaticallyCreateAccount]);
 
   return (
     <div className="flex h-full items-center justify-center">

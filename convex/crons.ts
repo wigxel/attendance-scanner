@@ -7,8 +7,7 @@ crons.daily(
   "take daily visit metrics",
   { hourUTC: 0, minuteUTC: 0 }, // 12 AM UTC
   internal.register.saveCount,
-
-const crons = cronJobs();
+);
 
 crons.interval(
   "cleanup expired pending bookings",

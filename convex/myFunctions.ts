@@ -622,8 +622,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-          .query("featureRequest")
-          .withIndex("by_status", (q) => q.eq("status", status))
+            .query("featureRequest")
+            .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 

@@ -5,12 +5,14 @@ import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { If } from "@/components/if";
+import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";
 import { useQuery } from "convex/react";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
+import { ActiveBookings } from "./active-bookings";
 
 function greet_time(): string {
   const date = new Date();
@@ -56,6 +58,8 @@ function Content() {
         <NotRegistered>
           <CheckInCard />
         </NotRegistered>
+
+        <ActiveBookings />
 
         <AttendanceCalendar />
 

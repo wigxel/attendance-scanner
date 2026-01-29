@@ -1,13 +1,16 @@
 "use client";
 
-import type React from "react";
-import { useEffect, useRef, useState } from "react";
-import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { Portal } from "@radix-ui/react-dialog";
+import consola from "consola";
+import { Html5Qrcode } from "html5-qrcode";
 import { LucideLoader, XIcon } from "lucide-react";
 import { motion } from "motion/react";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { Dialog } from "./ui/dialog";
 import {
   Select,
   SelectContent,
@@ -15,9 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import consola from "consola";
-import { Portal } from "@radix-ui/react-dialog";
-import { Dialog } from "./ui/dialog";
 
 interface QRCodeScannerProps {
   onScan: (data: string) => void;

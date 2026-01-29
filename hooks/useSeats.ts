@@ -1,14 +1,14 @@
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
-import { formatDateToLocalISO } from "@/lib/utils";
 import {
-  useBookingStore,
   addSelectedSeat,
   removeSelectedSeat,
+  useBookingStore,
 } from "@/app/reserve/store";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { formatDateToLocalISO } from "@/lib/utils";
+import { useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 interface Seat {
   _id: Id<"seats">;

@@ -1,6 +1,6 @@
-import React from "react";
-import { Id } from "@/convex/_generated/dataModel";
 import { useBookingStore } from "@/app/reserve/store";
+import type { Id } from "@/convex/_generated/dataModel";
+import type React from "react";
 
 import Chair from "@/public/images/chair.png";
 import Image from "next/image";

@@ -1,7 +1,13 @@
-import React from "react";
-import { useQuery as useTansackQuery } from "@tanstack/react-query";
+import { profile } from "console";
 import { decodeQRCodeData } from "@/app/actions/encrypt";
-import { Input } from "../ui/input";
+import { api } from "@/convex/_generated/api";
+import { useProfile } from "@/hooks/auth";
+import { safeArray, safeObj } from "@/lib/data.helpers";
+import { useQuery as useTansackQuery } from "@tanstack/react-query";
+import { useQuery } from "convex/react";
+import { decode } from "effect/Schema";
+import React from "react";
+import { ResizeableQRCode, useGetProfileHash } from "../CheckInCard";
 import {
   Dialog,
   DialogContent,
@@ -9,13 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { ResizeableQRCode, useGetProfileHash } from "../CheckInCard";
-import { safeArray, safeObj } from "@/lib/data.helpers";
-import { profile } from "console";
-import { useProfile } from "@/hooks/auth";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { decode } from "effect/Schema";
+import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 
 export function DebugProfile(props: { children: React.ReactNode }) {

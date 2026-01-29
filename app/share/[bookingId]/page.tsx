@@ -1,14 +1,14 @@
 "use client";
-import { useQuery, useMutation } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
-import { useParams } from "next/navigation";
+import type { Id } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
+import { useMutation, useQuery } from "convex/react";
+import { useParams } from "next/navigation";
 
-import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
+import { Check, LucideLoader } from "lucide-react";
 import { toast } from "sonner";
-import { LucideLoader, Check } from "lucide-react";
 
 export default function SharePage() {
   const { bookingId } = useParams();

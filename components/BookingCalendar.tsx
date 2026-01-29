@@ -2,8 +2,8 @@
 import { useBookingCalendarLogic } from "@/hooks/useBookingCalendarLogic";
 
 import { Calendar } from "@demark-pro/react-booking-calendar";
-import "@demark-pro/react-booking-calendar/dist/react-booking-calendar.css";
-import { Calendar as CalendarIcon } from "lucide-react";
+import "@/app/booking.css";
+
 import {
   Select,
   SelectContent,
@@ -11,6 +11,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "./ui/button";
+
+const components = {
+  MonthArrowBack: (props) => {
+    console.log(props)
+
+    return (
+      <button {...props.innerProps} type="button" className="w-[14.2857%] flex justify-center h-[50px] items-center">
+        <div className="flex aspect-square w-10 items-center justify-center border rounded-full"><ChevronLeft strokeWidth={1} /></div>
+      </button>
+    );
+  },
+  MonthArrowNext: (props) => (
+    <button {...props.innerProps} type="button" className="w-[14.2857%]  flex justify-center h-[50px] items-center">
+      <div className="flex aspect-square w-10 items-center justify-center border rounded-full"><ChevronRight strokeWidth={1} /></div>
+    </button>
+  ),
+}
 
 const BookingCalendar = () => {
   const {
@@ -32,25 +51,28 @@ const BookingCalendar = () => {
         onChange={handleDateChange}
         protection={true}
         range={false}
+        components={components}
       />
 
-      <div className="flex gap-6 mt-4 mb-6">
+      <div className="flex gap-6 mt-4 mb-6 justify-center">
         <div className="flex items-center gap-1">
-          <div className="w-4 h-4 bg-black rounded"></div>
+          <div className="w-4 h-4 bg-black rounded" />
           <span className="text-sm text-gray-600">Selected</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-4 h-4 bg-gray-100 border rounded"></div>
+          <div className="w-4 h-4 bg-gray-100 border rounded" />
           <span className="text-sm text-gray-600">Fully Booked</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-4 h-4 border border-gray-300 rounded"></div>
+          <div className="w-4 h-4 border border-gray-300 rounded" />
           <span className="text-sm text-gray-600">Available</span>
         </div>
       </div>
 
+      <div className="my-8 h-px bg-gradient-to-l from-transparent via-gray-300 to-transparent w-full" />
+
       {selectedDate && (
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="">
           <div className="mb-6">
             <Select
               value={timePeriodString}
@@ -73,12 +95,6 @@ const BookingCalendar = () => {
                 <div>{formatDate(selectedDate)}</div>
               </div>
             </div>
-            <button
-              onClick={handleProceed}
-              className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
-            >
-              Proceed
-            </button>
           </div>
         </div>
       )}
@@ -89,6 +105,17 @@ const BookingCalendar = () => {
           <p className="text-gray-600">Select a date to continue</p>
         </div>
       )}
+
+      <div className="w-full mt-4 mb-6">
+        <Button
+          variant={'default'}
+          size="lg"
+          className="w-full"
+          onClick={handleProceed}
+        >
+          Proceed
+        </Button>
+      </div>
     </div>
   );
 };

@@ -1,15 +1,15 @@
 "use client";
-import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import type { Id } from "@/convex/_generated/dataModel";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
+import { useQuery } from "convex/react";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { resetBookingState } from "../store";
 
-import Image from "next/image";
 import CheckMark from "@/public/checkmark.svg";
 import { LucideLoader } from "lucide-react";
+import Image from "next/image";
 
 export default function SuccessPage() {
   useEffect(() => {

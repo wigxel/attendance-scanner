@@ -1,6 +1,6 @@
-import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { formatDateToLocalISO } from "../lib/utils";
+import { query } from "./_generated/server";
 
 export const getAllSeats = query({
   args: {},

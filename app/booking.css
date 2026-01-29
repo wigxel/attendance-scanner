@@ -1,0 +1,18 @@
+@import "@demark-pro/react-booking-calendar/dist/react-booking-calendar.css" layer(base);
+
+@layer components {
+
+    .calendar__calendar-container span,
+    .calendar__calendar-container .calendar__day-content {
+        font-family: var(--font-geist-mono) !important;
+    }
+
+    .calendar__calendar-container:not([data-scrollable]) .calendar__month-content[data-some-month] span:first-child {
+        color: var(--color-foreground)
+    }
+
+    .calendar__month-content[data-some-year] span:nth-child(2),
+    [data-weekend="true"] {
+        color: var(--color-muted-foreground)
+    }
+}

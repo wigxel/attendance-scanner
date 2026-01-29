@@ -1,7 +1,7 @@
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { Navbar } from "@/components/navbar";
-import { currentUser, type User } from "@clerk/nextjs/server";
+import { type User, currentUser } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 
 const ConvexUserImpl = {
