@@ -19,8 +19,9 @@
   "dependencies": {
     "@auth/core": "^0.39.0",
     "@clerk/nextjs": "^6.23.0",
-    "@convex-dev/aggregate": "^0.1.21",
+    "@convex-dev/aggregate": "^0.1.23",
     "@convex-dev/auth": "^0.0.81",
+    "@demark-pro/react-booking-calendar": "^4.0.3",
     "@fingerprintjs/fingerprintjs": "^4.6.2",
     "@hookform/resolvers": "^5.0.1",
     "@mdx-js/loader": "^3.1.0",

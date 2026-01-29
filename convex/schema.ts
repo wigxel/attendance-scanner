@@ -68,6 +68,62 @@ const featureVotes = defineTable({
   userId: v.string(),
 }).index("request", ["entityId"]);
 
+const seats = defineTable({
+  seatNumber: v.number(),
+  isBooked: v.boolean(),
+  createdAt: v.number(),
+}).index("by_seat_number", ["seatNumber"]);
+
+const bookings = defineTable({
+  userId: v.string(),
+  seatIds: v.array(v.id("seats")),
+  duration: v.number(),
+  startDate: v.string(),
+  endDate: v.string(),
+  durationType: v.union(
+    v.literal("day"),
+    v.literal("week"),
+    v.literal("month"),
+  ),
+  pricePerSeat: v.number(),
+  amount: v.number(),
+  status: v.union(
+    v.literal("pending"),
+    v.literal("confirmed"),
+    v.literal("cancelled"),
+    v.literal("expired"),
+  ),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+})
+  .index("user_id", ["userId"])
+  .index("by_status", ["status"])
+  .index("by_startDate", ["startDate"]);
+
+const bookedSeats = defineTable({
+  bookingId: v.id("bookings"),
+  seatId: v.id("seats"),
+  status: v.union(
+    v.literal("pending"),
+    v.literal("confirmed"),
+    v.literal("cancelled"),
+    v.literal("expired"),
+  ),
+})
+  .index("by_seat_and_status", ["seatId", "status"])
+  .index("by_status", ["status"]);
+
+const tickets = defineTable({
+  bookingId: v.id("bookings"),
+  seatId: v.id("seats"),
+  holderUserId: v.optional(v.string()), // null if unclaimed
+  status: v.union(v.literal("reserved"), v.literal("claimed")),
+  claimedAt: v.optional(v.number()),
+})
+  .index("by_booking", ["bookingId"])
+  .index("by_holder", ["holderUserId"])
+  .index("by_booking_and_holder", ["bookingId", "holderUserId"]);
+
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
 // The schema provides more precise TypeScript types.
@@ -87,4 +143,8 @@ export default defineSchema({
   occupations,
   featureVotes,
   dailyAttendanceMetrics,
+  seats,
+  bookings,
+  bookedSeats,
+  tickets,
 });

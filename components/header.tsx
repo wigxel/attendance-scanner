@@ -13,7 +13,8 @@ export function Header() {
   const { data: profile } = useProfile();
 
   return (
-    <header className="sticky top-0 z-10 p-4 gap-4 dark:border-slate-800 flex flex-row justify-between items-center">
+    <header className="sticky top-0 z-30 p-4 gap-4 dark:border-slate-800 flex flex-row justify-between items-center bg-white">
+      <div className="absolute inset-0 z-0 scanline-container pointer-events-none" />
       <Logo className="w-[7rem] md:w-[9rem]" />
 
       <div className="flex gap-3 items-center">
