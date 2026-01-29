@@ -1,5 +1,5 @@
 import { httpRouter } from "convex/server";
-import { isRecord } from 'effect/Predicate';
+import { isRecord } from "effect/Predicate";
 import crypto from "uncrypto";
 import { z } from "zod";
 import { api, internal } from "./_generated/api";
@@ -125,7 +125,10 @@ const handleEvents = httpAction(async (ctx, res) => {
       convexUserId: convex_user_id,
     });
 
-    console.info({ isRecord: isRecord(response) }, "Expecting an object but got a `Response` Object");
+    console.info(
+      { isRecord: isRecord(response) },
+      "Expecting an object but got a `Response` Object",
+    );
     console.info("Linked Convex User to Clerk User");
     return Response.json({ message: "OK", data: "User linking complete" });
   }

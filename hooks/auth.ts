@@ -17,19 +17,27 @@ export function useProfile() {
   const pathname = usePathname();
 
   useEffect(() => {
-    console.assert(pathname !== '/onboarding', "Never use this hook useProfile in the onboarding screen");
+    console.assert(
+      pathname !== "/onboarding",
+      "Never use this hook useProfile in the onboarding screen",
+    );
 
-    if (pathname === '/onboarding') {
+    if (pathname === "/onboarding") {
       return;
     }
 
-    if (isSignedIn && user && profile?.id?.startsWith('user_')) {
-      router.replace('/onboarding');
-      return
+    if (isSignedIn && user && profile?.id?.startsWith("user_")) {
+      router.replace("/onboarding");
+      return;
     }
 
-    if (isSignedIn && user && profile?.occupation && profile.occupation === 'None') {
-      router.push('/onboarding')
+    if (
+      isSignedIn &&
+      user &&
+      profile?.occupation &&
+      profile.occupation === "None"
+    ) {
+      router.push("/onboarding");
     }
   }, [isSignedIn, user, profile, router, pathname]);
 

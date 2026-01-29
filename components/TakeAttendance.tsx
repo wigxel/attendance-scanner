@@ -8,29 +8,29 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { useMutation } from "convex/react";
 import { format, isToday, isValid } from "date-fns";
-import { Bug } from 'lucide-react';
-import posthog from 'posthog-js';
+import { Bug } from "lucide-react";
+import posthog from "posthog-js";
 import { useState } from "react";
 import { toast } from "sonner";
 import { convex } from "./ConvexClientProvider";
-import { DebugProfile } from './forms/debug-profile';
+import { DebugProfile } from "./forms/debug-profile";
 import { If } from "./if";
 import { Card } from "./ui/card";
 
 export const ScanTimeCodec = {
   encode(date: Date) {
-    return format(date, "dd-MM-yyyy-hh")
+    return format(date, "dd-MM-yyyy-hh");
   },
 
   decode(time_str?: string) {
-    const [d, m, y, h] = String(time_str).split('-');
+    const [d, m, y, h] = String(time_str).split("-");
 
     const date = new Date(+y, +m - 1, +d, +h);
     const is_valid_date = isValid(date) && isToday(date);
 
     return { success: is_valid_date, value: date };
-  }
-}
+  },
+};
 
 export function TakeAttendance() {
   const [scannedData, setScannedData] = useState<string | null>(null);
@@ -48,20 +48,21 @@ export function TakeAttendance() {
       const encoded_data = url.pathname.split("/").at(-1);
 
       // Validate the QR data format
-      const [customer_id, visitor_id, browser, plan, time] = await decodeQRCodeData(
-        encoded_data ?? "none",
-      ).catch((err) => {
-        posthog.captureException(err, {
-          arguments: [encoded_data]
+      const [customer_id, visitor_id, browser, plan, time] =
+        await decodeQRCodeData(encoded_data ?? "none").catch((err) => {
+          posthog.captureException(err, {
+            arguments: [encoded_data],
+          });
+          throw err;
         });
-        throw err;
-      })
 
       if (!plan) {
-        throw new Error("A plan is required to proceed. Please ensure you're scanning the latest QR Code");
+        throw new Error(
+          "A plan is required to proceed. Please ensure you're scanning the latest QR Code",
+        );
       }
 
-      const result = ScanTimeCodec.decode(time)
+      const result = ScanTimeCodec.decode(time);
 
       // scans must happen on the the day and time
       if (!result.success) {
@@ -142,7 +143,6 @@ export function TakeAttendance() {
   return (
     <Card>
       <div className="p-4 flex flex-col gap-2">
-
         {scanningEnabled ? (
           <QRCodeScanner
             onScan={(data) => {
@@ -179,7 +179,6 @@ export function TakeAttendance() {
           </div>
         )}
 
-
         <If cond={isDevelopment}>
           {scannedData && (
             <div className="mt-6 p-4 border rounded-lg bg-muted w-full">
@@ -206,9 +205,9 @@ export function TakeAttendance() {
         </div>
       </div>
 
-      <div className='flex justify-end px-4'>
+      <div className="flex justify-end px-4">
         <DebugProfile>
-          <Button variant={'outline'} size="lg">
+          <Button variant={"outline"} size="lg">
             <Bug />
           </Button>
         </DebugProfile>

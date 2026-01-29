@@ -1,6 +1,12 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
-import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { deleteClerkUser } from "./clerk";
 
@@ -53,7 +59,6 @@ export const getUser = internalQuery({
   },
 });
 
-
 // Create or update user profile
 export const createOrUpdateProfile = mutation({
   args: {
@@ -69,12 +74,16 @@ export const createOrUpdateProfile = mutation({
       throw new Error("User must be authenticated");
     }
 
-    const find_convex_user_id = async () => await ctx.db.query('users').filter(e => e.eq(e.field('email'), identity.email)).unique();
+    const find_convex_user_id = async () =>
+      await ctx.db
+        .query("users")
+        .filter((e) => e.eq(e.field("email"), identity.email))
+        .unique();
 
     // Never use the clerk user for `profile`.`id` column
-    const new_id = String(identity?.profile_id).startsWith('user_')
-      ? await find_convex_user_id().then(e => e?._id)
-      : identity?.profile_id as string;
+    const new_id = String(identity?.profile_id).startsWith("user_")
+      ? await find_convex_user_id().then((e) => e?._id)
+      : (identity?.profile_id as string);
 
     if (!new_id) {
       throw new ConvexError("Error finding User unique id");
@@ -91,7 +100,8 @@ export const createOrUpdateProfile = mutation({
       .filter((q) => q.eq(q.field("id"), new_id))
       .first();
 
-    const existing_record_id = existingClerkProfile?._id || existingProfile?._id;
+    const existing_record_id =
+      existingClerkProfile?._id || existingProfile?._id;
 
     if (existing_record_id) {
       // Update existing profile
@@ -140,25 +150,26 @@ export const requireIdentity = async (ctx: QueryCtx | MutationCtx) => {
   return identity;
 };
 
-
 // Create or update user profile
 export const destroyUser = internalAction({
   args: {
     userId: v.id("users"),
-    dryRun: v.union(v.literal("YES"), v.literal("NO"))
+    dryRun: v.union(v.literal("YES"), v.literal("NO")),
   },
   handler: async (ctx, args) => {
-    const { dryRun = 'NO' } = args;
+    const { dryRun = "NO" } = args;
 
-    const user = await ctx.runQuery(internal.auth.getUser, { userId: args.userId });
-    const isDryRun = dryRun === 'YES';
+    const user = await ctx.runQuery(internal.auth.getUser, {
+      userId: args.userId,
+    });
+    const isDryRun = dryRun === "YES";
 
     if (isDryRun) {
       console.info("Running in dry-run mode");
     }
 
     if (!user) {
-      console.info("User record not found")
+      console.info("User record not found");
       throw new ConvexError("User doesn't exists");
     }
 
@@ -167,33 +178,35 @@ export const destroyUser = internalAction({
     const profile = await ctx.runQuery(internal.auth.getProfileByEmailOrId, {
       userId: user._id,
       email: user.email,
-    })
+    });
 
     profile
       ? console.info("Profile record found")
       : console.info("No profile record found");
 
     if (profile) {
-      if (profile.id.startsWith('user_')) {
+      if (profile.id.startsWith("user_")) {
         console.info("Deleting clerk user record...");
         if (!isDryRun) {
           await deleteClerkUser({ clerkUserId: profile.id });
         }
-        console.info("Clerk user deleted.")
+        console.info("Clerk user deleted.");
       }
 
-      console.info("Deleting profile record...")
+      console.info("Deleting profile record...");
       if (!isDryRun) {
-        await ctx.runMutation(internal.auth.deleteProfile, { profileId: profile._id });
+        await ctx.runMutation(internal.auth.deleteProfile, {
+          profileId: profile._id,
+        });
       }
     }
 
     console.info("Deleting user record...");
     if (!isDryRun) {
-      await ctx.runMutation(internal.auth.deleteUser, { userId: user._id })
+      await ctx.runMutation(internal.auth.deleteUser, { userId: user._id });
     }
 
-    return "complete"
+    return "complete";
   },
 });
 
@@ -203,29 +216,32 @@ export const getProfileByEmailOrId = internalQuery({
     email: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    return ctx.db.query('profile').filter(q => {
-      return q.or(
-        q.eq(q.field("id"), args.userId),
-        q.eq(q.field('email'), args.email)
-      );
-    }).unique();
-  }
-})
+    return ctx.db
+      .query("profile")
+      .filter((q) => {
+        return q.or(
+          q.eq(q.field("id"), args.userId),
+          q.eq(q.field("email"), args.email),
+        );
+      })
+      .unique();
+  },
+});
 
 export const deleteProfile = internalMutation({
   args: {
-    profileId: v.id("profile")
+    profileId: v.id("profile"),
   },
   handler: async (ctx, args) => {
     return ctx.db.delete(args.profileId);
-  }
-})
+  },
+});
 
 export const deleteUser = internalMutation({
   args: {
-    userId: v.id("users")
+    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
     return ctx.db.delete(args.userId);
-  }
-})
+  },
+});

@@ -34,10 +34,10 @@ export async function setExternalId(params: {
 }
 
 export async function deleteClerkUser(params: {
-  clerkUserId: string
+  clerkUserId: string;
 }) {
   return clerkFetch(`https://api.clerk.com/v1/users/${params.clerkUserId}`, {
-    method: "DELETE"
+    method: "DELETE",
   });
 }
 
@@ -47,12 +47,12 @@ export async function updateClerkUser(params: {
   lastName: string;
 }) {
   const body = {
-    "first_name": params.firstName,
-    "last_name": params.lastName,
-  }
+    first_name: params.firstName,
+    last_name: params.lastName,
+  };
 
   return clerkFetch(`https://api.clerk.com/v1/users/${params.userId}`, {
     method: "PATCH",
-    body
+    body,
   });
 }

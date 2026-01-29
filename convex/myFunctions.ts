@@ -274,7 +274,7 @@ export const updateUser = action({
       userId: identity.subject,
       firstName: args.firstName,
       lastName: args.lastName,
-    })
+    });
 
     if (!identity.email) {
       throw new ConvexError("Email required to update account");
@@ -286,13 +286,13 @@ export const updateUser = action({
       email: identity.email,
       phoneNumber: args.phoneNumber,
       occupation: args.occupation,
-    })
+    });
   },
 });
 
 export const updateProfile = internalMutation({
   args: {
-    _id: v.id('profile'),
+    _id: v.id("profile"),
     firstName: v.string(),
     lastName: v.string(),
     phoneNumber: v.string(),
@@ -590,8 +590,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-          .query("featureRequest")
-          .withIndex("by_status", (q) => q.eq("status", status))
+            .query("featureRequest")
+            .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 

@@ -65,6 +65,6 @@ export function useQueryHash(
     queryFn: () => encodeQRCodeData(data),
     enabled: opts.enabled,
     retryDelay: 3000,
-    retry: 3
+    retry: 3,
   });
 }

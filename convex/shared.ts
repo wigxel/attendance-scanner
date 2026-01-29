@@ -23,7 +23,7 @@ export const PlanImpl = {
   async validatePlan<TDB extends GenericMutationCtx<any>["db"]>(
     db: TDB,
     plan_string: string,
-  ): Promise<Doc<'accessPlans'>> {
+  ): Promise<Doc<"accessPlans">> {
     const plan = await db
       .query("accessPlans")
       .withIndex("plan_key", (gt) => gt.eq("key", plan_string))

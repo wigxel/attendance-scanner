@@ -265,14 +265,15 @@ function RegisteredUserEntry({
           </div>
         </div>
 
-
         <If cond={can_modify_plan}>
           <RoleChangingButton id={entry.userId} />
         </If>
 
-        <div className={cn("inline-block text-sm font-semibold text-foreground", {
-          "group-hover:hidden": can_modify_plan
-        })}>
+        <div
+          className={cn("inline-block text-sm font-semibold text-foreground", {
+            "group-hover:hidden": can_modify_plan,
+          })}
+        >
           {diffFromNow}
         </div>
       </div>
@@ -283,23 +284,31 @@ function RegisteredUserEntry({
 function RoleChangingButton({ id }: { id: string }) {
   const changePlan = useMutation(api.register.updateTodaysRegisterAccess);
 
-  return <div className="hidden group-hover:flex items-center gap-1">
-    <Button
-      title="Mark as Paying customer"
-      size="icon"
-      variant="secondary"
-      onClick={() => {
-        changePlan({ userId: id, plan: "daily" });
-      }}>
-      <Crown className="h-4 w-4" />
-    </Button>
+  return (
+    <div className="hidden group-hover:flex items-center gap-1">
+      <Button
+        title="Mark as Paying customer"
+        size="icon"
+        variant="secondary"
+        onClick={() => {
+          changePlan({ userId: id, plan: "daily" });
+        }}
+      >
+        <Crown className="h-4 w-4" />
+      </Button>
 
-    <Button title="Mark as Free customer" size="icon" variant="outline" onClick={() => {
-      changePlan({ userId: id, plan: "free" })
-    }}>
-      <Gift className="h-4 w-4" />
-    </Button>
-  </div>
+      <Button
+        title="Mark as Free customer"
+        size="icon"
+        variant="outline"
+        onClick={() => {
+          changePlan({ userId: id, plan: "free" });
+        }}
+      >
+        <Gift className="h-4 w-4" />
+      </Button>
+    </div>
+  );
 }
 
 const map = {

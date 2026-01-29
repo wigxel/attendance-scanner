@@ -78,7 +78,7 @@ export const setFreeAccess = internalMutation({
 export const updateTodaysRegisterAccess = mutation({
   args: {
     userId: v.string(),
-    plan: v.string()
+    plan: v.string(),
   },
   handler: async (ctx, args) => {
     const today = new Date();
@@ -93,8 +93,8 @@ export const updateTodaysRegisterAccess = mutation({
         q.and(
           q.eq(q.field("userId"), args.userId),
           q.gte(q.field("timestamp"), start),
-          q.lte(q.field("timestamp"), end)
-        )
+          q.lte(q.field("timestamp"), end),
+        ),
       )
       .first();
 
