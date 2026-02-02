@@ -83,6 +83,7 @@ export const getAccountMeta = query({
       .query("users")
       .filter((q) => q.eq(q.field("email"), ident.email))
       .unique();
+
     const profile = await ctx.db
       .query("profile")
       .filter((q) => q.eq(q.field("id"), user?._id))
@@ -102,7 +103,7 @@ export const getProfile = query({
     return await ctx.db
       .query("profile")
       .filter((q) => q.eq(q.field("id"), userId))
-      .unique();
+      .first();
   },
 });
 

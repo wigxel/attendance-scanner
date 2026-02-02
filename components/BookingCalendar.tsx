@@ -1,5 +1,5 @@
 "use client";
-import { useBookingCalendarLogic } from "@/hooks/useBookingCalendarLogic";
+// import { useBookingCalendarLogic } from "@/hooks/useBookingCalendarLogic";
 
 import { Calendar } from "@demark-pro/react-booking-calendar";
 import "@/app/booking.css";
@@ -11,25 +11,58 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import type { ButtonHTMLAttributes, ClassAttributes, JSX } from "react";
 import { Button } from "./ui/button";
 
+function useBookingCalendarLogic() {
+  return {
+    reserved: [],
+    selectedDate: new Date(),
+    handleDateChange: () => { },
+    formatDate: () => "",
+    timePeriodString: "",
+    handleTimePeriodChange: () => { },
+    handleProceed: () => { },
+  };
+}
+
 const components = {
-  MonthArrowBack: (props) => {
-    console.log(props)
+  MonthArrowBack: (props: {
+    innerProps: JSX.IntrinsicAttributes &
+    ClassAttributes<HTMLButtonElement> &
+    ButtonHTMLAttributes<HTMLButtonElement>;
+  }) => {
+    console.log(props);
 
     return (
-      <button {...props.innerProps} type="button" className="w-[14.2857%] flex justify-center h-[50px] items-center">
-        <div className="flex aspect-square w-10 items-center justify-center border rounded-full"><ChevronLeft strokeWidth={1} /></div>
+      <button
+        {...props.innerProps}
+        type="button"
+        className="w-[14.2857%] flex justify-center h-[50px] items-center"
+      >
+        <div className="flex aspect-square w-10 items-center justify-center border rounded-full">
+          <ChevronLeft strokeWidth={1} />
+        </div>
       </button>
     );
   },
-  MonthArrowNext: (props) => (
-    <button {...props.innerProps} type="button" className="w-[14.2857%]  flex justify-center h-[50px] items-center">
-      <div className="flex aspect-square w-10 items-center justify-center border rounded-full"><ChevronRight strokeWidth={1} /></div>
+  MonthArrowNext: (props: { innerProps: JSX.IntrinsicAttributes & ClassAttributes<HTMLButtonElement> & ButtonHTMLAttributes<HTMLButtonElement>; }) => (
+    <button
+      {...props.innerProps}
+      type="button"
+      className="w-[14.2857%]  flex justify-center h-[50px] items-center"
+    >
+      <div className="flex aspect-square w-10 items-center justify-center border rounded-full">
+        <ChevronRight strokeWidth={1} />
+      </div>
     </button>
   ),
-}
+};
 
 const BookingCalendar = () => {
   const {
@@ -47,10 +80,10 @@ const BookingCalendar = () => {
       <Calendar
         selected={selectedDate ? [selectedDate] : []}
         reserved={reserved}
-        // @ts-expect-error set selected dates
         onChange={handleDateChange}
         protection={true}
         range={false}
+        // @ts-expect-error set selected dates
         components={components}
       />
 
@@ -92,7 +125,7 @@ const BookingCalendar = () => {
             <div>
               <p className="font-medium text-gray-900">Selected Date:</p>
               <div className="text-sm text-gray-600 mt-1">
-                <div>{formatDate(selectedDate)}</div>
+                <div>{formatDate()}</div>
               </div>
             </div>
           </div>
@@ -108,7 +141,7 @@ const BookingCalendar = () => {
 
       <div className="w-full mt-4 mb-6">
         <Button
-          variant={'default'}
+          variant={"default"}
           size="lg"
           className="w-full"
           onClick={handleProceed}

@@ -47,7 +47,7 @@ function ValidateConvexProfile() {
     window.location.reload();
   });
 
-  const once = useEffectEvent(() => {
+  const redirect = useEffectEvent(() => {
     if (profile_info?.user && profile_info?.profile) {
       router.push("/account");
       return;
@@ -55,20 +55,21 @@ function ValidateConvexProfile() {
   });
 
   React.useEffect(() => {
-    once();
-  }, [once]);
+    redirect();
+  }, [redirect]);
 
   React.useEffect(() => {
     if (profile_info) {
+      console.log({ profile_info })
       if (profile_info.user && profile_info.profile) {
-        return;
+        return redirect();
       }
 
       automaticallyCreateAccount().catch((err) => {
         toast.error(getErrorMessage(err));
       });
     }
-  }, [profile_info, automaticallyCreateAccount]);
+  }, [profile_info, redirect, automaticallyCreateAccount]);
 
   return (
     <div className="flex h-full items-center justify-center">
