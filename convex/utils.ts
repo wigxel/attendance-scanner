@@ -295,3 +295,47 @@ export const findUnassigned = internalQuery({
     return records;
   },
 });
+
+
+
+// Finds the empty emails and tries to match profiles
+export const fixEmptyEmail = internalMutation({
+  args: {
+    dryRun: v.optional(v.boolean()), // Add dryRun argument, defaulting to false
+  },
+  handler: async (ctx, args) => {
+    const { dryRun = true } = args; // Destructure dryRun with a default
+
+    const all = await ctx.db.query('profile').filter(q => q.eq(q.field('email'), undefined)).collect();
+
+    for (const entry of all.slice(1)) {
+      const match = await ctx.db.query('profile').filter(
+        q => q.and(
+          q.eq(q.field('firstName'), entry.firstName),
+          q.eq(q.field('lastName'), entry.lastName),
+          q.neq(q.field('email'), undefined)
+        )
+      ).first();
+
+      if (match === null) {
+        continue
+      }
+
+      if (match && entry && match?.id === entry.id) {
+        continue;
+      }
+
+      if (match?.email) {
+        if (dryRun) {
+          console.log(`Dry run: Would update ${entry.id} with email ${match?.email}`);
+        } else {
+          await ctx.db.patch(entry._id, { email: match?.email });
+        }
+      } else {
+        console.log("Invalid Match", match);
+      }
+    }
+
+    return all.map(e => [e.id, e.email])
+  },
+});
