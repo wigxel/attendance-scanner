@@ -59,15 +59,26 @@ export const createUser = mutation({
       name: `${args.firstName} ${args.lastName}`,
     });
 
-    await ctx.db.insert("profile", {
-      id: user_id,
-      email: args.email,
-      firstName: args.firstName,
-      lastName: args.lastName,
-      occupation: "None",
-      phoneNumber: args.phone,
-      role: "user",
-    });
+    const profile = await ctx.db
+      .query("profile")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+
+    if (profile) {
+      await ctx.db.patch(profile._id, {
+        id: user_id
+      })
+    } else {
+      await ctx.db.insert("profile", {
+        id: user_id,
+        email: args.email,
+        firstName: args.firstName,
+        lastName: args.lastName,
+        occupation: "None",
+        phoneNumber: args.phone,
+        role: "user",
+      });
+    }
 
     return user_id;
   },

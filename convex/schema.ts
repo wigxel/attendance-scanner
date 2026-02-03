@@ -66,7 +66,9 @@ const featureVotes = defineTable({
   entityId: v.string(),
   value: v.number(),
   userId: v.string(),
-}).index("request", ["entityId"]);
+})
+  .index("user_id", ["userId"])
+  .index("request", ["entityId"]);
 
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
