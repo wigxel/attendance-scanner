@@ -336,6 +336,6 @@ export const fixEmptyEmail = internalMutation({
       }
     }
 
-    return all.map(e => [e.id, e.email])
+    return all.map(e => [e._id, e?.id ?? "none", e.email ?? "none"])
   },
 });
