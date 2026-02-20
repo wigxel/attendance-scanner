@@ -50,7 +50,7 @@ function BookingStepTrigger({
           showCheckmark
             ? "text-muted-foreground border"
             : "bg-gray-200 text-gray-500",
-          isCurrentlyActive ? "bg-[#0000FF] text-white" : ""
+          isCurrentlyActive ? "bg-[#0000FF] text-white" : "",
         )}
       >
         {showCheckmark ? <Check size={16} /> : stepNumber}
@@ -460,12 +460,13 @@ function MakePaymentTab() {
         <div>
           {paymentMessage && (
             <div
-              className={`p-3 rounded-lg mb-4 text-center font-medium ${paymentStatus != "pending" && paymentStatus != "failed"
-                ? "bg-green-100 text-green-800 border border-green-200"
-                : paymentStatus === "failed"
-                  ? "bg-red-100 text-red-800 border border-red-200"
-                  : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                }`}
+              className={`p-3 rounded-lg mb-4 text-center font-medium ${
+                paymentStatus != "pending" && paymentStatus != "failed"
+                  ? "bg-green-100 text-green-800 border border-green-200"
+                  : paymentStatus === "failed"
+                    ? "bg-red-100 text-red-800 border border-red-200"
+                    : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+              }`}
             >
               {paymentMessage}
             </div>
@@ -476,10 +477,11 @@ function MakePaymentTab() {
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-700">Time Remaining</h3>
               <div
-                className={`text-lg font-bold px-3 py-1 rounded-full ${isExpiringSoon
-                  ? "bg-red-100 text-red-700"
-                  : "bg-blue-100 text-[#0000FF]"
-                  }`}
+                className={`text-lg font-bold px-3 py-1 rounded-full ${
+                  isExpiringSoon
+                    ? "bg-red-100 text-red-700"
+                    : "bg-blue-100 text-[#0000FF]"
+                }`}
               >
                 {formatTime(timeRemaining)}
               </div>
@@ -487,8 +489,9 @@ function MakePaymentTab() {
             {/* Progress bar */}
             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all duration-1000 ${isExpiringSoon ? "bg-red-500" : "bg-[#0000FF]"
-                  }`}
+                className={`h-full transition-all duration-1000 ${
+                  isExpiringSoon ? "bg-red-500" : "bg-[#0000FF]"
+                }`}
                 style={{ width: `${(timeRemaining / 600) * 100}%` }}
               />
             </div>

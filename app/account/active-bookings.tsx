@@ -147,7 +147,7 @@ function BookingDateTimeInfo({
         </div>
       ) : (
         <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-          <Calendar className="w-3.5 h-3.5 text-gray-400" />
+          <Calendar strokeWidth={2} className="w-3.5 h-3.5 text-gray-400" />
           <span>
             {formatDate(startDate)} - {formatDate(endDate)}
           </span>

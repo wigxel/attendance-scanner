@@ -11,25 +11,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "./ui/button";
 
 const components = {
   MonthArrowBack: (props) => {
-    console.log(props)
+    console.log(props);
 
     return (
-      <button {...props.innerProps} type="button" className="w-[14.2857%] flex justify-center h-[50px] items-center">
-        <div className="flex aspect-square w-10 items-center justify-center border rounded-full"><ChevronLeft strokeWidth={1} /></div>
+      <button
+        {...props.innerProps}
+        type="button"
+        className="w-[14.2857%] flex justify-center h-[50px] items-center"
+      >
+        <div className="flex aspect-square w-10 items-center justify-center border rounded-full">
+          <ChevronLeft strokeWidth={1} />
+        </div>
       </button>
     );
   },
   MonthArrowNext: (props) => (
-    <button {...props.innerProps} type="button" className="w-[14.2857%]  flex justify-center h-[50px] items-center">
-      <div className="flex aspect-square w-10 items-center justify-center border rounded-full"><ChevronRight strokeWidth={1} /></div>
+    <button
+      {...props.innerProps}
+      type="button"
+      className="w-[14.2857%]  flex justify-center h-[50px] items-center"
+    >
+      <div className="flex aspect-square w-10 items-center justify-center border rounded-full">
+        <ChevronRight strokeWidth={1} />
+      </div>
     </button>
   ),
-}
+};
 
 const BookingCalendar = () => {
   const {
@@ -88,6 +104,7 @@ const BookingCalendar = () => {
               </SelectContent>
             </Select>
           </div>
+
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-gray-900">Selected Date:</p>
@@ -108,7 +125,7 @@ const BookingCalendar = () => {
 
       <div className="w-full mt-4 mb-6">
         <Button
-          variant={'default'}
+          variant={"default"}
           size="lg"
           className="w-full"
           onClick={handleProceed}
