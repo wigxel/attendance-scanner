@@ -66,7 +66,9 @@ const featureVotes = defineTable({
   entityId: v.string(),
   value: v.number(),
   userId: v.string(),
-}).index("request", ["entityId"]);
+})
+  .index("user_id", ["userId"])
+  .index("request", ["entityId"]);
 
 const seats = defineTable({
   seatNumber: v.number(),

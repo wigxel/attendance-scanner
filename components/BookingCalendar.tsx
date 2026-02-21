@@ -104,7 +104,6 @@ const BookingCalendar = () => {
               </SelectContent>
             </Select>
           </div>
-
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-gray-900">Selected Date:</p>

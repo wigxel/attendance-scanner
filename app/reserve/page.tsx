@@ -407,17 +407,15 @@ function MakePaymentTab() {
             </div>
             <div className="flex flex-col gap-6">
               <div>
-                <h5 className="text-xl font-bold text-muted-foreground">
-                  09:00am
-                </h5>
-                <p>{selectedDate.toDateString()}</p>
-                <p>Seat {selectedSeatNumbers.join(", ")}</p>
+                <h5 className="text-base font-bold">09:00am</h5>
+                <p className="opacity-70">{selectedDate.toDateString()}</p>
+                <p className="opacity-70">
+                  Seat {selectedSeatNumbers.join(", ")}
+                </p>
               </div>
               <div>
-                <h5 className="text-xl font-bold text-muted-foreground">
-                  05:00pm
-                </h5>
-                <p>{endDate?.toDateString()}</p>
+                <h5 className="text-base font-bold">05:00pm</h5>
+                <p className="opacity-70">{endDate?.toDateString()}</p>
               </div>
             </div>
           </div>

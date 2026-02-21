@@ -15,7 +15,7 @@ importers:
         specifier: ^6.23.0
         version: 6.23.0(next@15.4.8(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@convex-dev/aggregate':
-        specifier: ^0.1.23
+        specifier: ^0.1.24
         version: 0.1.24(convex@1.23.0(@clerk/clerk-react@5.32.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@convex-dev/auth':
         specifier: ^0.0.81

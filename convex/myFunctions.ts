@@ -59,15 +59,26 @@ export const createUser = mutation({
       name: `${args.firstName} ${args.lastName}`,
     });
 
-    await ctx.db.insert("profile", {
-      id: user_id,
-      email: args.email,
-      firstName: args.firstName,
-      lastName: args.lastName,
-      occupation: "None",
-      phoneNumber: args.phone,
-      role: "user",
-    });
+    const profile = await ctx.db
+      .query("profile")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+
+    if (profile) {
+      await ctx.db.patch(profile._id, {
+        id: user_id,
+      });
+    } else {
+      await ctx.db.insert("profile", {
+        id: user_id,
+        email: args.email,
+        firstName: args.firstName,
+        lastName: args.lastName,
+        occupation: "None",
+        phoneNumber: args.phone,
+        role: "user",
+      });
+    }
 
     return user_id;
   },
@@ -83,6 +94,7 @@ export const getAccountMeta = query({
       .query("users")
       .filter((q) => q.eq(q.field("email"), ident.email))
       .unique();
+
     const profile = await ctx.db
       .query("profile")
       .filter((q) => q.eq(q.field("id"), user?._id))
@@ -102,7 +114,7 @@ export const getProfile = query({
     return await ctx.db
       .query("profile")
       .filter((q) => q.eq(q.field("id"), userId))
-      .unique();
+      .first();
   },
 });
 
@@ -278,7 +290,7 @@ export const getDailyRegister = query({
  * @param ctx
  * @returns
  */
-async function readId(ctx: any): Promise<string | null> {
+export async function readId(ctx: any): Promise<string | null> {
   const identity = await ctx.auth.getUserIdentity();
 
   const userId = identity?.profile_id ?? null;
@@ -622,8 +634,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-          .query("featureRequest")
-          .withIndex("by_status", (q) => q.eq("status", status))
+            .query("featureRequest")
+            .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 

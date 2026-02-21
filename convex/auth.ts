@@ -28,25 +28,6 @@ export const getCurrentUser = query({
   },
 });
 
-// Get user profile by ID
-export const getUserProfile = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw new Error("User must be authenticated");
-    }
-
-    const user = await ctx.db
-      .query("profile")
-      .filter((q) => q.eq(q.field("id"), args.userId))
-      .first();
-
-    return user;
-  },
-});
-
 export const getUser = internalQuery({
   args: { userId: v.string() },
   handler: async (ctx, args) => {

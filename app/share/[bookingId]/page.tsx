@@ -1,22 +1,25 @@
 "use client";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import { useUser } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
-import { useParams } from "next/navigation";
-
+import { CustomerAvatar } from "@/components/customers";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
-import { Check, LucideLoader } from "lucide-react";
+import { If } from "@/components/if";
+import { Button } from "@/components/ui/button";
+import { api } from "@/convex/_generated/api";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
+import { useProfile } from "@/hooks/auth";
+import { getErrorMessage } from "@/lib/error.helpers";
+import { O } from "@/lib/fp.helpers";
+import { useMutation, useQuery } from "convex/react";
+import { Check, LucideLoader, UserMinus2 } from "lucide-react";
+import { useParams } from "next/navigation";
 import { toast } from "sonner";
 
 export default function SharePage() {
   const { bookingId } = useParams();
-  const { user } = useUser();
+  const auth_profile = useProfile();
   const data = useQuery(api.bookings.getBookingWithTickets, {
     bookingId: bookingId as Id<"bookings">,
   });
-  const claimMutation = useMutation(api.bookings.claimTicket);
 
   if (!data)
     return (
@@ -40,18 +43,20 @@ export default function SharePage() {
       </>
     );
 
-  const handleClaim = async (ticketId: string) => {
-    if (!user) return alert("Please sign in to claim a seat.");
-    try {
-      await claimMutation({ ticketId: ticketId as Id<"tickets"> });
-      toast("Seat claimed successfully!");
-    } catch (error) {
-      toast("You have already claimed a seat in this booking.");
-      console.error("Error claiming ticket:", error);
-    }
-  };
+  const payerId = data.userId;
+  const authUserId = O.fromNullable(auth_profile.data?.id);
+  const isPurchaser = auth_profile?.data?.id === payerId;
+  const { owner = [], invitees = [] } = Object.groupBy(
+    data.tickets,
+    (ticket) => (ticket.holderUserId === payerId ? "owner" : "invitees"),
+  );
+  const purchaser_ticket = owner[0];
 
-  const isPurchaser = user?.id === data.userId;
+  const isMySeat = (ticket_uid?: string) =>
+    authUserId.pipe(
+      O.map((auth_user_id) => auth_user_id === ticket_uid),
+      O.getOrElse(() => false),
+    );
 
   return (
     <>
@@ -65,87 +70,185 @@ export default function SharePage() {
             <p className="text-gray-500 mb-6">
               {isPurchaser
                 ? "Manage your booking and share this link with friends."
-                : "You've been invited! Pick an open seat below."}
+                : ""}
             </p>
 
             {isPurchaser && (
-              <div className="bg-blue-50 p-4 rounded-lg mb-6 flex justify-between items-center">
-                <span className="flex-1 text-sm font-medium text-[#0000FF] truncate pr-4">
+              <div className="bg-gray-100 border-gray-200 border py-2 ps-4 pe-2 rounded-lg mb-6 flex justify-between items-center">
+                <span className="flex-1 text-sm font-medium text-[black] truncate pr-4">
                   {window.location.href}
                 </span>
-                <button
-                  onClick={() =>
-                    navigator.clipboard.writeText(window.location.href)
-                  }
-                  className="text-xs bg-[#0000FF] text-white px-3 py-1.5 rounded-md hover:bg-[#0000FF]/70 cursor-pointer"
+
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    return navigator.clipboard.writeText(window.location.href);
+                  }}
                 >
                   Copy Link
-                </button>
+                </Button>
               </div>
             )}
 
-            <div className="space-y-3">
-              {data.tickets.map((ticket) => {
-                const isClaimed = !!ticket.holderUserId;
-                const isMySeat = user?.id && ticket.holderUserId === user.id;
+            {purchaser_ticket ? (
+              <section>
+                <h4 className="font-medium mb-2 text-sm">Booked by</h4>
+                <SlotItem
+                  user_mode={"owner"}
+                  view_mode={isPurchaser ? "owner" : "invitee"}
+                  currentUser={auth_profile.data}
+                  isMySeat={isMySeat(purchaser_ticket.holderUserId)}
+                  canClaim={false}
+                  isClaimed={true}
+                  data={purchaser_ticket}
+                />
+              </section>
+            ) : null}
 
-                return (
-                  <div
-                    key={ticket._id}
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
-                      isClaimed
-                        ? "bg-gray-50 border-gray-200"
-                        : "bg-white border-green-200"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`px-3 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                          isClaimed
-                            ? "bg-gray-200 text-gray-500"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        <p>Seat {ticket.seatNumber}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">
-                          {isMySeat
-                            ? "Your Seat"
-                            : isClaimed
-                              ? "Taken"
-                              : "Available"}
-                        </p>
-                        {isClaimed && ticket.holderUserId === data.userId && (
-                          <span className="text-xs text-gray-400">
-                            Purchaser
-                          </span>
-                        )}
-                      </div>
-                    </div>
+            <div className="my-4 border-t-[1px] border-gray-200" />
 
-                    {!isClaimed ? (
-                      <button
-                        onClick={() => handleClaim(ticket._id)}
-                        className="px-4 py-2 text-sm bg-black text-white rounded-lg cursor-pointer hover:bg-gray-800 transition-colors"
-                      >
-                        Claim
-                      </button>
-                    ) : (
-                      isMySeat && (
-                        <div className="text-green-600">
-                          <Check size={20} />
-                        </div>
-                      )
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <section>
+              <h4 className="font-medium mb-2 text-sm">
+                Invitees <If cond={!isPurchaser}>— Claim a seat below.</If>
+              </h4>
+
+              <ul className="space-y-3">
+                {invitees.map((ticket) => {
+                  const isClaimed = !!ticket.holderUserId;
+
+                  return (
+                    <SlotItem
+                      key={ticket._id}
+                      user_mode={
+                        ticket.holderUserId === payerId ? "owner" : "invitee"
+                      }
+                      view_mode={isPurchaser ? "owner" : "invitee"}
+                      currentUser={auth_profile.data}
+                      canClaim={!isPurchaser}
+                      isMySeat={isMySeat(ticket.holderUserId)}
+                      isClaimed={isClaimed}
+                      data={ticket}
+                    />
+                  );
+                })}
+              </ul>
+            </section>
           </div>
         </main>
         <Footer />
       </div>
     </>
+  );
+}
+
+function SlotItem({
+  user_mode,
+  view_mode,
+  data: ticket,
+  currentUser: user,
+  canClaim = false,
+  isClaimed = false,
+  isMySeat = false,
+}: {
+  view_mode: "owner" | "invitee";
+  user_mode: "owner" | "invitee";
+  isClaimed: boolean;
+  canClaim: boolean;
+  isMySeat: boolean;
+  data: Doc<"tickets">;
+  currentUser: Doc<"profile"> | null | undefined;
+}) {
+  const claimMutation = useMutation(api.bookings.claimTicket);
+  const removeClaimMutation = useMutation(api.bookings.removeClaim);
+  const a = useProfile();
+  const ticket_profile = useQuery(api.myFunctions.getUserById, {
+    userId: ticket.holderUserId ?? "",
+  });
+
+  const removeClaim = async (ticketId: Doc<"tickets">["_id"]) => {
+    if (view_mode !== "owner")
+      return toast.warning("Only a purchaser can remove a claim");
+
+    try {
+      await removeClaimMutation({ ticketId: ticketId });
+      toast.success("Ticket claim revoked");
+    } catch (error) {
+      toast.error("We can't seem to unassign this ticket");
+      console.error("Error claiming ticket:", getErrorMessage(error));
+    }
+  };
+
+  const handleClaim = async (ticketId: string) => {
+    if (!user) return toast.warning("Please sign in to claim a seat.");
+
+    try {
+      await claimMutation({ ticketId: ticketId as Id<"tickets"> });
+      toast("Seat claimed successfully!");
+    } catch (error) {
+      toast("You have already claimed a seat in this booking.");
+      console.error("Error claiming ticket:", getErrorMessage(error));
+    }
+  };
+
+  return (
+    <li
+      className={`flex items-center justify-between p-4 rounded-lg border ${isClaimed ? "bg-gray-50 border-gray-200" : "bg-white border-green-200"
+        }`}
+    >
+      <div className="flex flex-col items-start gap-2">
+        <div className="flex text-sm">Seat #{ticket.seatNumber}</div>
+
+        <p className="font-medium text-sm">
+          {isMySeat || isClaimed ? (
+            ticket_profile ? (
+              <div className="flex gap-2 items-center">
+                <CustomerAvatar userId={ticket_profile.id} />
+                <span>
+                  {ticket_profile.firstName} {ticket_profile.lastName}
+                </span>
+              </div>
+            ) : (
+              "Seat Taken"
+            )
+          ) : (
+            "Available"
+          )}
+        </p>
+      </div>
+
+      <div className="flex gap-2 items-center">
+        <If
+          cond={view_mode === "owner" && isClaimed && user_mode === "invitee"}
+        >
+          <Button
+            size="icon"
+            type="button"
+            variant="outline"
+            title="Reclaim Ticket"
+            onClick={() => removeClaim(ticket._id)}
+          >
+            <UserMinus2 />
+          </Button>
+        </If>
+
+        {!isClaimed ? (
+          <Button
+            // size=""
+            type="button"
+            variant="default"
+            disabled={!canClaim}
+            onClick={() => handleClaim(ticket._id)}
+          >
+            Claim
+          </Button>
+        ) : (
+          isMySeat && (
+            <div className="text-primary">
+              <Check size={20} />
+            </div>
+          )
+        )}
+      </div>
+    </li>
   );
 }

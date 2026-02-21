@@ -1,6 +1,9 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { formatDateToLocalISO } from "../lib/utils";
+import { api } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
+import { readId } from "./myFunctions";
 
 export const getBooking = query({
   args: {
@@ -8,6 +11,7 @@ export const getBooking = query({
   },
   handler: async (ctx, { bookingId }) => {
     const booking = await ctx.db.get(bookingId);
+
     if (!booking) {
       throw new Error("Booking not found");
     }
@@ -71,12 +75,24 @@ export const createBooking = mutation({
   },
   handler: async (ctx, args) => {
     // Get current user from Clerk
-    const identity = await ctx.auth.getUserIdentity();
+    const identity = await readId(ctx);
     if (!identity) throw new Error("Must be logged in");
 
-    const userId = identity.subject; // Clerk user ID
-    const userEmail = identity.email;
-    const userName = identity.name;
+    const profile: Doc<"profile"> | null = await ctx.runQuery(
+      api.myFunctions.getProfile,
+    );
+
+    if (!profile) throw new Error("User profile not found");
+
+    if (!profile.email) {
+      throw new Error(
+        "User must have an email address before creating an booking",
+      );
+    }
+
+    const userId: string = profile.id;
+    const userEmail: string = profile.email;
+    const userName: string = `${profile.firstName} ${profile.lastName}`;
 
     const calculateEndDate = (
       startDate: string,
@@ -212,9 +228,11 @@ export const updateBooking = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
+    const identity = await readId(ctx);
+
     if (!identity) throw new Error("Must be logged in");
-    const userId = identity.subject;
+
+    const userId = identity;
 
     const existingBooking = await ctx.db.get(args.bookingId);
 
@@ -296,12 +314,12 @@ export const updateBooking = mutation({
 // Get current user's bookings
 export const getUserBookings = query({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
+    const identity = await readId(ctx);
     if (!identity) throw new Error("Must be logged in");
 
     const bookings = await ctx.db
       .query("bookings")
-      .filter((q) => q.eq(q.field("userId"), identity.subject))
+      .filter((q) => q.eq(q.field("userId"), identity))
       .collect();
 
     // Get seat details for each booking
@@ -330,12 +348,13 @@ export const getUserConfirmedBookings = query({
    * @returns Array of confirmed bookings for the current user.
    */
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
+    const identity = await readId(ctx);
+
     if (!identity) {
       return [];
     }
 
-    const userId = identity.subject;
+    const userId = identity;
 
     const purchasedBookings = await ctx.db
       .query("bookings")
@@ -408,7 +427,8 @@ export const getUserPendingBookings = query({
    * @returns Array of pending bookings for the current user.
    */
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
+    const identity = await readId(ctx);
+
     if (!identity) {
       return [];
     }
@@ -417,7 +437,7 @@ export const getUserPendingBookings = query({
       .query("bookings")
       .withIndex("by_startDate")
       .order("asc")
-      .filter((q) => q.eq(q.field("userId"), identity.subject))
+      .filter((q) => q.eq(q.field("userId"), identity))
       .filter((q) => q.eq(q.field("status"), "pending"))
       .collect();
 
@@ -822,8 +842,9 @@ export const getBookingWithTickets = query({
 export const claimTicket = mutation({
   args: { ticketId: v.id("tickets") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthorized");
+    const profileId = await readId(ctx);
+
+    if (!profileId) throw new ConvexError("Unauthorized");
 
     const ticket = await ctx.db.get(args.ticketId);
     if (!ticket) throw new Error("Ticket not found");
@@ -833,9 +854,7 @@ export const claimTicket = mutation({
     const alreadyClaimed = await ctx.db
       .query("tickets")
       .withIndex("by_booking_and_holder", (q) =>
-        q
-          .eq("bookingId", ticket.bookingId)
-          .eq("holderUserId", identity.subject),
+        q.eq("bookingId", ticket.bookingId).eq("holderUserId", profileId),
       )
       .first();
 
@@ -843,9 +862,32 @@ export const claimTicket = mutation({
       throw new Error("You have already claimed a seat in this booking.");
 
     await ctx.db.patch(args.ticketId, {
-      holderUserId: identity.subject,
+      holderUserId: profileId,
       status: "claimed",
       claimedAt: Date.now(),
+    });
+  },
+});
+
+export const removeClaim = mutation({
+  args: { ticketId: v.id("tickets") },
+  handler: async (ctx, args) => {
+    const profileId = await readId(ctx);
+
+    if (!profileId) throw new ConvexError("Unauthorized");
+
+    const ticket = await ctx.db.get(args.ticketId);
+    if (!ticket) throw new Error("Ticket not found");
+
+    if (!ticket.holderUserId) {
+      console.info("No action taken, ticket is unclaimed");
+      return;
+    }
+
+    await ctx.db.patch(args.ticketId, {
+      holderUserId: undefined,
+      claimedAt: undefined,
+      status: "reserved",
     });
   },
 });
