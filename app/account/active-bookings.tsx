@@ -1,3 +1,4 @@
+import { If } from "@/components/if";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,7 +10,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { Calendar, Clock, Users } from "lucide-react";
+import { Calendar, ChevronRight, Clock, Share2Icon, Users } from "lucide-react";
 import Link from "next/link";
 import type React from "react"; // Added React import for React.ReactNode type
 
@@ -116,7 +117,7 @@ function EmptyBookingsCard() {
 /**
  * Displays the month and day of a booking's start date in a styled box.
  */
-function BookingCalendarBox({ startDate }: { startDate: string }) {
+export function BookingCalendarBox({ startDate }: { startDate: string }) {
   const date = new Date(startDate);
   return (
     <div className="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg shrink-0 border border-gray-200">
@@ -168,18 +169,6 @@ function BookingActionStatus({
   seats,
   bookingId,
 }: Pick<Booking, "role" | "seats"> & { bookingId: string }) {
-  if (role === "purchaser" && seats.length > 1) {
-    return (
-      <Link
-        href={`/share/${bookingId}`}
-        className="flex items-center gap-2 px-3 py-1.5 bg-black hover:bg-gray-800 text-white text-xs font-medium rounded-full transition-all shadow-sm hover:shadow"
-      >
-        <Users className="w-3 h-3" />
-        <span>Manage Group</span>
-      </Link>
-    );
-  }
-
   if (role === "guest") {
     return (
       <div className="flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
@@ -226,7 +215,7 @@ function BookingSeatNumbers({ seats }: Pick<Booking, "seats">) {
  */
 function BookingItem({ booking }: { booking: Booking }) {
   return (
-    <div className="py-4 border-b border-gray-100 last:border-0 flex flex-col gap-3">
+    <div className="group py-4 border-b border-gray-100 last:border-0 flex flex-col gap-3">
       <div className="group flex flex-col md:flex-row sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
         {/* LEFT: Date and Time */}
         <div className="flex items-center gap-3 min-w-[180px]">
@@ -249,7 +238,21 @@ function BookingItem({ booking }: { booking: Booking }) {
       </div>
 
       {/* Seat Numbers */}
-      <BookingSeatNumbers seats={booking.seats} />
+      <div className="gap-x-2 items-end flex">
+        <BookingSeatNumbers seats={booking.seats} />
+
+        <If cond={booking.role === "purchaser" && booking.seats.length > 1}>
+          <Link
+            href={`/share/${booking._id}`}
+            className="group-hover:opacity-100 opacity-0"
+          >
+            <Button variant={"link"} size="sm" className="py-0 h-7">
+              <span>Manage</span>
+              <ChevronRight className="size-3" />
+            </Button>
+          </Link>
+        </If>
+      </div>
     </div>
   );
 }

@@ -165,3 +165,12 @@
 .section-record-count {
   @apply text-muted-foreground font-mono font-normal;
 }
+
+.button-iso {
+  @apply relative border-2 !leading-[2ex] border-black;
+}
+
+.button-iso::after {
+  @apply absolute top-0 inset-x-0 bottom-1 rounded-sm bg-white/15;
+  content: "";
+}

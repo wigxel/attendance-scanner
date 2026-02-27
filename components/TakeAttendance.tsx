@@ -16,6 +16,9 @@ import { convex } from "./ConvexClientProvider";
 import { DebugProfile } from "./forms/debug-profile";
 import { If } from "./if";
 import { Card } from "./ui/card";
+import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
+
+type ScanMode = "walk_in" | "reservation";
 
 export const ScanTimeCodec = {
   encode(date: Date) {
@@ -36,18 +39,17 @@ export function TakeAttendance() {
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [scanningEnabled, setScanningEnabled] = useState(true);
+  const [scanMode, setScanMode] = useState<ScanMode>("walk_in");
 
-  // In a real implementation, you'd create a mutation to record attendance
   const register = useMutation(api.myFunctions.registerUser);
 
-  const handleScan = async (uri_string: string) => {
+  const handleScan = async (uri_string: string, mode: ScanMode) => {
     setScannedData(uri_string);
 
     try {
       const url = new URL(uri_string);
       const encoded_data = url.pathname.split("/").at(-1);
 
-      // Validate the QR data format
       const [customer_id, visitor_id, browser, plan, time] =
         await decodeQRCodeData(encoded_data ?? "none").catch((err) => {
           posthog.captureException(err, {
@@ -56,15 +58,14 @@ export function TakeAttendance() {
           throw err;
         });
 
-      if (!plan) {
+      if (!plan && mode === "walk_in") {
         throw new Error(
-          "A plan is required to proceed. Please ensure you're scanning the latest QR Code",
+          "A plan is required for walk-in. Please ensure you're scanning the latest QR Code",
         );
       }
 
       const result = ScanTimeCodec.decode(time);
 
-      // scans must happen on the the day and time
       if (!result.success) {
         throw new Error("Invalid scan date. Scans must happen on the same day");
       }
@@ -74,25 +75,14 @@ export function TakeAttendance() {
         return;
       }
 
-      const is_registered = await convex.query(
-        api.myFunctions.isUserRegisteredForToday,
-        {
-          userId: customer_id as Id<"profile">,
-        },
-      );
-
-      if (is_registered) {
-        throw new Error("Customer already registered for today.");
-      }
-
       setProcessing(true);
 
-      // Here you would call your API to record attendance
       await register({
         browser: browser ?? "unknown",
         visitorId: visitor_id ?? "unknown",
         customerId: customer_id as Id<"profile">,
-        plan: plan,
+        plan: plan ?? "none",
+        mode: mode,
       });
 
       const customer_info = await convex.query(api.myFunctions.getUserById, {
@@ -103,24 +93,13 @@ export function TakeAttendance() {
         throw new Error("Anomaly: Customer info not found");
       }
 
-      //Fetch user stats
-      const userStats = await convex.query(api.myFunctions.getUserStats, {
-        userId: customer_id as Id<"profile">,
-      });
-
-      if (!userStats) {
-        throw new Error("Anomaly: Customer info not found");
-      }
-
       toast.success(
         `Attendance recorded for ${customer_info.firstName ?? "{{firstName}}"} ${customer_info.lastName ?? "{{lastname}}"}`,
       );
 
       setTimeout(() => {
-        // Reset for next scan
         setScannedData(null);
         setProcessing(false);
-        // Auto re-enable scanning after a delay
         setScanningEnabled(true);
       }, 2000);
     } catch (error) {
@@ -142,12 +121,23 @@ export function TakeAttendance() {
 
   return (
     <Card>
-      <div className="p-4 flex flex-col gap-2">
+      <div className="p-4 flex flex-col gap-4">
+        <Tabs
+          defaultValue="walk_in"
+          onValueChange={(value) => setScanMode(value as ScanMode)}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="walk_in">Walk-in</TabsTrigger>
+            <TabsTrigger value="reservation">Reservation</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         {scanningEnabled ? (
           <QRCodeScanner
             onScan={(data) => {
-              setScanningEnabled(false); // Disable scanning after successful scan
-              handleScan(data);
+              setScanningEnabled(false);
+              handleScan(data, scanMode);
             }}
             onError={handleError}
           />
@@ -195,12 +185,12 @@ export function TakeAttendance() {
         <div className="p-4 border rounded-lg bg-yellow-100">
           <h2 className="text-lg font-medium mb-2">Instructions:</h2>
           <ul className="text-xs list-disc list-inside">
+            <li>Select the check-in mode (Walk-in or Reservation).</li>
             <li>
-              Scan the attendance QR code displayed on the member&apos;s profile
+              Scan the attendance QR code displayed on the member's profile.
             </li>
-            <li>The camera will automatically detect the QR code</li>
-            <li>Attendance will be recorded instantly</li>
-            <li>You can scan multiple codes in succession</li>
+            <li>The camera will automatically detect the QR code.</li>
+            <li>Attendance will be recorded instantly.</li>
           </ul>
         </div>
       </div>

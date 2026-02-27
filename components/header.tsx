@@ -8,6 +8,7 @@ import {
   SignedOut,
   UserButton,
 } from "@clerk/nextjs";
+import Link from "next/link";
 
 export function Header() {
   const { data: profile } = useProfile();
@@ -17,22 +18,32 @@ export function Header() {
       <div className="absolute inset-0 z-0 scanline-container pointer-events-none" />
       <Logo className="w-[7rem] md:w-[9rem]" />
 
-      <div className="flex gap-3 items-center">
-        <span>{profile?.firstName}</span>
-        <SignedOut>
-          <SignInButton />
-          <SignUpButton>
-            <button
-              type="button"
-              className="bg-[#6c47ff] text-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer"
-            >
-              Sign Up
-            </button>
-          </SignUpButton>
-        </SignedOut>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
+      <div className="flex gap-4 items-center">
+        <nav>
+          <li className="flex items-center">
+            <Link href="/account" className="text-black hover:underline">
+              Account
+            </Link>
+          </li>
+        </nav>
+
+        <div className="flex gap-3 items-center">
+          <span>{profile?.firstName}</span>
+          <SignedOut>
+            <SignInButton />
+            <SignUpButton>
+              <button
+                type="button"
+                className="bg-[#6c47ff] text-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer"
+              >
+                Sign Up
+              </button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+        </div>
       </div>
     </header>
   );

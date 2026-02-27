@@ -1,4 +1,10 @@
+import { ConvexError } from "convex/values";
+
 export function getErrorMessage(error: unknown): string {
+  if (error instanceof ConvexError) {
+    return error.data;
+  }
+
   if (typeof error === "string") {
     return error;
   }

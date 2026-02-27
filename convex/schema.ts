@@ -23,11 +23,13 @@ const daily_register = defineTable({
   }),
   access: accessPlanSchema,
   admitted_by: v.string(), // v.id("profile"),
+  ticketId: v.optional(v.id("tickets")),
 })
   .index("admitted_by", ["admitted_by"])
   .index("unique_visitor", ["device.visitorId"])
   .index("access_plan", ["access.kind"])
-  .index("user", ["userId"]);
+  .index("user", ["userId"])
+  .index("by_ticket", ["ticketId"]);
 
 const featureRequest = defineTable({
   userId: v.string(), // v.id("profile"),

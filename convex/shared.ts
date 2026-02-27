@@ -31,7 +31,7 @@ export const PlanImpl = {
 
     if (!plan) {
       throw new Error(
-        "Invalid plan provided. Registration rejected. Please provide a valid plan ",
+        "Invalid plan provided. Registration rejected. Please provide a valid plan",
       );
     }
 

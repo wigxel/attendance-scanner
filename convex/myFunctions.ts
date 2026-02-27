@@ -2,7 +2,7 @@ import type { Profile, User } from "@auth/core/types";
 import { TableAggregate } from "@convex-dev/aggregate";
 import type { GenericQueryCtx } from "convex/server";
 import { ConvexError, v } from "convex/values";
-import { formatISO, setHours } from "date-fns";
+import { formatISO, isWithinInterval, parseISO, setHours } from "date-fns";
 import { logger } from "../config/logger";
 import { components } from "./_generated/api";
 import { api } from "./_generated/api";
@@ -222,38 +222,102 @@ export const registerUser = mutation({
     customerId: v.string(),
     visitorId: v.string(),
     browser: v.string(),
-    plan: v.string(),
+    plan: v.string(), // This is used for walk-in mode
+    mode: v.union(v.literal("walk_in"), v.literal("reservation")),
   },
   handler: async (ctx, args) => {
-    const userId = await readId(ctx);
-
-    if (!userId) {
-      logger.warn("User not authenticated");
-      return null;
+    // Fail-fast 1: Authenticate the user performing the scan
+    const scannerId = await readId(ctx);
+    if (!scannerId) {
+      throw new ConvexError("User not authenticated");
     }
 
-    const plan = await PlanImpl.validatePlan(ctx.db, args.plan);
-
+    // Fail-fast 2: Check if the customer profile exists
     const customer = await ctx.runQuery(api.myFunctions.getUserById, {
       userId: args.customerId,
     });
-
     if (!customer) {
-      return null;
+      throw new ConvexError("Customer profile not found.");
     }
 
-    await ctx.db.insert("daily_register", {
+    // Fail-fast 3: Check if customer is already registered for today
+    const isAlreadyRegistered = await _isUserRegistered(ctx, {
       userId: customer.id,
-      device: {
-        name: "Unknown",
-        visitorId: args.visitorId,
-        browser: args.browser,
-      },
-      source: "web",
-      admitted_by: userId as Id<"profile">,
-      timestamp: new Date().toISOString(),
-      access: PlanImpl.toStruct(plan),
     });
+    if (isAlreadyRegistered) {
+      throw new ConvexError("Customer already registered for today.");
+    }
+
+    // --- Mode-specific Logic ---
+
+    // RESERVATION MODE: Validate Ticket
+    if (args.mode === "reservation") {
+      const userTickets = await ctx.db
+        .query("tickets")
+        .withIndex("by_holder", (q) => q.eq("holderUserId", customer.id))
+        .collect();
+
+      let activeTicket = null;
+      let activeBooking = null;
+
+      for (const ticket of userTickets) {
+        const booking = await ctx.db.get(ticket.bookingId);
+        if (booking && booking.status === "confirmed") {
+          const isDateActive = isWithinInterval(new Date(), {
+            start: parseISO(booking.startDate),
+            end: parseISO(booking.endDate),
+          });
+
+          if (isDateActive) {
+            activeTicket = ticket;
+            activeBooking = booking;
+            break; // Use the first active ticket found
+          }
+        }
+      }
+
+      if (!activeTicket || !activeBooking) {
+        throw new ConvexError("No active reservation found for this customer.");
+      }
+
+      await ctx.db.insert("daily_register", {
+        userId: customer.id,
+        device: {
+          name: "Unknown",
+          visitorId: args.visitorId,
+          browser: args.browser,
+        },
+        source: "web",
+        admitted_by: scannerId as Id<"profile">,
+        timestamp: new Date().toISOString(),
+        access: {
+          kind: "paid",
+          planId: activeBooking.durationType, // e.g., "day", "week"
+          amount: activeBooking.pricePerSeat,
+        },
+        ticketId: activeTicket._id,
+      });
+      return; // End execution
+    }
+
+    // WALK_IN MODE: Use existing plan-based logic
+    if (args.mode === "walk_in") {
+      const plan = await PlanImpl.validatePlan(ctx.db, args.plan);
+
+      await ctx.db.insert("daily_register", {
+        userId: customer.id,
+        device: {
+          name: "Unknown",
+          visitorId: args.visitorId,
+          browser: args.browser,
+        },
+        source: "web",
+        admitted_by: scannerId as Id<"profile">,
+        timestamp: new Date().toISOString(),
+        access: PlanImpl.toStruct(plan),
+      });
+      return; // End execution
+    }
   },
 });
 

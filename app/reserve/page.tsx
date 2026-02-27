@@ -15,9 +15,12 @@ import PendingBookingsModal from "@/components/PendingBookingsModal";
 import SeatLayout from "@/components/SeatLayout";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, LucideLoader } from "lucide-react";
+import { Check, ChevronDown, LucideLoader } from "lucide-react";
+import { motion } from "motion/react";
+import { BookingCalendarBox } from "../account/active-bookings";
 
 function BookingStepTrigger({
   value,
@@ -210,6 +213,8 @@ function PickSeatTab() {
     );
   }
 
+  const has_selected_a_seat = selectedSeatNumbers.length > 0;
+
   if (seats.length === 0) {
     return (
       <div className="h-96 bg-gray-100 rounded-lg flex justify-center items-center">
@@ -219,36 +224,54 @@ function PickSeatTab() {
   }
 
   return (
-    <div className="p-3 bg-gray-100 min-h-screen rounded-lg">
+    <div className="p-3 mb-3 -mx-4 bg-gray-100 min-h-[400px] rounded-lg">
       <SeatLayout
         seats={seats}
         selectedSeatNumbers={selectedSeatNumbers}
         onSeatClick={handleSeatClick}
       />
-      {selectedSeatNumbers.length > 0 && (
-        <div className="bg-white p-4 rounded-lg mt-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">Selected Seats:</p>
-              <div className="text-sm text-gray-600 mt-1">
-                <p className="font-semibold text-gray-900">
-                  {selectedSeatNumbers.join(", ")}
-                </p>
-                <p className="text-xs mt-1 text-gray-500">
-                  {selectedSeatNumbers.length} seat
-                  {selectedSeatNumbers.length !== 1 ? "s" : ""} selected
-                </p>
-              </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: "25%" }}
+        animate={
+          has_selected_a_seat
+            ? { opacity: 100, y: "0" }
+            : { opacity: 0, y: "25%" }
+        }
+        className="bg-white p-4 rounded-lg mt-4"
+      >
+        <div className="flex flex-col">
+          <div>
+            <p className="text-gray-900 text-sm">Selected Seats:</p>
+
+            <div className="text-sm text-gray-600 mt-1">
+              <p className="font-semibold inline-flex text-gray-900 gap-2">
+                {selectedSeatNumbers.map((seat_num) => {
+                  return (
+                    <span
+                      key={seat_num}
+                      className="size-8 rounded-sm border aspect-square flex items-center justify-center font-mono"
+                    >
+                      #{seat_num}
+                    </span>
+                  );
+                })}
+              </p>
             </div>
-            <button
-              onClick={proceedToPayment}
-              className="px-6 py-2 bg-[#0000FF] text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
-            >
+          </div>
+
+          <div className="flex border-t mt-4 pt-4 justify-between">
+            <p className="text-sm mt-1 text-gray-500">
+              {selectedSeatNumbers.length} seat
+              {selectedSeatNumbers.length !== 1 ? "s" : ""} selected
+            </p>
+
+            <Button disabled={!has_selected_a_seat} onClick={proceedToPayment}>
               Proceed
-            </button>
+            </Button>
           </div>
         </div>
-      )}
+      </motion.div>
     </div>
   );
 }
@@ -271,6 +294,12 @@ function MakePaymentTab() {
   const [showTimer, setShowTimer] = useState(false);
   const pendingBookings = useQuery(api.bookings.getUserPendingBookings);
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+
+  const isExpiringSoon = timeRemaining < 60;
+  const totalPrice = price ? price * selectedSeatNumbers.length : 0;
+
+  const opening_hour = "09:00am";
+  const closing_hour = "05:00am";
 
   useEffect(() => {
     if (pendingBookings && pendingBookings.length > 0) {
@@ -330,9 +359,6 @@ function MakePaymentTab() {
     setShowTimer(true);
   };
 
-  const isExpiringSoon = timeRemaining < 60;
-  const totalPrice = price ? price * selectedSeatNumbers.length : 0;
-
   return (
     <>
       <div className="p-4">
@@ -341,12 +367,13 @@ function MakePaymentTab() {
           automatically canceled.
         </p>
       </div>
+
       <div className="bg-white mb-8 flex flex-col gap-6">
         {user ? (
-          <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
+          <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-2">
             {user.fullName && (
               <div>
-                <p className="text-sm text-gray-600">Name</p>
+                <p className="text-sm text-gray-600">Full name</p>
                 <div className="font-medium text-gray-900 mt-1">
                   {user.fullName}
                 </div>
@@ -370,96 +397,120 @@ function MakePaymentTab() {
             )}
           </div>
         ) : (
-          <div className="border-gray-200 border shadow rounded-lg p-4 flex flex-col gap-6">
-            <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse mb-2"></div>
-            <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+          <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
+            <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse mb-2" />
+            <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse" />
           </div>
         )}
 
-        {selectedSeatNumbers.length > 0 && selectedDate ? (
-          <div className="border-gray-200 border shadow rounded-lg p-4 flex gap-3">
-            <div className="pt-2.5">
-              <svg
-                width="9"
-                height="110"
-                viewBox="0 0 9 110"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="4.5"
-                  cy="4"
-                  r="4"
-                  className="fill-muted-foreground"
-                />
-                <path
-                  d="M4.5 8L4.5 102"
-                  strokeDasharray="2 2"
-                  className="stroke-muted-foreground"
-                />
-                <circle
-                  cx="4.5"
-                  cy="106"
-                  r="4"
-                  className="fill-muted-foreground"
-                />
-              </svg>
-            </div>
-            <div className="flex flex-col gap-6">
-              <div>
-                <h5 className="text-base font-bold">09:00am</h5>
-                <p className="opacity-70">{selectedDate.toDateString()}</p>
-                <p className="opacity-70">
-                  Seat {selectedSeatNumbers.join(", ")}
-                </p>
+        <section className="flex flex-col gap-2">
+          {selectedSeatNumbers.length > 0 && selectedDate ? (
+            <div className="border-gray-200 border rounded-lg p-4 flex gap-3">
+              <div className="pt-2.5">
+                <svg
+                  width="9"
+                  height="110"
+                  viewBox="0 0 9 110"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="4.5"
+                    cy="4"
+                    r="4"
+                    className="fill-muted-foreground"
+                  />
+                  <path
+                    d="M4.5 8L4.5 102"
+                    strokeDasharray="2 2"
+                    className="stroke-muted-foreground"
+                  />
+                  <circle
+                    cx="4.5"
+                    cy="106"
+                    r="4"
+                    className="fill-muted-foreground"
+                  />
+                </svg>
               </div>
-              <div>
-                <h5 className="text-base font-bold">05:00pm</h5>
-                <p className="opacity-70">{endDate?.toDateString()}</p>
+              <div className="flex flex-col gap-6">
+                <div>
+                  <h5 className="text-base font-bold">{opening_hour}</h5>
+                  <p className="opacity-70">{selectedDate.toDateString()}</p>
+                </div>
+                <div>
+                  <h5 className="text-base font-bold">05:00pm</h5>
+                  <p className="opacity-70">{endDate?.toDateString()}</p>
+                </div>
               </div>
             </div>
+          ) : null}
+
+          {selectedSeatNumbers.length > 0 && selectedDate ? (
+            <div className="border-gray-200 border rounded-lg p-4 flex gap-3">
+              <div className="flex flex-col gap-6 w-full">
+                <div className="flex gap-x-3 tabular-nums items-start">
+                  <BookingCalendarBox startDate={selectedDate} />
+                  <div>
+                    <h5 className="text-base text-black">
+                      {opening_hour} — {closing_hour}
+                    </h5>
+                    <p className="text-muted-foreground">Day Plan</p>
+                  </div>
+                </div>
+                <div className="border-t flex justify-end items-center relative border-gray-200 w-full">
+                  <button
+                    type="button"
+                    className="absolute px-4 cursor-pointer text-sm font-medium h-10 border inline-flex items-center justify-center bg-white rounded-full shadow-[0px_0px_0px_5px] shadow-background"
+                    onClick={handleChangeDate}
+                  >
+                    Adjust <ChevronDown strokeWidth={1} size="1.5em" />
+                  </button>
+                </div>
+                <div className="flex gap-x-3 tabular-nums items-start">
+                  <BookingCalendarBox startDate={endDate} />
+                  <div>
+                    <h5 className="text-base text-black">
+                      {opening_hour} — {closing_hour}
+                    </h5>
+                    <p className="text-muted-foreground">Day Plan</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={handleChangeSeats}>
+              Change Seats
+            </Button>
           </div>
-        ) : null}
+        </section>
 
-        <div className="flex gap-3">
-          <button
-            onClick={handleChangeDate}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
-          >
-            Change Date
-          </button>
-          <button
-            onClick={handleChangeSeats}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
-          >
-            Change Seats
-          </button>
-        </div>
-
-        <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
-          <div className="flex justify-between items-center">
+        <ul className="border-gray-200 divide-y divide-gray-200 border rounded-lg flex flex-col *:py-2 *:px-4">
+          <li className="flex justify-between items-center">
             <p className="text-muted-foreground">Payment Status</p>
             <p>
-              {paymentStatus == "pending" || paymentStatus == "failed"
+              {paymentStatus === "pending" || paymentStatus === "failed"
                 ? "Not Paid"
                 : "Paid"}
             </p>
-          </div>
-          <div className="flex justify-between items-center">
+          </li>
+          <li className="flex justify-between items-center">
             <p className="text-muted-foreground">Price per seat</p>
             <p>{formatPrice(price)}</p>
-          </div>
-          <div className="flex justify-between items-center">
+          </li>
+          <li className="flex justify-between items-center">
             <p className="text-muted-foreground">Total Price</p>
-            <p>{formatPrice(totalPrice)}</p>
-          </div>
-        </div>
+            <p className="text-3xl text-black">{formatPrice(totalPrice)}</p>
+          </li>
+        </ul>
 
         <div>
           {paymentMessage && (
             <div
               className={`p-3 rounded-lg mb-4 text-center font-medium ${
-                paymentStatus != "pending" && paymentStatus != "failed"
+                paymentStatus !== "pending" && paymentStatus !== "failed"
                   ? "bg-green-100 text-green-800 border border-green-200"
                   : paymentStatus === "failed"
                     ? "bg-red-100 text-red-800 border border-red-200"
@@ -470,6 +521,7 @@ function MakePaymentTab() {
             </div>
           )}
         </div>
+
         {showTimer && (
           <div className="border border-gray-200 rounded-lg p-4 mb-2">
             <div className="flex items-center justify-between mb-3">
@@ -484,6 +536,7 @@ function MakePaymentTab() {
                 {formatTime(timeRemaining)}
               </div>
             </div>
+
             {/* Progress bar */}
             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
@@ -496,10 +549,7 @@ function MakePaymentTab() {
           </div>
         )}
 
-        <button
-          onClick={handlePayNowClick}
-          className="bg-[#0000FF] hover:bg-[#3333FF] transition-colors duration-300 font-semibold text-white p-3 w-full rounded-lg cursor-pointer flex items-center justify-center"
-        >
+        <Button size="lg" onClick={handlePayNowClick}>
           {paymentLoading ? (
             <LucideLoader
               size={"1.5rem"}
@@ -509,7 +559,7 @@ function MakePaymentTab() {
           ) : (
             "Pay Now"
           )}
-        </button>
+        </Button>
       </div>
     </>
   );

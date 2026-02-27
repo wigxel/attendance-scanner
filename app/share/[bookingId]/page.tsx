@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useProfile } from "@/hooks/auth";
+import { currencyFormatter } from "@/lib/currency.helpers";
+import { DateParse } from "@/lib/date.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
+import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
-import { Check, LucideLoader, UserMinus2 } from "lucide-react";
+import { Calendar, Check, Clock, LucideLoader, UserMinus2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -61,7 +64,9 @@ export default function SharePage() {
   return (
     <>
       <title>Share Booking | InSpace</title>
+
       <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />
+
       <div className="z-[2] relative">
         <Header />
         <main className="max-w-xl mx-auto py-12 px-4 min-h-screen">
@@ -89,6 +94,57 @@ export default function SharePage() {
                 </Button>
               </div>
             )}
+
+            <div className="grid grid-cols-2 gap-y-4 gap-x-8 mb-8 p-5 bg-gray-50/50 rounded-2xl border border-gray-100">
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">
+                  Duration
+                </p>
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-900 capitalize">
+                  <Clock className="w-3.5 h-3.5 text-gray-400" />
+                  {data.duration} {data.durationType}(s)
+                </div>
+              </div>
+
+              <div className="space-y-1 text-right sm:text-left">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">
+                  Status
+                </p>
+                <div className="flex items-center sm:justify-start justify-end gap-2 text-sm font-medium text-gray-900 capitalize">
+                  <div
+                    className={`w-1.5 h-1.5 rounded-full ${data.status === "confirmed" ? "bg-green-500" : "bg-yellow-500"}`}
+                  />
+                  {data.status}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">
+                  Amount
+                </p>
+                <div className="text-sm font-medium text-gray-900">
+                  {currencyFormatter.format(data.amount / 100)}
+                </div>
+              </div>
+
+              <div className="space-y-1 text-right sm:text-left">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">
+                  Dates
+                </p>
+                <div className="flex items-center sm:justify-start justify-end gap-2 text-sm font-medium text-gray-900">
+                  <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                  <span>
+                    {DateParse.presets
+                      .dateOnly(data.startDate)
+                      .pipe(O.getOrElse(() => ""))}{" "}
+                    -{" "}
+                    {DateParse.presets
+                      .dateOnly(data.endDate)
+                      .pipe(O.getOrElse(() => ""))}
+                  </span>
+                </div>
+              </div>
+            </div>
 
             {purchaser_ticket ? (
               <section>
@@ -192,8 +248,10 @@ function SlotItem({
 
   return (
     <li
-      className={`flex items-center justify-between p-4 rounded-lg border ${isClaimed ? "bg-gray-50 border-gray-200" : "bg-white border-green-200"
-        }`}
+      className={cn(
+        `flex items-center justify-between p-4 rounded-lg border`,
+        isClaimed ? "bg-gray-50 border-gray-200" : "bg-white border-green-200",
+      )}
     >
       <div className="flex flex-col items-start gap-2">
         <div className="flex text-sm">Seat #{ticket.seatNumber}</div>

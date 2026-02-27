@@ -223,6 +223,7 @@ function RegisteredUserEntry({
     userId: string;
     timestamp: string;
     access?: AccessPlan;
+    ticketId?: string;
   };
 }) {
   const user = useCustomer({ userId: entry.userId }) ?? {
@@ -231,7 +232,9 @@ function RegisteredUserEntry({
   };
   const visitCount = useVisitCount({ userId: entry.userId });
   const diffFromNow = format_time_to_now(entry.timestamp);
-  const can_modify_plan = differenceInHours(Date.now(), entry.timestamp) < 24;
+  const can_modify_plan = entry.ticketId
+    ? false
+    : differenceInHours(Date.now(), entry.timestamp) < 24;
 
   if (!user) return null;
 
