@@ -3,7 +3,7 @@ import { formatDateToLocalISO } from "../lib/utils";
 import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import { readId } from "./myFunctions";
+import { authGuard, readId } from "./myFunctions"; // Added authGuard
 
 export const getBooking = query({
   args: {
@@ -866,6 +866,50 @@ export const claimTicket = mutation({
       status: "claimed",
       claimedAt: Date.now(),
     });
+  },
+});
+
+export const getAllBookings = query({
+  handler: async (ctx) => {
+    // Add admin check here
+    const adminProfile = await authGuard(ctx, "admin");
+
+    if (!adminProfile) {
+      throw new Error("Not authorized to view all bookings");
+    }
+
+    const bookings = await ctx.db.query("bookings").collect();
+
+    // Get seat and user details for each booking
+    const bookingsWithDetails = await Promise.all(
+      bookings.map(async (booking) => {
+        // fetch all seats for this booking
+        const seats = await Promise.all(
+          booking.seatIds.map((seatId) => ctx.db.get(seatId)),
+        );
+        const user = await ctx.db
+          .query("profile")
+          .filter((q) => q.eq(q.field("id"), booking.userId))
+          .first();
+
+        return {
+          ...booking,
+          seats: seats.filter((seat) => seat !== null), // filter out any null values
+          user: user
+            ? {
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+            }
+            : {
+              name: "Anonymous User",
+              email: "--"
+            }
+        };
+      }),
+    );
+
+    return bookingsWithDetails;
   },
 });
 

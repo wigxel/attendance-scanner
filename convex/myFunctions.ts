@@ -570,8 +570,7 @@ export const listOccupations = query({
   },
 });
 
-//Function for Auth guard
-//
+// Function for Auth guard
 export const authGuard = async (
   ctx: GenericQueryCtx<any>,
   requiredRole?: string,
@@ -596,7 +595,7 @@ export const authGuard = async (
   return profile;
 };
 
-//Mutation to create a new occupation
+// Mutation to create a new occupation
 export const addOccupation = mutation({
   args: {
     name: v.string(),
@@ -632,7 +631,7 @@ export const addOccupation = mutation({
   },
 });
 
-//Mutation to update an occupation
+// Mutation to update an occupation
 export const updateOccupation = mutation({
   args: {
     id: v.id("occupations"),
@@ -665,7 +664,7 @@ export const updateOccupation = mutation({
   },
 });
 
-//Mutation to delete an occupation
+// Mutation to delete an occupation
 export const deleteOccupation = mutation({
   args: {
     id: v.id("occupations"),
@@ -698,8 +697,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-            .query("featureRequest")
-            .withIndex("by_status", (q) => q.eq("status", status))
+          .query("featureRequest")
+          .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 

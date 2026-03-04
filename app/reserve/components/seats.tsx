@@ -15,12 +15,9 @@ export function SelectedSeats(props: {
           <p className="font-semibold inline-flex text-gray-900 gap-2">
             {selectedSeatNumbers.map((seat_num) => {
               return (
-                <span
-                  key={seat_num}
-                  className="size-8 rounded-sm border aspect-square flex items-center justify-center font-mono"
-                >
-                  #{seat_num}
-                </span>
+                <SeatBadge key={seat_num}>
+                  {seat_num}
+                </SeatBadge>
               );
             })}
           </p>
@@ -37,4 +34,10 @@ export function SelectedSeats(props: {
       </div>
     </div>
   );
+}
+
+export function SeatBadge({ children }: { children: React.ReactNode }) {
+  return <span className="size-8 rounded-sm border-b-2 border border-foreground tabular-nums text-foreground aspect-square flex items-center justify-center text-sm font-mono">
+    #{children}
+  </span>
 }

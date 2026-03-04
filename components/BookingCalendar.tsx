@@ -15,16 +15,20 @@ import {
   addDays,
   addMonths,
   addWeeks,
+  differenceInDays,
   formatDate,
   isMatch,
   isSameDay,
   subDays,
 } from "date-fns";
+import { start } from "effect/ScheduleIntervals";
 import {
+  ArrowRight,
   Calendar as CalendarIcon,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  CircleArrowRight,
   SlidersHorizontal,
 } from "lucide-react";
 import { If } from "./if";
@@ -226,7 +230,7 @@ export function RangePreview({
   );
 }
 
-function BookingPeriod({
+export function BookingPeriod({
   date: selectedDate,
   period: timePeriodString,
 }: {
@@ -241,27 +245,31 @@ function BookingPeriod({
         : [selectedDate, addMonths(selectedDate, 1)];
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="text-base font-medium text-foreground flex gap-2 items-center">
-        <div>{formatDate(start_time, "dd MMM, yyyy")}</div>
-        <If cond={timePeriodString !== "day"}>
-          <ChevronRight strokeWidth={1} size={14} />
-          <div>{formatDate(end_time, "dd MMM, yyyy")}</div>
-        </If>
-      </div>
-
-      <p className="text-foreground text-sm">
-        Booking for{" "}
-        <span className="text-foreground">
-          {timePeriodString === "day"
-            ? "Today"
-            : timePeriodString === "week"
-              ? "6 days"
-              : "24 days"}
-        </span>
-      </p>
-    </div>
+    <RangePreviewSimple startDate={start_time} endDate={end_time} />
   );
+}
+
+export function RangePreviewSimple({ startDate, endDate }: { startDate: Date, endDate: Date }) {
+  const is_same_day = isSameDay(startDate, endDate);
+
+  return <div className="flex flex-col gap-1">
+    <div className="text-base font-medium text-foreground flex gap-2 items-center">
+      <div>{formatDate(startDate, "dd MMM")}</div>
+      <If cond={!is_same_day}>
+        <ArrowRight strokeWidth={1} size={14} />
+        <div>{formatDate(endDate, "dd MMM, yyyy")}</div>
+      </If>
+    </div>
+
+    <p className="text-foreground text-sm">
+      Booking for{" "}
+      <span className="text-foreground">
+        {is_same_day
+          ? "1 day"
+          : <>{differenceInDays(endDate, startDate)} days</>}
+      </span>
+    </p>
+  </div>
 }
 
 function addWeekOpeningDays(date: Date): Date {
