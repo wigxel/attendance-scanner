@@ -10,7 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { setActiveTab, useBookingStore } from "./store";
 
-import BookingCalendar from "@/components/BookingCalendar";
+import BookingCalendar, { RangePreview } from "@/components/BookingCalendar";
 import PendingBookingsModal from "@/components/PendingBookingsModal";
 import SeatLayout from "@/components/SeatLayout";
 import { Footer } from "@/components/footer";
@@ -20,7 +20,8 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, ChevronDown, LucideLoader } from "lucide-react";
 import { motion } from "motion/react";
-import { BookingCalendarBox } from "../account/active-bookings";
+import React from "react";
+import { SelectedSeats } from "./components/seats";
 
 function BookingStepTrigger({
   value,
@@ -238,39 +239,15 @@ function PickSeatTab() {
             ? { opacity: 100, y: "0" }
             : { opacity: 0, y: "25%" }
         }
-        className="bg-white p-4 rounded-lg mt-4"
+        className="mt-4"
       >
-        <div className="flex flex-col">
-          <div>
-            <p className="text-gray-900 text-sm">Selected Seats:</p>
-
-            <div className="text-sm text-gray-600 mt-1">
-              <p className="font-semibold inline-flex text-gray-900 gap-2">
-                {selectedSeatNumbers.map((seat_num) => {
-                  return (
-                    <span
-                      key={seat_num}
-                      className="size-8 rounded-sm border aspect-square flex items-center justify-center font-mono"
-                    >
-                      #{seat_num}
-                    </span>
-                  );
-                })}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex border-t mt-4 pt-4 justify-between">
-            <p className="text-sm mt-1 text-gray-500">
-              {selectedSeatNumbers.length} seat
-              {selectedSeatNumbers.length !== 1 ? "s" : ""} selected
-            </p>
-
+        <SelectedSeats
+          proceedButton={
             <Button disabled={!has_selected_a_seat} onClick={proceedToPayment}>
               Proceed
             </Button>
-          </div>
-        </div>
+          }
+        />
       </motion.div>
     </div>
   );
@@ -294,12 +271,10 @@ function MakePaymentTab() {
   const [showTimer, setShowTimer] = useState(false);
   const pendingBookings = useQuery(api.bookings.getUserPendingBookings);
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+  const generateTicketsMutation = useMutation(api.bookings.generateTickets);
 
   const isExpiringSoon = timeRemaining < 60;
   const totalPrice = price ? price * selectedSeatNumbers.length : 0;
-
-  const opening_hour = "09:00am";
-  const closing_hour = "05:00am";
 
   useEffect(() => {
     if (pendingBookings && pendingBookings.length > 0) {
@@ -313,8 +288,7 @@ function MakePaymentTab() {
     }
   }, [pendingBookings]);
 
-  const generateTicketsMutation = useMutation(api.bookings.generateTickets);
-  useEffect(() => {
+  React.useEffect(() => {
     if (paymentStatus === "success" && bookingId) {
       generateTicketsMutation({ bookingId })
         .then(() => {
@@ -405,86 +379,20 @@ function MakePaymentTab() {
 
         <section className="flex flex-col gap-2">
           {selectedSeatNumbers.length > 0 && selectedDate ? (
-            <div className="border-gray-200 border rounded-lg p-4 flex gap-3">
-              <div className="pt-2.5">
-                <svg
-                  width="9"
-                  height="110"
-                  viewBox="0 0 9 110"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <circle
-                    cx="4.5"
-                    cy="4"
-                    r="4"
-                    className="fill-muted-foreground"
-                  />
-                  <path
-                    d="M4.5 8L4.5 102"
-                    strokeDasharray="2 2"
-                    className="stroke-muted-foreground"
-                  />
-                  <circle
-                    cx="4.5"
-                    cy="106"
-                    r="4"
-                    className="fill-muted-foreground"
-                  />
-                </svg>
-              </div>
-              <div className="flex flex-col gap-6">
-                <div>
-                  <h5 className="text-base font-bold">{opening_hour}</h5>
-                  <p className="opacity-70">{selectedDate.toDateString()}</p>
-                </div>
-                <div>
-                  <h5 className="text-base font-bold">05:00pm</h5>
-                  <p className="opacity-70">{endDate?.toDateString()}</p>
-                </div>
-              </div>
-            </div>
+            <RangePreview
+              selectedDate={selectedDate}
+              endDate={endDate}
+              handleChangeDate={handleChangeDate}
+            />
           ) : null}
 
-          {selectedSeatNumbers.length > 0 && selectedDate ? (
-            <div className="border-gray-200 border rounded-lg p-4 flex gap-3">
-              <div className="flex flex-col gap-6 w-full">
-                <div className="flex gap-x-3 tabular-nums items-start">
-                  <BookingCalendarBox startDate={selectedDate} />
-                  <div>
-                    <h5 className="text-base text-black">
-                      {opening_hour} — {closing_hour}
-                    </h5>
-                    <p className="text-muted-foreground">Day Plan</p>
-                  </div>
-                </div>
-                <div className="border-t flex justify-end items-center relative border-gray-200 w-full">
-                  <button
-                    type="button"
-                    className="absolute px-4 cursor-pointer text-sm font-medium h-10 border inline-flex items-center justify-center bg-white rounded-full shadow-[0px_0px_0px_5px] shadow-background"
-                    onClick={handleChangeDate}
-                  >
-                    Adjust <ChevronDown strokeWidth={1} size="1.5em" />
-                  </button>
-                </div>
-                <div className="flex gap-x-3 tabular-nums items-start">
-                  <BookingCalendarBox startDate={endDate} />
-                  <div>
-                    <h5 className="text-base text-black">
-                      {opening_hour} — {closing_hour}
-                    </h5>
-                    <p className="text-muted-foreground">Day Plan</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={handleChangeSeats}>
-              Change Seats
-            </Button>
-          </div>
+          <SelectedSeats
+            proceedButton={
+              <Button variant="outline" onClick={handleChangeSeats}>
+                Change Seats
+              </Button>
+            }
+          />
         </section>
 
         <ul className="border-gray-200 divide-y divide-gray-200 border rounded-lg flex flex-col *:py-2 *:px-4">
@@ -530,7 +438,7 @@ function MakePaymentTab() {
                 className={`text-lg font-bold px-3 py-1 rounded-full ${
                   isExpiringSoon
                     ? "bg-red-100 text-red-700"
-                    : "bg-blue-100 text-[#0000FF]"
+                    : "bg-blue-100 text-primary"
                 }`}
               >
                 {formatTime(timeRemaining)}
@@ -541,7 +449,7 @@ function MakePaymentTab() {
             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
                 className={`h-full transition-all duration-1000 ${
-                  isExpiringSoon ? "bg-red-500" : "bg-[#0000FF]"
+                  isExpiringSoon ? "bg-red-500" : "bg-primary"
                 }`}
                 style={{ width: `${(timeRemaining / 600) * 100}%` }}
               />
