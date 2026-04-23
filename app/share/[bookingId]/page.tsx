@@ -216,7 +216,6 @@ function SlotItem({
 }) {
   const claimMutation = useMutation(api.bookings.claimTicket);
   const removeClaimMutation = useMutation(api.bookings.removeClaim);
-  const a = useProfile();
   const ticket_profile = useQuery(api.myFunctions.getUserById, {
     userId: ticket.holderUserId ?? "",
   });

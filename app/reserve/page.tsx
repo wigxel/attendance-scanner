@@ -18,7 +18,7 @@ import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, ChevronDown, LucideLoader } from "lucide-react";
+import { Check, LucideLoader } from "lucide-react";
 import { motion } from "motion/react";
 import React from "react";
 import { SelectedSeats } from "./components/seats";
@@ -29,7 +29,6 @@ function BookingStepTrigger({
   stepNumber,
   isCompleted,
   isActive,
-  alwaysBlue,
   canShowCheckmark = true,
 }: {
   value: string;
@@ -37,7 +36,6 @@ function BookingStepTrigger({
   stepNumber: number;
   isCompleted: boolean;
   isActive: boolean;
-  alwaysBlue?: boolean;
   canShowCheckmark?: boolean;
 }) {
   const isCurrentlyActive = isActive;
@@ -138,7 +136,6 @@ function Content() {
             stepNumber={1}
             isCompleted={isBookingCompleted}
             isActive={isBookingActive}
-            alwaysBlue={true} // First step always has active colors
           />
           <BookingStepTrigger
             value="choose"
@@ -298,7 +295,7 @@ function MakePaymentTab() {
           console.error(error);
         });
     }
-  }, [paymentStatus, bookingId, router]);
+  }, [paymentStatus, bookingId, router, generateTicketsMutation]);
 
   useEffect(() => {
     if (!showTimer || timeRemaining <= 0) {

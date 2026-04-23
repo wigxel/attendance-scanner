@@ -781,3 +781,47 @@ const aggregateBySuggestion = new TableAggregate<{
   sortKey: (doc) => doc._creationTime, //[doc._creationTime, doc.userId],
   sumValue: (doc) => doc.value,
 });
+
+export const getAttendanceForBooking = query({
+  args: {
+    bookingId: v.id("bookings"),
+  },
+  handler: async (ctx, args) => {
+    const tickets = await ctx.db
+      .query("tickets")
+      .withIndex("by_booking", (q) => q.eq("bookingId", args.bookingId))
+      .collect();
+
+    if (tickets.length === 0) {
+      return [];
+    }
+
+    const ticketIds = tickets.map((ticket) => ticket._id);
+
+    const attendancePromises = ticketIds.map(ticketId => {
+      return ctx.db
+        .query("daily_register")
+        .withIndex("by_ticket", (q) => q.eq("ticketId", ticketId))
+        .collect();
+    });
+
+    const attendanceArrays = await Promise.all(attendancePromises);
+    const attendance = attendanceArrays.flat();
+
+    // Now, enrich the attendance data with user and admitter details
+    const enrichedAttendance = await Promise.all(
+      attendance.map(async (record) => {
+        const user = await ctx.db.query('profile').filter(q => q.eq(q.field('id'), record.userId)).first();
+        const admitter = await ctx.db.get(record.admitted_by as Id<"profile">);
+        return {
+          ...record,
+          userName: user ? `${user.firstName} ${user.lastName}` : "Unknown",
+          admitterName: admitter ? `${admitter.firstName} ${admitter.lastName}` : "Unknown",
+        };
+      })
+    );
+
+    return enrichedAttendance;
+  },
+});
+

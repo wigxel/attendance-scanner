@@ -10,7 +10,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { Calendar, ChevronRight, Clock, Share2Icon, Users } from "lucide-react";
+import { Calendar, ChevronRight, Clock } from "lucide-react";
 import Link from "next/link";
 import type React from "react"; // Added React import for React.ReactNode type
 
@@ -166,9 +166,7 @@ function BookingDateTimeInfo({
  */
 function BookingActionStatus({
   role,
-  seats,
-  bookingId,
-}: Pick<Booking, "role" | "seats"> & { bookingId: string }) {
+}: Pick<Booking, "role">) {
   if (role === "guest") {
     return (
       <div className="flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
@@ -231,8 +229,6 @@ function BookingItem({ booking }: { booking: Booking }) {
         <div className="flex items-center md:justify-end sm:min-w-[140px]">
           <BookingActionStatus
             role={booking.role}
-            seats={booking.seats}
-            bookingId={booking._id}
           />
         </div>
       </div>

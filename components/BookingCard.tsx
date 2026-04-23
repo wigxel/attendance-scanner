@@ -1,16 +1,33 @@
 import { SeatBadge } from "@/app/reserve/components/seats";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { CalendarIcon, RockingChair } from "lucide-react";
 import { RangePreviewSimple } from "./BookingCalendar";
 import { CustomerAvatar } from "./customers";
 
-export function BookingCard({ booking }: { booking: any }) {
+type BookingWithDetails = Doc<"bookings"> & {
+  seats: Doc<"seats">[];
+  user: {
+    id: string;
+    name: string;
+    email: string | undefined;
+  } | null;
+};
+
+export function BookingCard({
+  booking,
+  onClick,
+}: { booking: BookingWithDetails; onClick?: () => void }) {
   return (
-    <Card>
+    <Card onClick={onClick} className="cursor-pointer">
       <CardHeader className="flex flex-row justify-between items-center">
-        <CardTitle className="uppercase mb-0">#{booking._id.slice(0, 6)}</CardTitle>
-        <Badge variant={booking.status === "confirmed" ? "success" : "destructive"}>
+        <CardTitle className="uppercase mb-0">
+          #{booking._id.slice(0, 6)}
+        </CardTitle>
+        <Badge
+          variant={booking.status === "confirmed" ? "success" : "destructive"}
+        >
           {booking.status}
         </Badge>
       </CardHeader>
@@ -39,10 +56,8 @@ export function BookingCard({ booking }: { booking: any }) {
             <RockingChair />
           </div>
           <div className="flex flex-wrap gap-2">
-            {booking.seats.map((seat) => (
-              <SeatBadge key={seat._id}>
-                {seat.seatNumber}
-              </SeatBadge>
+            {booking.seats.map((seat: Doc<"seats">) => (
+              <SeatBadge key={seat._id}>{seat.seatNumber}</SeatBadge>
             ))}
           </div>
         </div>

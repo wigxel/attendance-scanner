@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import { resetBookingState } from "../store";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import CheckMark from "@/public/checkmark.svg";
 import { LucideLoader } from "lucide-react";
 import Image from "next/image";
@@ -25,7 +25,6 @@ export default function SuccessPage() {
 
   const bookingDetails = useQuery(api.bookings.getBooking, { bookingId });
 
-  const userId = bookingDetails?.userId || "";
   const seatIds = bookingDetails ? bookingDetails?.seatIds : [];
 
   const user = useQuery(api.myFunctions.getProfile);

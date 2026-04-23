@@ -2,13 +2,7 @@
 
 import { Reservations } from "@/components/Reservations";
 
-type PageProps = {
-  params: Promise<{
-    id: string;
-  }>;
-};
-
-const Page = ({ params }: PageProps) => {
+const Page = () => {
   return (
     <>
       <section className="p-8">

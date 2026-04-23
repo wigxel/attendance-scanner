@@ -60,7 +60,7 @@ export function TakeAttendance() {
 
       if (!plan && mode === "walk_in") {
         throw new Error(
-          "A plan is required for walk-in. Please ensure you're scanning the latest QR Code",
+          "A plan is required for walk-in. Please ensure you are scanning the latest QR Code",
         );
       }
 
@@ -71,7 +71,7 @@ export function TakeAttendance() {
       }
 
       if (!customer_id) {
-        toast.error("User doesn't exist or isn't registered");
+        toast.error("User does not exist or is not registered");
         return;
       }
 

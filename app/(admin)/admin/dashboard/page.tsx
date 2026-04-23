@@ -5,13 +5,7 @@ import { Feedbacks } from "@/components/feedbacks";
 import { MetricsChart } from "@/components/metrics";
 import { TotalRevenue, TotalVisits } from "../customers/analytics";
 
-type PageProps = {
-  params: Promise<{
-    id: string;
-  }>;
-};
-
-const Page = ({ params }: PageProps) => {
+const Page = () => {
   return (
     <>
       <section className="p-8">
