@@ -1,4 +1,7 @@
-import { CustomersTable, TopCustomersAvatarGroup } from "@/components/customers";
+import {
+  CustomersTable,
+  TopCustomersAvatarGroup,
+} from "@/components/customers";
 import React from "react";
 import { Analytics } from "./analytics";
 

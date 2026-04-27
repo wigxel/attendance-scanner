@@ -34,10 +34,16 @@ export function useDeviceMeta() {
             ? fpResult.components.vendor.value
             : "unknown";
 
-        const userAgentDataRaw = (fpResult.components as Record<string, { value?: unknown }>).userAgentData;
-        const userAgentData = userAgentDataRaw?.value as { brands?: Array<{ brand?: string }> } | null | undefined;
+        const userAgentDataRaw = (
+          fpResult.components as Record<string, { value?: unknown }>
+        ).userAgentData;
+        const userAgentData = userAgentDataRaw?.value as
+          | { brands?: Array<{ brand?: string }> }
+          | null
+          | undefined;
 
-        const browserName = userAgentData?.brands?.[0]?.brand ?? vendor ?? "unknown";
+        const browserName =
+          userAgentData?.brands?.[0]?.brand ?? vendor ?? "unknown";
 
         const data: DeviceMeta = {
           browser: browserName,

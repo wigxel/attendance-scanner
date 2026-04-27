@@ -39,7 +39,10 @@ function MetricCard({
   aggregation?: "sum" | "avg" | "latest";
 }) {
   const { filter } = DateRange.useState();
-  const [startObj, endObj] = React.useMemo(() => filter.get_range(Date.now()), [filter]);
+  const [startObj, endObj] = React.useMemo(
+    () => filter.get_range(Date.now()),
+    [filter],
+  );
   const start = format(startObj, "yyyy-MM-dd");
   const end = format(endObj, "yyyy-MM-dd");
 

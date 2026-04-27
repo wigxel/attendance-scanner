@@ -35,8 +35,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-
-
 export function DataTableDemo<T>({
   columns,
   data,

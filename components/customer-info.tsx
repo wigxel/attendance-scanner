@@ -16,17 +16,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "./ui/sheet";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "./ui/chart";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 
 function CustomerSheet({
   userId,
@@ -45,7 +36,7 @@ function CustomerSheet({
   } = usePaginatedQuery(
     api.customers.getVisitHistory,
     userId ? { userId } : "skip",
-    { initialNumItems: 20 }
+    { initialNumItems: 20 },
   );
 
   return (
@@ -103,7 +94,7 @@ function CustomerSheet({
                   const isCurrentYear = isSameYear(visitDate, new Date());
                   const formattedDate = format(
                     visitDate,
-                    isCurrentYear ? "do MMM" : "do MMM, yyyy"
+                    isCurrentYear ? "do MMM" : "do MMM, yyyy",
                   );
                   const formattedTime = format(visitDate, "h:mm a");
 
@@ -165,7 +156,10 @@ function CustomerVisitTrend({ userId }: { userId: string }) {
               <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <ChartTooltip content={<ChartTooltipContent hideLabel />} cursor={false} />
+          <ChartTooltip
+            content={<ChartTooltipContent hideLabel />}
+            cursor={false}
+          />
           <Area
             type="monotone"
             dataKey="visits"

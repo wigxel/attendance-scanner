@@ -34,8 +34,9 @@ export const getVisitHistory = query({
         let adminName = "Unknown";
 
         if (visit.admitted_by) {
-          const user = await ctx.db.get(visit.admitted_by as Id<'users'>)
-            .catch(() => null)
+          const user = await ctx.db
+            .get(visit.admitted_by as Id<"users">)
+            .catch(() => null);
 
           if (user) {
             adminName = user.name ?? adminName;
@@ -43,7 +44,7 @@ export const getVisitHistory = query({
         }
 
         return { ...visit, adminName };
-      })
+      }),
     );
 
     return { ...visits, page: enrichedVisits };
@@ -699,7 +700,7 @@ export const getTopCustomers = query({
           name: `${profile.firstName} ${profile.lastName}`,
           visits: count,
         };
-      })
+      }),
     );
 
     const limit = args.limit ?? 50;

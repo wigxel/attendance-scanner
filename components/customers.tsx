@@ -378,25 +378,35 @@ function format_time_to_now(date_: unknown) {
 }
 
 export function TopCustomersAvatarGroup() {
-  const topCustomers = useQuery(api.customers.getTopCustomers, {
-    limit: 50,
-    start: new Date(2024, 11, 1).toISOString()
-  }) ?? [];
+  const topCustomers =
+    useQuery(api.customers.getTopCustomers, {
+      limit: 50,
+      start: new Date(2024, 11, 1).toISOString(),
+    }) ?? [];
   const top6 = topCustomers.slice(0, 6);
   const extra = Math.max(0, topCustomers.length - top6.length);
 
   return (
     <EmptyState isEmpty={topCustomers.length === 0}>
       <EmptyStateContent>
-        <Button variant="outline" disabled className="h-auto p-2 px-4 rounded-full flex items-center justify-center">
-          <span className="text-xs text-muted-foreground">No Top Customers yet</span>
+        <Button
+          variant="outline"
+          disabled
+          className="h-auto p-2 px-4 rounded-full flex items-center justify-center"
+        >
+          <span className="text-xs text-muted-foreground">
+            No Top Customers yet
+          </span>
         </Button>
       </EmptyStateContent>
 
       <EmptyStateConceal>
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" className="h-auto p-2 pl-4 rounded-full flex items-center gap-3">
+            <Button
+              variant="outline"
+              className="h-auto p-2 pl-4 rounded-full flex items-center gap-3"
+            >
               <div className="flex -space-x-3">
                 {top6.map((customer, i) => (
                   <CustomerAvatar
@@ -404,13 +414,15 @@ export function TopCustomersAvatarGroup() {
                     userId={customer.userId}
                     className={cn(
                       "w-8 h-8 border-2 border-background ring-2 ring-transparent transition-all",
-                      "hover:z-10 pointer-events-none"
+                      "hover:z-10 pointer-events-none",
                     )}
                   />
                 ))}
               </div>
               <div className="flex flex-col items-start text-xs text-muted-foreground mr-2">
-                <span className="font-medium text-foreground">Star Customers</span>
+                <span className="font-medium text-foreground">
+                  Star Customers
+                </span>
                 <If cond={extra > 0}>
                   <span>+{extra} more</span>
                 </If>
@@ -418,7 +430,10 @@ export function TopCustomersAvatarGroup() {
             </Button>
           </SheetTrigger>
 
-          <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col h-full">
+          <SheetContent
+            side="right"
+            className="w-full sm:max-w-md p-0 flex flex-col h-full"
+          >
             <SheetHeader className="p-6 border-b">
               <SheetTitle>Top Customers</SheetTitle>
             </SheetHeader>
@@ -426,15 +441,22 @@ export function TopCustomersAvatarGroup() {
             <ScrollArea className="flex-1">
               <ul className="divide-y divide-border">
                 {topCustomers.map((customer, i) => (
-                  <li key={customer.userId} className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
+                  <li
+                    key={customer.userId}
+                    className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
+                  >
                     <div className="font-mono text-sm text-muted-foreground w-4 text-center">
                       {i + 1}
                     </div>
-                    <CustomerAvatar userId={customer.userId} className="w-10 h-10" />
+                    <CustomerAvatar
+                      userId={customer.userId}
+                      className="w-10 h-10"
+                    />
                     <div className="flex-1">
                       <div className="font-semibold">{customer.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        {serialNo(customer.visits)} visit{customer.visits === 1 ? "" : "s"}
+                        {serialNo(customer.visits)} visit
+                        {customer.visits === 1 ? "" : "s"}
                       </div>
                     </div>
                   </li>
