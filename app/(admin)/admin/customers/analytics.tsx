@@ -9,22 +9,113 @@ import { useQuery } from "convex/react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { isNullable } from "effect/Predicate";
 import React from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { RegisteredUserEntry } from "@/components/customers";
+
+type MetricKind = "totalCustomers" | "newCustomers" | "activeCustomers" | "repeatCustomerRate" | "avgVisitsPerCustomer" | "lapsedCustomers";
+
+function MetricCard({
+  label,
+  kind,
+  suffix,
+  aggregation = "latest",
+}: {
+  label: string;
+  kind: MetricKind;
+  suffix?: string;
+  aggregation?: "sum" | "avg" | "latest";
+}) {
+  const now = new Date();
+  const start = format(startOfMonth(now), "yyyy-MM-dd");
+  const end = format(endOfMonth(now), "yyyy-MM-dd");
+
+  const value = useQuery(api.customers.getCustomerMetrics, {
+    kind,
+    start,
+    end,
+    aggregation,
+  });
+  const is_nullable = isNullable(value);
+
+  const startTime = startOfMonth(new Date()).getTime();
+  const newCustomers = useQuery(api.customers.listNewCustomers, { startTime });
+
+  const isNewCustomersCard = kind === "newCustomers";
+
+  const cardContent = (
+    <Card className="aspect-[3/1.5]">
+      <CardContent className="flex pt-4 flex-col gap-2">
+        <CardDescription>{label}</CardDescription>
+        <span className="text-3xl font-semibold">
+          <If cond={!is_nullable}>
+            {suffix === "%"
+              ? `${safeNum(value)}%`
+              : suffix === "x"
+                ? `${safeNum(value)}x`
+                : serialNo(safeNum(value))}
+          </If>
+          <If cond={is_nullable}>{"--"}</If>
+        </span>
+      </CardContent>
+    </Card>
+  );
+
+  if (isNewCustomersCard) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
+          <TooltipContent
+            side="bottom"
+            className="w-80 p-0 max-h-[400px]"
+          >
+            <ScrollArea className="h-[300px]">
+              <ul className="py-2">
+                {newCustomers === undefined && (
+                  <li className="px-4 py-2 text-sm text-muted-foreground text-center">
+                    Loading...
+                  </li>
+                )}
+                {newCustomers?.length === 0 && (
+                  <li className="px-4 py-2 text-sm text-muted-foreground text-center">
+                    No new customers this month
+                  </li>
+                )}
+                {newCustomers?.map((customer) => (
+                  <RegisteredUserEntry
+                    key={customer._id}
+                    entry={{
+                      userId: customer.id,
+                      timestamp: new Date(customer._creationTime).toISOString(),
+                    }}
+                  />
+                ))}
+              </ul>
+            </ScrollArea>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return cardContent;
+}
 
 export function Analytics() {
-  const count = useQuery(api.customers.countCustomers);
-  const is_nullable = isNullable(count);
-
   return (
-    <div className="grid grid-cols-4">
-      <Card className="aspect-[3/1.5]">
-        <CardContent className="flex pt-4 flex-col gap-2">
-          <CardDescription>Total customers</CardDescription>
-          <span className="text-3xl font-semibold">
-            <If cond={!is_nullable}>{serialNo(safeNum(count))}</If>
-            <If cond={is_nullable}>{"--"}</If>
-          </span>
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-3 gap-4 p-4 pt-0">
+      <MetricCard label="Total customers" kind="totalCustomers" />
+      <MetricCard label="New customers (this month)" kind="newCustomers" />
+      <MetricCard label="Active customers (30 days)" kind="activeCustomers" />
+      <MetricCard label="Repeat customer rate" kind="repeatCustomerRate" suffix="%" />
+      <MetricCard label="Avg visits per customer" kind="avgVisitsPerCustomer" suffix="x" aggregation="avg" />
+      <MetricCard label="Lapsed customers (30+ days)" kind="lapsedCustomers" />
     </div>
   );
 }

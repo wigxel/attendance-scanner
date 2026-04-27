@@ -216,7 +216,7 @@ type AccessPlan =
   | { kind: "paid"; amount: number }
   | undefined;
 
-function RegisteredUserEntry({
+export function RegisteredUserEntry({
   entry,
 }: {
   entry: {

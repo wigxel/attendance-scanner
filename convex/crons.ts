@@ -5,8 +5,15 @@ const crons = cronJobs();
 
 crons.daily(
   "take daily visit metrics",
-  { hourUTC: 0, minuteUTC: 0 }, // 12 AM UTC
+  { hourUTC: 0, minuteUTC: 0 },
   internal.register.saveCount,
+);
+
+crons.daily(
+  "compute customer metrics",
+  { hourUTC: 0, minuteUTC: 0 },
+  internal.customers.computeMetrics,
+  {},
 );
 
 crons.interval(

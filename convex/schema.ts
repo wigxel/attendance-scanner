@@ -136,6 +136,41 @@ const dailyAttendanceMetrics = defineTable({
   totalUsers: v.number(),
 }).index("by_date", ["date"]);
 
+const metricKinds = v.union(
+  v.literal("totalCustomers"),
+  v.literal("newCustomers"),
+  v.literal("activeCustomers"),
+  v.literal("repeatCustomerRate"),
+  v.literal("avgVisitsPerCustomer"),
+  v.literal("lapsedCustomers"),
+);
+
+const app_metrics = defineTable({
+  date: v.string(),
+  category: v.literal("customer"),
+  kind: metricKinds,
+  value: v.number(),
+}).index("by_date_category_kind", ["date", "category", "kind"]);
+
+const app_metrics_top_customers = defineTable({
+  date: v.string(),
+  userId: v.string(),
+  visits: v.number(),
+}).index("by_date", ["date"]);
+
+/**
+ * Generic key/value configuration store.
+ * Used to persist backfill state and other runtime flags.
+ *
+ * Known keys:
+ * - `processing_backfill`    – "true" while a backfill job is running
+ * - `last_processed_backfill` – last successfully processed date (yyyy-MM-dd)
+ */
+const config = defineTable({
+  key: v.string(),
+  value: v.string(),
+}).index("by_key", ["key"]);
+
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
   users: authTables.users,
@@ -151,4 +186,7 @@ export default defineSchema({
   bookings,
   bookedSeats,
   tickets,
+  app_metrics,
+  app_metrics_top_customers,
+  config,
 });

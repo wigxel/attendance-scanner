@@ -23,7 +23,7 @@ export function DebugProfile(props: { children: React.ReactNode }) {
 
   return (
     <Dialog>
-      <DialogTrigger>{props.children}</DialogTrigger>
+      <DialogTrigger asChild>{props.children}</DialogTrigger>
 
       <DialogContent>
         <DialogHeader>
