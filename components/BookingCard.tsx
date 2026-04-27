@@ -11,8 +11,8 @@ import { O } from "@/lib/fp.helpers";
 
 type BookingWithDetails = Omit<Doc<"bookings">, "startDate" | "endDate"> & {
   _id: string | undefined;
-  startDate: string
-  endDate: string
+  startDate: string;
+  endDate: string;
   seats: Doc<"seats">[];
   user: {
     id?: string;
@@ -49,14 +49,21 @@ export function BookingCard({
               DateParse.parse(booking.endDate),
             ]),
             O.map(([start, end]) => {
-              return <RangePreviewSimple
-                startDate={start}
-                endDate={end}
-              />
+              return (
+                <RangePreviewSimple
+                  key={"pair"}
+                  startDate={start}
+                  endDate={end}
+                />
+              );
             }),
             O.getOrElse(() => {
-              return <p className="text-sm">Error rendering Preview. Start date or end date is invalid.</p>
-            })
+              return (
+                <p className="text-sm">
+                  Error rendering Preview. Start date or end date is invalid.
+                </p>
+              );
+            }),
           )}
         </div>
 

@@ -117,7 +117,9 @@ function EmptyBookingsCard() {
 /**
  * Displays the month and day of a booking's start date in a styled box.
  */
-export function BookingCalendarBox({ startDate }: { startDate: string | Date }) {
+export function BookingCalendarBox({
+  startDate,
+}: { startDate: string | Date }) {
   const date = new Date(startDate);
   return (
     <div className="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg shrink-0 border border-gray-200">
