@@ -2,12 +2,15 @@ import { TableAggregate } from "@convex-dev/aggregate";
 import { ConvexError, v } from "convex/values";
 import {
   addDays,
+  addMonths,
+  addWeeks,
   format,
   isAfter,
   isValid,
   parseISO,
   startOfDay,
   startOfMonth,
+  startOfWeek,
   subDays,
 } from "date-fns";
 import { components } from "./_generated/api";
@@ -15,6 +18,54 @@ import { api, internal } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { type MutationCtx, internalMutation, query } from "./_generated/server";
 import { deleteConfig, getConfig, setConfig } from "./config";
+import { paginationOptsValidator } from "convex/server";
+
+export const getVisitHistory = query({
+  args: { paginationOpts: paginationOptsValidator, userId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("daily_register")
+      .withIndex("user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .paginate(args.paginationOpts);
+  },
+});
+
+export const getCustomerVisitTrend = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const visits = await ctx.db
+      .query("daily_register")
+      .withIndex("user", (q) => q.eq("userId", args.userId))
+      .order("asc")
+      .collect();
+
+    if (visits.length === 0) return [];
+
+    const grouped = new Map<string, number>();
+    for (const v of visits) {
+      const visitDate = parseISO(v.timestamp);
+      const weekStart = format(startOfWeek(visitDate), "yyyy-MM-dd");
+      grouped.set(weekStart, (grouped.get(weekStart) || 0) + 1);
+    }
+
+    const start = parseISO(visits[0].timestamp);
+    const end = parseISO(visits[visits.length - 1].timestamp);
+
+    const result = [];
+    let current = startOfWeek(start);
+    while (!isAfter(current, startOfWeek(end))) {
+      const dateStr = format(current, "yyyy-MM-dd");
+      result.push({
+        date: format(current, "MMM d"), // formatting for chart
+        visits: grouped.get(dateStr) || 0,
+      });
+      current = addWeeks(current, 1);
+    }
+
+    return result;
+  },
+});
 
 const profileAggregate = new TableAggregate<{
   Key: number;
@@ -22,6 +73,16 @@ const profileAggregate = new TableAggregate<{
   TableName: "profile";
 }>(components.customerStats, {
   sortKey: (doc) => doc._creationTime,
+});
+
+export const visitsAggregate = new TableAggregate<{
+  Namespace: string;
+  Key: number;
+  DataModel: DataModel;
+  TableName: "daily_register";
+}>(components.customerStats, {
+  namespace: (doc) => doc.userId,
+  sortKey: (doc) => parseISO(doc.timestamp).getTime(),
 });
 
 const metricKinds = v.union(
@@ -327,31 +388,61 @@ export const startBackfill = internalMutation({
   args: {
     startFrom: v.optional(v.string()),
     force: v.optional(v.boolean()),
+    dryRun: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const lock = await getConfig(ctx, CONFIG_LOCK);
-
-    if (lock === "true" && !args.force) {
-      // Auto-recover if the heartbeat is too old — the previous process
-      // likely died without releasing the lock.
-      const heartbeat = await getConfig(ctx, CONFIG_HEARTBEAT);
-      const isStale =
-        !heartbeat || Date.now() - Number(heartbeat) > LOCK_TTL_MS;
-
-      if (!isStale) {
-        return {
-          started: false,
-          reason:
-            "A backfill is already running. Pass force: true to override, or wait for it to finish.",
-        };
-      }
-      // Fall through: stale lock detected, safe to take over.
-    }
-
     // Validate startFrom before touching any state.
     const startFrom = args.startFrom
       ? parseDateArg(args.startFrom, "startFrom")
       : undefined;
+
+    const lock = await getConfig(ctx, CONFIG_LOCK);
+    const heartbeat = await getConfig(ctx, CONFIG_HEARTBEAT);
+    const isStale = !heartbeat || Date.now() - Number(heartbeat) > LOCK_TTL_MS;
+    const isCurrentlyLocked = lock === "true" && !isStale;
+
+    if (args.dryRun) {
+      let simulatedStartDate = startFrom;
+
+      if (!simulatedStartDate) {
+        const lastProcessed = await getConfig(ctx, CONFIG_LAST_DATE);
+        if (lastProcessed) {
+          simulatedStartDate = format(
+            addDays(startOfDay(parseISO(lastProcessed)), 1),
+            "yyyy-MM-dd",
+          );
+        } else {
+          const earliest = await ctx.db
+            .query("daily_register")
+            .order("asc")
+            .first();
+          simulatedStartDate = earliest
+            ? format(startOfDay(parseISO(earliest.timestamp)), "yyyy-MM-dd")
+            : undefined;
+        }
+      }
+
+      const yesterday = startOfDay(subDays(new Date(), 1));
+      const wouldProcess =
+        !!simulatedStartDate &&
+        !isAfter(parseISO(simulatedStartDate), yesterday);
+
+      return {
+        dryRun: true,
+        wouldProcess,
+        wouldStartFrom: simulatedStartDate ?? null,
+        wouldEndAt: format(yesterday, "yyyy-MM-dd"),
+        isCurrentlyLocked,
+      };
+    }
+
+    if (isCurrentlyLocked && !args.force) {
+      return {
+        started: false,
+        reason:
+          "A backfill is already running. Pass force: true to override, or wait for it to finish.",
+      };
+    }
 
     // If a new startFrom is provided, reset progress so we start fresh.
     if (startFrom) {
@@ -515,10 +606,9 @@ export const getCustomerMetrics = query({
 
     const records = await ctx.db
       .query("app_metrics")
-      .withIndex("by_date_category_kind", (q) => q.eq("date", start))
+      .withIndex("by_date_category_kind", (q) => q.gte("date", start))
       .filter((q) =>
         q.and(
-          q.gte(q.field("date"), start),
           q.lte(q.field("date"), end),
           q.eq(q.field("category"), "customer"),
           q.eq(q.field("kind"), args.kind),
@@ -567,34 +657,47 @@ export const getTopCustomers = query({
     const defaultStart = format(startOfMonth(now), "yyyy-MM-dd");
 
     const end = args.end ?? defaultEnd;
+    const start = args.start ?? defaultStart;
 
-    const topCustomers = await ctx.db
-      .query("app_metrics_top_customers")
-      .withIndex("by_date", (q) => q.eq("date", end))
-      .collect();
+    const startObj = startOfDay(parseISO(start));
+    const endObj = startOfDay(addDays(parseISO(end), 1));
+    const startMs = startObj.getTime();
+    const endMs = endObj.getTime();
+
+    const profiles = await ctx.db.query("profile").collect();
+
+    const visitCounts = await Promise.all(
+      profiles.map(async (profile) => {
+        const count = await visitsAggregate.count(ctx, {
+          namespace: profile.id,
+          bounds: {
+            lower: { key: startMs, inclusive: true },
+            upper: { key: endMs, inclusive: false },
+          },
+        });
+        return {
+          userId: profile.id,
+          name: `${profile.firstName} ${profile.lastName}`,
+          visits: count,
+        };
+      })
+    );
 
     const limit = args.limit ?? 50;
-    const sorted = topCustomers
+    const sorted = visitCounts
+      .filter((uv) => uv.visits > 0)
       .sort((a, b) => b.visits - a.visits)
       .slice(0, limit);
 
-    const enriched = await Promise.all(
-      sorted.map(async (tc) => {
-        const profile = await ctx.db
-          .query("profile")
-          .filter((q) => q.eq(q.field("id"), tc.userId))
-          .first();
+    return sorted;
+  },
+});
 
-        return {
-          userId: tc.userId,
-          name: profile
-            ? `${profile.firstName} ${profile.lastName}`
-            : "Unknown",
-          visits: tc.visits,
-        };
-      }),
-    );
-
-    return enriched;
+export const backfillVisitsAggregate = internalMutation({
+  handler: async (ctx) => {
+    const registers = await ctx.db.query("daily_register").collect();
+    for (const reg of registers) {
+      await visitsAggregate.insert(ctx, reg);
+    }
   },
 });

@@ -9,6 +9,7 @@ import { api } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { setExternalId, updateClerkUser } from "./clerk";
+import { visitsAggregate } from "./customers";
 import { PlanImpl, featureRequestStatus } from "./shared";
 
 export const authUser = query({
@@ -280,7 +281,7 @@ export const registerUser = mutation({
         throw new ConvexError("No active reservation found for this customer.");
       }
 
-      await ctx.db.insert("daily_register", {
+      const id = await ctx.db.insert("daily_register", {
         userId: customer.id,
         device: {
           name: "Unknown",
@@ -297,6 +298,8 @@ export const registerUser = mutation({
         },
         ticketId: activeTicket._id,
       });
+      const entry = await ctx.db.get(id);
+      if (entry) await visitsAggregate.insert(ctx, entry);
       return; // End execution
     }
 
@@ -304,7 +307,7 @@ export const registerUser = mutation({
     if (args.mode === "walk_in") {
       const plan = await PlanImpl.validatePlan(ctx.db, args.plan);
 
-      await ctx.db.insert("daily_register", {
+      const id = await ctx.db.insert("daily_register", {
         userId: customer.id,
         device: {
           name: "Unknown",
@@ -316,6 +319,8 @@ export const registerUser = mutation({
         timestamp: new Date().toISOString(),
         access: PlanImpl.toStruct(plan),
       });
+      const entry = await ctx.db.get(id);
+      if (entry) await visitsAggregate.insert(ctx, entry);
       return; // End execution
     }
   },
@@ -527,6 +532,7 @@ export const getAllUsers = query({
 
         return {
           id: profile._id,
+          userId: profile.id,
           firstName: profile.firstName,
           lastName: profile.lastName,
           email: profile.email ?? "N/A",

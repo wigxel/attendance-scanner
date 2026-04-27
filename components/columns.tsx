@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 export type UserRow = {
   id: string;
+  userId: string;
   firstname: string;
   lastname: string;
   email: string | null;

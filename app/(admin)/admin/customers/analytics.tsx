@@ -13,6 +13,7 @@ import { api } from "@/convex/_generated/api";
 import { currencyFormatter } from "@/lib/currency.helpers";
 import { safeNum, serialNo } from "@/lib/data.helpers";
 import { O, pipe } from "@/lib/fp.helpers";
+import { DateRange } from "@/components/DateRange";
 import { useQuery } from "convex/react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { isNullable } from "effect/Predicate";
@@ -37,9 +38,10 @@ function MetricCard({
   suffix?: string;
   aggregation?: "sum" | "avg" | "latest";
 }) {
-  const now = new Date();
-  const start = format(startOfMonth(now), "yyyy-MM-dd");
-  const end = format(endOfMonth(now), "yyyy-MM-dd");
+  const { filter } = DateRange.useState();
+  const [startObj, endObj] = React.useMemo(() => filter.get_range(Date.now()), [filter]);
+  const start = format(startObj, "yyyy-MM-dd");
+  const end = format(endObj, "yyyy-MM-dd");
 
   const value = useQuery(api.customers.getCustomerMetrics, {
     kind,
@@ -49,7 +51,7 @@ function MetricCard({
   });
   const is_nullable = isNullable(value);
 
-  const startTime = startOfMonth(new Date()).getTime();
+  const startTime = startObj.getTime();
   const newCustomers = useQuery(api.customers.listNewCustomers, { startTime });
 
   const isNewCustomersCard = kind === "newCustomers";
@@ -87,7 +89,7 @@ function MetricCard({
                 )}
                 {newCustomers?.length === 0 && (
                   <li className="px-4 py-2 text-sm text-muted-foreground text-center">
-                    No new customers this month
+                    No new customers in this range
                   </li>
                 )}
                 {newCustomers?.map((customer) => (
@@ -112,29 +114,34 @@ function MetricCard({
 
 export function Analytics() {
   return (
-    <div className="grid grid-cols-3 gap-4 p-4 pt-0">
-      <MetricCard label="Total customers" kind="totalCustomers" />
-      <MetricCard label="New customers (this month)" kind="newCustomers" />
-      <MetricCard label="Active customers (30 days)" kind="activeCustomers" />
-      <MetricCard
-        label="Repeat customer rate"
-        kind="repeatCustomerRate"
-        suffix="%"
-      />
-      <MetricCard
-        label="Avg visits per customer"
-        kind="avgVisitsPerCustomer"
-        suffix="x"
-        aggregation="avg"
-      />
-      <MetricCard label="Lapsed customers (30+ days)" kind="lapsedCustomers" />
-    </div>
+    <DateRange.Provider>
+      <div className="p-4 pt-0">
+        <div className="flex justify-end mb-4">
+          <DateRange.Dropdown />
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <MetricCard label="Total customers" kind="totalCustomers" />
+          <MetricCard label="New customers" kind="newCustomers" />
+          <MetricCard label="Active customers" kind="activeCustomers" />
+          <MetricCard
+            label="Repeat customer rate"
+            kind="repeatCustomerRate"
+            suffix="%"
+          />
+          <MetricCard
+            label="Avg visits per customer"
+            kind="avgVisitsPerCustomer"
+            suffix="x"
+            aggregation="avg"
+          />
+          <MetricCard label="Lapsed customers" kind="lapsedCustomers" />
+        </div>
+      </div>
+    </DateRange.Provider>
   );
 }
 
 const today = Date.now();
-
-import { DateRange } from "@/components/DateRange";
 
 export function TotalVisits() {
   return (

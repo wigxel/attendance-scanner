@@ -7,13 +7,15 @@ import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
 import { DateParse } from "@/lib/date.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import {
   differenceInDays,
   differenceInHours,
   differenceInMinutes,
   differenceInSeconds,
+  format,
   formatISO,
+  isSameYear,
   isToday,
   parseISO,
   setHours,
@@ -36,6 +38,19 @@ import { Badge, badgeVariants } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./ui/sheet";
+import { Area, AreaChart } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "./ui/chart";
 
 export function useUsers() {
   const record = useQuery(api.myFunctions.getAllUsers);
@@ -49,6 +64,9 @@ export function useUsers() {
 */
 export function CustomersTable() {
   const { data: users } = useUsers();
+  const [selectedUserId, setSelectedUserId] = React.useState<string | null>(
+    null,
+  );
 
   if (!users) {
     return <div>Loading...</div>;
@@ -63,7 +81,128 @@ export function CustomersTable() {
           firstname: user.firstName,
           lastname: user.lastName,
         }))}
+        onRowClick={(row) => setSelectedUserId(row.userId)}
       />
+      <CustomerSheet
+        userId={selectedUserId}
+        open={!!selectedUserId}
+        onOpenChange={(open) => !open && setSelectedUserId(null)}
+      />
+    </div>
+  );
+}
+
+function CustomerSheet({
+  userId,
+  open,
+  onOpenChange,
+}: {
+  userId: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const customer = useCustomer({ userId: userId ?? "" });
+  const {
+    results: visits,
+    status,
+    loadMore,
+  } = usePaginatedQuery(
+    api.customers.getVisitHistory,
+    userId ? { userId } : "skip",
+    { initialNumItems: 20 }
+  );
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md p-0 flex flex-col h-full overflow-y-auto"
+      >
+        <SheetHeader className="p-6 border-b">
+          <SheetTitle>Customer Details</SheetTitle>
+        </SheetHeader>
+        <ScrollArea className="flex-1">
+          {customer && (
+            <div className="p-6 flex items-start gap-4">
+              <CustomerAvatar userId={userId ?? ""} className="w-16 h-16 shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg">
+                  {customer.firstName} {customer.lastName}
+                </h3>
+                <p className="text-muted-foreground text-sm">{customer.email}</p>
+                <p className="text-muted-foreground text-sm">{customer.phoneNumber}</p>
+                <p className="text-muted-foreground text-sm">{customer.occupation}</p>
+              </div>
+              {userId && <CustomerVisitTrend userId={userId} />}
+            </div>
+          )}
+          <div className="p-6 pt-0 border-t">
+            <h4 className="font-semibold mb-4 mt-4">Visit History</h4>
+            {status === "LoadingFirstPage" ? (
+              <p>Loading...</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {visits.map((visit) => {
+                  const visitDate = new Date(visit.timestamp);
+                  const isCurrentYear = isSameYear(visitDate, new Date());
+                  const formattedDate = format(
+                    visitDate,
+                    isCurrentYear ? "do MMMM" : "do MMMM, yyyy"
+                  );
+                  
+                  return (
+                    <li key={visit._id} className="py-3 flex justify-between items-center">
+                      <span>{formattedDate}</span>
+                      <PaymentBadge data={visit.access} />
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {status === "CanLoadMore" && (
+              <Button
+                variant="outline"
+                className="w-full mt-4"
+                onClick={() => loadMore(20)}
+              >
+                Load More
+              </Button>
+            )}
+          </div>
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function CustomerVisitTrend({ userId }: { userId: string }) {
+  const data = useQuery(api.customers.getCustomerVisitTrend, { userId });
+
+  if (!data || data.length === 0) return null;
+
+  return (
+    <div className="h-16 w-32 shrink-0">
+      <ChartContainer
+        config={{ visits: { label: "Visits", color: "#3b82f6" } }}
+      >
+        <AreaChart data={data} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <ChartTooltip content={<ChartTooltipContent hideLabel />} cursor={false} />
+          <Area
+            type="monotone"
+            dataKey="visits"
+            stroke="#3b82f6"
+            strokeWidth={2}
+            fillOpacity={1}
+            fill="url(#colorVisits)"
+          />
+        </AreaChart>
+      </ChartContainer>
     </div>
   );
 }
@@ -358,4 +497,75 @@ function format_time_to_now(date_: unknown) {
   }
 
   return "now";
+}
+
+export function TopCustomersAvatarGroup() {
+  const topCustomers = useQuery(api.customers.getTopCustomers, {
+    limit: 50,
+    start: new Date(2024, 11, 1).toISOString()
+  }) ?? [];
+  const top6 = topCustomers.slice(0, 6);
+  const extra = Math.max(0, topCustomers.length - top6.length);
+
+  return (
+    <EmptyState isEmpty={topCustomers.length === 0}>
+      <EmptyStateContent>
+        <Button variant="outline" disabled className="h-auto p-2 px-4 rounded-full flex items-center justify-center">
+          <span className="text-xs text-muted-foreground">No Top Customers yet</span>
+        </Button>
+      </EmptyStateContent>
+
+      <EmptyStateConceal>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="h-auto p-2 pl-4 rounded-full flex items-center gap-3">
+              <div className="flex -space-x-3">
+                {top6.map((customer, i) => (
+                  <CustomerAvatar
+                    key={customer.userId}
+                    userId={customer.userId}
+                    className={cn(
+                      "w-8 h-8 border-2 border-background ring-2 ring-transparent transition-all",
+                      "hover:z-10 pointer-events-none"
+                    )}
+                  />
+                ))}
+              </div>
+              <div className="flex flex-col items-start text-xs text-muted-foreground mr-2">
+                <span className="font-medium text-foreground">Star Customers</span>
+                <If cond={extra > 0}>
+                  <span>+{extra} more</span>
+                </If>
+              </div>
+            </Button>
+          </SheetTrigger>
+
+          <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col h-full">
+            <SheetHeader className="p-6 border-b">
+              <SheetTitle>Top Customers</SheetTitle>
+            </SheetHeader>
+
+            <ScrollArea className="flex-1">
+              <ul className="divide-y divide-border">
+                {topCustomers.map((customer, i) => (
+                  <li key={customer.userId} className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
+                    <div className="font-mono text-sm text-muted-foreground w-4 text-center">
+                      {i + 1}
+                    </div>
+                    <CustomerAvatar userId={customer.userId} className="w-10 h-10" />
+                    <div className="flex-1">
+                      <div className="font-semibold">{customer.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {serialNo(customer.visits)} visit{customer.visits === 1 ? "" : "s"}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
+      </EmptyStateConceal>
+    </EmptyState>
+  );
 }
