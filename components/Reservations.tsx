@@ -35,14 +35,14 @@ export function Reservations() {
 
   const { present, past } = bookings
     ? Object.groupBy(bookings, (booking) => {
-        if (booking.status === "confirmed" || booking.status === "pending") {
-          return "present";
-        }
-        if (booking.status === "expired" || booking.status === "cancelled") {
-          return "past";
-        }
-        return "other"; // Fallback for any unhandled statuses, though not explicitly used below
-      })
+      if (booking.status === "confirmed" || booking.status === "pending") {
+        return "present";
+      }
+      if (booking.status === "expired" || booking.status === "cancelled") {
+        return "past";
+      }
+      return "other"; // Fallback for any unhandled statuses, though not explicitly used below
+    })
     : {};
 
   if (!bookings) {
@@ -68,7 +68,7 @@ export function Reservations() {
             <EmptyStateContent className="mt-8">
               <EmptyStateTitle>No active reservations</EmptyStateTitle>
               <EmptyStateDescription>
-                You don't have any present or pending reservations.
+                You don&apos;t have any present or pending reservations.
               </EmptyStateDescription>
             </EmptyStateContent>
             <EmptyStateConceal>
@@ -90,7 +90,7 @@ export function Reservations() {
             <EmptyStateContent className="mt-8">
               <EmptyStateTitle>No past reservations</EmptyStateTitle>
               <EmptyStateDescription>
-                You don't have any past reservations.
+                You don&apos;t have any past reservations.
               </EmptyStateDescription>
             </EmptyStateContent>
             <EmptyStateConceal>
