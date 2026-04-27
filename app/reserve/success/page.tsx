@@ -4,7 +4,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
 import { useQuery } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { resetBookingState } from "../store";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import CheckMark from "@/public/checkmark.svg";
 import { LucideLoader } from "lucide-react";
 import Image from "next/image";
 
-export default function SuccessPage() {
+function SuccessPageContent() {
   useEffect(() => {
     resetBookingState();
   }, []);
@@ -128,5 +128,19 @@ export default function SuccessPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-screen">
+          <LucideLoader className="animate-spin" />
+        </div>
+      }
+    >
+      <SuccessPageContent />
+    </Suspense>
   );
 }

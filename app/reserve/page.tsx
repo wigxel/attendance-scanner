@@ -7,7 +7,7 @@ import { cn, formatTime } from "@/lib/utils";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { setActiveTab, setSelectedDate, useBookingStore } from "./store";
 
 import BookingCalendar, { RangePreview } from "@/components/BookingCalendar";
@@ -486,7 +486,15 @@ export default function ReservePage() {
         <Header />
 
         <main className="min-h-screen">
-          <Content />
+          <Suspense
+            fallback={
+              <div className="flex justify-center items-center h-96">
+                <LucideLoader className="animate-spin" />
+              </div>
+            }
+          >
+            <Content />
+          </Suspense>
         </main>
 
         <Footer />
