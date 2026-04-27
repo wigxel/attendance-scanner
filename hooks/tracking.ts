@@ -1,33 +1,48 @@
 import { encodeQRCodeData } from "@/app/actions/encrypt";
-import { safeArray } from "@/lib/data.helpers";
 import { load } from "@fingerprintjs/fingerprintjs";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 
-type A = Partial<{ browser: string; visitorId: string }>;
 type Result<A, E> =
   | { status: "loading"; data: undefined }
   | { status: "success"; data: A }
   | { status: "error"; error: Error };
 
+type DeviceMeta = {
+  browser: string;
+  platform: string;
+  visitorId: string;
+};
+
 export function useDeviceMeta() {
-  const [result, setStatus] = React.useState<Result<A, unknown>>({
+  const [result, setStatus] = React.useState<Result<DeviceMeta, unknown>>({
     status: "loading",
     data: undefined,
   });
 
   React.useEffect(() => {
     load()
-      .then((result) => result.get())
-      .then((result) => {
-        const values =
-          "value" in result.components.vendorFlavors
-            ? safeArray(result.components.vendorFlavors.value)
-            : ["unknown"];
+      .then((fp) => fp.get())
+      .then((fpResult) => {
+        const platform =
+          "value" in fpResult.components.platform
+            ? fpResult.components.platform.value
+            : "unknown";
+
+        const vendor =
+          "value" in fpResult.components.vendor
+            ? fpResult.components.vendor.value
+            : "unknown";
+
+        const userAgentDataRaw = (fpResult.components as Record<string, { value?: unknown }>).userAgentData;
+        const userAgentData = userAgentDataRaw?.value as { brands?: Array<{ brand?: string }> } | null | undefined;
+
+        const browserName = userAgentData?.brands?.[0]?.brand ?? vendor ?? "unknown";
 
         const data: DeviceMeta = {
-          browser: values.join("/"),
-          visitorId: result.visitorId,
+          browser: browserName,
+          platform: platform,
+          visitorId: fpResult.visitorId,
         };
 
         setStatus({ status: "success", data });
@@ -43,14 +58,9 @@ export function useDeviceMeta() {
   };
 }
 
-type DeviceMeta = {
-  browser: string;
-  visitorId: string;
-};
-
 export type CustomerRegisterTuple = [
   string | undefined, // customer id
-  string | undefined, // browser fingerprint
+  string | undefined, // browser fingerprint (visitorId)
   string | undefined, // browser name
   string | undefined, // access plan
   string | undefined, // date-month-year

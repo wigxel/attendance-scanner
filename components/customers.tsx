@@ -7,15 +7,13 @@ import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
 import { DateParse } from "@/lib/date.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   differenceInDays,
   differenceInHours,
   differenceInMinutes,
   differenceInSeconds,
-  format,
   formatISO,
-  isSameYear,
   isToday,
   parseISO,
   setHours,
@@ -33,6 +31,7 @@ import {
   EmptyStateTitle,
 } from "./empty-state";
 import { If } from "./if";
+import { CustomerSheet } from "./customer-info";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge, badgeVariants } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -45,12 +44,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "./ui/sheet";
-import { Area, AreaChart } from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "./ui/chart";
 
 export function useUsers() {
   const record = useQuery(api.myFunctions.getAllUsers);
@@ -88,121 +81,6 @@ export function CustomersTable() {
         open={!!selectedUserId}
         onOpenChange={(open) => !open && setSelectedUserId(null)}
       />
-    </div>
-  );
-}
-
-function CustomerSheet({
-  userId,
-  open,
-  onOpenChange,
-}: {
-  userId: string | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const customer = useCustomer({ userId: userId ?? "" });
-  const {
-    results: visits,
-    status,
-    loadMore,
-  } = usePaginatedQuery(
-    api.customers.getVisitHistory,
-    userId ? { userId } : "skip",
-    { initialNumItems: 20 }
-  );
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full sm:max-w-md p-0 flex flex-col h-full overflow-y-auto"
-      >
-        <SheetHeader className="p-6 border-b">
-          <SheetTitle>Customer Details</SheetTitle>
-        </SheetHeader>
-        <ScrollArea className="flex-1">
-          {customer && (
-            <div className="p-6 flex items-start gap-4">
-              <CustomerAvatar userId={userId ?? ""} className="w-16 h-16 shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg">
-                  {customer.firstName} {customer.lastName}
-                </h3>
-                <p className="text-muted-foreground text-sm">{customer.email}</p>
-                <p className="text-muted-foreground text-sm">{customer.phoneNumber}</p>
-                <p className="text-muted-foreground text-sm">{customer.occupation}</p>
-              </div>
-              {userId && <CustomerVisitTrend userId={userId} />}
-            </div>
-          )}
-          <div className="p-6 pt-0 border-t">
-            <h4 className="font-semibold mb-4 mt-4">Visit History</h4>
-            {status === "LoadingFirstPage" ? (
-              <p>Loading...</p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {visits.map((visit) => {
-                  const visitDate = new Date(visit.timestamp);
-                  const isCurrentYear = isSameYear(visitDate, new Date());
-                  const formattedDate = format(
-                    visitDate,
-                    isCurrentYear ? "do MMMM" : "do MMMM, yyyy"
-                  );
-                  
-                  return (
-                    <li key={visit._id} className="py-3 flex justify-between items-center">
-                      <span>{formattedDate}</span>
-                      <PaymentBadge data={visit.access} />
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-            {status === "CanLoadMore" && (
-              <Button
-                variant="outline"
-                className="w-full mt-4"
-                onClick={() => loadMore(20)}
-              >
-                Load More
-              </Button>
-            )}
-          </div>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-function CustomerVisitTrend({ userId }: { userId: string }) {
-  const data = useQuery(api.customers.getCustomerVisitTrend, { userId });
-
-  if (!data || data.length === 0) return null;
-
-  return (
-    <div className="h-16 w-32 shrink-0">
-      <ChartContainer
-        config={{ visits: { label: "Visits", color: "#3b82f6" } }}
-      >
-        <AreaChart data={data} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <ChartTooltip content={<ChartTooltipContent hideLabel />} cursor={false} />
-          <Area
-            type="monotone"
-            dataKey="visits"
-            stroke="#3b82f6"
-            strokeWidth={2}
-            fillOpacity={1}
-            fill="url(#colorVisits)"
-          />
-        </AreaChart>
-      </ChartContainer>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 import { APP_URL, isDevelopment } from "@/config/constants";
 import { useProfile } from "@/hooks/auth";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
-import { safeObj } from "@/lib/data.helpers";
+import { safeObj, safeStr } from "@/lib/data.helpers";
 import { cn } from "@/lib/utils";
 import { LucideLoader, XIcon } from "lucide-react";
 import { motion as m } from "motion/react";
@@ -14,13 +14,20 @@ import { If } from "./if";
 export function useGetProfileHash(profile?: { id: string } | null) {
   const device_meta = useDeviceMeta();
 
+  const visitorId =
+    device_meta.status === "success" ? device_meta.data?.visitorId : undefined;
+  const browser =
+    device_meta.status === "success" ? device_meta.data?.browser : undefined;
+  const platform =
+    device_meta.status === "success" ? device_meta.data?.platform : undefined;
+
+  const browser_ = safeStr(browser) + safeStr(platform);
+
   return useQueryHash(
     [
       profile?.id,
-      // @ts-expect-error Not important
-      device_meta?.data?.visitorId,
-      // @ts-expect-error Not important
-      device_meta?.data?.browser,
+      visitorId,
+      browser_,
       "free",
       ScanTimeCodec.encode(new Date()),
     ],

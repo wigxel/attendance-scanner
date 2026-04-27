@@ -1,4 +1,5 @@
 import { TableAggregate } from "@convex-dev/aggregate";
+import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import {
   addDays,
@@ -15,19 +16,37 @@ import {
 } from "date-fns";
 import { components } from "./_generated/api";
 import { api, internal } from "./_generated/api";
-import type { DataModel } from "./_generated/dataModel";
+import type { DataModel, Id } from "./_generated/dataModel";
 import { type MutationCtx, internalMutation, query } from "./_generated/server";
 import { deleteConfig, getConfig, setConfig } from "./config";
-import { paginationOptsValidator } from "convex/server";
 
 export const getVisitHistory = query({
   args: { paginationOpts: paginationOptsValidator, userId: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const visits = await ctx.db
       .query("daily_register")
       .withIndex("user", (q) => q.eq("userId", args.userId))
       .order("desc")
       .paginate(args.paginationOpts);
+
+    const enrichedVisits = await Promise.all(
+      visits.page.map(async (visit) => {
+        let adminName = "Unknown";
+
+        if (visit.admitted_by) {
+          const user = await ctx.db.get(visit.admitted_by as Id<'users'>)
+            .catch(() => null)
+
+          if (user) {
+            adminName = user.name ?? adminName;
+          }
+        }
+
+        return { ...visit, adminName };
+      })
+    );
+
+    return { ...visits, page: enrichedVisits };
   },
 });
 
