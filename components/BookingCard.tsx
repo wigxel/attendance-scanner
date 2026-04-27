@@ -5,11 +5,17 @@ import type { Doc } from "@/convex/_generated/dataModel";
 import { CalendarIcon, RockingChair } from "lucide-react";
 import { RangePreviewSimple } from "./BookingCalendar";
 import { CustomerAvatar } from "./customers";
+import { DateParse } from "@/lib/date.helpers";
+import { pipe } from "effect";
+import { O } from "@/lib/fp.helpers";
 
-type BookingWithDetails = Doc<"bookings"> & {
+type BookingWithDetails = Omit<Doc<"bookings">, "startDate" | "endDate"> & {
+  _id: string | undefined;
+  startDate: string
+  endDate: string
   seats: Doc<"seats">[];
   user: {
-    id: string;
+    id?: string;
     name: string;
     email: string | undefined;
   } | null;
@@ -37,14 +43,25 @@ export function BookingCard({
           <div className="w-8 h-8 flex items-center justify-center">
             <CalendarIcon />
           </div>
-          <RangePreviewSimple
-            startDate={booking.startDate}
-            endDate={booking.endDate}
-          />
+          {pipe(
+            O.all([
+              DateParse.parse(booking.startDate),
+              DateParse.parse(booking.endDate),
+            ]),
+            O.map(([start, end]) => {
+              return <RangePreviewSimple
+                startDate={start}
+                endDate={end}
+              />
+            }),
+            O.getOrElse(() => {
+              return <p className="text-sm">Error rendering Preview. Start date or end date is invalid.</p>
+            })
+          )}
         </div>
 
         <div className="flex gap-6">
-          <CustomerAvatar userId={booking.user?.id} />
+          <CustomerAvatar userId={booking.user?.id ?? ""} />
           <div className="flex flex-col text-sm">
             <div className="text-foreground">{booking.user?.name}</div>
             <p className="text-gray-500">{booking.user?.email}</p>

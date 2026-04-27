@@ -117,7 +117,7 @@ function EmptyBookingsCard() {
 /**
  * Displays the month and day of a booking's start date in a styled box.
  */
-export function BookingCalendarBox({ startDate }: { startDate: string }) {
+export function BookingCalendarBox({ startDate }: { startDate: string | Date }) {
   const date = new Date(startDate);
   return (
     <div className="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg shrink-0 border border-gray-200">
@@ -164,9 +164,7 @@ function BookingDateTimeInfo({
 /**
  * Renders the appropriate action button or status badge based on booking role and seat count.
  */
-function BookingActionStatus({
-  role,
-}: Pick<Booking, "role">) {
+function BookingActionStatus({ role }: Pick<Booking, "role">) {
   if (role === "guest") {
     return (
       <div className="flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
@@ -227,9 +225,7 @@ function BookingItem({ booking }: { booking: Booking }) {
 
         {/* RIGHT: Action Button / Status Badge */}
         <div className="flex items-center md:justify-end sm:min-w-[140px]">
-          <BookingActionStatus
-            role={booking.role}
-          />
+          <BookingActionStatus role={booking.role} />
         </div>
       </div>
 
@@ -275,6 +271,7 @@ export function ActiveBookings() {
     >
       <CardContent className="px-6 py-3 flex flex-col gap-3 max-h-80 overflow-y-auto">
         {bookings.map((booking) => (
+          // @ts-expect-error seatNumber is expected to be a number but got a string
           <BookingItem key={booking._id} booking={booking} />
         ))}
       </CardContent>

@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import { ensure } from "effect/Array";
 import { formatDateToLocalISO } from "../lib/utils";
 import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
@@ -760,7 +761,7 @@ export const getFullyBookedDates = query({
           dateSeatsMap.set(dateKey, new Set());
         }
 
-        dateSeatsMap.get(dateKey)!.add(bookedSeat.seatId);
+        dateSeatsMap.get(dateKey)?.add(bookedSeat.seatId);
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
@@ -897,14 +898,14 @@ export const getAllBookings = query({
           seats: seats.filter((seat) => seat !== null), // filter out any null values
           user: user
             ? {
-              id: user.id,
-              name: `${user.firstName} ${user.lastName}`,
-              email: user.email,
-            }
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+              }
             : {
-              name: "Anonymous User",
-              email: "--"
-            }
+                name: "Anonymous User",
+                email: "--",
+              },
         };
       }),
     );

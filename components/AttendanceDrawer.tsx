@@ -6,9 +6,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import type { Id } from "@/convex/_generated/dataModel";
+import { useQuery } from "convex/react";
 import { Skeleton } from "./ui/skeleton";
 import {
   Table,
@@ -30,7 +30,7 @@ export function AttendanceDrawer({
 }) {
   const attendance = useQuery(
     api.myFunctions.getAttendanceForBooking,
-    bookingId ? { bookingId } : "skip"
+    bookingId ? { bookingId } : "skip",
   );
 
   return (

@@ -1,6 +1,10 @@
 "use client";
 import { useBookingCalendarLogic } from "@/hooks/useBookingCalendarLogic";
-import { Calendar } from "@demark-pro/react-booking-calendar";
+import {
+  Calendar,
+  MonthArrowBackProps,
+  MonthArrowNextProps,
+} from "@demark-pro/react-booking-calendar";
 import "@/app/booking.css";
 import { BookingCalendarBox } from "@/app/account/active-bookings";
 import {
@@ -35,9 +39,7 @@ import { If } from "./if";
 import { Button } from "./ui/button";
 
 const components = {
-  MonthArrowBack: (props) => {
-    console.log(props);
-
+  MonthArrowBack: (props: MonthArrowBackProps) => {
     return (
       <button
         {...props.innerProps}
@@ -50,7 +52,7 @@ const components = {
       </button>
     );
   },
-  MonthArrowNext: (props) => (
+  MonthArrowNext: (props: MonthArrowNextProps) => (
     <button
       {...props.innerProps}
       type="button"
@@ -244,32 +246,37 @@ export function BookingPeriod({
         ? [selectedDate, subDays(addWeeks(selectedDate, 1), 1)]
         : [selectedDate, addMonths(selectedDate, 1)];
 
-  return (
-    <RangePreviewSimple startDate={start_time} endDate={end_time} />
-  );
+  return <RangePreviewSimple startDate={start_time} endDate={end_time} />;
 }
 
-export function RangePreviewSimple({ startDate, endDate }: { startDate: Date, endDate: Date }) {
+export function RangePreviewSimple({
+  startDate,
+  endDate,
+}: { startDate: Date; endDate: Date }) {
   const is_same_day = isSameDay(startDate, endDate);
 
-  return <div className="flex flex-col gap-1">
-    <div className="text-base font-medium text-foreground flex gap-2 items-center">
-      <div>{formatDate(startDate, "dd MMM")}</div>
-      <If cond={!is_same_day}>
-        <ArrowRight strokeWidth={1} size={14} />
-        <div>{formatDate(endDate, "dd MMM, yyyy")}</div>
-      </If>
-    </div>
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="text-base font-medium text-foreground flex gap-2 items-center">
+        <div>{formatDate(startDate, "dd MMM")}</div>
+        <If cond={!is_same_day}>
+          <ArrowRight strokeWidth={1} size={14} />
+          <div>{formatDate(endDate, "dd MMM, yyyy")}</div>
+        </If>
+      </div>
 
-    <p className="text-foreground text-sm">
-      Booking for{" "}
-      <span className="text-foreground">
-        {is_same_day
-          ? "1 day"
-          : <>{differenceInDays(endDate, startDate)} days</>}
-      </span>
-    </p>
-  </div>
+      <p className="text-foreground text-sm">
+        Booking for{" "}
+        <span className="text-foreground">
+          {is_same_day ? (
+            "1 day"
+          ) : (
+            <>{differenceInDays(endDate, startDate)} days</>
+          )}
+        </span>
+      </p>
+    </div>
+  );
 }
 
 function addWeekOpeningDays(date: Date): Date {

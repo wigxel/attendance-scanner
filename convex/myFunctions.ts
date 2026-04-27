@@ -697,8 +697,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-          .query("featureRequest")
-          .withIndex("by_status", (q) => q.eq("status", status))
+            .query("featureRequest")
+            .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 
@@ -798,7 +798,7 @@ export const getAttendanceForBooking = query({
 
     const ticketIds = tickets.map((ticket) => ticket._id);
 
-    const attendancePromises = ticketIds.map(ticketId => {
+    const attendancePromises = ticketIds.map((ticketId) => {
       return ctx.db
         .query("daily_register")
         .withIndex("by_ticket", (q) => q.eq("ticketId", ticketId))
@@ -811,17 +811,21 @@ export const getAttendanceForBooking = query({
     // Now, enrich the attendance data with user and admitter details
     const enrichedAttendance = await Promise.all(
       attendance.map(async (record) => {
-        const user = await ctx.db.query('profile').filter(q => q.eq(q.field('id'), record.userId)).first();
+        const user = await ctx.db
+          .query("profile")
+          .filter((q) => q.eq(q.field("id"), record.userId))
+          .first();
         const admitter = await ctx.db.get(record.admitted_by as Id<"profile">);
         return {
           ...record,
           userName: user ? `${user.firstName} ${user.lastName}` : "Unknown",
-          admitterName: admitter ? `${admitter.firstName} ${admitter.lastName}` : "Unknown",
+          admitterName: admitter
+            ? `${admitter.firstName} ${admitter.lastName}`
+            : "Unknown",
         };
-      })
+      }),
     );
 
     return enrichedAttendance;
   },
 });
-

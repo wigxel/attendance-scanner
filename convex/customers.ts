@@ -1,11 +1,20 @@
-import { v, ConvexError } from "convex/values";
-import { query, internalMutation, MutationCtx } from "./_generated/server";
-import { components } from "./_generated/api";
-import type { DataModel } from "./_generated/dataModel";
 import { TableAggregate } from "@convex-dev/aggregate";
-import { format, subDays, startOfMonth, addDays, parseISO, isAfter, startOfDay, isValid } from "date-fns";
+import { ConvexError, v } from "convex/values";
+import {
+  addDays,
+  format,
+  isAfter,
+  isValid,
+  parseISO,
+  startOfDay,
+  startOfMonth,
+  subDays,
+} from "date-fns";
+import { components } from "./_generated/api";
 import { api, internal } from "./_generated/api";
-import { getConfig, setConfig, deleteConfig } from "./config";
+import type { DataModel } from "./_generated/dataModel";
+import { type MutationCtx, internalMutation, query } from "./_generated/server";
+import { deleteConfig, getConfig, setConfig } from "./config";
 
 const profileAggregate = new TableAggregate<{
   Key: number;
@@ -24,7 +33,13 @@ const metricKinds = v.union(
   v.literal("lapsedCustomers"),
 );
 
-export type MetricKind = "totalCustomers" | "newCustomers" | "activeCustomers" | "repeatCustomerRate" | "avgVisitsPerCustomer" | "lapsedCustomers";
+export type MetricKind =
+  | "totalCustomers"
+  | "newCustomers"
+  | "activeCustomers"
+  | "repeatCustomerRate"
+  | "avgVisitsPerCustomer"
+  | "lapsedCustomers";
 
 /**
  * Returns the total number of registered customer profiles.
@@ -69,7 +84,7 @@ export const listNewCustomers = query({
       .filter((q) => q.gte(q.field("_creationTime"), args.startTime))
       .order("desc")
       .collect();
-    
+
     return profiles;
   },
 });
@@ -130,9 +145,12 @@ async function computeMetricsForDate(
     startTime: monthStartTime,
   });
 
-  const activeCustomers = await ctx.runQuery(api.customers.countActiveCustomers, {
-    startTime: thirtyDaysAgoTime,
-  });
+  const activeCustomers = await ctx.runQuery(
+    api.customers.countActiveCustomers,
+    {
+      startTime: thirtyDaysAgoTime,
+    },
+  );
 
   // Collect all check-ins within the month window for this date.
   const allRegisters = await ctx.db
@@ -175,7 +193,10 @@ async function computeMetricsForDate(
     const existing = await ctx.db
       .query("app_metrics")
       .withIndex("by_date_category_kind", (q) =>
-        q.eq("date", date).eq("category", "customer").eq("kind", metric.kind as any),
+        q
+          .eq("date", date)
+          .eq("category", "customer")
+          .eq("kind", metric.kind as any),
       )
       .unique();
 
@@ -314,12 +335,14 @@ export const startBackfill = internalMutation({
       // Auto-recover if the heartbeat is too old — the previous process
       // likely died without releasing the lock.
       const heartbeat = await getConfig(ctx, CONFIG_HEARTBEAT);
-      const isStale = !heartbeat || Date.now() - Number(heartbeat) > LOCK_TTL_MS;
+      const isStale =
+        !heartbeat || Date.now() - Number(heartbeat) > LOCK_TTL_MS;
 
       if (!isStale) {
         return {
           started: false,
-          reason: "A backfill is already running. Pass force: true to override, or wait for it to finish.",
+          reason:
+            "A backfill is already running. Pass force: true to override, or wait for it to finish.",
         };
       }
       // Fall through: stale lock detected, safe to take over.
@@ -446,13 +469,16 @@ export const getBackfillStatus = query({
   handler: async (ctx) => {
     const records = await ctx.db.query("config").collect();
     const map = Object.fromEntries(records.map((r) => [r.key, r.value]));
-    const lastHeartbeatMs = map[CONFIG_HEARTBEAT] ? Number(map[CONFIG_HEARTBEAT]) : null;
+    const lastHeartbeatMs = map[CONFIG_HEARTBEAT]
+      ? Number(map[CONFIG_HEARTBEAT])
+      : null;
     return {
       isRunning: map[CONFIG_LOCK] === "true",
-      isStale: lastHeartbeatMs !== null && Date.now() - lastHeartbeatMs > LOCK_TTL_MS,
+      isStale:
+        lastHeartbeatMs !== null && Date.now() - lastHeartbeatMs > LOCK_TTL_MS,
       lastHeartbeatMs,
       lastProcessedDate: map[CONFIG_LAST_DATE] ?? null,
-      startDate: map["backfill_start_date"] ?? null,
+      startDate: map.backfill_start_date ?? null,
     };
   },
 });
@@ -475,7 +501,9 @@ export const getCustomerMetrics = query({
     kind: metricKinds,
     start: v.optional(v.string()),
     end: v.optional(v.string()),
-    aggregation: v.optional(v.union(v.literal("sum"), v.literal("avg"), v.literal("latest"))),
+    aggregation: v.optional(
+      v.union(v.literal("sum"), v.literal("avg"), v.literal("latest")),
+    ),
   },
   handler: async (ctx, args) => {
     const now = new Date();
@@ -487,9 +515,7 @@ export const getCustomerMetrics = query({
 
     const records = await ctx.db
       .query("app_metrics")
-      .withIndex("by_date_category_kind", (q) =>
-        q.eq("date", start),
-      )
+      .withIndex("by_date_category_kind", (q) => q.eq("date", start))
       .filter((q) =>
         q.and(
           q.gte(q.field("date"), start),
@@ -507,12 +533,15 @@ export const getCustomerMetrics = query({
 
     if (aggregation === "sum") {
       return values.reduce((a, b) => a + b, 0);
-    } else if (aggregation === "avg") {
-      return Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10;
-    } else {
-      const latest = records.sort((a, b) => b.date.localeCompare(a.date))[0];
-      return latest?.value ?? null;
     }
+    if (aggregation === "avg") {
+      return (
+        Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) /
+        10
+      );
+    }
+    const latest = records.sort((a, b) => b.date.localeCompare(a.date))[0];
+    return latest?.value ?? null;
   },
 });
 
@@ -545,7 +574,9 @@ export const getTopCustomers = query({
       .collect();
 
     const limit = args.limit ?? 50;
-    const sorted = topCustomers.sort((a, b) => b.visits - a.visits).slice(0, limit);
+    const sorted = topCustomers
+      .sort((a, b) => b.visits - a.visits)
+      .slice(0, limit);
 
     const enriched = await Promise.all(
       sorted.map(async (tc) => {
@@ -556,7 +587,9 @@ export const getTopCustomers = query({
 
         return {
           userId: tc.userId,
-          name: profile ? `${profile.firstName} ${profile.lastName}` : "Unknown",
+          name: profile
+            ? `${profile.firstName} ${profile.lastName}`
+            : "Unknown",
           visits: tc.visits,
         };
       }),

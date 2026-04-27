@@ -40,7 +40,7 @@ export const useSeats = () => {
         const selectedSeat = availableSeats.find(
           (seat: Seat) => seat.seatNumber === seatNumber,
         );
-        if (selectedSeat && selectedSeat.isBooked) {
+        if (selectedSeat?.isBooked) {
           seatsToRemove.push(seatNumber);
         }
       });

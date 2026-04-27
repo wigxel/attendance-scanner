@@ -211,7 +211,7 @@ function SlotItem({
   isClaimed: boolean;
   canClaim: boolean;
   isMySeat: boolean;
-  data: Doc<"tickets">;
+  data: Doc<"tickets"> & { seatNumber?: number };
   currentUser: Doc<"profile"> | null | undefined;
 }) {
   const claimMutation = useMutation(api.bookings.claimTicket);
@@ -248,7 +248,7 @@ function SlotItem({
   return (
     <li
       className={cn(
-        `flex items-center justify-between p-4 rounded-lg border`,
+        "flex items-center justify-between p-4 rounded-lg border",
         isClaimed ? "bg-gray-50 border-gray-200" : "bg-white border-green-200",
       )}
     >

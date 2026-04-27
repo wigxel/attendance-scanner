@@ -98,11 +98,11 @@ function OnboardingForm({
 
     // Ensure it always starts with +234
     if (!value.startsWith("+234")) {
-      value = "+234" + value.replace(/^\+234/, "");
+      value = `+234${value.replace(/^\+234/, "")}`;
     }
 
     // Only allow numbers after the +234 prefix
-    value = "+234" + value.substring(4).replace(/[^0-9]/g, "");
+    value = `+234${value.substring(4).replace(/[^0-9]/g, "")}`;
 
     onChange(value);
   };

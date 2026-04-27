@@ -5,7 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export function useCustomer({ userId }: { userId: string }) {
-  const profile = useQuery(api.myFunctions.getUserById, { userId: userId ?? "--" });
+  const profile = useQuery(api.myFunctions.getUserById, {
+    userId: userId ?? "--",
+  });
 
   return profile;
 }

@@ -1,4 +1,4 @@
-import { profile } from "console";
+import { profile } from "node:console";
 import { decodeQRCodeData } from "@/app/actions/encrypt";
 import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";

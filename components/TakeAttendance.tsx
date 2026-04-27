@@ -187,7 +187,8 @@ export function TakeAttendance() {
           <ul className="text-xs list-disc list-inside">
             <li>Select the check-in mode (Walk-in or Reservation).</li>
             <li>
-              Scan the attendance QR code displayed on the member's profile.
+              Scan the attendance QR code displayed on the member&apos;s
+              profile.
             </li>
             <li>The camera will automatically detect the QR code.</li>
             <li>Attendance will be recorded instantly.</li>

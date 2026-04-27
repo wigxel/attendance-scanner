@@ -1,6 +1,14 @@
 "use client";
+import { RegisteredUserEntry } from "@/components/customers";
 import { If } from "@/components/if";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { api } from "@/convex/_generated/api";
 import { currencyFormatter } from "@/lib/currency.helpers";
 import { safeNum, serialNo } from "@/lib/data.helpers";
@@ -9,16 +17,14 @@ import { useQuery } from "convex/react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { isNullable } from "effect/Predicate";
 import React from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { RegisteredUserEntry } from "@/components/customers";
 
-type MetricKind = "totalCustomers" | "newCustomers" | "activeCustomers" | "repeatCustomerRate" | "avgVisitsPerCustomer" | "lapsedCustomers";
+type MetricKind =
+  | "totalCustomers"
+  | "newCustomers"
+  | "activeCustomers"
+  | "repeatCustomerRate"
+  | "avgVisitsPerCustomer"
+  | "lapsedCustomers";
 
 function MetricCard({
   label,
@@ -71,10 +77,7 @@ function MetricCard({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
-          <TooltipContent
-            side="bottom"
-            className="w-80 p-0 max-h-[400px]"
-          >
+          <TooltipContent side="bottom" className="w-80 p-0 max-h-[400px]">
             <ScrollArea className="h-[300px]">
               <ul className="py-2">
                 {newCustomers === undefined && (
@@ -113,8 +116,17 @@ export function Analytics() {
       <MetricCard label="Total customers" kind="totalCustomers" />
       <MetricCard label="New customers (this month)" kind="newCustomers" />
       <MetricCard label="Active customers (30 days)" kind="activeCustomers" />
-      <MetricCard label="Repeat customer rate" kind="repeatCustomerRate" suffix="%" />
-      <MetricCard label="Avg visits per customer" kind="avgVisitsPerCustomer" suffix="x" aggregation="avg" />
+      <MetricCard
+        label="Repeat customer rate"
+        kind="repeatCustomerRate"
+        suffix="%"
+      />
+      <MetricCard
+        label="Avg visits per customer"
+        kind="avgVisitsPerCustomer"
+        suffix="x"
+        aggregation="avg"
+      />
       <MetricCard label="Lapsed customers (30+ days)" kind="lapsedCustomers" />
     </div>
   );

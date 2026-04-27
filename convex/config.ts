@@ -1,4 +1,4 @@
-import { MutationCtx, QueryCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 
 /**
  * Reads a value from the `config` table by key.

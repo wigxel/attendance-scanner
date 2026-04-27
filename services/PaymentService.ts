@@ -36,8 +36,8 @@ interface PaystackConfig {
   onClose: () => void;
 }
 
-export class PaymentService {
-  static async checkSeatAvailability(
+export const PaymentService = {
+  async checkSeatAvailability(
     httpClient: ConvexHttpClient,
     seatId: Id<"seats">,
     startDate: string,
@@ -48,36 +48,29 @@ export class PaymentService {
       startDate,
       durationType,
     });
-  }
-
-  static async createPendingBooking(
+  },
+  async createPendingBooking(
     httpClient: ConvexHttpClient,
     bookingArgs: BookingArgs,
   ) {
     return await httpClient.mutation(api.bookings.createBooking, bookingArgs);
-  }
-
-  static async confirmBooking(
+  },
+  async confirmBooking(
     httpClient: ConvexHttpClient,
     bookingId: Id<"bookings">,
   ) {
     return await httpClient.mutation(api.bookings.confirmBooking, {
       bookingId,
     });
-  }
-
-  static async cancelBooking(
-    httpClient: ConvexHttpClient,
-    bookingId: Id<"bookings">,
-  ) {
+  },
+  async cancelBooking(httpClient: ConvexHttpClient, bookingId: Id<"bookings">) {
     return await httpClient.mutation(api.bookings.cancelBooking, { bookingId });
-  }
-
-  static async setupPaystack(config: PaystackConfig) {
+  },
+  async setupPaystack(config: PaystackConfig) {
     const loaded = await loadPaystackScript();
     if (!loaded) throw new Error("Payment service failed to load");
 
     // @ts-expect-error paystack
     return window.PaystackPop.setup(config);
-  }
-}
+  },
+};

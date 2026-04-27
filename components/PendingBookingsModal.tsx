@@ -103,7 +103,7 @@ const PendingBookingsModal = () => {
     });
 
     setActiveTab("payment");
-    router.push(`?tab=payment`, { scroll: false });
+    router.push("?tab=payment", { scroll: false });
 
     setIsOpen(false);
   };
