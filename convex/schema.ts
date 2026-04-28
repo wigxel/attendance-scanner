@@ -48,7 +48,9 @@ const profile = defineTable({
   email: v.optional(v.string()),
   occupation: v.string(),
   role: v.optional(v.union(v.literal("admin"), v.literal("user"))),
-}).index("occupation", ["occupation"]);
+})
+  .index("occupation", ["occupation"])
+  .index("by_user_id", ["id"]);
 
 //Schema for stats
 const stats = defineTable({
@@ -97,6 +99,7 @@ const bookings = defineTable({
     v.literal("cancelled"),
     v.literal("expired"),
   ),
+  created_by: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
 })

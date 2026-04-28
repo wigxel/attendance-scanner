@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import { addDays, format, parseISO } from "date-fns";
 import { ensure } from "effect/Array";
 import { formatDateToLocalISO } from "../lib/utils";
 import { api } from "./_generated/api";
@@ -194,6 +195,7 @@ export const createBooking = mutation({
       status: "pending",
       pricePerSeat,
       amount,
+      created_by: "system",
       createdAt: now,
       updatedAt: now,
     });
@@ -934,5 +936,83 @@ export const removeClaim = mutation({
       claimedAt: undefined,
       status: "reserved",
     });
+  },
+});
+
+export const createManualBooking = mutation({
+  args: {
+    userId: v.string(),
+    planKey: v.string(),
+    startDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const profileId = await readId(ctx);
+
+    if (!profileId) throw new ConvexError("Unauthorized");
+
+    const { userId, planKey, startDate } = args;
+
+    const profile = await ctx.db
+      .query("profile")
+      .withIndex("by_user_id", (q) => q.eq("id", userId))
+      .first();
+
+    if (!profile) throw new ConvexError("Customer not found");
+
+    const plan = await ctx.db
+      .query("accessPlans")
+      .withIndex("plan_key", (q) => q.eq("key", planKey))
+      .first();
+
+    if (!plan) throw new ConvexError("Invalid plan");
+
+    const now = new Date();
+    const bookingStartDate = parseISO(startDate);
+    const bookingEndDate = addDays(bookingStartDate, plan.no_of_days);
+    const todayStr = format(now, "yyyy-MM-dd");
+
+    if (startDate < todayStr) {
+      throw new ConvexError("Start date cannot be in the past");
+    }
+
+    const activeBooking = await ctx.db
+      .query("bookings")
+      .withIndex("user_id", (q) => q.eq("userId", userId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "confirmed"),
+          q.gte(q.field("endDate"), todayStr),
+        )
+      )
+      .first();
+
+    if (activeBooking) {
+      throw new ConvexError("Customer already has an active booking");
+    }
+
+    const durationType = (() => {
+      if (plan.no_of_days === 1) return "day" as const;
+      if (plan.no_of_days > 7) return "month" as const;
+      return "week" as const;
+    })();
+
+    const adminId = await readId(ctx);
+
+    const booking = await ctx.db.insert("bookings", {
+      userId,
+      seatIds: [],
+      duration: plan.no_of_days,
+      startDate: format(bookingStartDate, "yyyy-MM-dd"),
+      endDate: format(bookingEndDate, "yyyy-MM-dd"),
+      durationType,
+      pricePerSeat: plan.price,
+      amount: plan.price,
+      status: "confirmed",
+      created_by: adminId ?? "system",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return booking;
   },
 });

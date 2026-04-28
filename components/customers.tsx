@@ -1,11 +1,12 @@
 "use client";
 import { DataTableDemo } from "@/components/DataTable";
-import { columns } from "@/components/columns";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createColumns } from "@/components/columns";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
 import { useCustomer } from "@/hooks/auth";
 import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
 import { DateParse } from "@/lib/date.helpers";
+import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
@@ -21,9 +22,9 @@ import {
 } from "date-fns";
 import { Option, pipe } from "effect";
 import { ChevronLeft, ChevronRight, Crown, Gift } from "lucide-react";
-import { motion } from "motion/react";
 import * as React from "react";
 import useEvent from "react-use-event-hook";
+import { toast } from "sonner";
 import { DateRange } from "./DateRange";
 import { CustomerSheet } from "./customer-info";
 import {
@@ -33,10 +34,18 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "./empty-state";
+import { ManualBookingForm } from "./forms/ManualBookingForm";
 import { If } from "./if";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
 import {
   Sheet,
@@ -62,6 +71,54 @@ export function CustomersTable() {
   const [selectedUserId, setSelectedUserId] = React.useState<string | null>(
     null,
   );
+  const [bookingUserId, setBookingUserId] = React.useState<string | null>(
+    null,
+  );
+  const [bookingUserName, setBookingUserName] = React.useState<string>("");
+  const createBooking = useMutation(api.bookings.createManualBooking);
+  const [isBookingLoading, setIsBookingLoading] = React.useState(false);
+
+  const handleViewProfile = useEvent((userId: string) => {
+    setSelectedUserId(userId);
+  });
+
+  const handleCreateBooking = useEvent((userId: string, userName: string) => {
+    setBookingUserId(userId);
+    setBookingUserName(userName);
+  });
+
+  const handleBookingSubmit = useEvent(
+    async (values: {
+      planKey: string;
+      startDate: string;
+    }) => {
+      if (!bookingUserId) return;
+      setIsBookingLoading(true);
+
+      try {
+        await createBooking({
+          userId: bookingUserId,
+          planKey: values.planKey,
+          startDate: values.startDate,
+        });
+
+        setBookingUserId(null);
+        toast.success("Booking created successfully");
+      } catch (error) {
+        toast.error("Error making reservation", {
+          description: getErrorMessage(error),
+          duration: 40000,
+        });
+      } finally {
+        setIsBookingLoading(false);
+      }
+    },
+  );
+
+  const tableColumns = React.useMemo(
+    () => createColumns({ onViewProfile: handleViewProfile, onCreateBooking: handleCreateBooking }),
+    [handleViewProfile, handleCreateBooking],
+  );
 
   if (!users) {
     return <div>Loading...</div>;
@@ -70,19 +127,38 @@ export function CustomersTable() {
   return (
     <div className="p-4">
       <DataTableDemo
-        columns={columns}
+        columns={tableColumns}
         data={users.map((user) => ({
           ...user,
           firstname: user.firstName,
           lastname: user.lastName,
         }))}
-        onRowClick={(row) => setSelectedUserId(row.userId)}
       />
+
       <CustomerSheet
         userId={selectedUserId}
         open={!!selectedUserId}
         onOpenChange={(open) => !open && setSelectedUserId(null)}
       />
+
+      <Dialog open={!!bookingUserId} onOpenChange={(open) => !open && setBookingUserId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Booking</DialogTitle>
+            <DialogDescription>
+              Create a manual booking for {bookingUserName}
+            </DialogDescription>
+          </DialogHeader>
+
+          <ManualBookingForm
+            userId={bookingUserId ?? ""}
+            userName={bookingUserName}
+            isLoading={isBookingLoading}
+            onSubmit={handleBookingSubmit}
+            onCancel={() => setBookingUserId(null)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
