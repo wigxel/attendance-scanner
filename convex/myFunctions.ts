@@ -835,3 +835,140 @@ export const getAttendanceForBooking = query({
     return enrichedAttendance;
   },
 });
+
+/**
+ * List all access pricing plans
+ */
+export const listAccessPlans = query({
+  handler: async (ctx) => {
+    return ctx.db.query("accessPlans").collect();
+  },
+});
+
+/**
+ * Add a new access pricing plan
+ */
+export const addAccessPlan = mutation({
+  args: {
+    key: v.string(),
+    name: v.string(),
+    price: v.number(),
+    no_of_days: v.number(),
+    description: v.optional(v.string()),
+    features: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("accessPlans")
+      .withIndex("plan_key", (q) => q.eq("key", args.key))
+      .first();
+
+    if (existing) {
+      throw new Error(`Plan with key "${args.key}" already exists`);
+    }
+
+    const planId = ctx.db.insert("accessPlans", {
+      key: args.key,
+      name: args.name,
+      price: args.price,
+      no_of_days: args.no_of_days,
+      description: args.description ?? "",
+      features: args.features ?? [],
+    });
+
+    return planId;
+  },
+});
+
+/**
+ * Update an existing access pricing plan (key is not updatable)
+ */
+export const updateAccessPlan = mutation({
+  args: {
+    id: v.id("accessPlans"),
+    name: v.string(),
+    price: v.number(),
+    no_of_days: v.number(),
+    description: v.optional(v.string()),
+    features: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.id);
+
+    if (!existing) {
+      throw new Error("Plan not found");
+    }
+
+    await ctx.db.patch(args.id, {
+      name: args.name,
+      price: args.price,
+      no_of_days: args.no_of_days,
+      description: args.description ?? "",
+      features: args.features ?? [],
+    });
+
+    return args.id;
+  },
+});
+
+/**
+ * Delete an access pricing plan
+ */
+export const deleteAccessPlan = mutation({
+  args: {
+    id: v.id("accessPlans"),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.id);
+
+    if (!existing) {
+      throw new Error("Plan not found");
+    }
+
+    await ctx.db.delete(args.id);
+
+    return args.id;
+  },
+});
+
+/**
+ * Seed default access plans if none exist
+ */
+export const seedAccessPlans = internalMutation({
+  handler: async (ctx) => {
+    const existing = await ctx.db.query("accessPlans").collect();
+
+    if (existing.length > 0) {
+      return { seeded: 0 };
+    }
+
+    ctx.db.insert("accessPlans", {
+      key: "free",
+      name: "Free",
+      price: 0,
+      no_of_days: 1,
+      description: "Free daily access",
+      features: [],
+    });
+
+    ctx.db.insert("accessPlans", {
+      key: "weekly",
+      name: "Weekly",
+      price: 1500,
+      no_of_days: 7,
+      description: "7-day access pass",
+      features: ["priority-check-in"],
+    });
+
+    ctx.db.insert("accessPlans", {
+      key: "monthly",
+      name: "Monthly",
+      price: 5000,
+      no_of_days: 30,
+      description: "30-day access pass",
+      features: ["priority-check-in", "booking"],
+    });
+
+    return { seeded: 3 };
+  },
+});

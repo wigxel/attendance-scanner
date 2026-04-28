@@ -1,4 +1,5 @@
 import OccupationManagement from "@/components/manage-occupation";
+import PricingManagement from "@/components/manage-pricing";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React from "react";
 
@@ -22,6 +23,9 @@ export default function SettingsPage() {
                 >
                   Onboarding
                 </TabsTrigger>
+                <TabsTrigger value="pricing" className="justify-start w-full">
+                  Pricing
+                </TabsTrigger>
                 <TabsTrigger value="profile" className="justify-start w-full">
                   User Profile
                 </TabsTrigger>
@@ -32,6 +36,10 @@ export default function SettingsPage() {
             <section className="flex-1 p-6 shadow-inner rounded-lg bg-gray-50">
               <TabsContent value="onboarding">
                 <OccupationManagement />
+              </TabsContent>
+
+              <TabsContent value="pricing">
+                <PricingManagement />
               </TabsContent>
 
               <TabsContent value="profile">Hello man</TabsContent>
