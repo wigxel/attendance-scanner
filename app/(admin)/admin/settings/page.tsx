@@ -1,6 +1,7 @@
 import OccupationManagement from "@/components/manage-occupation";
 import PricingManagement from "@/components/manage-pricing";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BadgeDollarSign, User, Wrench } from "lucide-react";
 import React from "react";
 
 export default function SettingsPage() {
@@ -21,12 +22,15 @@ export default function SettingsPage() {
                   value="onboarding"
                   className="justify-start w-full"
                 >
+                  <Wrench className="w-4 h-4 mr-2" />
                   Onboarding
                 </TabsTrigger>
                 <TabsTrigger value="pricing" className="justify-start w-full">
+                  <BadgeDollarSign className="w-4 h-4 mr-2" />
                   Pricing
                 </TabsTrigger>
                 <TabsTrigger value="profile" className="justify-start w-full">
+                  <User className="w-4 h-4 mr-2" />
                   User Profile
                 </TabsTrigger>
               </TabsList>

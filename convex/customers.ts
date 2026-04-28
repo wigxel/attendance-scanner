@@ -659,17 +659,18 @@ export const getCustomerMetrics = query({
  * Returns the top customers ranked by visit count for a given date, enriched
  * with profile names from the `profile` table.
  *
- * @param start - Unused start date (reserved for future range support).
- * @param end   - Date string `yyyy-MM-dd` to look up top customers for
- *                (defaults to today).
+ * @param start - Start date string `yyyy-MM-dd` (defaults to start of current month).
+ * @param end   - End date string `yyyy-MM-dd` (defaults to today).
  * @param limit - Maximum number of results to return (defaults to 50).
- * @returns Array of `{ userId, name, visits }` sorted by visits descending.
+ * @param filter - Filter by access plan: "all", "free", or "paid" (defaults to "all").
+ * @returns Array of `{ userId, name, visits, accessPlan }` sorted by visits descending.
  */
 export const getTopCustomers = query({
   args: {
     start: v.optional(v.string()),
     end: v.optional(v.string()),
     limit: v.optional(v.number()),
+    filter: v.optional(v.union(v.literal("all"), v.literal("free"), v.literal("paid"))),
   },
   handler: async (ctx, args) => {
     const now = new Date();
@@ -678,34 +679,53 @@ export const getTopCustomers = query({
 
     const end = args.end ?? defaultEnd;
     const start = args.start ?? defaultStart;
+    const filter = args.filter ?? "all";
 
-    const startObj = startOfDay(parseISO(start));
-    const endObj = startOfDay(addDays(parseISO(end), 1));
-    const startMs = startObj.getTime();
-    const endMs = endObj.getTime();
+    const startISO = startOfDay(parseISO(start)).toISOString();
+    const endISO = startOfDay(addDays(parseISO(end), 1)).toISOString();
 
     const profiles = await ctx.db.query("profile").collect();
 
     const visitCounts = await Promise.all(
       profiles.map(async (profile) => {
-        const count = await visitsAggregate.count(ctx, {
-          namespace: profile.id,
-          bounds: {
-            lower: { key: startMs, inclusive: true },
-            upper: { key: endMs, inclusive: false },
-          },
-        });
+        const registers = await ctx.db
+          .query("daily_register")
+          .withIndex("user", (q) => q.eq("userId", profile.id))
+          .filter((q) =>
+            q.and(
+              q.gte(q.field("timestamp"), startISO),
+              q.lt(q.field("timestamp"), endISO),
+            )
+          )
+          .collect();
+
+        const count = registers.length;
+
+        if (count === 0) return null;
+
+        const sortedByTime = registers.sort(
+          (a, b) => Number.parseInt(b.timestamp) - Number.parseInt(a.timestamp),
+        );
+        const mostRecent = sortedByTime[0];
+        const accessPlan = mostRecent.access.kind;
+
         return {
           userId: profile.id,
           name: `${profile.firstName} ${profile.lastName}`,
           visits: count,
+          accessPlan,
         };
       }),
     );
 
+    let filtered = visitCounts.filter((uv): uv is NonNullable<typeof uv> => uv !== null);
+
+    if (filter !== "all") {
+      filtered = filtered.filter((uv) => uv.accessPlan === filter);
+    }
+
     const limit = args.limit ?? 50;
-    const sorted = visitCounts
-      .filter((uv) => uv.visits > 0)
+    const sorted = filtered
       .sort((a, b) => b.visits - a.visits)
       .slice(0, limit);
 

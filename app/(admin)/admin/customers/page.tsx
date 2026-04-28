@@ -1,3 +1,5 @@
+"use client"
+import { DateRange } from "@/components/DateRange";
 import {
   CustomersTable,
   TopCustomersAvatarGroup,
@@ -7,21 +9,23 @@ import { Analytics } from "./analytics";
 
 export default function CustomersPage() {
   return (
-    <div>
-      <section className="p-8 flex justify-between">
-        <div className="flex flex-col">
-          <h1 className="text-3xl font-bold mb-4">Customers</h1>
-          <p>Manage customers</p>
-        </div>
+    <DateRange.Provider>
+      <div>
+        <section className="p-8 flex justify-between">
+          <div className="flex flex-col">
+            <h1 className="text-3xl font-bold mb-4">Customers</h1>
+            <p>Manage customers</p>
+          </div>
 
-        <div>
-          <TopCustomersAvatarGroup />
-        </div>
-      </section>
+          <div>
+            <TopCustomersAvatarGroup />
+          </div>
+        </section>
 
-      <Analytics />
+        <Analytics />
 
-      <CustomersTable />
-    </div>
+        <CustomersTable />
+      </div>
+    </DateRange.Provider>
   );
 }

@@ -21,10 +21,11 @@ export function findDuplicatesInRecords(
 
   for (const record of records) {
     if (record?.email) {
-      if (uniqueEmails.has(record.email)) {
+      const normalizedEmail = record.email.toLowerCase();
+      if (uniqueEmails.has(normalizedEmail)) {
         duplicateEmails.push(record.email);
       } else {
-        uniqueEmails.add(record.email);
+        uniqueEmails.add(normalizedEmail);
       }
     }
 

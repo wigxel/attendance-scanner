@@ -17,26 +17,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Pencil, Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AccessPlanForm } from "./forms/AccessPlanForm";
 
 interface AccessPlan {
   _id: Id<"accessPlans">;
@@ -61,17 +48,10 @@ export default function PricingManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
-  const [formData, setFormData] = useState({
-    key: "",
-    name: "",
-    price: 0,
-    no_of_days: 1,
-    description: "",
-    features: "",
-  });
-
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [planToDelete, setPlanToDelete] = useState<AccessPlan | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const accessPlans = useQuery(api.myFunctions.listAccessPlans);
   const addAccessPlan = useMutation(api.myFunctions.addAccessPlan);
@@ -79,64 +59,65 @@ export default function PricingManagement() {
   const deleteAccessPlan = useMutation(api.myFunctions.deleteAccessPlan);
 
   const resetForm = () => {
-    setFormData({
-      key: "",
-      name: "",
-      price: 0,
-      no_of_days: 1,
-      description: "",
-      features: "",
-    });
     setCurrentPlanId(null);
   };
 
-  const handleAdd = async () => {
-    if (!formData.key.trim() || !formData.name.trim()) {
-      toast.error("Key and Name are required");
-      return;
-    }
-
+  const handleAdd = async (values: {
+    key: string;
+    name: string;
+    price: number;
+    no_of_days: number;
+    description?: string;
+    features?: string;
+  }) => {
+    setIsSubmitting(true);
     try {
       await addAccessPlan({
-        key: formData.key.trim(),
-        name: formData.name.trim(),
-        price: formData.price,
-        no_of_days: formData.no_of_days,
-        description: formData.description.trim() || undefined,
-        features: formData.features
-          ? formData.features.split(",").map((f) => f.trim()).filter(Boolean)
+        key: values.key.trim(),
+        name: values.name.trim(),
+        price: values.price,
+        no_of_days: values.no_of_days,
+        description: values.description?.trim() || undefined,
+        features: values.features
+          ? values.features.split(",").map((f) => f.trim()).filter(Boolean)
           : undefined,
       });
       toast.success("Pricing plan added successfully");
-      resetForm();
       setAddDialogOpen(false);
     } catch (error) {
       toast.error(`Error: ${(error as Error).message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleEdit = async () => {
-    if (!currentPlanId || !formData.name.trim()) {
-      toast.error("Name is required");
-      return;
-    }
-
+  const handleEdit = async (values: {
+    key: string;
+    name: string;
+    price: number;
+    no_of_days: number;
+    description?: string;
+    features?: string;
+  }) => {
+    if (!currentPlanId) return;
+    setIsSubmitting(true);
     try {
       await updateAccessPlan({
         id: currentPlanId as Id<"accessPlans">,
-        name: formData.name.trim(),
-        price: formData.price,
-        no_of_days: formData.no_of_days,
-        description: formData.description.trim() || undefined,
-        features: formData.features
-          ? formData.features.split(",").map((f) => f.trim()).filter(Boolean)
+        name: values.name.trim(),
+        price: values.price,
+        no_of_days: values.no_of_days,
+        description: values.description?.trim() || undefined,
+        features: values.features
+          ? values.features.split(",").map((f) => f.trim()).filter(Boolean)
           : undefined,
       });
       toast.success("Pricing plan updated successfully");
-      resetForm();
       setIsEditDialogOpen(false);
     } catch (error) {
       toast.error(`Error: ${(error as Error).message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -155,14 +136,6 @@ export default function PricingManagement() {
 
   const openEditDialog = (plan: AccessPlan) => {
     setCurrentPlanId(plan._id);
-    setFormData({
-      key: plan.key,
-      name: plan.name,
-      price: plan.price,
-      no_of_days: plan.no_of_days,
-      description: plan.description,
-      features: plan.features.join(", "),
-    });
     setIsEditDialogOpen(true);
   };
 
@@ -170,6 +143,8 @@ export default function PricingManagement() {
     setPlanToDelete(plan);
     setIsDeleteAlertOpen(true);
   };
+
+  const currentPlan = accessPlans?.find((p) => p._id === currentPlanId);
 
   return (
     <div className="flex gap-4 flex-col">
@@ -188,89 +163,12 @@ export default function PricingManagement() {
                 Create a new access plan for customers.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="key">Key (unique identifier)</Label>
-                <Input
-                  id="key"
-                  value={formData.key}
-                  onChange={(e) =>
-                    setFormData({ ...formData, key: e.target.value })
-                  }
-                  placeholder="e.g., free, weekly, monthly"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="e.g., Free Plan"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="price">Price (₦)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        price: Number.parseInt(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="days">Duration (days)</Label>
-                  <Input
-                    id="days"
-                    type="number"
-                    value={formData.no_of_days}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        no_of_days: Number.parseInt(e.target.value) || 1,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder="Description of the plan"
-                  rows={2}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="features">Features (comma-separated)</Label>
-                <Input
-                  id="features"
-                  value={formData.features}
-                  onChange={(e) =>
-                    setFormData({ ...formData, features: e.target.value })
-                  }
-                  placeholder="e.g., priority-check-in, booking"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleAdd}>Add Plan</Button>
-            </DialogFooter>
+            <AccessPlanForm
+              onSubmit={handleAdd}
+              onCancel={() => setAddDialogOpen(false)}
+              isLoading={isSubmitting}
+              submitLabel="Add Plan"
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -283,101 +181,46 @@ export default function PricingManagement() {
               Update the details of the pricing plan.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Key</Label>
-              <div className="px-3 py-2 bg-muted rounded-md text-muted-foreground font-mono text-sm">
-                {formData.key}
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-name">Name</Label>
-              <Input
-                id="edit-name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+          <AccessPlanForm
+            initialFormData={
+              currentPlan
+                ? {
+                  key: currentPlan.key,
+                  name: currentPlan.name,
+                  price: currentPlan.price,
+                  no_of_days: currentPlan.no_of_days,
+                  description: currentPlan.description,
+                  features: currentPlan.features.join(", "),
                 }
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-price">Price (₦)</Label>
-                <Input
-                  id="edit-price"
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      price: Number.parseInt(e.target.value) || 0,
-                    })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-days">Duration (days)</Label>
-                <Input
-                  id="edit-days"
-                  type="number"
-                  value={formData.no_of_days}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      no_of_days: Number.parseInt(e.target.value) || 1,
-                    })
-                  }
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                rows={2}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-features">Features (comma-separated)</Label>
-              <Input
-                id="edit-features"
-                value={formData.features}
-                onChange={(e) =>
-                  setFormData({ ...formData, features: e.target.value })
-                }
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleEdit}>Save Changes</Button>
-          </DialogFooter>
+                : undefined
+            }
+            onSubmit={handleEdit}
+            onCancel={() => setIsEditDialogOpen(false)}
+            isLoading={isSubmitting}
+            submitLabel="Save Changes"
+          />
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Pricing Plan?</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Pricing Plan?</DialogTitle>
+            <DialogDescription>
               This action cannot be undone. This will permanently delete the{" "}
               {planToDelete?.name} plan.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPlanToDelete(null)}>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPlanToDelete(null)}>
               Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {(accessPlans ?? []).length > 0 ? (
@@ -400,14 +243,15 @@ export default function PricingManagement() {
                     size="sm"
                     onClick={() => openEditDialog(plan)}
                   >
-                    <Pencil className="h-4 w-4 mr-1" /> Edit
+                    <Pencil className="h-4 w-4" />
+                    <span>Edit</span>
                   </Button>
                   <Button
-                    variant="destructive"
                     size="sm"
+                    variant="destructive"
                     onClick={() => openDeleteAlert(plan)}
                   >
-                    <Trash className="h-4 w-4 mr-1" />
+                    <Trash className="h-4 w-4" />
                   </Button>
                 </div>
               </CardFooter>

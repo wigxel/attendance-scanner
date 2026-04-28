@@ -1,6 +1,7 @@
 "use client";
 import { DataTableDemo } from "@/components/DataTable";
 import { columns } from "@/components/columns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
 import { useCustomer } from "@/hooks/auth";
 import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
@@ -21,8 +22,10 @@ import {
 import { Option, pipe } from "effect";
 import { ChevronLeft, ChevronRight, Crown, Gift } from "lucide-react";
 import { motion } from "motion/react";
-import React from "react";
+import * as React from "react";
 import useEvent from "react-use-event-hook";
+import { DateRange } from "./DateRange";
+import { CustomerSheet } from "./customer-info";
 import {
   EmptyState,
   EmptyStateConceal,
@@ -31,9 +34,7 @@ import {
   EmptyStateTitle,
 } from "./empty-state";
 import { If } from "./if";
-import { CustomerSheet } from "./customer-info";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Badge, badgeVariants } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { ScrollArea } from "./ui/scroll-area";
@@ -44,6 +45,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "./ui/sheet";
+import { Skeleton } from "./ui/skeleton";
 
 export function useUsers() {
   const record = useQuery(api.myFunctions.getAllUsers);
@@ -378,16 +380,28 @@ function format_time_to_now(date_: unknown) {
 }
 
 export function TopCustomersAvatarGroup() {
+
+  const { filter: dateFilter } = DateRange.useState();
+
+  const [startDate, endDate] = React.useMemo(
+    () => dateFilter.get_range(Date.now()),
+    [dateFilter],
+  );
+
   const topCustomers =
     useQuery(api.customers.getTopCustomers, {
       limit: 50,
-      start: new Date(2024, 11, 1).toISOString(),
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+      filter: "all",
     }) ?? [];
-  const top6 = topCustomers.slice(0, 6);
-  const extra = Math.max(0, topCustomers.length - top6.length);
+
+  const displayCustomers = topCustomers;
+  const top6 = displayCustomers.slice(0, 6);
+  const extra = Math.max(0, displayCustomers.length - top6.length);
 
   return (
-    <EmptyState isEmpty={topCustomers.length === 0}>
+    <EmptyState isEmpty={displayCustomers.length === 0}>
       <EmptyStateContent>
         <Button
           variant="outline"
@@ -400,8 +414,8 @@ export function TopCustomersAvatarGroup() {
         </Button>
       </EmptyStateContent>
 
-      <EmptyStateConceal>
-        <Sheet>
+      <Sheet>
+        <EmptyStateConceal>
           <SheetTrigger asChild>
             <Button
               variant="outline"
@@ -429,43 +443,131 @@ export function TopCustomersAvatarGroup() {
               </div>
             </Button>
           </SheetTrigger>
+        </EmptyStateConceal>
 
-          <SheetContent
-            side="right"
-            className="w-full sm:max-w-md p-0 flex flex-col h-full"
-          >
-            <SheetHeader className="p-6 border-b">
-              <SheetTitle>Top Customers</SheetTitle>
-            </SheetHeader>
-
-            <ScrollArea className="flex-1">
-              <ul className="divide-y divide-border">
-                {topCustomers.map((customer, i) => (
-                  <li
-                    key={customer.userId}
-                    className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="font-mono text-sm text-muted-foreground w-4 text-center">
-                      {i + 1}
-                    </div>
-                    <CustomerAvatar
-                      userId={customer.userId}
-                      className="w-10 h-10"
-                    />
-                    <div className="flex-1">
-                      <div className="font-semibold">{customer.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {serialNo(customer.visits)} visit
-                        {customer.visits === 1 ? "" : "s"}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </ScrollArea>
-          </SheetContent>
-        </Sheet>
-      </EmptyStateConceal>
+        <TopCustomersSheet />
+      </Sheet>
     </EmptyState>
+  );
+}
+
+function TopCustomersSheet() {
+  const [filter, setFilter] = React.useState<"all" | "free" | "paid">("all");
+
+  const { filter: dateFilter } = DateRange.useState();
+
+  const [startDate, endDate] = React.useMemo(
+    () => dateFilter.get_range(Date.now()),
+    [dateFilter],
+  );
+
+  const response =
+    useQuery(api.customers.getTopCustomers, {
+      limit: 50,
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+      filter: filter,
+    });
+
+  const displayCustomers = safeArray(response);
+
+  return (
+    <SheetContent
+      side="right"
+      className="w-full sm:max-w-md p-0 flex flex-col h-screen"
+    >
+      <SheetHeader className="p-6 border-b">
+        <SheetTitle>Top Customers</SheetTitle>
+      </SheetHeader>
+
+      <Tabs
+        value={filter}
+        onValueChange={(v) => setFilter(v as typeof filter)}
+        className="w-full flex flex-1 flex-col"
+      >
+        <div className="flex items-center justify-between px-4 gap-4">
+          <TabsList>
+            <TabsTrigger value="all" className="px-4">
+              All
+            </TabsTrigger>
+            <TabsTrigger value="free" className="px-4">
+              Free
+            </TabsTrigger>
+            <TabsTrigger value="paid" className="px-4">
+              Paid
+            </TabsTrigger>
+          </TabsList>
+
+          <DateRange.Dropdown />
+        </div>
+
+        <ScrollArea className="h-[80svh]">
+          {response === undefined ?
+            [...Array(5)].map((_, i) => (
+              <li key={i} className="flex items-center gap-4 py-4 px-4">
+                <Skeleton className="w-8 h-8 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="w-24 h-4" />
+                  <Skeleton className="w-16 h-3" />
+                </div>
+              </li>
+            )) :
+            <EmptyState isEmpty={displayCustomers.length === 0}>
+              <div className="flex flex-col items-center justify-center">
+                <EmptyStateContent className="py-16">
+                  <Crown className="w-8 h-8 text-muted-foreground" />
+                  <EmptyStateTitle>No customers found</EmptyStateTitle>
+                  <EmptyStateDescription>
+                    No customers in this date range.
+                  </EmptyStateDescription>
+                </EmptyStateContent>
+              </div>
+
+              <EmptyStateConceal>
+                <ul className="divide-y divide-border grow-0 shrink-1 overflow-hidden flex flex-col">
+                  {displayCustomers.map((customer, i) => (
+                    <li
+                      key={customer.userId}
+                      className="flex text-xs items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="font-mono text-[1em] text-muted-foreground w-4 text-center">
+                        {serialNo(i + 1)}
+                      </div>
+
+                      <CustomerAvatar
+                        userId={customer.userId}
+                        className="w-8 h-8"
+                      />
+
+                      <div className="flex-1">
+                        <div className="font-semibold text-[1.2em]">
+                          {customer.name}
+                        </div>
+                        <div className="flex items-center gap-2 text-[1em] text-muted-foreground">
+                          <span>
+                            {serialNo(customer.visits)} visit
+                            {customer.visits === 1 ? "" : "s"}
+                          </span>
+                          <span
+                            className={cn(
+                              "px-1.5 py-0.5 rounded",
+                              customer.accessPlan === "paid"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                                : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+                            )}
+                          >
+                            {customer.accessPlan}
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </EmptyStateConceal>
+            </EmptyState>}
+
+        </ScrollArea>
+      </Tabs>
+    </SheetContent>
   );
 }

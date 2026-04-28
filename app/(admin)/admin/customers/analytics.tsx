@@ -1,4 +1,5 @@
 "use client";
+import { DateRange } from "@/components/DateRange";
 import { RegisteredUserEntry } from "@/components/customers";
 import { If } from "@/components/if";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
@@ -13,7 +14,6 @@ import { api } from "@/convex/_generated/api";
 import { currencyFormatter } from "@/lib/currency.helpers";
 import { safeNum, serialNo } from "@/lib/data.helpers";
 import { O, pipe } from "@/lib/fp.helpers";
-import { DateRange } from "@/components/DateRange";
 import { useQuery } from "convex/react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { isNullable } from "effect/Predicate";
@@ -117,30 +117,28 @@ function MetricCard({
 
 export function Analytics() {
   return (
-    <DateRange.Provider>
-      <div className="p-4 pt-0">
-        <div className="flex justify-end mb-4">
-          <DateRange.Dropdown />
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <MetricCard label="Total customers" kind="totalCustomers" />
-          <MetricCard label="New customers" kind="newCustomers" />
-          <MetricCard label="Active customers" kind="activeCustomers" />
-          <MetricCard
-            label="Repeat customer rate"
-            kind="repeatCustomerRate"
-            suffix="%"
-          />
-          <MetricCard
-            label="Avg visits per customer"
-            kind="avgVisitsPerCustomer"
-            suffix="x"
-            aggregation="avg"
-          />
-          <MetricCard label="Lapsed customers" kind="lapsedCustomers" />
-        </div>
+    <div className="p-4 pt-0">
+      <div className="flex justify-end mb-4">
+        <DateRange.Dropdown />
       </div>
-    </DateRange.Provider>
+      <div className="grid grid-cols-3 gap-4">
+        <MetricCard label="Total customers" kind="totalCustomers" />
+        <MetricCard label="New customers" kind="newCustomers" />
+        <MetricCard label="Active customers" kind="activeCustomers" />
+        <MetricCard
+          label="Repeat customer rate"
+          kind="repeatCustomerRate"
+          suffix="%"
+        />
+        <MetricCard
+          label="Avg visits per customer"
+          kind="avgVisitsPerCustomer"
+          suffix="x"
+          aggregation="avg"
+        />
+        <MetricCard label="Lapsed customers" kind="lapsedCustomers" />
+      </div>
+    </div>
   );
 }
 
