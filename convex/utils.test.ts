@@ -8,15 +8,32 @@ describe("findDuplicatesInRecords", () => {
   });
 
   it("should return empty result for single record", () => {
-    const records = [{ id: "1", firstName: "John", lastName: "Doe", email: "john@example.com" }];
+    const records = [
+      {
+        id: "1",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@example.com",
+      },
+    ];
     const result = findDuplicatesInRecords(records);
     expect(result).toEqual({ duplicateEmails: [], duplicateNames: [] });
   });
 
   it("should detect duplicate emails", () => {
     const records = [
-      { id: "1", firstName: "John", lastName: "Doe", email: "johN@example.com" },
-      { id: "2", firstName: "Jane", lastName: "Doe", email: "john@example.com" },
+      {
+        id: "1",
+        firstName: "John",
+        lastName: "Doe",
+        email: "johN@example.com",
+      },
+      {
+        id: "2",
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "john@example.com",
+      },
     ];
     const result = findDuplicatesInRecords(records);
     expect(result.duplicateEmails).toContain("john@example.com");
@@ -25,19 +42,48 @@ describe("findDuplicatesInRecords", () => {
 
   it("should detect duplicate names (case insensitive)", () => {
     const records = [
-      { id: "1", firstName: "John", lastName: "Doe", email: "john@example.com" },
-      { id: "2", firstName: "JOHN", lastName: "DOE", email: "john2@example.com" },
+      {
+        id: "1",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@example.com",
+      },
+      {
+        id: "2",
+        firstName: "JOHN",
+        lastName: "DOE",
+        email: "john2@example.com",
+      },
     ];
     const result = findDuplicatesInRecords(records);
     expect(result.duplicateNames).toHaveLength(1);
-    expect(result.duplicateNames[0]).toEqual({ firstName: "JOHN", lastName: "DOE", id: "2" });
+    expect(result.duplicateNames[0]).toEqual({
+      firstName: "JOHN",
+      lastName: "DOE",
+      id: "2",
+    });
   });
 
   it("should detect both duplicate emails and names", () => {
     const records = [
-      { id: "1", firstName: "John", lastName: "Doe", email: "john@example.com" },
-      { id: "2", firstName: "Jane", lastName: "Doe", email: "john@example.com" },
-      { id: "3", firstName: "John", lastName: "Doe", email: "john3@example.com" },
+      {
+        id: "1",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@example.com",
+      },
+      {
+        id: "2",
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "john@example.com",
+      },
+      {
+        id: "3",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john3@example.com",
+      },
     ];
     const result = findDuplicatesInRecords(records);
     expect(result.duplicateEmails).toContain("john@example.com");
@@ -47,7 +93,12 @@ describe("findDuplicatesInRecords", () => {
   it("should handle records with missing email", () => {
     const records = [
       { id: "1", firstName: "John", lastName: "Doe", email: undefined },
-      { id: "2", firstName: "Jane", lastName: "Doe", email: "jane@example.com" },
+      {
+        id: "2",
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane@example.com",
+      },
     ];
     const result = findDuplicatesInRecords(records);
     expect(result.duplicateEmails).toEqual([]);
@@ -55,8 +106,18 @@ describe("findDuplicatesInRecords", () => {
 
   it("should handle records with missing names", () => {
     const records = [
-      { id: "1", firstName: "John", lastName: "Doe", email: "john@example.com" },
-      { id: "2", firstName: undefined, lastName: "Doe", email: "jane@example.com" },
+      {
+        id: "1",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@example.com",
+      },
+      {
+        id: "2",
+        firstName: undefined,
+        lastName: "Doe",
+        email: "jane@example.com",
+      },
     ];
     const result = findDuplicatesInRecords(records);
     expect(result.duplicateNames).toEqual([]);
@@ -64,8 +125,18 @@ describe("findDuplicatesInRecords", () => {
 
   it("should handle records with partial names", () => {
     const records = [
-      { id: "1", firstName: "John", lastName: "Doe", email: "john@example.com" },
-      { id: "2", firstName: "John", lastName: undefined, email: "john2@example.com" },
+      {
+        id: "1",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@example.com",
+      },
+      {
+        id: "2",
+        firstName: "John",
+        lastName: undefined,
+        email: "john2@example.com",
+      },
     ];
     const result = findDuplicatesInRecords(records);
     expect(result.duplicateNames).toEqual([]);
@@ -86,7 +157,12 @@ describe("findDuplicatesInRecords", () => {
 
   it("should handle records without id field for names", () => {
     const records = [
-      { id: "1", firstName: "John", lastName: "Doe", email: "john@example.com" },
+      {
+        id: "1",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@example.com",
+      },
       { firstName: "John", lastName: "Doe", email: "john2@example.com" },
     ];
     const result = findDuplicatesInRecords(records);

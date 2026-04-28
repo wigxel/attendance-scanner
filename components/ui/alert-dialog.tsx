@@ -8,9 +8,7 @@ import { cn } from "@/lib/utils";
 function AlertDialog({
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
-  return (
-    <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
-  );
+  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
 }
 
 function AlertDialogTrigger({
@@ -24,7 +22,9 @@ function AlertDialogTrigger({
 function AlertDialogPortal({
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Portal>) {
-  return <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />;
+  return (
+    <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />
+  );
 }
 
 function AlertDialogOverlay({

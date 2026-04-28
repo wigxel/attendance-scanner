@@ -73,7 +73,11 @@ export function ManualBookingForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Select Plan</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoading}
+              >
                 <FormControl>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a plan" />
@@ -82,7 +86,7 @@ export function ManualBookingForm({
 
                 <SelectContent>
                   {safeArray(accessPlans).map((plan) => {
-                    if (plan.key === 'free') return;
+                    if (plan.key === "free") return;
 
                     return (
                       <SelectItem key={plan.key} value={plan.key}>
@@ -118,7 +122,12 @@ export function ManualBookingForm({
 
         <div className="flex justify-end gap-2">
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
           )}

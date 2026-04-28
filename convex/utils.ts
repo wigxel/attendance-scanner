@@ -11,7 +11,12 @@ export type DuplicateResult = {
 };
 
 export function findDuplicatesInRecords(
-  records: Array<{ email?: string; firstName?: string; lastName?: string; id?: string }>,
+  records: Array<{
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    id?: string;
+  }>,
 ): DuplicateResult {
   const uniqueEmails = new Set<string>();
   const duplicateEmails: string[] = [];
@@ -52,7 +57,14 @@ export const findDuplicates = internalQuery({
   },
   handler: async (ctx, args) => {
     const records = await ctx.db.query(args.table).collect();
-    return findDuplicatesInRecords(records as Array<{ email?: string; firstName?: string; lastName?: string; id?: string }>);
+    return findDuplicatesInRecords(
+      records as Array<{
+        email?: string;
+        firstName?: string;
+        lastName?: string;
+        id?: string;
+      }>,
+    );
   },
 });
 
@@ -72,10 +84,9 @@ export const fixDuplicates = internalMutation({
     // 1. Use the existing `findDuplicates` query to get a list of emails
     //    that are duplicated within the 'profile' table. The prompt implies
     //    that 'profile' records are the primary target for deletion.
-    const duplicatedData = await ctx.runQuery(
-      internal.utils.findDuplicates,
-      { table: "profile" },
-    );
+    const duplicatedData = await ctx.runQuery(internal.utils.findDuplicates, {
+      table: "profile",
+    });
 
     const duplicateEmails = duplicatedData.duplicateEmails;
     const duplicateNames = duplicatedData.duplicateNames;

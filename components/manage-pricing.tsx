@@ -79,7 +79,10 @@ export default function PricingManagement() {
         no_of_days: values.no_of_days,
         description: values.description?.trim() || undefined,
         features: values.features
-          ? values.features.split(",").map((f) => f.trim()).filter(Boolean)
+          ? values.features
+              .split(",")
+              .map((f) => f.trim())
+              .filter(Boolean)
           : undefined,
       });
       toast.success("Pricing plan added successfully");
@@ -109,7 +112,10 @@ export default function PricingManagement() {
         no_of_days: values.no_of_days,
         description: values.description?.trim() || undefined,
         features: values.features
-          ? values.features.split(",").map((f) => f.trim()).filter(Boolean)
+          ? values.features
+              .split(",")
+              .map((f) => f.trim())
+              .filter(Boolean)
           : undefined,
       });
       toast.success("Pricing plan updated successfully");
@@ -185,13 +191,13 @@ export default function PricingManagement() {
             initialFormData={
               currentPlan
                 ? {
-                  key: currentPlan.key,
-                  name: currentPlan.name,
-                  price: currentPlan.price,
-                  no_of_days: currentPlan.no_of_days,
-                  description: currentPlan.description,
-                  features: currentPlan.features.join(", "),
-                }
+                    key: currentPlan.key,
+                    name: currentPlan.name,
+                    price: currentPlan.price,
+                    no_of_days: currentPlan.no_of_days,
+                    description: currentPlan.description,
+                    features: currentPlan.features.join(", "),
+                  }
                 : undefined
             }
             onSubmit={handleEdit}

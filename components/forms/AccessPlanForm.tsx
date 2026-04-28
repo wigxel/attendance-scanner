@@ -90,7 +90,11 @@ export function AccessPlanForm({
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="e.g., Free Plan" disabled={isLoading} />
+                <Input
+                  {...field}
+                  placeholder="e.g., Free Plan"
+                  disabled={isLoading}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -108,7 +112,9 @@ export function AccessPlanForm({
                   <Input
                     {...field}
                     type="number"
-                    onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 0)}
+                    onChange={(e) =>
+                      field.onChange(Number.parseInt(e.target.value) || 0)
+                    }
                     disabled={isLoading}
                   />
                 </FormControl>
@@ -127,7 +133,9 @@ export function AccessPlanForm({
                   <Input
                     {...field}
                     type="number"
-                    onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 1)}
+                    onChange={(e) =>
+                      field.onChange(Number.parseInt(e.target.value) || 1)
+                    }
                     disabled={isLoading}
                   />
                 </FormControl>
@@ -176,12 +184,19 @@ export function AccessPlanForm({
 
         <div className="flex justify-end gap-2">
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
           )}
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? `${submitLabel.replace("...", "ing")}...` : submitLabel}
+            {isLoading
+              ? `${submitLabel.replace("...", "ing")}...`
+              : submitLabel}
           </Button>
         </div>
       </form>

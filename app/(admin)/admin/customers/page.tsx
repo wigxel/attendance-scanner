@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { DateRange } from "@/components/DateRange";
 import {
   CustomersTable,

@@ -670,7 +670,9 @@ export const getTopCustomers = query({
     start: v.optional(v.string()),
     end: v.optional(v.string()),
     limit: v.optional(v.number()),
-    filter: v.optional(v.union(v.literal("all"), v.literal("free"), v.literal("paid"))),
+    filter: v.optional(
+      v.union(v.literal("all"), v.literal("free"), v.literal("paid")),
+    ),
   },
   handler: async (ctx, args) => {
     const now = new Date();
@@ -695,7 +697,7 @@ export const getTopCustomers = query({
             q.and(
               q.gte(q.field("timestamp"), startISO),
               q.lt(q.field("timestamp"), endISO),
-            )
+            ),
           )
           .collect();
 
@@ -718,16 +720,16 @@ export const getTopCustomers = query({
       }),
     );
 
-    let filtered = visitCounts.filter((uv): uv is NonNullable<typeof uv> => uv !== null);
+    let filtered = visitCounts.filter(
+      (uv): uv is NonNullable<typeof uv> => uv !== null,
+    );
 
     if (filter !== "all") {
       filtered = filtered.filter((uv) => uv.accessPlan === filter);
     }
 
     const limit = args.limit ?? 50;
-    const sorted = filtered
-      .sort((a, b) => b.visits - a.visits)
-      .slice(0, limit);
+    const sorted = filtered.sort((a, b) => b.visits - a.visits).slice(0, limit);
 
     return sorted;
   },

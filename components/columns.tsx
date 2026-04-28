@@ -42,13 +42,15 @@ export function createColumns({
     {
       accessorKey: "firstName",
       header: "First Name",
-      cell: ({ row }) => <button
-        type="button"
-        className="appearance-none hover:underline"
-        onClick={() => onViewProfile(row.original.userId)}
-      >
-        {row.getValue("firstName")} {safeStr(row.original?.lastName, "")}
-      </button>,
+      cell: ({ row }) => (
+        <button
+          type="button"
+          className="appearance-none hover:underline"
+          onClick={() => onViewProfile(row.original.userId)}
+        >
+          {row.getValue("firstName")} {safeStr(row.original?.lastname, "")}
+        </button>
+      ),
     },
     {
       accessorKey: "email",
@@ -103,12 +105,14 @@ export function createColumns({
                   <EyeIcon /> View Profile
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => {
-                  return setTimeout(() => {
-                    // this is important do not remove
-                    return onCreateBooking(userId, userName);
-                  }, 16);
-                }}>
+                <DropdownMenuItem
+                  onClick={() => {
+                    return setTimeout(() => {
+                      // this is important do not remove
+                      return onCreateBooking(userId, userName);
+                    }, 16);
+                  }}
+                >
                   <CalendarIcon /> Create Booking
                 </DropdownMenuItem>
               </DropdownMenuContent>

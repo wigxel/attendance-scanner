@@ -71,12 +71,11 @@ export function CustomersTable() {
   const [selectedUserId, setSelectedUserId] = React.useState<string | null>(
     null,
   );
-  const [bookingUserId, setBookingUserId] = React.useState<string | null>(
-    null,
-  );
+  const [bookingUserId, setBookingUserId] = React.useState<string | null>(null);
   const [bookingUserName, setBookingUserName] = React.useState<string>("");
-  const createBooking = useMutation(api.bookings.createManualBooking);
   const [isBookingLoading, setIsBookingLoading] = React.useState(false);
+
+  const createBooking = useMutation(api.bookings.createManualBooking);
 
   const handleViewProfile = useEvent((userId: string) => {
     setSelectedUserId(userId);
@@ -116,7 +115,11 @@ export function CustomersTable() {
   );
 
   const tableColumns = React.useMemo(
-    () => createColumns({ onViewProfile: handleViewProfile, onCreateBooking: handleCreateBooking }),
+    () =>
+      createColumns({
+        onViewProfile: handleViewProfile,
+        onCreateBooking: handleCreateBooking,
+      }),
     [handleViewProfile, handleCreateBooking],
   );
 
@@ -141,7 +144,10 @@ export function CustomersTable() {
         onOpenChange={(open) => !open && setSelectedUserId(null)}
       />
 
-      <Dialog open={!!bookingUserId} onOpenChange={(open) => !open && setBookingUserId(null)}>
+      <Dialog
+        open={!!bookingUserId}
+        onOpenChange={(open) => !open && setBookingUserId(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create Booking</DialogTitle>
@@ -151,7 +157,6 @@ export function CustomersTable() {
           </DialogHeader>
 
           <ManualBookingForm
-            userId={bookingUserId ?? ""}
             userName={bookingUserName}
             isLoading={isBookingLoading}
             onSubmit={handleBookingSubmit}
@@ -456,7 +461,6 @@ function format_time_to_now(date_: unknown) {
 }
 
 export function TopCustomersAvatarGroup() {
-
   const { filter: dateFilter } = DateRange.useState();
 
   const [startDate, endDate] = React.useMemo(
@@ -537,13 +541,12 @@ function TopCustomersSheet() {
     [dateFilter],
   );
 
-  const response =
-    useQuery(api.customers.getTopCustomers, {
-      limit: 50,
-      start: startDate.toISOString(),
-      end: endDate.toISOString(),
-      filter: filter,
-    });
+  const response = useQuery(api.customers.getTopCustomers, {
+    limit: 50,
+    start: startDate.toISOString(),
+    end: endDate.toISOString(),
+    filter: filter,
+  });
 
   const displayCustomers = safeArray(response);
 
@@ -578,7 +581,7 @@ function TopCustomersSheet() {
         </div>
 
         <ScrollArea className="h-[80svh]">
-          {response === undefined ?
+          {response === undefined ? (
             [...Array(5)].map((_, i) => (
               <li key={i} className="flex items-center gap-4 py-4 px-4">
                 <Skeleton className="w-8 h-8 rounded-full" />
@@ -587,7 +590,8 @@ function TopCustomersSheet() {
                   <Skeleton className="w-16 h-3" />
                 </div>
               </li>
-            )) :
+            ))
+          ) : (
             <EmptyState isEmpty={displayCustomers.length === 0}>
               <div className="flex flex-col items-center justify-center">
                 <EmptyStateContent className="py-16">
@@ -640,8 +644,8 @@ function TopCustomersSheet() {
                   ))}
                 </ul>
               </EmptyStateConceal>
-            </EmptyState>}
-
+            </EmptyState>
+          )}
         </ScrollArea>
       </Tabs>
     </SheetContent>

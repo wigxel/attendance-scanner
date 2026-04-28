@@ -517,7 +517,7 @@ export const getAllProfiles = query({
 export const getAllUsers = query({
   args: {},
   handler: async (ctx) => {
-    //get all profiles joined with auth users
+    // get all profiles joined with auth users
     const profiles = await ctx.db.query("profile").collect();
 
     const data = await Promise.all(

@@ -982,7 +982,7 @@ export const createManualBooking = mutation({
         q.and(
           q.eq(q.field("status"), "confirmed"),
           q.gte(q.field("endDate"), todayStr),
-        )
+        ),
       )
       .first();
 

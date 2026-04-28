@@ -2,11 +2,11 @@
 import { api } from "@/convex/_generated/api";
 import { useCustomer } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
+import { usePaginatedQuery, useQuery } from "convex/react";
 import { format, isSameYear } from "date-fns";
 import { Globe } from "lucide-react";
-import { usePaginatedQuery, useQuery } from "convex/react";
-import { Area, AreaChart } from "recharts";
 import React from "react";
+import { Area, AreaChart } from "recharts";
 import {
   EmptyState,
   EmptyStateContent,
@@ -15,9 +15,9 @@ import {
 } from "./empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 import { ScrollArea } from "./ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 
 function CustomerSheet({
   userId,
@@ -94,24 +94,28 @@ function CustomerSheet({
                   const isCurrentYear = isSameYear(visitDate, new Date());
                   const formattedDate = format(
                     visitDate,
-                    isCurrentYear ? "do MMM" : "do MMM, yyyy",
+                    isCurrentYear ? "MMM dd" : "MMM dd yyy",
                   );
                   const formattedTime = format(visitDate, "h:mm a");
 
                   return (
                     <li
                       key={visit._id}
-                      className="py-3 flex justify-between items-center gap-2"
+                      className="py-3 flex justify-between items-start gap-2 text-sm"
                     >
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <span className="tabular-nums font-mono text-sm text-muted-foreground">
-                          {formattedTime}
-                        </span>
-                        <span className="text-sm">by {visit.adminName}</span>
+                      <div className="flex items-start gap-2">
+                        <Globe className="w-4 h-4 mt-[0.4ex] text-muted-foreground shrink-0" />
+                        <div className="flex flex-col gap-0.5">
+                          <span className="tabular-nums font-mono uppercase">
+                            {formattedDate} • {formattedTime}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            by {visit.adminName}
+                          </span>
+                        </div>
                       </div>
+
                       <div className="flex items-center gap-2 tabular-nums">
-                        <span className="text-sm mr-2">{formattedDate}</span>
                         <PaymentBadge data={visit.access} />
                       </div>
                     </li>
