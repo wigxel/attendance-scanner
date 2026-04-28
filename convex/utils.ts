@@ -1,31 +1,57 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id, TableNames } from "./_generated/dataModel";
-import { internalMutation, internalQuery } from "./_generated/server"; // Added internalMutation
+import { internalMutation, internalQuery } from "./_generated/server";
+
+export type DuplicateName = { firstName: string; lastName: string; id: string };
+
+export type DuplicateResult = {
+  duplicateEmails: string[];
+  duplicateNames: DuplicateName[];
+};
+
+export function findDuplicatesInRecords(
+  records: Array<{ email?: string; firstName?: string; lastName?: string; id?: string }>,
+): DuplicateResult {
+  const uniqueEmails = new Set<string>();
+  const duplicateEmails: string[] = [];
+
+  const uniqueNames = new Map<string, string>();
+  const duplicateNames: DuplicateName[] = [];
+
+  for (const record of records) {
+    if (record?.email) {
+      if (uniqueEmails.has(record.email)) {
+        duplicateEmails.push(record.email);
+      } else {
+        uniqueEmails.add(record.email);
+      }
+    }
+
+    if (record?.firstName && record?.lastName && record?.id) {
+      const fullName = `${record.firstName.toLowerCase()}-${record.lastName.toLowerCase()}`;
+      if (uniqueNames.has(fullName)) {
+        duplicateNames.push({
+          firstName: record.firstName,
+          lastName: record.lastName,
+          id: record.id,
+        });
+      } else {
+        uniqueNames.set(fullName, record.id);
+      }
+    }
+  }
+
+  return { duplicateEmails, duplicateNames };
+}
 
 export const findDuplicates = internalQuery({
   args: {
     table: v.union(v.literal("profile"), v.literal("users")),
   },
   handler: async (ctx, args) => {
-    // This function identifies emails that are duplicated within a single specified table.
     const records = await ctx.db.query(args.table).collect();
-    const unique = new Set<string>(); // Explicitly type the Set
-    const duplicates: string[] = []; // Explicitly type the array
-
-    for (const record of records) {
-      // Type assertion to ensure 'email' property is recognized and handled safely.
-      const recordWithEmail = record as { email?: string };
-      if (!recordWithEmail?.email) continue;
-
-      if (unique.has(recordWithEmail.email)) {
-        duplicates.push(recordWithEmail.email);
-      } else {
-        unique.add(recordWithEmail.email);
-      }
-    }
-
-    return duplicates;
+    return findDuplicatesInRecords(records as Array<{ email?: string; firstName?: string; lastName?: string; id?: string }>);
   },
 });
 
@@ -45,29 +71,40 @@ export const fixDuplicates = internalMutation({
     // 1. Use the existing `findDuplicates` query to get a list of emails
     //    that are duplicated within the 'profile' table. The prompt implies
     //    that 'profile' records are the primary target for deletion.
-    const duplicatedEmailsInProfile = await ctx.runQuery(
+    const duplicatedData = await ctx.runQuery(
       internal.utils.findDuplicates,
       { table: "profile" },
     );
 
-    // If no duplicate emails are found in the 'profile' table, there's nothing to fix.
-    if (duplicatedEmailsInProfile.length === 0) {
+    const duplicateEmails = duplicatedData.duplicateEmails;
+    const duplicateNames = duplicatedData.duplicateNames;
+
+    if (duplicateEmails.length === 0 && duplicateNames.length === 0) {
       console.log(
-        `${logPrefix}No duplicate emails found in the 'profile' table to fix.`,
+        `${logPrefix}No duplicates found in the 'profile' table to fix.`,
       );
       return {
         deletedCount: 0,
         deletedIds: [],
-        message: `${logPrefix}No duplicate emails found in the 'profile' table to fix.`,
+        message: `${logPrefix}No duplicates found in the 'profile' table to fix.`,
       };
     }
 
     console.log(
-      `${logPrefix}Found ${duplicatedEmailsInProfile.length} email(s) with duplicates in 'profile' table.`,
+      `${logPrefix}Found ${duplicateEmails.length} email(s) and ${duplicateNames.length} name(s) with duplicates in 'profile' table.`,
     );
-    console.log(
-      `${logPrefix}Duplicated emails: ${duplicatedEmailsInProfile.join(", ")}`,
-    );
+
+    if (duplicateEmails.length > 0) {
+      console.log(
+        `${logPrefix}Duplicate emails: ${duplicateEmails.join(", ")}`,
+      );
+    }
+
+    if (duplicateNames.length > 0) {
+      console.log(
+        `${logPrefix}Duplicate names: ${duplicateNames.map((n) => `${n.firstName} ${n.lastName}`).join(", ")}`,
+      );
+    }
 
     // 2. Retrieve all emails from the 'users' table.
     //    This set will be used to check if a profile's email has a corresponding user.
@@ -83,7 +120,7 @@ export const fixDuplicates = internalMutation({
     );
 
     // 3. Iterate through each email identified as duplicated in the 'profile' table.
-    for (const email of duplicatedEmailsInProfile) {
+    for (const email of duplicateEmails) {
       // Find all 'profile' records that share this specific duplicated email.
       const newly_deleted_emails = await ctx.runMutation(
         internal.utils.deleteDuplicateAccount,
