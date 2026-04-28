@@ -123,13 +123,13 @@ export function TakeAttendance() {
     <Card>
       <div className="p-4 flex flex-col gap-4">
         <Tabs
-          defaultValue="walk_in"
+          defaultValue="reservation"
           onValueChange={(value) => setScanMode(value as ScanMode)}
           className="w-full"
         >
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="walk_in">Walk-in</TabsTrigger>
             <TabsTrigger value="reservation">Reservation</TabsTrigger>
+            <TabsTrigger value="walk_in">Walk-in</TabsTrigger>
           </TabsList>
         </Tabs>
 

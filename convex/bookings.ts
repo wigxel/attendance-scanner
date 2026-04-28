@@ -1,9 +1,8 @@
 import { ConvexError, v } from "convex/values";
 import { addDays, format, parseISO } from "date-fns";
-import { ensure } from "effect/Array";
 import { formatDateToLocalISO } from "../lib/utils";
 import { api } from "./_generated/api";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { authGuard, readId } from "./myFunctions"; // Added authGuard
 
@@ -18,7 +17,39 @@ export const getBooking = query({
       throw new Error("Booking not found");
     }
 
-    return booking;
+    // fetch all seats for this booking
+    const seats = await Promise.all(
+      booking.seatIds.map((seatId) => ctx.db.get(seatId)),
+    );
+
+    const [user, creator] = await Promise.all([
+      ctx.db
+        .query("profile")
+        .filter((q) => q.eq(q.field("id"), booking.userId))
+        .first(),
+      booking.created_by === "system" || booking.created_by === undefined
+        ? Promise.resolve("Booking system")
+        : ctx.db
+            .get(booking.created_by as Id<"users">)
+            .then((e) => e?.name ?? "Anonymous")
+            .catch(() => "--"),
+    ]);
+
+    return {
+      ...booking,
+      creator,
+      seats: seats.filter((seat) => seat !== null), // filter out any null values
+      user: user
+        ? {
+            id: user.id,
+            name: `${user.firstName} ${user.lastName}`,
+            email: user.email,
+          }
+        : {
+            name: "Anonymous User",
+            email: "--",
+          },
+    };
   },
 });
 
@@ -997,6 +1028,8 @@ export const createManualBooking = mutation({
     })();
 
     const adminId = await readId(ctx);
+    const number_of_seats = 1;
+    const amount_paid = plan.price * 100;
 
     const booking = await ctx.db.insert("bookings", {
       userId,
@@ -1005,8 +1038,8 @@ export const createManualBooking = mutation({
       startDate: format(bookingStartDate, "yyyy-MM-dd"),
       endDate: format(bookingEndDate, "yyyy-MM-dd"),
       durationType,
-      pricePerSeat: plan.price,
-      amount: plan.price,
+      pricePerSeat: amount_paid / number_of_seats,
+      amount: amount_paid,
       status: "confirmed",
       created_by: adminId ?? "system",
       createdAt: Date.now(),

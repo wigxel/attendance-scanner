@@ -2,8 +2,8 @@
 import { useBookingCalendarLogic } from "@/hooks/useBookingCalendarLogic";
 import {
   Calendar,
-  MonthArrowBackProps,
-  MonthArrowNextProps,
+  type MonthArrowBackProps,
+  type MonthArrowNextProps,
 } from "@demark-pro/react-booking-calendar";
 import "@/app/booking.css";
 import { BookingCalendarBox } from "@/app/account/active-bookings";
@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import {
   addBusinessDays,
   addDays,
@@ -251,13 +252,19 @@ export function BookingPeriod({
 
 export function RangePreviewSimple({
   startDate,
+  variant = "default",
   endDate,
-}: { startDate: Date; endDate: Date }) {
+}: { startDate: Date; endDate: Date; variant?: "default" | "sm" }) {
   const is_same_day = isSameDay(startDate, endDate);
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="text-base font-medium text-foreground flex gap-2 items-center">
+      <div
+        className={cn("font-medium text-foreground flex gap-2 items-center", {
+          "text-base ": variant === "default",
+          "text-sm": variant === "sm",
+        })}
+      >
         <div>{formatDate(startDate, "dd MMM")}</div>
         <If cond={!is_same_day}>
           <ArrowRight strokeWidth={1} size={14} />
@@ -265,7 +272,12 @@ export function RangePreviewSimple({
         </If>
       </div>
 
-      <p className="text-foreground text-sm">
+      <p
+        className={cn("text-foreground", {
+          "text-sm": variant === "default",
+          "text-xs": variant === "sm",
+        })}
+      >
         Booking for{" "}
         <span className="text-foreground">
           {is_same_day ? (
