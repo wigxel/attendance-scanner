@@ -1,5 +1,12 @@
 import { ConvexError, v } from "convex/values";
-import { addDays, format, parseISO } from "date-fns";
+import {
+  addDays,
+  endOfMonth,
+  format,
+  isSameMonth,
+  parseISO,
+  startOfMonth,
+} from "date-fns";
 import { formatDateToLocalISO } from "../lib/utils";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -1047,5 +1054,106 @@ export const createManualBooking = mutation({
     });
 
     return booking;
+  },
+});
+
+function parseMonthArg(value: string, argName = "month"): string {
+  if (!/^\d{4}-\d{2}$/.test(value)) {
+    throw new ConvexError(
+      `Invalid ${argName}: "${value}". Expected format: yyyy-MM (e.g. "2025-04").`,
+    );
+  }
+
+  const [year, month] = value.split("-").map(Number);
+
+  if (month < 1 || month > 12) {
+    throw new ConvexError(
+      `Invalid ${argName}: "${value}". Month must be between 01 and 12.`,
+    );
+  }
+
+  if (year < 2000 || year > 2100) {
+    throw new ConvexError(
+      `Invalid ${argName}: "${value}". Year must be between 2000 and 2100.`,
+    );
+  }
+
+  return value;
+}
+
+export const getMonthlyReservations = query({
+  args: {
+    month: v.string(),
+    durationType: v.optional(
+      v.union(
+        v.literal("day"),
+        v.literal("week"),
+        v.literal("month"),
+        v.literal("all"),
+      ),
+    ),
+    overflow: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const validatedMonth = parseMonthArg(args.month, "month");
+    const targetDate = parseISO(`${validatedMonth}-01`);
+    const monthStart = startOfMonth(targetDate);
+    const monthEnd = endOfMonth(targetDate);
+
+    const monthStartStr = format(monthStart, "yyyy-MM-dd");
+    const monthEndStr = format(monthEnd, "yyyy-MM-dd");
+
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_startDate", (q) =>
+        q.gte("startDate", monthStartStr).lte("startDate", monthEndStr),
+      )
+      .collect();
+
+    const filtered = bookings.filter((booking) => {
+      if (booking.status !== "confirmed") return false;
+
+      if (args.durationType && args.durationType !== "all") {
+        if (booking.durationType !== args.durationType) return false;
+      }
+
+      const startInMonth = isSameMonth(parseISO(booking.startDate), targetDate);
+      const endInMonth = isSameMonth(parseISO(booking.endDate), targetDate);
+
+      if (args.overflow) {
+        return startInMonth && !endInMonth;
+      } else {
+        return startInMonth && endInMonth;
+      }
+    });
+
+    const bookingsWithCustomer = await Promise.all(
+      filtered.map(async (booking) => {
+        const user = await ctx.db
+          .query("profile")
+          .filter((q) => q.eq(q.field("id"), booking.userId))
+          .first();
+
+        return {
+          ...booking,
+          user: user
+            ? {
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+              }
+            : {
+                id: booking.userId,
+                name: "Anonymous User",
+                email: null,
+              },
+        };
+      }),
+    );
+
+    return {
+      overflow: args.overflow ?? false,
+      bookings: bookingsWithCustomer,
+    };
   },
 });

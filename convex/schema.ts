@@ -105,6 +105,7 @@ const bookings = defineTable({
 })
   .index("user_id", ["userId"])
   .index("by_status", ["status"])
+  .index("by_duration", ["durationType"])
   .index("by_startDate", ["startDate"]);
 
 const bookedSeats = defineTable({
