@@ -3,7 +3,7 @@ import { isRecord } from "effect/Predicate";
 import crypto from "uncrypto";
 import { z } from "zod";
 import { api, internal } from "./_generated/api";
-import { httpAction, internalAction } from "./_generated/server";
+import { httpAction } from "./_generated/server";
 import { setExternalId } from "./clerk";
 
 const http = httpRouter();

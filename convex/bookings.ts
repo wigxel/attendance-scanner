@@ -9,8 +9,9 @@ import {
 } from "date-fns";
 import { formatDateToLocalISO } from "../lib/utils";
 import { api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { action, internalAction, mutation, query } from "./_generated/server";
 import { authGuard, readId } from "./myFunctions"; // Added authGuard
 
 export const getBooking = query({
@@ -1155,5 +1156,65 @@ export const getMonthlyReservations = query({
       overflow: args.overflow ?? false,
       bookings: bookingsWithCustomer,
     };
+  },
+});
+
+export const exportMonthlyReservations = action({
+  args: {
+    month: v.string(),
+    durationType: v.optional(
+      v.union(
+        v.literal("day"),
+        v.literal("week"),
+        v.literal("month"),
+        v.literal("all"),
+      ),
+    ),
+    overflow: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const bookings = await ctx.runQuery(api.bookings.getMonthlyReservations, {
+      month: args.month,
+      durationType: args.durationType,
+      overflow: args.overflow,
+    });
+
+    const headers = [
+      "Customer Name",
+      "Email",
+      "Duration Type",
+      "Amount",
+      "Created Date",
+    ];
+    const rows = bookings.bookings.map((b) => [
+      `"${b.user.name}"`,
+      b.user.email ? `"${b.user.email}"` : "",
+      b.durationType,
+      (b.amount / 100).toString(),
+      new Date(b.createdAt).toISOString().split("T")[0],
+    ]);
+
+    const csv = [headers.join(","), ...rows.map((row) => row.join(","))].join(
+      "\n",
+    );
+    const blob = new Blob([csv], { type: "text/csv" });
+
+    const storageId = await ctx.storage.store(blob);
+
+    const twelveHoursMs = 12 * 60 * 60 * 1000;
+    await ctx.scheduler.runAfter(
+      twelveHoursMs,
+      internal.bookings.deleteExport,
+      { storageId },
+    );
+
+    return { storageUrl: await ctx.storage.getUrl(storageId) };
+  },
+});
+
+export const deleteExport = internalAction({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    await ctx.storage.delete(args.storageId);
   },
 });

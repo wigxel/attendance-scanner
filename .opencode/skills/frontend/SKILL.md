@@ -10,6 +10,7 @@ description: Frontend development rules and patterns for Next.js/React projects
 - React 19
 - Shadcn UI components
 - TanStack Query
+- Effect-ts
 - React Hook Form + Zod
 - Lucide React icons
 - Motion (for animations)
@@ -41,6 +42,7 @@ Dialog → Integrated → Form:
 - Use Lucide React icons exclusively
 - Use appropriate color variables from theme
 - Small, composable components over large monolithic ones
+- Use `cn` helper for conditional and dynamic classname concatenation
 
 ### Currency Formatting (Naira)
 ```typescript
@@ -163,6 +165,21 @@ Inline functions cause child components to rerender on every parent render:
 
 // Good - use stable handler, pass id as argument
 <Button onClick={handleClick} payload={id} />
+```
+
+### Conditional Rendering with Maps
+Prefer map with direct access over multiple/nested ternary operations for JavaScript conditionals.
+```typescript
+// Bad - nested ternaries
+const value = var === "a" ? 1 : var === "b" ? 2 : var === "c" ? 3 : "default";
+
+// Good - map lookup
+const valueMap = {
+  "a": 1,
+  "b": 2,
+  "c": 3
+};
+const value = valueMap[var] || "default";
 ```
 
 ### Conditional Rendering
