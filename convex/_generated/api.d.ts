@@ -22,6 +22,7 @@ import type * as seats from "../seats.js";
 import type * as seedSeats from "../seedSeats.js";
 import type * as shared from "../shared.js";
 import type * as utils from "../utils.js";
+import type * as webhooks from "../webhooks.js";
 
 import type {
   ApiFromModules,
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   seedSeats: typeof seedSeats;
   shared: typeof shared;
   utils: typeof utils;
+  webhooks: typeof webhooks;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

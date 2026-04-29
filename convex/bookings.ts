@@ -61,6 +61,12 @@ export const getBooking = query({
   },
 });
 
+const DURATION_TYPE_TO_PLAN_KEY: Record<string, string> = {
+  day: "daily",
+  week: "weekly",
+  month: "monthly",
+};
+
 export const createBooking = mutation({
   /**
    * Creates a new seat booking for the authenticated user.
@@ -127,7 +133,7 @@ export const createBooking = mutation({
 
     if (!profile.email) {
       throw new Error(
-        "User must have an email address before creating an booking",
+        "User must have an email address before creating a booking",
       );
     }
 
@@ -159,32 +165,30 @@ export const createBooking = mutation({
       return formatDateToLocalISO(currentDate);
     };
 
-    // Calculate duration
     if (!args.durationType) throw new Error("Duration type is required");
-    let duration: number;
-    let pricePerSeat: number; // in kobo
-    let endDate: string;
-    if (args.durationType === "day") {
-      duration = 1;
-      pricePerSeat = 150000; // 1,500 per day
-      const startMs = new Date(args.startDate).getTime();
-      const endMs = startMs; // end date should be the same as start date
-      endDate = formatDateToLocalISO(new Date(endMs));
-    } else if (args.durationType === "week") {
-      duration = 6;
-      pricePerSeat = 600000; // 6,000 per week
-      endDate = calculateEndDate(args.startDate, duration);
-    } else if (args.durationType === "month") {
-      duration = 24;
-      pricePerSeat = 2400000; // 24,000 per month
-      endDate = calculateEndDate(args.startDate, duration);
-    } else {
-      throw new Error("Invalid duration type");
+
+    const planKey = DURATION_TYPE_TO_PLAN_KEY[args.durationType];
+    const accessPlan = await ctx.db
+      .query("accessPlans")
+      .withIndex("plan_key", (q) => q.eq("key", planKey))
+      .first();
+
+    if (!accessPlan) {
+      throw new Error(`Access plan not found for type: ${args.durationType}`);
     }
 
-    // Validate dates
-    if (duration < 1) throw new Error("Invalid date range");
+    const duration = accessPlan.no_of_days;
+    const pricePerSeat = accessPlan.price * 100;
+
     const startMs = new Date(args.startDate).getTime();
+    let endDate: string;
+    if (args.durationType === "day") {
+      endDate = formatDateToLocalISO(new Date(startMs));
+    } else {
+      endDate = calculateEndDate(args.startDate, duration);
+    }
+
+    if (duration < 1) throw new Error("Invalid date range");
     if (startMs < Date.now()) throw new Error("Cannot book past dates");
 
     const startDate = new Date(args.startDate);
@@ -1123,9 +1127,9 @@ export const getMonthlyReservations = query({
 
       if (args.overflow) {
         return startInMonth && !endInMonth;
-      } else {
-        return startInMonth && endInMonth;
       }
+
+      return startInMonth && endInMonth;
     });
 
     const bookingsWithCustomer = await Promise.all(

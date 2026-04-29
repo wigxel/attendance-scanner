@@ -10,6 +10,20 @@ import { calculateEndDate } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 
+type AccessPlanKey = "daily" | "weekly" | "monthly";
+
+const DURATION_TYPE_TO_PLAN_KEY: Record<string, AccessPlanKey> = {
+  day: "daily",
+  week: "weekly",
+  month: "monthly",
+};
+
+const PLAN_KEY_TO_DURATION_TYPE: Record<AccessPlanKey, string> = {
+  daily: "day",
+  weekly: "week",
+  monthly: "month",
+};
+
 export const useBookingCalendarLogic = () => {
   const router = useRouter();
   const { timePeriodString } = useBookingStore();
@@ -17,21 +31,27 @@ export const useBookingCalendarLogic = () => {
   const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
 
   const fullyBookedDates = useQuery(api.bookings.getFullyBookedDates);
+  const accessPlans = useQuery(api.myFunctions.listAccessPlans);
 
-  let timePeriod: number;
-  let price: number; // in kobo
+  const getPlanByKey = (key: AccessPlanKey) =>
+    accessPlans?.find((plan) => plan.key === key);
 
-  if (timePeriodString === "day") {
-    timePeriod = 1;
-    price = 150000; // 1,500
-  } else if (timePeriodString === "week") {
-    timePeriod = 7;
-    price = 600000; // 6,000
-  } else if (timePeriodString === "month") {
-    timePeriod = 24;
-    price = 2400000; // 24,000
-  } else {
-    throw new Error("Invalid time period");
+  const currentPlan = getPlanByKey(timePeriodString as AccessPlanKey);
+
+  const timePeriod = currentPlan?.no_of_days ?? 0;
+  const price = currentPlan?.price ?? 0; // in kobo
+
+  if (!accessPlans) {
+    return {
+      reserved: [],
+      selectedDate,
+      setSelectedDate: () => {},
+      handleDateChange: () => {},
+      formatDate: () => "",
+      timePeriodString,
+      handleTimePeriodChange: () => {},
+      handleProceed: () => {},
+    };
   }
 
   const reserved: {
@@ -56,7 +76,8 @@ export const useBookingCalendarLogic = () => {
   };
 
   const handleTimePeriodChange = (value: "day" | "week" | "month") => {
-    setTimePeriodString(value);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (setTimePeriodString as any)(DURATION_TYPE_TO_PLAN_KEY[value]);
   };
 
   const handleDateChange = (dates: Date[]) => setSelectedDate(dates[0] || null);
