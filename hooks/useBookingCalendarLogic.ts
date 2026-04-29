@@ -6,9 +6,12 @@ import {
   useBookingStore,
 } from "@/app/reserve/store";
 import { api } from "@/convex/_generated/api";
+import { safeArray, safeInt, safeNum } from "@/lib/data.helpers";
+import { anomaly } from "@/lib/error.helpers";
 import { calculateEndDate } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type AccessPlanKey = "daily" | "weekly" | "monthly";
 
@@ -33,14 +36,6 @@ export const useBookingCalendarLogic = () => {
   const fullyBookedDates = useQuery(api.bookings.getFullyBookedDates);
   const accessPlans = useQuery(api.myFunctions.listAccessPlans);
 
-  const getPlanByKey = (key: AccessPlanKey) =>
-    accessPlans?.find((plan) => plan.key === key);
-
-  const currentPlan = getPlanByKey(timePeriodString as AccessPlanKey);
-
-  const timePeriod = currentPlan?.no_of_days ?? 0;
-  const price = currentPlan?.price ?? 0; // in kobo
-
   if (!accessPlans) {
     return {
       reserved: [],
@@ -57,16 +52,16 @@ export const useBookingCalendarLogic = () => {
   const reserved: {
     startDate: Date;
     endDate: Date;
-  }[] =
-    fullyBookedDates?.map((dateStr: string) => ({
-      startDate: new Date(dateStr),
-      endDate: new Date(dateStr),
-    })) || [];
+  }[] = safeArray(fullyBookedDates).map((dateStr: string) => ({
+    startDate: new Date(dateStr),
+    endDate: new Date(dateStr),
+  }));
 
   const formatDate = (date: Date): string => {
     if (!date) {
       return "";
     }
+
     return date.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -76,25 +71,52 @@ export const useBookingCalendarLogic = () => {
   };
 
   const handleTimePeriodChange = (value: "day" | "week" | "month") => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (setTimePeriodString as any)(DURATION_TYPE_TO_PLAN_KEY[value]);
+    setTimePeriodString(value);
   };
 
   const handleDateChange = (dates: Date[]) => setSelectedDate(dates[0] || null);
 
   const handleProceed = () => {
-    if (!selectedDate) return;
+    if (!selectedDate) {
+      return toast.error("Please select a date");
+    }
 
     if (selectedDate.getDay() === 0) {
-      alert("Please select another date. We're closed on Sundays");
-    } else {
-      const calculatedEndDate = calculateEndDate(selectedDate, timePeriod);
-
-      setEndDate(calculatedEndDate);
-      setPrice(price);
-      router.push("?tab=choose");
+      return toast.info("Please select another date. We're closed on Sundays");
     }
+
+    const getPlanByKey = (key: AccessPlanKey) =>
+      accessPlans?.find((plan) => plan.key === DURATION_TYPE_TO_PLAN_KEY[key]);
+
+    const currentPlan = getPlanByKey(timePeriodString as AccessPlanKey);
+    const timePeriod = safeInt(currentPlan?.no_of_days, 0);
+
+    if (!currentPlan) {
+      const error = new Error("Invalid plan provided");
+      anomaly(error, { currentPlan });
+
+      return toast.error(error.message, { description: error.message });
+    }
+
+    if (timePeriod === 0) {
+      const error = new Error("Booking duration is too short");
+      anomaly(error, { no_of_days: currentPlan?.no_of_days, timePeriod });
+
+      return toast.error("Booking failed", { description: error.message });
+    }
+
+    debugger;
+    console.log({ currentPlan });
+    const price = currentPlan.price * 100;
+
+    const calculatedEndDate = calculateEndDate(selectedDate, timePeriod);
+
+    setEndDate(calculatedEndDate);
+    setPrice(price);
+
+    router.push("?tab=choose");
   };
+
   return {
     reserved,
     selectedDate,

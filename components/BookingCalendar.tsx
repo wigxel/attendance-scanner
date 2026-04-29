@@ -247,7 +247,15 @@ export function BookingPeriod({
         ? [selectedDate, subDays(addWeeks(selectedDate, 1), 1)]
         : [selectedDate, addMonths(selectedDate, 1)];
 
-  return <RangePreviewSimple startDate={start_time} endDate={end_time} />;
+  return (
+    <div className="flex gap-3 items-start">
+      <div className="w-8 h-8 flex items-center justify-center">
+        <CalendarIcon className="text-muted-foreground" />
+      </div>
+
+      <RangePreviewSimple startDate={start_time} endDate={end_time} />
+    </div>
+  );
 }
 
 export function RangePreviewSimple({

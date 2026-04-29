@@ -15,15 +15,17 @@ import PendingBookingsModal from "@/components/PendingBookingsModal";
 import SeatLayout from "@/components/SeatLayout";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SegmentProgressBar } from "@/components/ui/segment-gradient-progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { isNullable } from "effect/Predicate";
+import { isEmpty } from "effect/String";
 import { Check, LucideLoader } from "lucide-react";
 import { motion } from "motion/react";
 import React from "react";
 import { SelectedSeats } from "./components/seats";
-import { isNullable } from "effect/Predicate";
-import { isEmpty } from "effect/String";
 
 function BookingStepTrigger({
   value,
@@ -433,28 +435,21 @@ function MakePaymentTab() {
 
         {showTimer && (
           <div className="border border-gray-200 rounded-lg p-4 mb-2">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-gray-700">Time Remaining</h3>
-              <div
-                className={`text-lg font-bold px-3 py-1 rounded-full ${
-                  isExpiringSoon
-                    ? "bg-red-100 text-red-700"
-                    : "bg-blue-100 text-primary"
-                }`}
+            <div className="flex items-center justify-between mb-3 text-sm">
+              <h3 className="text-foreground">Time Remaining</h3>
+              <Badge
+                variant={isExpiringSoon ? "destructive" : "default"}
+                className={"tabular-nums font-mono"}
               >
                 {formatTime(timeRemaining)}
-              </div>
+              </Badge>
             </div>
 
             {/* Progress bar */}
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className={`h-full transition-all duration-1000 ${
-                  isExpiringSoon ? "bg-red-500" : "bg-primary"
-                }`}
-                style={{ width: `${(timeRemaining / 600) * 100}%` }}
-              />
-            </div>
+            <SegmentProgressBar
+              gradient={{ startColor: "#1f4fee", endColor: "#32aaf9" }}
+              progressValue={(timeRemaining / 600) * 100}
+            />
           </div>
         )}
 
