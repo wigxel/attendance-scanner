@@ -1,22 +1,29 @@
+import { safeNum } from "@/lib/data.helpers";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
 import { setTime } from "effect/TestClock";
-import { RotateCcw, RotateCw } from "lucide-react";
+import { Grid2X2Icon, RotateCcw, RotateCw, XIcon } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import React from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 import { Switch } from "./ui/switch";
 
-const COLUMN_COUNT = 10;
-const ROW_COUNT = 3;
-
-const table_ = generateMatrix(ROW_COUNT, COLUMN_COUNT).flat();
-
-const Control = {
-  lastIndex: { rowIndex: 0, colIndex: 0 } satisfies Position,
-  lastEl: null as null | HTMLElement,
-  selected: { rowIndex: 0, colIndex: 0 } as null | Position,
+const Control: {
+  lastIndex: Position;
+  lastEl: null | HTMLElement;
+  selected: null | Position;
+  clearSelection(): void;
+} = {
+  lastIndex: { rowIndex: 0, colIndex: 0 },
+  lastEl: null,
+  selected: { rowIndex: 0, colIndex: 0 },
   clearSelection() {
     const fill = document.querySelectorAll("#grid-guide [data-index]");
     for (const e of fill) {
@@ -32,19 +39,41 @@ type ObjectEntry = { type: string; index: string; position: Position };
 
 window.Control = Control;
 
+const COLUMN_COUNT = 10;
+const ROW_COUNT = 3;
+
 export function SeatStructureGrid() {
   const [seats, setSeats] = React.useState<ObjectEntry[]>([]);
   const [edit, setEdit] = React.useState<boolean>(false);
 
+  const [rowCount, setRowCount] = React.useState<number>(ROW_COUNT);
+  const [columnCount, setColumnCount] = React.useState<number>(COLUMN_COUNT);
+
+  const grid_style = {
+    gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+    gridTemplateRows: `repeat(${rowCount}, minmax(0, 1fr))`,
+  };
+
+  const table_ = React.useMemo(
+    () => generateMatrix(rowCount, columnCount).flat(),
+    [rowCount, columnCount],
+  );
+
   const add = React.useMemo(
     () => (type: "seat" | "table") => () => {
-      if (!Control.selected) {
+      if (Control.selected === null) {
         return toast.error("Please select a cell first");
       }
 
+      const position = { ...Control.selected };
+
       setSeats((e) => [
         ...e,
-        { type, index: String(e.length), position: { ...Control.selected } },
+        {
+          type,
+          index: String(e.length),
+          position,
+        },
       ]);
       setTimeout(() => {
         Control.clearSelection();
@@ -84,20 +113,57 @@ export function SeatStructureGrid() {
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <div className="flex gap-2 items-center justify-between">
+      <div className="flex gap-2 items-center justify-between z-40 relative">
         <div className="flex gap-2 items-center">
           <Button onClick={add("seat")}>Add Seats</Button>
           <Button onClick={add("table")}>Add Tables</Button>
         </div>
 
-        <div className="flex gap-2 items-center uppercase text-xs font-medium">
-          Show grid
-          <Switch
-            checked={edit}
-            onCheckedChange={() => {
-              setEdit((e) => !e);
-            }}
-          />
+        <div className="flex gap-2">
+          <div className="flex gap-2 items-center uppercase text-xs font-medium">
+            Show grid
+            <Switch
+              checked={edit}
+              onCheckedChange={() => {
+                setEdit((e) => !e);
+              }}
+            />
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="w-8 h-8">
+                <Grid2X2Icon className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              align="end"
+              className="bg-white max-w-xs py-2 rounded-sm px-2"
+            >
+              <div className="flex gap-px items-center">
+                <Input
+                  className="w-16"
+                  min="0"
+                  type="number"
+                  value={rowCount}
+                  onChange={(v) =>
+                    setRowCount(safeNum(v.target.value, ROW_COUNT))
+                  }
+                />
+                <span className="font-mono px-1">x</span>
+                <Input
+                  className="w-16"
+                  min="0"
+                  type="number"
+                  value={columnCount}
+                  onChange={(v) =>
+                    setColumnCount(safeNum(v.target.value, COLUMN_COUNT))
+                  }
+                />
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -110,10 +176,7 @@ export function SeatStructureGrid() {
               "opacity-25 pointer-events-auto": edit,
             },
           )}
-          style={{
-            gridTemplateColumns: `repeat(${COLUMN_COUNT}, minmax(0, 1fr))`,
-            gridTemplateRows: `repeat(${ROW_COUNT}, minmax(0, 1fr))`,
-          }}
+          style={grid_style}
         >
           {table_.map((e) => {
             return (
@@ -121,7 +184,7 @@ export function SeatStructureGrid() {
                 key={`${e.rowIndex}-${e.colIndex}`}
                 data-index={`${e.rowIndex},${e.colIndex}`}
                 className="bg-gray-400 hover:bg-cyan-500 cursor-pointer data-[active=true]:bg-blue-500 aspect-square w-full rounded-sm"
-                onKeyDown={() => {}}
+                onKeyDown={() => { }}
                 onDoubleClick={() => {
                   remove(e);
                 }}
@@ -142,10 +205,7 @@ export function SeatStructureGrid() {
 
         <div
           className="grid gap-1 text-[10px] w-full max-w-md"
-          style={{
-            gridTemplateColumns: `repeat(${COLUMN_COUNT}, minmax(0, 1fr))`,
-            gridTemplateRows: `repeat(${ROW_COUNT}, minmax(0, 1fr))`,
-          }}
+          style={grid_style}
         >
           <div
             id="DO_NOT_REMOVE_IMPORTANT_FOR_GRID_STRUCTURE"
@@ -155,9 +215,9 @@ export function SeatStructureGrid() {
           {seats.map((e) => {
             const style = e.position
               ? {
-                  gridColumnStart: `${e.position.colIndex + 1}`,
-                  gridRowStart: `${e.position.rowIndex + 1}`,
-                }
+                gridColumnStart: `${e.position.colIndex + 1}`,
+                gridRowStart: `${e.position.rowIndex + 1}`,
+              }
               : {};
 
             if (e.type === "seat") {
@@ -230,6 +290,10 @@ const sizeAndRotationClasses = {
     horizontal: "col-span-2 row-span-1",
     vertical: "col-span-1 row-span-2",
   },
+  md: {
+    horizontal: "col-span-3",
+    vertical: "col-span-1 row-span-3",
+  },
   lg: {
     horizontal: "col-span-4 row-span-2",
     vertical: "col-span-2 row-span-4",
@@ -246,7 +310,7 @@ export function Table({
   mode: "edit" | "preview";
 } & React.ComponentProps<"div">) {
   const shapeClass = shape === "circle" ? "rounded-full" : "rounded-md";
-  const [size, toggle] = useToggleOptions(["sm", "lg"]);
+  const [size, toggle] = useToggleOptions(["sm", "md", "lg"]);
   const [rotation, toggleRotate] = useToggleOptions(["horizontal", "vertical"]);
   const specificGridClasses = sizeAndRotationClasses[size][rotation];
 
@@ -317,11 +381,11 @@ export function SeatButton(
             !isSelected
               ? { translateY: 0, translateX: 0, opacity: 0, scale: 0.25 }
               : {
-                  scale: 1,
-                  opacity: 100,
-                  translateY: "-50%",
-                  translateX: "-50%",
-                }
+                scale: 1,
+                opacity: 100,
+                translateY: "-50%",
+                translateX: "-50%",
+              }
           }
           className="absolute top-0 left-0 bg-white bg-white p-2 rounded-full size-8"
         >

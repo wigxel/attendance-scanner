@@ -174,3 +174,7 @@
   @apply absolute top-0 inset-x-0 bottom-1 rounded-sm bg-white/15;
   content: "";
 }
+
+.button-iso:focus {
+  @apply translate-y-[1px] border-b-0 ring-0;
+}
