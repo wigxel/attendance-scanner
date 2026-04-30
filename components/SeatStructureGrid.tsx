@@ -5,8 +5,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
-import { setTime } from "effect/TestClock";
-import { Grid2X2Icon, RotateCcw, RotateCw, XIcon } from "lucide-react";
+import { Grid2X2Icon, RotateCcw, RotateCw } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import React from "react";
@@ -14,30 +13,108 @@ import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Switch } from "./ui/switch";
-
-const Control: {
-  lastIndex: Position;
-  lastEl: null | HTMLElement;
-  selected: null | Position;
-  clearSelection(): void;
-} = {
-  lastIndex: { rowIndex: 0, colIndex: 0 },
-  lastEl: null,
-  selected: { rowIndex: 0, colIndex: 0 },
-  clearSelection() {
-    const fill = document.querySelectorAll("#grid-guide [data-index]");
-    for (const e of fill) {
-      if (e) e.dataset.active = "false";
-    }
-
-    Control.selected = null;
-  },
-};
-
 type Position = { rowIndex: number; colIndex: number };
 type ObjectEntry = { type: string; index: string; position: Position };
 
-window.Control = Control;
+// Define the shape of the data stored within the Control object
+interface ControlData {
+  lastIndex: Position;
+  lastEl: null | HTMLElement;
+  selected: null | Position;
+  dragging: boolean;
+  startPos: Position;
+  endPos: Position;
+}
+
+const Control = {
+  // All state/data properties are now consolidated under _data
+  _data: {
+    lastIndex: { rowIndex: 0, colIndex: 0 },
+    lastEl: null,
+    selected: null,
+    // multiple selection state
+    dragging: false,
+    startPos: { rowIndex: 0, colIndex: 0 },
+    endPos: { rowIndex: 0, colIndex: 0 },
+  } satisfies ControlData,
+
+  select(e: Position, event: React.MouseEvent<HTMLElement>) {
+    Control.clearSelection();
+
+    Control._data.selected = e;
+    Control._data.lastEl = event.target as HTMLElement; // Cast to HTMLElement for dataset access
+
+    if (Control._data.lastEl) {
+      Control._data.lastEl.dataset.active = "true";
+    }
+  },
+
+  clearSelection() {
+    const fill = document.querySelectorAll("#grid-guide [data-index]");
+    for (const el of fill) { // Renamed 'e' to 'el' for clarity
+      if (el instanceof HTMLElement) { // Type guard to ensure 'el' is HTMLElement
+        el.dataset.active = "false";
+        el.dataset.selected = "false";
+      }
+    }
+
+    Control._data.selected = null;
+  },
+
+  getEl(cell: Position): HTMLElement | null {
+    return document.querySelector(`#grid-guide [data-index="${cell.rowIndex},${cell.colIndex}"]`);
+  },
+
+  highlight(startPos: Position, endPos: Position) {
+    Control.clearSelection(); // Clear previous highlights to show only current selection range
+    const hlighs = runBounds(startPos, endPos);
+
+    for (const cell of hlighs) {
+      const el = Control.getEl(cell);
+
+      if (el) {
+        el.dataset.selected = "true";
+      }
+    }
+  },
+
+  mouseUp(e: Position, event: React.MouseEvent<HTMLElement>) {
+    if (Control._data.dragging) { // Only process if a drag was initiated
+      Control._data.dragging = false;
+      Control._data.endPos = e;
+
+      Control.highlight(Control._data.startPos, Control._data.endPos);
+    }
+  },
+  mouseOver(e: Position, event: React.MouseEvent<HTMLElement>) {
+    if (Control._data.dragging) {
+      Control.highlight(Control._data.startPos, e);
+    }
+  },
+  mouseDown(e: Position, event: React.MouseEvent<HTMLElement>) {
+    Control._data.dragging = true;
+    Control._data.startPos = e;
+    Control.clearSelection(); // Clear any existing selections when starting a new drag
+  },
+};
+
+function runBounds(start: Position, end: Position): Position[] {
+  const minRow = Math.min(start.rowIndex, end.rowIndex);
+  const maxRow = Math.max(start.rowIndex, end.rowIndex);
+  const minCol = Math.min(start.colIndex, end.colIndex);
+  const maxCol = Math.max(start.colIndex, end.colIndex);
+
+  const highlightedCells: Position[] = [];
+
+  for (let rowIndex = minRow; rowIndex <= maxRow; rowIndex++) {
+    for (let colIndex = minCol; colIndex <= maxCol; colIndex++) {
+      highlightedCells.push({ rowIndex, colIndex });
+    }
+  }
+
+  return highlightedCells;
+}
+
 
 const COLUMN_COUNT = 10;
 const ROW_COUNT = 3;
@@ -61,11 +138,11 @@ export function SeatStructureGrid() {
 
   const add = React.useMemo(
     () => (type: "seat" | "table") => () => {
-      if (Control.selected === null) {
+      if (Control._data.selected === null) { // Access selected from _data
         return toast.error("Please select a cell first");
       }
 
-      const position = { ...Control.selected };
+      const position = { ...Control._data.selected }; // Access selected from _data
 
       setSeats((e) => [
         ...e,
@@ -85,7 +162,7 @@ export function SeatStructureGrid() {
   const remove = React.useMemo(
     () =>
       ({ rowIndex, colIndex }: Position) => {
-        if (!Control.selected) {
+        if (!Control._data.selected) { // Access selected from _data
           return toast.error("Please select a cell first");
         }
 
@@ -183,20 +260,22 @@ export function SeatStructureGrid() {
               <div
                 key={`${e.rowIndex}-${e.colIndex}`}
                 data-index={`${e.rowIndex},${e.colIndex}`}
-                className="bg-gray-400 hover:bg-cyan-500 cursor-pointer data-[active=true]:bg-blue-500 aspect-square w-full rounded-sm"
+                className="bg-gray-400 hover:bg-cyan-500 cursor-pointer data-[active=true]:bg-blue-500 data-[selected=true]:bg-pink-500! aspect-square w-full rounded-sm"
                 onKeyDown={() => { }}
                 onDoubleClick={() => {
                   remove(e);
                 }}
+                onMouseUp={(event) => {
+                  Control.mouseUp(e, event);
+                }}
+                onMouseOver={(event) => {
+                  Control.mouseOver(e, event);
+                }}
+                onMouseDown={(event) => {
+                  Control.mouseDown(e, event);
+                }}
                 onClick={(event) => {
-                  Control.clearSelection();
-
-                  Control.selected = e;
-                  Control.lastEl = event.target;
-
-                  if (Control.lastEl) {
-                    Control.lastEl.dataset.active = "true";
-                  }
+                  Control.select(e, event);
                 }}
               />
             );
@@ -295,8 +374,8 @@ const sizeAndRotationClasses = {
     vertical: "col-span-1 row-span-3",
   },
   lg: {
-    horizontal: "col-span-4 row-span-2",
-    vertical: "col-span-2 row-span-4",
+    horizontal: "col-span-3 row-span-2",
+    vertical: "col-span-2 row-span-3",
   },
 } as const;
 
