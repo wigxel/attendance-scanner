@@ -9,6 +9,7 @@ import { Grid2X2Icon, RotateCcw, RotateCw } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import React from "react";
+import useEvent from "react-use-event-hook";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -24,6 +25,7 @@ interface ControlData {
   dragging: boolean;
   startPos: Position;
   endPos: Position;
+  highlighted: Position[];
 }
 
 const Control = {
@@ -34,9 +36,10 @@ const Control = {
     selected: null,
     // multiple selection state
     dragging: false,
+    highlighted: [],
     startPos: { rowIndex: 0, colIndex: 0 },
     endPos: { rowIndex: 0, colIndex: 0 },
-  } satisfies ControlData,
+  } as ControlData,
 
   select(e: Position, event: React.MouseEvent<HTMLElement>) {
     Control.clearSelection();
@@ -51,8 +54,10 @@ const Control = {
 
   clearSelection() {
     const fill = document.querySelectorAll("#grid-guide [data-index]");
-    for (const el of fill) { // Renamed 'e' to 'el' for clarity
-      if (el instanceof HTMLElement) { // Type guard to ensure 'el' is HTMLElement
+    for (const el of fill) {
+      // Renamed 'e' to 'el' for clarity
+      if (el instanceof HTMLElement) {
+        // Type guard to ensure 'el' is HTMLElement
         el.dataset.active = "false";
         el.dataset.selected = "false";
       }
@@ -62,35 +67,45 @@ const Control = {
   },
 
   getEl(cell: Position): HTMLElement | null {
-    return document.querySelector(`#grid-guide [data-index="${cell.rowIndex},${cell.colIndex}"]`);
+    return document.querySelector(
+      `#grid-guide [data-index="${cell.rowIndex},${cell.colIndex}"]`,
+    );
   },
 
-  highlight(startPos: Position, endPos: Position) {
+  highlight(cell: Position) {
+    const el = Control.getEl(cell);
+
+    if (el) {
+      el.dataset.selected = "true";
+    }
+  },
+
+  highlightBounds(startPos: Position, endPos: Position) {
     Control.clearSelection(); // Clear previous highlights to show only current selection range
     const hlighs = runBounds(startPos, endPos);
+    Control._data.highlighted = [...hlighs];
 
     for (const cell of hlighs) {
-      const el = Control.getEl(cell);
-
-      if (el) {
-        el.dataset.selected = "true";
-      }
+      Control.highlight(cell);
     }
   },
 
   mouseUp(e: Position, event: React.MouseEvent<HTMLElement>) {
-    if (Control._data.dragging) { // Only process if a drag was initiated
+    if (Control._data.dragging) {
+      // Only process if a drag was initiated
       Control._data.dragging = false;
       Control._data.endPos = e;
 
-      Control.highlight(Control._data.startPos, Control._data.endPos);
+      Control.highlightBounds(Control._data.startPos, Control._data.endPos);
     }
   },
+
   mouseOver(e: Position, event: React.MouseEvent<HTMLElement>) {
     if (Control._data.dragging) {
-      Control.highlight(Control._data.startPos, e);
+      Control.highlightBounds(Control._data.startPos, e);
     }
   },
+
   mouseDown(e: Position, event: React.MouseEvent<HTMLElement>) {
     Control._data.dragging = true;
     Control._data.startPos = e;
@@ -115,7 +130,6 @@ function runBounds(start: Position, end: Position): Position[] {
   return highlightedCells;
 }
 
-
 const COLUMN_COUNT = 10;
 const ROW_COUNT = 3;
 
@@ -138,7 +152,8 @@ export function SeatStructureGrid() {
 
   const add = React.useMemo(
     () => (type: "seat" | "table") => () => {
-      if (Control._data.selected === null) { // Access selected from _data
+      if (Control._data.selected === null) {
+        // Access selected from _data
         return toast.error("Please select a cell first");
       }
 
@@ -162,7 +177,8 @@ export function SeatStructureGrid() {
   const remove = React.useMemo(
     () =>
       ({ rowIndex, colIndex }: Position) => {
-        if (!Control._data.selected) { // Access selected from _data
+        if (!Control._data.selected) {
+          // Access selected from _data
           return toast.error("Please select a cell first");
         }
 
@@ -187,6 +203,96 @@ export function SeatStructureGrid() {
       },
     [],
   );
+
+  const moveSelection = (
+    pos: Position,
+    event: React.KeyboardEvent<HTMLElement>,
+  ) => {
+    let { rowIndex, colIndex } = pos;
+
+    let updated = false;
+
+    switch (event.key) {
+      case "ArrowUp":
+        rowIndex = Math.max(0, rowIndex - 1);
+        updated = true;
+        break;
+      case "ArrowDown":
+        rowIndex = Math.min(rowCount - 1, rowIndex + 1);
+        updated = true;
+        break;
+      case "ArrowLeft":
+        colIndex = Math.max(0, colIndex - 1);
+        updated = true;
+        break;
+      case "ArrowRight":
+        colIndex = Math.min(columnCount - 1, colIndex + 1);
+        updated = true;
+        break;
+      case "Escape": // Optional: Clear selection on Escape key
+        Control.clearSelection();
+        break;
+      default:
+        break;
+    }
+
+    if (updated) {
+      event.preventDefault(); // Prevent default browser scroll behavior for arrow keys
+      return { rowIndex, colIndex };
+    }
+
+    return null;
+  };
+
+  const handleKeyDown = useEvent((event: KeyboardEvent) => {
+    // Only enable keyboard navigation if in edit mode
+    if (!edit) {
+      return;
+    }
+
+    const h = Control._data.highlighted;
+    if (h.length === 0) return;
+
+    const get_key = (cell: Position) =>
+      [cell.rowIndex, cell.colIndex].join(",");
+
+    const newPositionMap = new Map(
+      h
+        .map((cell) => [get_key(cell), moveSelection(cell, event)])
+        .filter((e): e is [string, Position] => e[1] !== null),
+    );
+
+    setSeats((seats) => {
+      return seats.map((e) => {
+        const key = get_key(e.position);
+
+        if (!newPositionMap.has(key)) return e;
+
+        return { ...e, position: newPositionMap.get(key) as Position };
+      });
+    });
+
+    const new_hs = Array.from(newPositionMap.values());
+
+    Control.clearSelection();
+    for (const pos of new_hs) {
+      Control.highlight(pos);
+    }
+
+    Control._data.highlighted = new_hs;
+  });
+
+  React.useEffect(() => {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+
+    document.addEventListener("keydown", handleKeyDown, { signal });
+
+    return () => {
+      // Clean up the event listener when the component unmounts or dependencies change
+      abortController.abort();
+    };
+  }, [handleKeyDown]); // Re-run effect if grid dimensions or edit mode changes
 
   return (
     <div className="w-full flex flex-col gap-4">
@@ -244,13 +350,16 @@ export function SeatStructureGrid() {
         </div>
       </div>
 
-      <div className="relative">
+      <div
+        className="grid gap-1 text-[10px] w-full max-w-md relative"
+        style={grid_style}
+      >
         <div
           id="grid-guide"
           className={cn(
-            "opacity-0 grid top-0 absolute pointer-events-none z-20 gap-1 text-[10px] w-full max-w-md",
+            "grid top-0 absolute opacity-0 inset-0 pointer-events-none z-20 gap-1 text-[10px] w-full max-w-md",
             {
-              "opacity-25 pointer-events-auto": edit,
+              "pointer-events-auto opacity-100": edit,
             },
           )}
           style={grid_style}
@@ -260,7 +369,11 @@ export function SeatStructureGrid() {
               <div
                 key={`${e.rowIndex}-${e.colIndex}`}
                 data-index={`${e.rowIndex},${e.colIndex}`}
-                className="bg-gray-400 hover:bg-cyan-500 cursor-pointer data-[active=true]:bg-blue-500 data-[selected=true]:bg-pink-500! aspect-square w-full rounded-sm"
+                className={cn(
+                  "opacity-100 border-gray-200/50 border-2 hover:bg-cyan-500/25 cursor-pointer aspect-square w-full rounded-sm",
+                  "data-[active=true]:bg-blue-500/25",
+                  "data-[selected=true]:bg-pink-500/25!",
+                )}
                 onKeyDown={() => { }}
                 onDoubleClick={() => {
                   remove(e);
@@ -283,44 +396,39 @@ export function SeatStructureGrid() {
         </div>
 
         <div
-          className="grid gap-1 text-[10px] w-full max-w-md"
-          style={grid_style}
-        >
-          <div
-            id="DO_NOT_REMOVE_IMPORTANT_FOR_GRID_STRUCTURE"
-            className="w-full aspect-square"
-          />
+          id="DO_NOT_REMOVE_IMPORTANT_FOR_GRID_STRUCTURE"
+          className="w-full aspect-square"
+        />
 
-          {seats.map((e) => {
-            const style = e.position
-              ? {
-                gridColumnStart: `${e.position.colIndex + 1}`,
-                gridRowStart: `${e.position.rowIndex + 1}`,
-              }
-              : {};
-
-            if (e.type === "seat") {
-              return (
-                <SeatButton
-                  data-index={e.index}
-                  count={"1"}
-                  isBooked={false}
-                  isSelected={false}
-                  style={style}
-                />
-              );
+        {seats.map((e) => {
+          const style = e.position
+            ? {
+              gridColumnStart: `${e.position.colIndex + 1}`,
+              gridRowStart: `${e.position.rowIndex + 1}`,
             }
+            : {};
 
+          if (e.type === "seat") {
             return (
-              <Table
+              <SeatButton
                 data-index={e.index}
-                key={e.index}
-                mode="edit"
+                count={"1"}
+                isBooked={false}
+                isSelected={false}
                 style={style}
               />
             );
-          })}
-        </div>
+          }
+
+          return (
+            <Table
+              data-index={e.index}
+              key={e.index}
+              mode="edit"
+              style={style}
+            />
+          );
+        })}
       </div>
 
       <motion.div
