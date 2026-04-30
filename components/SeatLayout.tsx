@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import Chair from "@/public/images/chair.png";
 import { motion } from "motion/react";
 import Image from "next/image";
+import useEvent from "react-use-event-hook";
+import { SeatButton, SeatStructureGrid, Table } from "./SeatStructureGrid";
 
 interface SeatData {
   _id: Id<"seats">;
@@ -28,75 +30,31 @@ interface SeatLayoutProps {
 }
 
 // Seat Component
-const Seat: React.FC<SeatProps> = ({
+function Seat({
   index,
   seatData,
   isSelected,
   onClick,
   className = "",
-}) => {
-  const handleClick = (): void => {
+}: SeatProps) {
+  const handleClick = useEvent((): void => {
     if (!seatData.isBooked) {
       onClick(seatData);
     }
-  };
-
-  const getSeatStyles = (): string => {
-    const baseStyles =
-      "rounded-lg p-1 cursor-pointer transition-all duration-200 flex items-center justify-center text-xs font-medium";
-
-    if (seatData.isBooked) {
-      return `${baseStyles} text-gray-800 cursor-not-allowed`;
-    }
-
-    if (isSelected) {
-      return `${baseStyles} bg-[#FFF2CC80] border-[#FF9900] border text-[#FF9900] shadow-lg scale-105`;
-    }
-
-    return `${baseStyles} border border-transparent bg-white text-gray-800 hover:bg-gray-300`;
-  };
+  });
 
   return (
-    <button
+    <SeatButton
       type="button"
-      title={`Seat ${seatData.seatNumber} - ${seatData.isBooked ? "Reserved" : isSelected ? "Selected" : "Available"}`}
-      className={cn(getSeatStyles(), className, "relative")}
+      count={index}
       onClick={handleClick}
-    >
-      {!seatData.isBooked ? (
-        <motion.span
-          animate={
-            !isSelected
-              ? { translateY: 0, translateX: 0, opacity: 0, scale: 0.25 }
-              : { scale: 1, opacity: 1, translateY: "-50%", translateX: "-50%" }
-          }
-          className="absolute top-0 left-0 bg-white bg-white p-2 rounded-full size-8"
-        >
-          {" "}
-          {index}{" "}
-        </motion.span>
-      ) : (
-        <span
-          className="pointer-events-none absolute inset-0 bg-[url('/images/reserved-bg.png')] rounded-lg"
-          style={{ backgroundSize: "60px" }}
-        />
-      )}
-
-      <Image src={Chair} alt="Chair" width={32} height={32} />
-    </button>
+      isBooked={seatData.isBooked}
+      isSelected={isSelected}
+      title={`Seat ${seatData.seatNumber} - ${seatData.isBooked ? "Reserved" : isSelected ? "Selected" : "Available"}`}
+      className={className}
+    />
   );
-};
-
-// Table Component
-const Table: React.FC<{
-  className?: string;
-  shape?: "rectangle" | "circle";
-}> = ({ className = "", shape = "rectangle" }) => {
-  const shapeClass = shape === "circle" ? "rounded-full" : "rounded-md";
-  return (
-    <div className={`bg-white shadow-2xs p-3.5 ${shapeClass} ${className}`} />
-  );
-};
+}
 
 const SeatLayout: React.FC<SeatLayoutProps> = ({ seats, onSeatClick }) => {
   const { selectedSeatNumbers } = useBookingStore();
@@ -300,6 +258,7 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats, onSeatClick }) => {
           />
         )}
       </div>
+      <SeatStructureGrid />
     </div>
   );
 };
