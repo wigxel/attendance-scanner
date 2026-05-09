@@ -45,68 +45,74 @@ export function Reservations() {
       })
     : {};
 
-  if (!bookings) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Skeleton className="h-64" />
-        <Skeleton className="h-64" />
-        <Skeleton className="h-64" />
-      </div>
-    );
-  }
+  const skeleton = (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <Skeleton className="h-64" />
+      <Skeleton className="h-64" />
+      <Skeleton className="h-64" />
+    </div>
+  );
 
   return (
     <>
       <Tabs defaultValue="present">
         <TabsList>
-          <TabsTrigger value="present">Present</TabsTrigger>
-          <TabsTrigger value="past">Past</TabsTrigger>
+          <TabsTrigger value="present">Active</TabsTrigger>
+          <TabsTrigger value="past">Expired</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="present">
-          <EmptyState isEmpty={safeArray(present).length === 0}>
-            <EmptyStateContent className="mt-8">
-              <EmptyStateTitle>No active reservations</EmptyStateTitle>
-              <EmptyStateDescription>
-                You don&apos;t have any present or pending reservations.
-              </EmptyStateDescription>
-            </EmptyStateContent>
-            <EmptyStateConceal>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {safeArray(present).map((booking) => (
-                  <BookingCard
-                    key={booking._id}
-                    booking={booking}
-                    onClick={() => handleCardClick(booking._id)}
-                  />
-                ))}
-              </div>
-            </EmptyStateConceal>
-          </EmptyState>
-        </TabsContent>
+        {!bookings ? (
+          skeleton
+        ) : (
+          <>
+            <TabsContent value="present">
+              <EmptyState isEmpty={safeArray(present).length === 0}>
+                <EmptyStateContent className="mt-8">
+                  <EmptyStateTitle>No active reservations</EmptyStateTitle>
+                  <EmptyStateDescription>
+                    You don&apos;t have any present or pending reservations.
+                  </EmptyStateDescription>
+                </EmptyStateContent>
 
-        <TabsContent value="past">
-          <EmptyState isEmpty={safeArray(past).length === 0}>
-            <EmptyStateContent className="mt-8">
-              <EmptyStateTitle>No past reservations</EmptyStateTitle>
-              <EmptyStateDescription>
-                You don&apos;t have any past reservations.
-              </EmptyStateDescription>
-            </EmptyStateContent>
-            <EmptyStateConceal>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {safeArray(past).map((booking) => (
-                  <BookingCard
-                    key={booking._id}
-                    booking={booking}
-                    onClick={() => handleCardClick(booking._id)}
-                  />
-                ))}
-              </div>
-            </EmptyStateConceal>
-          </EmptyState>
-        </TabsContent>
+                <EmptyStateConceal>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {safeArray(present).map((booking) => (
+                      <BookingCard
+                        key={booking._id}
+                        booking={booking}
+                        onClick={() => handleCardClick(booking._id)}
+                      />
+                    ))}
+                  </div>
+                </EmptyStateConceal>
+              </EmptyState>
+            </TabsContent>
+
+            <TabsContent value="past">
+              <EmptyState isEmpty={safeArray(past).length === 0}>
+                <EmptyStateContent className="mt-8">
+                  <EmptyStateTitle>No past reservations</EmptyStateTitle>
+                  <EmptyStateDescription>
+                    You don&apos;t have any past reservations.
+                  </EmptyStateDescription>
+                </EmptyStateContent>
+                <EmptyStateConceal>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {safeArray(past).map((booking) => (
+                      <BookingCard
+                        key={booking._id}
+                        booking={booking}
+                        onClick={() => handleCardClick(booking._id)}
+                      />
+                    ))}
+                  </div>
+                </EmptyStateConceal>
+              </EmptyState>
+            </TabsContent>
+          </>
+        )}
       </Tabs>
+
       <AttendanceDrawer
         bookingId={selectedBookingId}
         isOpen={isDrawerOpen}

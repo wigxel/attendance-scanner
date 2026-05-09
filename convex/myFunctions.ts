@@ -1,9 +1,18 @@
 import type { Profile, User } from "@auth/core/types";
 import { TableAggregate } from "@convex-dev/aggregate";
 import type { GenericQueryCtx } from "convex/server";
+import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
-import { formatISO, isWithinInterval, parseISO, setHours } from "date-fns";
+import {
+  formatISO,
+  isWithinInterval,
+  parseISO,
+  setHours,
+  subDays,
+} from "date-fns";
+import { z } from "zod";
 import { logger } from "../config/logger";
+import { safeStr } from "../lib/data.helpers";
 import { components } from "./_generated/api";
 import { api } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
@@ -305,6 +314,37 @@ export const registerUser = mutation({
 
     // WALK_IN MODE: Use existing plan-based logic
     if (args.mode === "walk_in") {
+      const thirtyTwoDaysAgo = subDays(new Date(), 32);
+
+      const userTickets = await ctx.db
+        .query("tickets")
+        .withIndex("by_holder", (q) => q.eq("holderUserId", customer.id))
+        .filter((q) =>
+          q.gte(q.field("_creationTime"), thirtyTwoDaysAgo.getTime()),
+        )
+        .collect();
+
+      let hasActiveBooking = false;
+      for (const ticket of userTickets) {
+        const booking = await ctx.db.get(ticket.bookingId);
+        if (booking && booking.status === "confirmed") {
+          const isDateActive = isWithinInterval(new Date(), {
+            start: parseISO(booking.startDate),
+            end: parseISO(booking.endDate),
+          });
+          if (isDateActive) {
+            hasActiveBooking = true;
+            break;
+          }
+        }
+      }
+
+      if (hasActiveBooking) {
+        throw new ConvexError(
+          "This customer has an active reservation. Please use Reservation mode instead.",
+        );
+      }
+
       const plan = await PlanImpl.validatePlan(ctx.db, args.plan);
 
       const id = await ctx.db.insert("daily_register", {
@@ -514,38 +554,89 @@ export const getAllProfiles = query({
   },
 });
 
+const emailValidator = z.string().email().optional();
+
 export const getAllUsers = query({
-  args: {},
-  handler: async (ctx) => {
-    // get all profiles joined with auth users
-    const profiles = await ctx.db.query("profile").collect();
+  args: {
+    paginationOpts: paginationOptsValidator,
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const searchTerm = args.search?.toLowerCase().trim();
+    const emailValidation = emailValidator.safeParse(searchTerm);
+    const isEmailSearch = emailValidation.success;
 
-    const data = await Promise.all(
-      profiles.map(async (profile) => {
-        const visitCount: number = await ctx.runQuery(
-          api.myFunctions.registrationCount,
-          {
-            userId: profile.id,
-          },
-        );
-        const eligible = visitCount >= 20;
+    let profiles;
+    if (isEmailSearch && emailValidation.data) {
+      profiles = await ctx.db
+        .query("profile")
+        .withIndex("by_email", (q) => q.eq("email", emailValidation.data))
+        .collect();
+    } else {
+      profiles = await ctx.db.query("profile").order("desc").collect();
+    }
 
-        return {
-          id: profile._id,
-          userId: profile.id,
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          email: profile.email ?? "N/A",
-          occupation: profile.occupation,
-          role: profile.role ?? "user",
-          phoneNumber: profile.phoneNumber ?? "N/A",
-          visitCount,
-          eligible,
-        };
-      }),
+    if (searchTerm && !isEmailSearch) {
+      profiles = profiles.filter(
+        (p) =>
+          safeStr(p.firstName).toLowerCase().includes(searchTerm) ||
+          safeStr(p.lastName).toLowerCase().includes(searchTerm),
+      );
+    }
+
+    const startIdx = args.paginationOpts.cursor
+      ? Number.parseInt(args.paginationOpts.cursor, 10)
+      : 0;
+    const paginatedProfiles = profiles.slice(
+      startIdx,
+      startIdx + args.paginationOpts.numItems,
     );
 
-    return data;
+    const continueCursor =
+      startIdx + args.paginationOpts.numItems < profiles.length
+        ? String(startIdx + args.paginationOpts.numItems)
+        : null;
+
+    if (paginatedProfiles.length === 0) {
+      return {
+        page: [],
+        continueCursor,
+        isDone: !continueCursor,
+      };
+    }
+
+    const userIds = paginatedProfiles.map((p) => p.id);
+    const allRegistrations = await ctx.db.query("daily_register").collect();
+
+    const countByUser: Record<string, number> = {};
+    for (const reg of allRegistrations) {
+      if (userIds.includes(reg.userId)) {
+        countByUser[reg.userId] = (countByUser[reg.userId] || 0) + 1;
+      }
+    }
+
+    const data = paginatedProfiles.map((profile) => {
+      const visitCount = countByUser[profile.id] || 0;
+      const eligible = visitCount >= 20;
+      return {
+        id: profile._id,
+        userId: profile.id,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email ?? "N/A",
+        occupation: profile.occupation,
+        role: profile.role ?? "user",
+        phoneNumber: profile.phoneNumber ?? "N/A",
+        visitCount,
+        eligible,
+      };
+    });
+
+    return {
+      page: data,
+      continueCursor,
+      isDone: !continueCursor,
+    };
   },
 });
 
@@ -943,18 +1034,18 @@ export const seedAccessPlans = internalMutation({
     }
 
     ctx.db.insert("accessPlans", {
-      key: "free",
-      name: "Free",
-      price: 0,
+      key: "daily",
+      name: "Daily",
+      price: 1500,
       no_of_days: 1,
-      description: "Free daily access",
+      description: "Daily access pass",
       features: [],
     });
 
     ctx.db.insert("accessPlans", {
       key: "weekly",
       name: "Weekly",
-      price: 1500,
+      price: 6000,
       no_of_days: 7,
       description: "7-day access pass",
       features: ["priority-check-in"],
@@ -963,12 +1054,46 @@ export const seedAccessPlans = internalMutation({
     ctx.db.insert("accessPlans", {
       key: "monthly",
       name: "Monthly",
-      price: 5000,
-      no_of_days: 30,
-      description: "30-day access pass",
+      price: 24000,
+      no_of_days: 24,
+      description: "24-working-day access pass",
       features: ["priority-check-in", "booking"],
     });
 
     return { seeded: 3 };
+  },
+});
+
+function toTitleCase(str: string): string {
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+export const normalizeProfileNames = internalMutation({
+  handler: async (ctx) => {
+    const profiles = await ctx.db.query("profile").collect();
+
+    let normalized = 0;
+
+    for (const profile of profiles) {
+      const normalizedFirst = toTitleCase(profile.firstName);
+      const normalizedLast = toTitleCase(profile.lastName);
+
+      if (
+        normalizedFirst !== profile.firstName ||
+        normalizedLast !== profile.lastName
+      ) {
+        await ctx.db.patch(profile._id, {
+          firstName: normalizedFirst,
+          lastName: normalizedLast,
+        });
+        normalized++;
+      }
+    }
+
+    return { normalized };
   },
 });

@@ -50,7 +50,8 @@ const profile = defineTable({
   role: v.optional(v.union(v.literal("admin"), v.literal("user"))),
 })
   .index("occupation", ["occupation"])
-  .index("by_user_id", ["id"]);
+  .index("by_user_id", ["id"])
+  .index("by_email", ["email"]);
 
 //Schema for stats
 const stats = defineTable({

@@ -39,6 +39,7 @@ import {
   LucideLoader,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AttendanceDrawer } from "./AttendanceDrawer";
 import { Card } from "./ui/card";
 
 const formatAmount = (amount: number) => currencyFormatter.format(amount / 100); // Convert from kobo to naira
@@ -76,15 +77,18 @@ type MonthlyReservationsResponse = {
   bookings: BookingWithCustomer[];
 };
 
+type DurationType = "day" | "week" | "month" | "all";
+
 export function MonthlyReservationsTable() {
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
-  const [durationType, setDurationType] = useState<
-    "day" | "week" | "month" | "all"
-  >("all");
+  const [durationType, setDurationType] = useState<DurationType>("all");
   const [overflow, setOverflow] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] =
+    useState<Id<"bookings"> | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const data = useQuery(api.bookings.getMonthlyReservations, {
     month: currentMonth,
@@ -249,7 +253,7 @@ export function MonthlyReservationsTable() {
           </div>
         </div>
 
-        <div className="rounded-md border">
+        <div className="rounded-md border min-h-[50svh]">
           <Table>
             <TableHeader>
               <TableRow>
@@ -289,20 +293,26 @@ export function MonthlyReservationsTable() {
                 </TableRow>
               ) : (
                 data?.bookings.map((booking, index) => (
-                  <TableRow key={booking._id}>
+                  <TableRow
+                    key={booking._id}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setSelectedBookingId(booking._id);
+                      setIsDrawerOpen(true);
+                    }}
+                  >
                     <TableCell className="font-medium">{index + 1}</TableCell>
                     <TableCell className="font-medium">
                       {booking.user.name}
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          booking.durationType === "day"
-                            ? "bg-blue-100 text-blue-800"
-                            : booking.durationType === "week"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-purple-100 text-purple-800"
-                        }`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${booking.durationType === "day"
+                          ? "bg-blue-100 text-blue-800"
+                          : booking.durationType === "week"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-purple-100 text-purple-800"
+                          }`}
                       >
                         {durationLabels[booking.durationType]}
                       </span>
@@ -323,6 +333,15 @@ export function MonthlyReservationsTable() {
           </div>
         )}
       </div>
+
+      <AttendanceDrawer
+        bookingId={selectedBookingId}
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedBookingId(null);
+        }}
+      />
     </Card>
   );
 }

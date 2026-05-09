@@ -4,8 +4,33 @@ import {
   CustomersTable,
   TopCustomersAvatarGroup,
 } from "@/components/customers";
+import { Button } from "@/components/ui/button";
 import React from "react";
+import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { Analytics } from "./analytics";
+
+function CustomersTableErrorFallback({
+  error,
+  resetErrorBoundary,
+}: FallbackProps) {
+  return (
+    <div className="p-6 border border-red-200 rounded-lg bg-red-50 m-4">
+      <h3 className="text-lg font-semibold text-red-600">
+        Failed to load customers
+      </h3>
+      <p className="text-sm text-red-500 mt-1">
+        {error?.message || "An unexpected error occurred"}
+      </p>
+      <Button
+        onClick={resetErrorBoundary}
+        variant="outline"
+        className="mt-3 border-red-300 text-red-600 hover:bg-red-100"
+      >
+        Try again
+      </Button>
+    </div>
+  );
+}
 
 export default function CustomersPage() {
   return (
@@ -24,7 +49,9 @@ export default function CustomersPage() {
 
         <Analytics />
 
-        <CustomersTable />
+        <ErrorBoundary FallbackComponent={CustomersTableErrorFallback}>
+          <CustomersTable />
+        </ErrorBoundary>
       </div>
     </DateRange.Provider>
   );

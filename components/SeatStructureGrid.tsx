@@ -1,3 +1,4 @@
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { safeNum } from "@/lib/data.helpers";
 import { cn } from "@/lib/utils";
 import {
@@ -134,11 +135,11 @@ const COLUMN_COUNT = 10;
 const ROW_COUNT = 3;
 
 export function SeatStructureGrid() {
-  const [seats, setSeats] = React.useState<ObjectEntry[]>([]);
+  const [seats, setSeats] = useLocalStorage<ObjectEntry[]>('seat_config', []);
   const [edit, setEdit] = React.useState<boolean>(false);
 
-  const [rowCount, setRowCount] = React.useState<number>(ROW_COUNT);
-  const [columnCount, setColumnCount] = React.useState<number>(COLUMN_COUNT);
+  const [rowCount, setRowCount] = useLocalStorage<number>("seat_config_row", ROW_COUNT);
+  const [columnCount, setColumnCount] = useLocalStorage<number>("seat_config_column", COLUMN_COUNT);
 
   const grid_style = {
     gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
@@ -375,6 +376,7 @@ export function SeatStructureGrid() {
                   "data-[selected=true]:bg-pink-500/25!",
                 )}
                 onKeyDown={() => { }}
+                onFocus={() => { }}
                 onDoubleClick={() => {
                   remove(e);
                 }}

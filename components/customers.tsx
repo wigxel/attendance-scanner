@@ -56,10 +56,37 @@ import {
 } from "./ui/sheet";
 import { Skeleton } from "./ui/skeleton";
 
-export function useUsers() {
-  const record = useQuery(api.myFunctions.getAllUsers);
+const defaultPaginationOpts = {
+  numItems: 50,
+  cursor: null as string | null,
+};
 
-  return { data: safeArray(record) };
+export function useUsers(searchTerm: string = "") {
+  const [paginationOpts, setPaginationOpts] = React.useState(
+    defaultPaginationOpts,
+  );
+
+  const record = useQuery(api.myFunctions.getAllUsers, {
+    paginationOpts,
+    search: searchTerm,
+  });
+
+  const loadMore = React.useCallback(() => {
+    if (record && !record.isDone && record.continueCursor) {
+      setPaginationOpts((prev) => ({
+        ...prev,
+        cursor: record.continueCursor ?? null,
+      }));
+    }
+  }, [record]);
+
+  return {
+    data: record?.page ?? [],
+    isDone: record?.isDone ?? false,
+    hasMore: !record?.isDone,
+    loadMore,
+    record,
+  };
 }
 
 /*
@@ -67,7 +94,10 @@ export function useUsers() {
   @todo:
 */
 export function CustomersTable() {
-  const { data: users } = useUsers();
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const debouncedSearch = React.useDeferredValue(searchTerm);
+  const { data: users, record } = useUsers(debouncedSearch);
+  const isLoading = record === undefined;
   const [selectedUserId, setSelectedUserId] = React.useState<string | null>(
     null,
   );
@@ -78,12 +108,16 @@ export function CustomersTable() {
   const createBooking = useMutation(api.bookings.createManualBooking);
 
   const handleViewProfile = useEvent((userId: string) => {
-    setSelectedUserId(userId);
+    setTimeout(() => {
+      setSelectedUserId(userId);
+    }, 16);
   });
 
   const handleCreateBooking = useEvent((userId: string, userName: string) => {
-    setBookingUserId(userId);
-    setBookingUserName(userName);
+    setTimeout(() => {
+      setBookingUserId(userId);
+      setBookingUserName(userName);
+    }, 16);
   });
 
   const handleBookingSubmit = useEvent(
@@ -100,7 +134,6 @@ export function CustomersTable() {
           planKey: values.planKey,
           startDate: values.startDate,
         });
-
         setBookingUserId(null);
         toast.success("Booking created successfully");
       } catch (error) {
@@ -136,6 +169,9 @@ export function CustomersTable() {
           firstname: user.firstName,
           lastname: user.lastName,
         }))}
+        searchTerm={debouncedSearch}
+        onSearchChange={setSearchTerm}
+        isLoading={isLoading}
       />
 
       <CustomerSheet
