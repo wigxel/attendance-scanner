@@ -1,22 +1,33 @@
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import { safeNum } from "@/lib/data.helpers";
+"use client";
+import { api } from "@/convex/_generated/api";
+import { safeNum, safeStr } from "@/lib/data.helpers";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
+import { useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { Grid2X2Icon, RotateCcw, RotateCw } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
+import { hash } from "ohash";
 import React from "react";
 import useEvent from "react-use-event-hook";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Switch } from "./ui/switch";
-type Position = { rowIndex: number; colIndex: number };
-type ObjectEntry = { type: string; index: string; position: Position };
+
+import { isNullable } from "effect/Predicate";
+import {
+  type ObjectEntry,
+  type Position,
+  get_pos_key,
+  orderCells,
+  reorderSeats,
+} from "./seat-grid-utils";
 
 // Define the shape of the data stored within the Control object
 interface ControlData {
@@ -135,11 +146,65 @@ const COLUMN_COUNT = 10;
 const ROW_COUNT = 3;
 
 export function SeatStructureGrid() {
-  const [seats, setSeats] = useLocalStorage<ObjectEntry[]>('seat_config', []);
-  const [edit, setEdit] = React.useState<boolean>(false);
+  const seatLayout = useQuery(api.seats.getSeatLayout);
+  const saveLayout = useMutation(api.seats.saveSeatLayout);
 
-  const [rowCount, setRowCount] = useLocalStorage<number>("seat_config_row", ROW_COUNT);
-  const [columnCount, setColumnCount] = useLocalStorage<number>("seat_config_column", COLUMN_COUNT);
+  const [cells, setCells] = React.useState<ObjectEntry[]>([]);
+  const [edit, setEdit] = React.useState<boolean>(false);
+  const [showSeatNumbers, setShowSeatNumbers] = React.useState<boolean>(false);
+  const [rowCount, setRowCount] = React.useState<number>(ROW_COUNT);
+  const [columnCount, setColumnCount] = React.useState<number>(COLUMN_COUNT);
+
+  const setValue = useEvent(
+    (pos: Position, attributes: Record<string, unknown>) => {
+      setCells((all) =>
+        all.map((entry) => {
+          return get_pos_key(pos) === get_pos_key(entry.position)
+            ? { ...entry, attributes }
+            : entry;
+        }),
+      );
+    },
+  );
+
+  // Load layout from Convex on mount (only when local state is empty)
+  React.useEffect(() => {
+    if (seatLayout && cells.length === 0) {
+      setCells(seatLayout.seats || []);
+      setRowCount(seatLayout.rowCount || ROW_COUNT);
+      setColumnCount(seatLayout.columnCount || COLUMN_COUNT);
+    }
+  }, [seatLayout, cells.length]);
+
+  // useMemo for local data structure
+  const localData = React.useMemo(
+    () => ({
+      seats: cells,
+      rowCount,
+      columnCount,
+    }),
+    [cells, rowCount, columnCount],
+  );
+
+  // useMemo for Convex data structure
+  const convexData = React.useMemo(() => {
+    if (!seatLayout) return null;
+    return {
+      seats: seatLayout.seats || [],
+      rowCount: seatLayout.rowCount || ROW_COUNT,
+      columnCount: seatLayout.columnCount || COLUMN_COUNT,
+    };
+  }, [seatLayout]);
+
+  // useMemo for hashes
+  const localHash = React.useMemo(() => hash(localData), [localData]);
+  const convexHash = React.useMemo(
+    () => (convexData ? hash(convexData) : null),
+    [convexData],
+  );
+
+  // Derived value - NO STATE NEEDED
+  const hasChanges = convexHash !== localHash;
 
   const grid_style = {
     gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
@@ -154,20 +219,43 @@ export function SeatStructureGrid() {
   const add = React.useMemo(
     () => (type: "seat" | "table") => () => {
       if (Control._data.selected === null) {
-        // Access selected from _data
         return toast.error("Please select a cell first");
       }
 
-      const position = { ...Control._data.selected }; // Access selected from _data
+      const position = { ...Control._data.selected };
 
-      setSeats((e) => [
-        ...e,
-        {
-          type,
-          index: String(e.length),
-          position,
-        },
-      ]);
+      setCells((entry) => {
+        if (type === "table") {
+          return [
+            ...entry,
+            {
+              type,
+              index: String(entry.length),
+              position,
+              attributes: {},
+            },
+          ];
+        }
+
+        const newSeatNumber =
+          entry.length > 0
+            ? Math.max(
+                ...entry
+                  .filter((e) => e.type === "seat")
+                  .map((s) => s.seatNumber),
+              ) + 1
+            : 1;
+
+        return [
+          ...entry,
+          {
+            type,
+            index: String(entry.length),
+            seatNumber: newSeatNumber,
+            position,
+          },
+        ];
+      });
       setTimeout(() => {
         Control.clearSelection();
       }, 16);
@@ -179,11 +267,10 @@ export function SeatStructureGrid() {
     () =>
       ({ rowIndex, colIndex }: Position) => {
         if (!Control._data.selected) {
-          // Access selected from _data
           return toast.error("Please select a cell first");
         }
 
-        setSeats((currentSeats) => {
+        setCells((currentSeats) => {
           const initialLength = currentSeats.length;
           const filteredSeats = currentSeats.filter(
             (item) =>
@@ -205,10 +292,20 @@ export function SeatStructureGrid() {
     [],
   );
 
-  const moveSelection = (
-    pos: Position,
-    event: React.KeyboardEvent<HTMLElement>,
-  ) => {
+  const handleSave = async () => {
+    try {
+      await saveLayout({
+        seats: reorderSeats(cells),
+        rowCount,
+        columnCount,
+      });
+      toast.success("Seat layout saved successfully!");
+    } catch (error) {
+      toast.error("Failed to save seat layout");
+    }
+  };
+
+  const moveSelection = (pos: Position, event: KeyboardEvent) => {
     let { rowIndex, colIndex } = pos;
 
     let updated = false;
@@ -254,18 +351,15 @@ export function SeatStructureGrid() {
     const h = Control._data.highlighted;
     if (h.length === 0) return;
 
-    const get_key = (cell: Position) =>
-      [cell.rowIndex, cell.colIndex].join(",");
-
     const newPositionMap = new Map(
       h
-        .map((cell) => [get_key(cell), moveSelection(cell, event)])
+        .map((cell) => [get_pos_key(cell), moveSelection(cell, event)])
         .filter((e): e is [string, Position] => e[1] !== null),
     );
 
-    setSeats((seats) => {
+    setCells((seats) => {
       return seats.map((e) => {
-        const key = get_key(e.position);
+        const key = get_pos_key(e.position);
 
         if (!newPositionMap.has(key)) return e;
 
@@ -304,6 +398,16 @@ export function SeatStructureGrid() {
         </div>
 
         <div className="flex gap-2">
+          <div className="flex gap-2 items-center uppercase text-xs font-medium">
+            Seat Numbers
+            <Switch
+              checked={showSeatNumbers}
+              onCheckedChange={() => {
+                setShowSeatNumbers((e) => !e);
+              }}
+            />
+          </div>
+
           <div className="flex gap-2 items-center uppercase text-xs font-medium">
             Show grid
             <Switch
@@ -349,6 +453,10 @@ export function SeatStructureGrid() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        <Button onClick={handleSave} variant="default" disabled={!hasChanges}>
+          Save changes
+        </Button>
       </div>
 
       <div
@@ -375,8 +483,8 @@ export function SeatStructureGrid() {
                   "data-[active=true]:bg-blue-500/25",
                   "data-[selected=true]:bg-pink-500/25!",
                 )}
-                onKeyDown={() => { }}
-                onFocus={() => { }}
+                onKeyDown={() => {}}
+                onFocus={() => {}}
                 onDoubleClick={() => {
                   remove(e);
                 }}
@@ -402,32 +510,38 @@ export function SeatStructureGrid() {
           className="w-full aspect-square"
         />
 
-        {seats.map((e) => {
-          const style = e.position
+        {cells.map((entry) => {
+          const style = entry.position
             ? {
-              gridColumnStart: `${e.position.colIndex + 1}`,
-              gridRowStart: `${e.position.rowIndex + 1}`,
-            }
+                gridColumnStart: `${entry.position.colIndex + 1}`,
+                gridRowStart: `${entry.position.rowIndex + 1}`,
+              }
             : {};
 
-          if (e.type === "seat") {
+          if (entry.type === "seat") {
             return (
               <SeatButton
-                data-index={e.index}
-                count={"1"}
+                key={entry.index}
+                data-index={entry.index}
+                count={String(entry.seatNumber)}
                 isBooked={false}
-                isSelected={false}
+                isSelected={showSeatNumbers}
                 style={style}
               />
             );
           }
 
+          console.log("Table entries", entry);
+
           return (
             <Table
-              data-index={e.index}
-              key={e.index}
+              data-index={entry.index}
+              key={entry.index}
               mode="edit"
               style={style}
+              onChange={({ size, rotation }) => {
+                setValue(entry.position, { size, rotation });
+              }}
             />
           );
         })}
@@ -435,7 +549,7 @@ export function SeatStructureGrid() {
 
       <motion.div
         animate={{ opacity: edit ? 1 : 0, y: edit ? "0" : "-20%" }}
-        className="text-xs text-muted-foreground text-center"
+        className="text-xs text-muted-foreground text-start"
       >
         <span className="">Double click</span> to{" "}
         <span className="text-foreground font-medium">remove</span>
@@ -461,8 +575,8 @@ function generateMatrix(
   return matrix;
 }
 
-function useToggleOptions<const T>(options: T[]) {
-  const [state, setState] = React.useState(options[0]);
+function useToggleOptions<const T>(options: T[], defaultValue: T) {
+  const [state, setState] = React.useState(defaultValue ?? options[0]);
 
   const toggle = () => {
     const currentIndex = options.indexOf(state);
@@ -489,46 +603,69 @@ const sizeAndRotationClasses = {
   },
 } as const;
 
+type TableProps = {
+  value?: { size: string; rotation: string };
+  onChange: (params: { size: string; rotation: string }) => void;
+  className?: string;
+  shape?: "rectangle" | "circle";
+  mode?: "edit" | "preview";
+} & React.ComponentProps<"div">;
+
 // Table Component
-export function Table({
-  className = "",
-  shape = "rectangle",
-  mode,
-  ...rest
-}: {
-  mode: "edit" | "preview";
-} & React.ComponentProps<"div">) {
+export function Table(props: TableProps) {
+  const {
+    value,
+    className = "",
+    shape = "rectangle",
+    mode = "preview",
+    onChange,
+    ...rest
+  } = props;
+
   const shapeClass = shape === "circle" ? "rounded-full" : "rounded-md";
-  const [size, toggle] = useToggleOptions(["sm", "md", "lg"]);
-  const [rotation, toggleRotate] = useToggleOptions(["horizontal", "vertical"]);
+  const [size, toggle] = useToggleOptions(["sm", "md", "lg"], value?.size);
+  const [rotation, toggleRotate] = useToggleOptions(
+    ["horizontal", "vertical"],
+    value?.rotation,
+  );
   const specificGridClasses = sizeAndRotationClasses[size][rotation];
+
+  const handleChange = useEvent((args: { size: string; rotation: string }) => {
+    onChange?.(args);
+  });
+
+  React.useEffect(() => {
+    handleChange({ rotation, size });
+  }, [rotation, size, handleChange]);
 
   return (
     <div
       className={cn(
-        "bg-white group shadow-2xs p-3.5 flex items-items-center justify-center relative",
+        "bg-white group shadow-2xs flex items-items-center justify-center relative",
         shapeClass,
         className,
         specificGridClasses,
       )}
       {...rest}
     >
-      <button
-        type="button"
-        className="absolute cursor-pointer top-0 -translate-y-1/2 rounded-full bg-white shadow z-20 group-hover:opacity-100 opacity-0 text-xs font-medium"
-        onClick={() => toggleRotate()}
-      >
-        {rotation !== "horizontal" ? <RotateCcw /> : <RotateCw />}
-      </button>
-
       {mode === "edit" ? (
-        <button
-          type="button"
-          className="font-mono cursor-pointer text-xs font-medium"
-          onClick={() => toggle()}
-        >
-          {size}
-        </button>
+        <>
+          <button
+            type="button"
+            className="absolute cursor-pointer top-0 -translate-y-1/2 rounded-full bg-white shadow z-20 group-hover:opacity-100 opacity-0 text-xs font-medium"
+            onClick={() => toggleRotate()}
+          >
+            {rotation !== "horizontal" ? <RotateCcw /> : <RotateCw />}
+          </button>
+
+          <button
+            type="button"
+            className="font-mono cursor-pointer text-xs font-medium"
+            onClick={() => toggle()}
+          >
+            {size}
+          </button>
+        </>
       ) : null}
     </div>
   );
@@ -570,11 +707,11 @@ export function SeatButton(
             !isSelected
               ? { translateY: 0, translateX: 0, opacity: 0, scale: 0.25 }
               : {
-                scale: 1,
-                opacity: 100,
-                translateY: "-50%",
-                translateX: "-50%",
-              }
+                  scale: 1,
+                  opacity: 100,
+                  translateY: "-50%",
+                  translateX: "-50%",
+                }
           }
           className="absolute top-0 left-0 bg-white bg-white p-2 rounded-full size-8"
         >
