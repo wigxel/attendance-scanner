@@ -7,7 +7,11 @@ import Chair from "@/public/images/chair.png";
 import { motion } from "motion/react";
 import Image from "next/image";
 import useEvent from "react-use-event-hook";
-import { SeatButton, SeatStructureGrid, Table } from "./SeatStructureGrid";
+import {
+  SLSeatItem,
+  SLTableItem,
+  SeatStructureGrid,
+} from "./SeatStructureGrid";
 
 interface SeatData {
   _id: Id<"seats">;
@@ -44,7 +48,7 @@ function Seat({
   });
 
   return (
-    <SeatButton
+    <SLSeatItem
       type="button"
       count={index}
       onClick={handleClick}
@@ -116,10 +120,10 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats, onSeatClick }) => {
             onClick={onSeatClick}
           />
         )}
-        <Table className="col-span-2 col-start-2" />
+        <SLTableItem className="col-span-2 col-start-2" mode="preview" />
 
         {/* Table 2 */}
-        <Table className="col-start-8 row-span-2" />
+        <SLTableItem className="col-start-8 row-span-2" mode="preview" />
         {getSeat("3") && (
           <Seat
             index="3"
@@ -158,7 +162,10 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats, onSeatClick }) => {
             className="col-start-4 row-start-5"
           />
         )}
-        <Table className="col-start-2 col-span-4 row-span-2" shape="circle" />
+        <SLTableItem
+          className="col-start-2 col-span-4 row-span-2"
+          shape="circle"
+        />
 
         {getSeat("7") && (
           <Seat
@@ -216,7 +223,10 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats, onSeatClick }) => {
             className="col-start-4 row-start-10"
           />
         )}
-        <Table className="col-start-2 col-span-4 row-span-2" />
+        <SLTableItem
+          className="col-start-2 col-span-4 row-span-2"
+          mode="preview"
+        />
 
         {getSeat("13") && (
           <Seat
@@ -238,7 +248,10 @@ const SeatLayout: React.FC<SeatLayoutProps> = ({ seats, onSeatClick }) => {
         )}
 
         {/* Table 5 */}
-        <Table className="col-start-8 row-span-2 row-start-11" />
+        <SLTableItem
+          className="col-start-8 row-span-2 row-start-11"
+          mode="preview"
+        />
         {getSeat("15") && (
           <Seat
             index="15"

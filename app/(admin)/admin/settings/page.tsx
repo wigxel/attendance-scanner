@@ -1,7 +1,8 @@
+import { SeatStructureGrid } from "@/components/SeatStructureGrid";
 import OccupationManagement from "@/components/manage-occupation";
 import PricingManagement from "@/components/manage-pricing";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BadgeDollarSign, User, Wrench } from "lucide-react";
+import { BadgeDollarSign, Grid2X2Icon, User, Wrench } from "lucide-react";
 import React from "react";
 
 export default function SettingsPage() {
@@ -33,6 +34,10 @@ export default function SettingsPage() {
                   <User className="w-4 h-4 mr-2" />
                   User Profile
                 </TabsTrigger>
+                <TabsTrigger value="seats" className="justify-start w-full">
+                  <Grid2X2Icon className="w-4 h-4 mr-2" />
+                  Seat Layout
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -46,7 +51,11 @@ export default function SettingsPage() {
                 <PricingManagement />
               </TabsContent>
 
-              <TabsContent value="profile">Hello man</TabsContent>
+              <TabsContent value="profile">Work In Progress</TabsContent>
+
+              <TabsContent value="seats">
+                <SeatStructureGrid />
+              </TabsContent>
             </section>
           </div>
         </section>

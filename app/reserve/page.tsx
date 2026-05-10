@@ -8,11 +8,11 @@ import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { setActiveTab, setSelectedDate, useBookingStore } from "./store";
+import { setActiveTab, useBookingStore } from "./store";
 
 import BookingCalendar, { RangePreview } from "@/components/BookingCalendar";
 import PendingBookingsModal from "@/components/PendingBookingsModal";
-import SeatLayout from "@/components/SeatLayout";
+import { DynamicSeatLayout } from "@/components/DynamicSeatLayout";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { Badge } from "@/components/ui/badge";
@@ -209,7 +209,7 @@ function PickSeatTab() {
           <LucideLoader
             size={"2rem"}
             strokeWidth={1}
-            className="animate animate-spin"
+            className="animate-spin"
           />
         </div>
       </div>
@@ -228,7 +228,7 @@ function PickSeatTab() {
 
   return (
     <div className="p-3 mb-3 -mx-4 bg-gray-100 min-h-[400px] rounded-lg">
-      <SeatLayout
+      <DynamicSeatLayout
         seats={seats}
         selectedSeatNumbers={selectedSeatNumbers}
         onSeatClick={handleSeatClick}

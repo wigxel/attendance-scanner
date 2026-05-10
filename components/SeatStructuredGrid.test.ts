@@ -1,8 +1,8 @@
 import { hash } from "ohash";
 import { describe, expect, it } from "vitest";
 import {
-  type ObjectEntry,
   type Position,
+  type SLEntry,
   orderCells,
   reorderSeats,
 } from "./seat-grid-utils";
@@ -169,7 +169,7 @@ describe("reorderSeats", () => {
         position: { colIndex: 2, rowIndex: 0 },
         attributes: { size: "sm", rotation: "horizontal" },
       },
-    ] satisfies ObjectEntry[];
+    ] satisfies SLEntry[];
 
     const result = reorderSeats(input);
 

@@ -1,4 +1,5 @@
 import type { Id } from "@/convex/_generated/dataModel";
+import { safeArray, safeObj } from "@/lib/data.helpers";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -7,7 +8,7 @@ export interface BookingState {
   selectedDate: string | null;
   endDate: string | null;
   price: number | null;
-  selectedSeatNumbers: (string | number)[];
+  selectedSeatNumbers: string[];
   selectedSeatIds: Id<"seats">[];
   timePeriodString: "day" | "week" | "month";
   bookingId: Id<"bookings"> | null;
@@ -27,6 +28,15 @@ export const useBookingStore = create<BookingState>()(
     }),
     {
       name: "booking-store",
+      merge(persisted, current) {
+        return {
+          ...current,
+          ...safeObj(persisted),
+          selectedSeatNumbers: safeArray(
+            safeObj(persisted).selectedSeatNumbers,
+          ).map((e) => String(e)),
+        };
+      },
     },
   ),
 );
@@ -47,21 +57,22 @@ export const setPrice = (price: BookingState["price"]) => {
   useBookingStore.setState({ price: price });
 };
 
-export const setSelectedSeatNumbers = (seats: (string | number)[]) => {
+export const setSelectedSeatNumbers = (seats: string[]) => {
   useBookingStore.setState({ selectedSeatNumbers: seats });
 };
 
-export const addSelectedSeat = (
-  seatNumber: string | number,
-  seatId: Id<"seats">,
-) => {
+export const addSelectedSeat = (seatNumber_: string, seatId: Id<"seats">) => {
+  const seatNumber = String(seatNumber_);
+
   useBookingStore.setState((state) => ({
     selectedSeatNumbers: [...state.selectedSeatNumbers, seatNumber],
     selectedSeatIds: [...state.selectedSeatIds, seatId],
   }));
 };
 
-export const removeSelectedSeat = (seatNumber: string | number) => {
+export const removeSelectedSeat = (seatNumber_: string) => {
+  const seatNumber = String(seatNumber_);
+
   useBookingStore.setState((state) => ({
     selectedSeatNumbers: state.selectedSeatNumbers.filter(
       (seat) => seat !== seatNumber,

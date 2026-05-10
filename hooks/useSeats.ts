@@ -12,7 +12,7 @@ import { useEffect } from "react";
 
 interface Seat {
   _id: Id<"seats">;
-  seatNumber: string | number;
+  seatNumber: string;
   isBooked: boolean;
 }
 
@@ -34,21 +34,22 @@ export const useSeats = () => {
   useEffect(() => {
     // check if any selected seats have become occupied
     if (selectedSeatNumbers.length > 0 && availableSeats) {
-      const seatsToRemove: (string | number)[] = [];
+      const seatsToRemove: string[] = [];
 
-      selectedSeatNumbers.forEach((seatNumber) => {
-        const selectedSeat = availableSeats.find(
-          (seat: Seat) => seat.seatNumber === seatNumber,
-        );
+      for (const seatNumber of selectedSeatNumbers) {
+        const selectedSeat = availableSeats.find((seat) => {
+          return String(seat.seatNumber) === seatNumber;
+        });
+
         if (selectedSeat?.isBooked) {
           seatsToRemove.push(seatNumber);
         }
-      });
+      }
 
       // remove any seats that became booked
-      seatsToRemove.forEach((seatNumber) => {
+      for (const seatNumber of seatsToRemove) {
         removeSelectedSeat(seatNumber);
-      });
+      }
     }
   }, [availableSeats, selectedSeatNumbers]);
 

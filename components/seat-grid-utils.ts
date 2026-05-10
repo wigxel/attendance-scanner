@@ -23,7 +23,7 @@ type SeatEntry = ObjectEntryShared<{
   seatNumber: number;
 }>;
 
-export type ObjectEntry = TableEntry | SeatEntry;
+export type SLEntry = TableEntry | SeatEntry;
 
 /**
  * e.g [
@@ -68,7 +68,7 @@ export const get_pos_key = (cell: Position) =>
  * @param cells_
  * @returns
  */
-export function reorderSeats(cells_: ObjectEntry[]) {
+export function reorderSeats(cells_: SLEntry[]) {
   const cells = structuredClone(cells_);
 
   const positions = cells

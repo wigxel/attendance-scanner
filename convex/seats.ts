@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { formatDateToLocalISO } from "../lib/utils";
-import { query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 
 export const getAllSeats = query({
   args: {},
@@ -207,5 +207,64 @@ export const getSeatsById = query({
       args.seatIds.map((seatId) => ctx.db.get(seatId)),
     );
     return seats.filter(Boolean);
+  },
+});
+
+export const getSeatLayout = query({
+  args: {},
+  handler: async (ctx) => {
+    const layoutConfig = await ctx.db
+      .query("config")
+      .withIndex("by_key", (q) => q.eq("key", "seat_layout"))
+      .first();
+
+    if (!layoutConfig) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(layoutConfig.value);
+    } catch {
+      return null;
+    }
+  },
+});
+
+export const saveSeatLayout = mutation({
+  args: {
+    seats: v.array(
+      v.object({
+        type: v.string(),
+        index: v.string(),
+        seatNumber: v.optional(v.number()),
+        position: v.object({
+          rowIndex: v.number(),
+          colIndex: v.number(),
+        }),
+        attributes: v.optional(v.any()),
+      }),
+    ),
+    rowCount: v.number(),
+    columnCount: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const layoutConfig = await ctx.db
+      .query("config")
+      .withIndex("by_key", (q) => q.eq("key", "seat_layout"))
+      .first();
+
+    const layoutValue = JSON.stringify({
+      seats: args.seats,
+      rowCount: args.rowCount,
+      columnCount: args.columnCount,
+    });
+
+    if (layoutConfig) {
+      await ctx.db.patch(layoutConfig._id, { value: layoutValue });
+    } else {
+      await ctx.db.insert("config", { key: "seat_layout", value: layoutValue });
+    }
+
+    return { success: true };
   },
 });

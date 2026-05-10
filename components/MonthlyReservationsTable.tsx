@@ -30,6 +30,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import {
   ChevronDown,
   ChevronLeft,
@@ -307,12 +308,14 @@ export function MonthlyReservationsTable() {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${booking.durationType === "day"
-                          ? "bg-blue-100 text-blue-800"
-                          : booking.durationType === "week"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-purple-100 text-purple-800"
-                          }`}
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          booking.durationType === "day"
+                            ? "bg-blue-100 text-blue-800"
+                            : booking.durationType === "week"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-purple-100 text-purple-800",
+                        )}
                       >
                         {durationLabels[booking.durationType]}
                       </span>

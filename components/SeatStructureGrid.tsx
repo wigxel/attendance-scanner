@@ -22,8 +22,8 @@ import { Switch } from "./ui/switch";
 
 import { isNullable } from "effect/Predicate";
 import {
-  type ObjectEntry,
   type Position,
+  type SLEntry,
   get_pos_key,
   orderCells,
   reorderSeats,
@@ -149,7 +149,7 @@ export function SeatStructureGrid() {
   const seatLayout = useQuery(api.seats.getSeatLayout);
   const saveLayout = useMutation(api.seats.saveSeatLayout);
 
-  const [cells, setCells] = React.useState<ObjectEntry[]>([]);
+  const [cells, setCells] = React.useState<SLEntry[]>([]);
   const [edit, setEdit] = React.useState<boolean>(false);
   const [showSeatNumbers, setShowSeatNumbers] = React.useState<boolean>(false);
   const [rowCount, setRowCount] = React.useState<number>(ROW_COUNT);
@@ -520,7 +520,7 @@ export function SeatStructureGrid() {
 
           if (entry.type === "seat") {
             return (
-              <SeatButton
+              <SLSeatItem
                 key={entry.index}
                 data-index={entry.index}
                 count={String(entry.seatNumber)}
@@ -534,7 +534,7 @@ export function SeatStructureGrid() {
           console.log("Table entries", entry);
 
           return (
-            <Table
+            <SLTableItem
               data-index={entry.index}
               key={entry.index}
               mode="edit"
@@ -604,15 +604,15 @@ const sizeAndRotationClasses = {
 } as const;
 
 type TableProps = {
-  value?: { size: string; rotation: string };
-  onChange: (params: { size: string; rotation: string }) => void;
+  value?: { size?: string; rotation?: string };
+  onChange?: (params: { size: string; rotation: string }) => void;
   className?: string;
   shape?: "rectangle" | "circle";
   mode?: "edit" | "preview";
 } & React.ComponentProps<"div">;
 
 // Table Component
-export function Table(props: TableProps) {
+export function SLTableItem(props: TableProps) {
   const {
     value,
     className = "",
@@ -671,7 +671,7 @@ export function Table(props: TableProps) {
   );
 }
 
-export function SeatButton(
+export function SLSeatItem(
   props: React.ComponentProps<"button"> & {
     count: string;
     isBooked: boolean;
