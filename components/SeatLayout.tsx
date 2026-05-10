@@ -1,11 +1,6 @@
 import { useBookingStore } from "@/app/reserve/store";
-import type { Id } from "@/convex/_generated/dataModel";
+import type { Seat } from "@/hooks/useSeats";
 import type React from "react";
-
-import { cn } from "@/lib/utils";
-import Chair from "@/public/images/chair.png";
-import { motion } from "motion/react";
-import Image from "next/image";
 import useEvent from "react-use-event-hook";
 import {
   SLSeatItem,
@@ -13,11 +8,7 @@ import {
   SeatStructureGrid,
 } from "./SeatStructureGrid";
 
-interface SeatData {
-  _id: Id<"seats">;
-  seatNumber: string | number;
-  isBooked: boolean;
-}
+type SeatData = Seat;
 
 interface SeatProps {
   index: string;

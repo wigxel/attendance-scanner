@@ -575,8 +575,14 @@ function generateMatrix(
   return matrix;
 }
 
-function useToggleOptions<const T>(options: T[], defaultValue: T) {
-  const [state, setState] = React.useState(defaultValue ?? options[0]);
+function useToggleOptions<const T>(options: T[], defaultValue?: string) {
+  const [state, setState] = React.useState<T>(() => {
+    const collection = new Set(options);
+
+    if (collection.has(defaultValue as T)) return options[0];
+
+    return defaultValue as T;
+  });
 
   const toggle = () => {
     const currentIndex = options.indexOf(state);
@@ -609,7 +615,7 @@ type TableProps = {
   className?: string;
   shape?: "rectangle" | "circle";
   mode?: "edit" | "preview";
-} & React.ComponentProps<"div">;
+} & Omit<React.ComponentProps<"div">, "onChange">;
 
 // Table Component
 export function SLTableItem(props: TableProps) {

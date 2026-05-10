@@ -1,22 +1,17 @@
 "use client";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import type { Seat } from "@/hooks/useSeats";
 import { safeObj } from "@/lib/data.helpers";
 import { useQuery } from "convex/react";
 import { LucideLoader } from "lucide-react";
 import { SLSeatItem, SLTableItem } from "./SeatStructureGrid";
 import type { SLEntry } from "./seat-grid-utils";
 
-interface SeatData {
-  _id: Id<"seats">;
-  seatNumber: number;
-  isBooked: boolean;
-}
-
 interface DynamicSeatLayoutProps {
-  seats: SeatData[];
+  seats: Seat[];
   selectedSeatNumbers: string[];
-  onSeatClick: (seat: SeatData) => void;
+  onSeatClick: (seat: Seat) => void;
 }
 
 export function DynamicSeatLayout({
@@ -71,7 +66,7 @@ export function DynamicSeatLayout({
       map[seat.seatNumber] = seat;
       return map;
     },
-    {} as Record<number, SeatData>,
+    {} as Record<number, Seat>,
   );
 
   console.log({ seatLayout, seatDataMap });

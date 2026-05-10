@@ -6,7 +6,11 @@ import {
 } from "@/components/customers";
 import { Button } from "@/components/ui/button";
 import React from "react";
-import { ErrorBoundary, FallbackProps } from "react-error-boundary";
+import {
+  ErrorBoundary,
+  type FallbackProps,
+  getErrorMessage,
+} from "react-error-boundary";
 import { Analytics } from "./analytics";
 
 function CustomersTableErrorFallback({
@@ -19,7 +23,7 @@ function CustomersTableErrorFallback({
         Failed to load customers
       </h3>
       <p className="text-sm text-red-500 mt-1">
-        {error?.message || "An unexpected error occurred"}
+        {getErrorMessage(error) || "An unexpected error occurred"}
       </p>
       <Button
         onClick={resetErrorBoundary}

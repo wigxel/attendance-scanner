@@ -10,9 +10,9 @@ import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-interface Seat {
+export interface Seat {
   _id: Id<"seats">;
-  seatNumber: string;
+  seatNumber: number;
   isBooked: boolean;
 }
 
@@ -54,11 +54,13 @@ export const useSeats = () => {
   }, [availableSeats, selectedSeatNumbers]);
 
   const handleSeatClick = (seat: Seat): void => {
+    const seat_num = seat.seatNumber.toString();
+
     // Toggle seat selection
-    if (selectedSeatNumbers.includes(seat.seatNumber)) {
-      removeSelectedSeat(seat.seatNumber);
+    if (selectedSeatNumbers.includes(seat_num)) {
+      removeSelectedSeat(seat_num);
     } else {
-      addSelectedSeat(seat.seatNumber, seat._id);
+      addSelectedSeat(seat_num, seat._id);
     }
   };
 

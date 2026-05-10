@@ -1,11 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { MonthlyReservationsTable } from "@/components/MonthlyReservationsTable";
 import { Reservations } from "@/components/Reservations";
-import { GridIcon, ListIcon, TableIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { getErrorMessage } from "@/lib/error.helpers";
+import { GridIcon, ListIcon } from "lucide-react";
 import React from "react";
+import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
 function ReservationsErrorFallback({
   error,
@@ -17,7 +18,7 @@ function ReservationsErrorFallback({
         Failed to load reservations
       </h3>
       <p className="text-sm text-red-500 mt-1">
-        {error?.message || "An unexpected error occurred"}
+        {getErrorMessage(error) ?? "An unexpected error occurred"}
       </p>
       <Button
         onClick={resetErrorBoundary}
@@ -40,7 +41,7 @@ function MonthlyReservationsErrorFallback({
         Failed to load reservations table
       </h3>
       <p className="text-sm text-red-500 mt-1">
-        {error?.message || "An unexpected error occurred"}
+        {getErrorMessage(error) ?? "An unexpected error occurred"}
       </p>
       <Button
         onClick={resetErrorBoundary}
