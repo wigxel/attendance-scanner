@@ -22,7 +22,7 @@ export const getBooking = query({
     const booking = await ctx.db.get(bookingId);
 
     if (!booking) {
-      throw new Error("Booking not found");
+      throw new ConvexError("Booking not found");
     }
 
     // fetch all seats for this booking
@@ -123,16 +123,16 @@ export const createBooking = mutation({
   handler: async (ctx, args) => {
     // Get current user from Clerk
     const identity = await readId(ctx);
-    if (!identity) throw new Error("Must be logged in");
+    if (!identity) throw new ConvexError("Must be logged in");
 
     const profile: Doc<"profile"> | null = await ctx.runQuery(
       api.myFunctions.getProfile,
     );
 
-    if (!profile) throw new Error("User profile not found");
+    if (!profile) throw new ConvexError("User profile not found");
 
     if (!profile.email) {
-      throw new Error(
+      throw new ConvexError(
         "User must have an email address before creating a booking",
       );
     }
@@ -165,7 +165,7 @@ export const createBooking = mutation({
       return formatDateToLocalISO(currentDate);
     };
 
-    if (!args.durationType) throw new Error("Duration type is required");
+    if (!args.durationType) throw new ConvexError("Duration type is required");
 
     const planKey = DURATION_TYPE_TO_PLAN_KEY[args.durationType];
     const accessPlan = await ctx.db
@@ -174,7 +174,9 @@ export const createBooking = mutation({
       .first();
 
     if (!accessPlan) {
-      throw new Error(`Access plan not found for type: ${args.durationType}`);
+      throw new ConvexError(
+        `Access plan not found for type: ${args.durationType}`,
+      );
     }
 
     const duration = accessPlan.no_of_days;
@@ -188,15 +190,17 @@ export const createBooking = mutation({
       endDate = calculateEndDate(args.startDate, duration);
     }
 
-    if (duration < 1) throw new Error("Invalid date range");
-    if (startMs < Date.now()) throw new Error("Cannot book past dates");
+    if (duration < 1) throw new ConvexError("Invalid date range");
+    if (startMs < Date.now()) throw new ConvexError("Cannot book past dates");
 
     const startDate = new Date(args.startDate);
     if (startDate.getDay() === 0) {
-      throw new Error("Cannot book on Sundays. Please select another date.");
+      throw new ConvexError(
+        "Cannot book on Sundays. Please select another date.",
+      );
     }
 
-    if (args.seatIds.length === 0) throw new Error("No seats selected");
+    if (args.seatIds.length === 0) throw new ConvexError("No seats selected");
 
     // Check availability for all requested seats
     for (const seatId of args.seatIds) {
@@ -217,7 +221,7 @@ export const createBooking = mutation({
         );
         if (datesOverlap) {
           const seat = await ctx.db.get(seatId);
-          throw new Error(
+          throw new ConvexError(
             `Seat ${seat?.seatNumber} is not available for selected dates`,
           );
         }
@@ -276,23 +280,23 @@ export const updateBooking = mutation({
   handler: async (ctx, args) => {
     const identity = await readId(ctx);
 
-    if (!identity) throw new Error("Must be logged in");
+    if (!identity) throw new ConvexError("Must be logged in");
 
     const userId = identity;
 
     const existingBooking = await ctx.db.get(args.bookingId);
 
     if (!existingBooking) {
-      throw new Error("Booking not found.");
+      throw new ConvexError("Booking not found.");
     }
 
     if (existingBooking.userId !== userId) {
-      throw new Error("You are not authorized to update this booking.");
+      throw new ConvexError("You are not authorized to update this booking.");
     }
 
     if (existingBooking.status !== "pending") {
       console.log("Booking Id: ", existingBooking._id);
-      throw new Error("Only pending bookings can be updated.");
+      throw new ConvexError("Only pending bookings can be updated.");
     }
 
     const calculateEndDate = (
@@ -319,7 +323,7 @@ export const updateBooking = mutation({
       return formatDateToLocalISO(currentDate);
     };
 
-    if (!args.durationType) throw new Error("Duration type is required");
+    if (!args.durationType) throw new ConvexError("Duration type is required");
     let duration: number;
     let pricePerSeat: number; // in kobo
     let endDate: string;
@@ -338,7 +342,7 @@ export const updateBooking = mutation({
       pricePerSeat = 2400000; // 24,000 per month
       endDate = calculateEndDate(args.startDate, duration);
     } else {
-      throw new Error("Invalid duration type");
+      throw new ConvexError("Invalid duration type");
     }
 
     const amount = pricePerSeat * args.seatIds.length; // price per seat multiplied by number of seats
@@ -361,7 +365,7 @@ export const updateBooking = mutation({
 export const getUserBookings = query({
   handler: async (ctx) => {
     const identity = await readId(ctx);
-    if (!identity) throw new Error("Must be logged in");
+    if (!identity) throw new ConvexError("Must be logged in");
 
     const bookings = await ctx.db
       .query("bookings")
@@ -522,7 +526,7 @@ export const confirmBooking = mutation({
   },
   handler: async (ctx, args) => {
     const booking = await ctx.db.get(args.bookingId);
-    if (!booking) throw new Error("Booking not found");
+    if (!booking) throw new ConvexError("Booking not found");
 
     // Verify all seats exist
     const seats = await Promise.all(
@@ -530,7 +534,7 @@ export const confirmBooking = mutation({
     );
 
     if (seats.some((seat) => seat === null)) {
-      throw new Error("One or more seats not found");
+      throw new ConvexError("One or more seats not found");
     }
 
     // update booking status
@@ -612,11 +616,13 @@ export const cancelBooking = mutation({
   handler: async (ctx, { bookingId }) => {
     const booking = await ctx.db.get(bookingId);
     if (!booking) {
-      throw new Error("Booking not found");
+      throw new ConvexError("Booking not found");
     }
 
     if (!["pending", "confirmed"].includes(booking.status)) {
-      throw new Error(`Cannot cancel booking with status: ${booking.status}`);
+      throw new ConvexError(
+        `Cannot cancel booking with status: ${booking.status}`,
+      );
     }
 
     await ctx.db.patch(bookingId, {
@@ -743,7 +749,7 @@ export const markBookingAsExpired = mutation({
   handler: async (ctx, { bookingId }) => {
     const booking = await ctx.db.get(bookingId);
     if (!booking) {
-      throw new Error("Booking not found");
+      throw new ConvexError("Booking not found");
     }
 
     await ctx.db.patch(bookingId, {
@@ -828,7 +834,7 @@ export const generateTickets = mutation({
   handler: async (ctx, args) => {
     const booking = await ctx.db.get(args.bookingId);
     if (!booking || booking.status !== "confirmed") {
-      throw new Error("Booking not found or not confirmed");
+      throw new ConvexError("Booking not found or not confirmed");
     }
 
     // check if tickets already exist to prevent duplicates
@@ -893,8 +899,8 @@ export const claimTicket = mutation({
     if (!profileId) throw new ConvexError("Unauthorized");
 
     const ticket = await ctx.db.get(args.ticketId);
-    if (!ticket) throw new Error("Ticket not found");
-    if (ticket.holderUserId) throw new Error("Seat already claimed");
+    if (!ticket) throw new ConvexError("Ticket not found");
+    if (ticket.holderUserId) throw new ConvexError("Seat already claimed");
 
     // prevent a user from claiming multiple seats in the same booking
     const alreadyClaimed = await ctx.db
@@ -905,7 +911,7 @@ export const claimTicket = mutation({
       .first();
 
     if (alreadyClaimed)
-      throw new Error("You have already claimed a seat in this booking.");
+      throw new ConvexError("You have already claimed a seat in this booking.");
 
     await ctx.db.patch(args.ticketId, {
       holderUserId: profileId,
@@ -921,7 +927,7 @@ export const getAllBookings = query({
     const adminProfile = await authGuard(ctx, "admin");
 
     if (!adminProfile) {
-      throw new Error("Not authorized to view all bookings");
+      throw new ConvexError("Not authorized to view all bookings");
     }
 
     const bookings = await ctx.db.query("bookings").collect();
@@ -967,7 +973,7 @@ export const removeClaim = mutation({
     if (!profileId) throw new ConvexError("Unauthorized");
 
     const ticket = await ctx.db.get(args.ticketId);
-    if (!ticket) throw new Error("Ticket not found");
+    if (!ticket) throw new ConvexError("Ticket not found");
 
     if (!ticket.holderUserId) {
       console.info("No action taken, ticket is unclaimed");

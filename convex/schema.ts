@@ -100,12 +100,14 @@ const bookings = defineTable({
     v.literal("cancelled"),
     v.literal("expired"),
   ),
+  paymentReference: v.optional(v.string()),
   created_by: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
 })
   .index("user_id", ["userId"])
   .index("by_status", ["status"])
+  .index("by_payment_reference", ["paymentReference"])
   .index("by_duration", ["durationType"])
   .index("by_startDate", ["startDate"]);
 
