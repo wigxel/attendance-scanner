@@ -11,8 +11,8 @@ import { Suspense, useEffect, useState } from "react";
 import { setActiveTab, useBookingStore } from "./store";
 
 import BookingCalendar, { RangePreview } from "@/components/BookingCalendar";
-import PendingBookingsModal from "@/components/PendingBookingsModal";
 import { DynamicSeatLayout } from "@/components/DynamicSeatLayout";
+import PendingBookingsModal from "@/components/PendingBookingsModal";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { Badge } from "@/components/ui/badge";

@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  EmptyState,
+  EmptyStateConceal,
+  EmptyStateContent,
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,8 +24,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { safeArray } from "@/lib/data.helpers";
 import { useMutation, useQuery } from "convex/react";
 import { Pencil, Plus, Trash } from "lucide-react";
 import { useState } from "react";
@@ -35,6 +44,37 @@ interface AccessPlan {
   features: string[];
 }
 
+function AccessPlanCard({
+  plan,
+  onEdit,
+  onDelete,
+}: {
+  plan: AccessPlan;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 border">
+      <CardHeader>
+        <CardTitle>{plan.name}</CardTitle>
+        <CardDescription>{plan.description}</CardDescription>
+      </CardHeader>
+      <CardFooter className="flex justify-between border-t p-4">
+        <div className="text-lg font-semibold">{formatPrice(plan.price)}</div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={onEdit}>
+            <Pencil className="h-4 w-4" />
+            <span>Edit</span>
+          </Button>
+          <Button size="sm" variant="destructive" onClick={onDelete}>
+            <Trash className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
@@ -42,6 +82,8 @@ export function formatPrice(price: number): string {
     maximumFractionDigits: 0,
   }).format(price);
 }
+
+const SKELETON_IDS = Array.from({ length: 3 }, () => crypto.randomUUID());
 
 export default function PricingManagement() {
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
@@ -57,6 +99,8 @@ export default function PricingManagement() {
   const addAccessPlan = useMutation(api.myFunctions.addAccessPlan);
   const updateAccessPlan = useMutation(api.myFunctions.updateAccessPlan);
   const deleteAccessPlan = useMutation(api.myFunctions.deleteAccessPlan);
+
+  const isLoading = accessPlans === undefined;
 
   const resetForm = () => {
     setCurrentPlanId(null);
@@ -228,47 +272,46 @@ export default function PricingManagement() {
         </DialogContent>
       </Dialog>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {(accessPlans ?? []).length > 0 ? (
-          (accessPlans ?? []).map((plan: AccessPlan) => (
-            <Card
-              key={plan._id}
-              className="shadow-sm hover:shadow-md transition-shadow duration-200 border"
-            >
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {SKELETON_IDS.map((id) => (
+            <Card key={id} className="shadow-sm border">
               <CardHeader>
-                <CardTitle>{plan.name}</CardTitle>
-                <CardDescription>{plan.description}</CardDescription>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
               </CardHeader>
               <CardFooter className="flex justify-between border-t p-4">
-                <div className="text-lg font-semibold">
-                  {formatPrice(plan.price)}
-                </div>
+                <Skeleton className="h-6 w-20" />
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditDialog(plan)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    <span>Edit</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => openDeleteAlert(plan)}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-8 w-8" />
                 </div>
               </CardFooter>
             </Card>
-          ))
-        ) : (
-          <div className="col-span-full text-center p-8 border rounded-lg bg-muted/30 text-muted-foreground">
-            <p>No pricing plans available. Add one to get started.</p>
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState isEmpty={safeArray(accessPlans).length === 0}>
+          <EmptyStateContent>
+            <EmptyStateTitle>No pricing plans available</EmptyStateTitle>
+            <EmptyStateDescription>
+              Add one to get started.
+            </EmptyStateDescription>
+          </EmptyStateContent>
+          <EmptyStateConceal>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {safeArray(accessPlans).map((plan: AccessPlan) => (
+                <AccessPlanCard
+                  key={plan._id}
+                  plan={plan}
+                  onEdit={() => openEditDialog(plan)}
+                  onDelete={() => openDeleteAlert(plan)}
+                />
+              ))}
+            </div>
+          </EmptyStateConceal>
+        </EmptyState>
+      )}
     </div>
   );
 }

@@ -61,7 +61,7 @@ const defaultPaginationOpts = {
   cursor: null as string | null,
 };
 
-export function useUsers(searchTerm: string = "") {
+export function useUsers(searchTerm = "") {
   const [paginationOpts, setPaginationOpts] = React.useState(
     defaultPaginationOpts,
   );
