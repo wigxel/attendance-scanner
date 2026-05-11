@@ -24,6 +24,56 @@ interface PendingBooking {
   durationType: "day" | "week" | "month" | undefined;
 }
 
+function PendingBookingItem({
+  booking,
+  onResume,
+  onCancel,
+}: {
+  booking: PendingBooking;
+  onResume: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="border rounded-lg p-4 mb-4">
+      <div className="mb-3">
+        <p className="text-sm text-gray-600">Date</p>
+        <p className="font-medium">
+          {new Date(booking.startDate).toDateString()}
+        </p>
+      </div>
+      <div className="mb-3">
+        <p className="text-sm text-gray-600">Seats</p>
+        <p className="font-medium">
+          {booking.seats.map((s) => s.seatNumber).join(", ")}
+        </p>
+      </div>
+      <div className="mb-4">
+        <p className="text-sm text-gray-600">Amount</p>
+        <p className="font-medium">
+          ₦{(booking.amount / 100).toLocaleString()}
+        </p>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-3">
+        <button
+          type="button"
+          onClick={onResume}
+          className="flex-1 bg-[#0000FF] text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+        >
+          Resume Payment
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const PendingBookingsModal = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -62,7 +112,7 @@ const PendingBookingsModal = () => {
       // No pending bookings found on initial load
       hasCheckedInitialBookings.current = true;
     }
-  }, [pendingBookings, bookingId]);
+  }, [pendingBookings]);
 
   useEffect(() => {
     if (!isOpen || timeRemaining <= 0) {
@@ -149,51 +199,12 @@ const PendingBookingsModal = () => {
         </div>
 
         {pendingBookings.map((booking) => (
-          <div key={booking._id} className="border rounded-lg p-4 mb-4">
-            <div className="mb-3">
-              <p className="text-sm text-gray-600">Date</p>
-              <p className="font-medium">
-                {new Date(booking.startDate).toDateString()}
-              </p>
-            </div>
-            <div className="mb-3">
-              <p className="text-sm text-gray-600">Seats</p>
-              <p className="font-medium">
-                {booking.seats
-                  .map(
-                    (s: {
-                      _id: Id<"seats">;
-                      _creationTime: number;
-                      createdAt: number;
-                      seatNumber: number;
-                      isBooked: boolean;
-                    }) => s.seatNumber,
-                  )
-                  .join(", ")}
-              </p>
-            </div>
-            <div className="mb-4">
-              <p className="text-sm text-gray-600">Amount</p>
-              <p className="font-medium">
-                ₦{(booking.amount / 100).toLocaleString()}
-              </p>
-            </div>
-
-            <div className="flex flex-col md:flex-row gap-3">
-              <button
-                onClick={() => handleResume(booking)}
-                className="flex-1 bg-[#0000FF] text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
-              >
-                Resume Payment
-              </button>
-              <button
-                onClick={() => handleCancel(booking._id)}
-                className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+          <PendingBookingItem
+            key={booking._id}
+            booking={booking}
+            onResume={() => handleResume(booking)}
+            onCancel={() => handleCancel(booking._id)}
+          />
         ))}
       </div>
     </div>

@@ -143,43 +143,9 @@ export function VotingSection() {
       </CardHeader>
 
       <CardContent className="gap-4 flex flex-col">
-        {safeArray(openSuggestions).map((e) => {
-          return (
-            <div key={e._id} className="flex group gap-6">
-              <div className="flex flex-col mt-1 gap-1 self-start text-base items-center">
-                <VoteTrigger value="up" feedbackId={e._id}>
-                  <button
-                    type="button"
-                    className="cursor-pointer text-muted-foreground hover:text-green-500"
-                    title="I don't support this"
-                  >
-                    <ArrowBigUp size="1em" />
-                  </button>
-                </VoteTrigger>
-
-                <span className="font-mono text-[0.8em]">{e.voteCount}</span>
-
-                <VoteTrigger value="down" feedbackId={e._id}>
-                  <button
-                    type="button"
-                    className="cursor-pointer text-muted-foreground hover:text-red-500"
-                    title="I support this"
-                  >
-                    <ArrowBigDown size="1em" />
-                  </button>
-                </VoteTrigger>
-              </div>
-
-              <div className="flex flex-col gap-0.5 flex-1 group-last:border-0 border-b pb-8">
-                <h6 className="font-semibold">{e.title}</h6>
-                <p className="text-sm">{e.description}</p>
-                <p className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(e._creationTime, { addSuffix: true })}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+        {safeArray(openSuggestions).map((e) => (
+          <SuggestionItem key={e._id} suggestion={e} />
+        ))}
         {/* Add voting controls or content here */}
       </CardContent>
 
@@ -220,6 +186,48 @@ function VoteTrigger(props: {
     >
       {props.children}
     </Slot>
+  );
+}
+
+function SuggestionItem({
+  suggestion: e,
+}: {
+  suggestion: Doc<"featureRequest"> & { voteCount: number };
+}) {
+  return (
+    <div key={e._id} className="flex group gap-6">
+      <div className="flex flex-col mt-1 gap-1 self-start text-base items-center">
+        <VoteTrigger value="up" feedbackId={e._id}>
+          <button
+            type="button"
+            className="cursor-pointer text-muted-foreground hover:text-green-500"
+            title="I don't support this"
+          >
+            <ArrowBigUp size="1em" />
+          </button>
+        </VoteTrigger>
+
+        <span className="font-mono text-[0.8em]">{e.voteCount}</span>
+
+        <VoteTrigger value="down" feedbackId={e._id}>
+          <button
+            type="button"
+            className="cursor-pointer text-muted-foreground hover:text-red-500"
+            title="I support this"
+          >
+            <ArrowBigDown size="1em" />
+          </button>
+        </VoteTrigger>
+      </div>
+
+      <div className="flex flex-col gap-0.5 flex-1 group-last:border-0 border-b pb-8">
+        <h6 className="font-semibold">{e.title}</h6>
+        <p className="text-sm">{e.description}</p>
+        <p className="text-sm text-muted-foreground">
+          {formatDistanceToNow(e._creationTime, { addSuffix: true })}
+        </p>
+      </div>
+    </div>
   );
 }
 

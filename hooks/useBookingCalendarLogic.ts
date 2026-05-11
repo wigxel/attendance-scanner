@@ -104,8 +104,6 @@ export const useBookingCalendarLogic = () => {
 
       return toast.error("Booking failed", { description: error.message });
     }
-
-    debugger;
     console.log({ currentPlan });
     const price = currentPlan.price * 100;
 
