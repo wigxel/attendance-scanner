@@ -303,7 +303,7 @@ export const registerUser = mutation({
         access: {
           kind: "paid",
           planId: activeBooking.durationType, // e.g., "day", "week"
-          amount: (activeBooking.pricePerSeat / activeBooking.duration) / 100,
+          amount: activeBooking.pricePerSeat / activeBooking.duration / 100,
         },
         ticketId: activeTicket._id,
       });

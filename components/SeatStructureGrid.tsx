@@ -1,6 +1,7 @@
 "use client";
 import { api } from "@/convex/_generated/api";
 import { safeNum, safeStr } from "@/lib/data.helpers";
+import { getErrorMessage } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -579,7 +580,9 @@ function useToggleOptions<const T>(options: T[], defaultValue?: string) {
   const [state, setState] = React.useState<T>(() => {
     const collection = new Set(options);
 
-    if (collection.has(defaultValue as T)) return options[0];
+    if (!collection.has(defaultValue as T)) {
+      return options[0];
+    }
 
     return defaultValue as T;
   });
@@ -738,5 +741,28 @@ export function SLSeatItem(
         height={32}
       />
     </button>
+  );
+}
+
+export function SeatStructureGridErrorFallback({
+  error,
+  resetErrorBoundary,
+}: FallbackProps) {
+  return (
+    <div className="p-6 border border-red-200 rounded-lg bg-red-50">
+      <h3 className="text-lg font-semibold text-red-600">
+        Failed to load seat structure
+      </h3>
+      <p className="text-sm text-red-500 mt-1">
+        {getErrorMessage(error) || "An unexpected error occurred"}
+      </p>
+      <Button
+        onClick={resetErrorBoundary}
+        variant="outline"
+        className="mt-3 border-red-300 text-red-600 hover:bg-red-100"
+      >
+        Try again
+      </Button>
+    </div>
   );
 }
