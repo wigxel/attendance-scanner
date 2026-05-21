@@ -11,19 +11,17 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
-import { type AccessStruct, PlanImpl } from "@/convex/shared";
+import {
+  type AccessDuration,
+  type AccessStruct,
+  PlanImpl,
+} from "@/convex/shared";
 import { useCustomer } from "@/hooks/auth";
 import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
 import { DateParse } from "@/lib/date.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@radix-ui/react-tooltip";
 import { useMutation, useQuery } from "convex/react";
 import {
   differenceInDays,
@@ -38,14 +36,13 @@ import {
 import { Match, Option, pipe } from "effect";
 import { range } from "effect/Array";
 import { intersperse } from "effect/Iterable";
+import { isNullable } from "effect/Predicate";
 import {
   ChevronLeft,
   ChevronRight,
   Crown,
-  Currency,
   Gift,
-  HelpCircleIcon,
-  Package,
+  InfoIcon,
   Package2Icon,
   PackageIcon,
   ReceiptIcon,
@@ -398,7 +395,8 @@ export function RegisteredUserEntry({
   };
   const visitCount = useVisitCount({ userId: entry.userId });
   const diffFromNow = format_time_to_now(entry.timestamp);
-  const can_modify_plan = entry.ticketId
+  const isReservation = !isNullable(entry.ticketId);
+  const can_modify_plan = isReservation
     ? false
     : differenceInHours(Date.now(), entry.timestamp) < 24;
 
@@ -418,12 +416,12 @@ export function RegisteredUserEntry({
       <CustomerAvatar userId={entry.userId} className="w-10 h-10" />
 
       <div className="group-last:border-none border-b flex items-center flex-1 pb-2">
-        <div className="flex-1">
+        <div className="flex-1 flex-col gap-1 flex">
           <div className="font-semibold">
             {user.firstName} {user.lastName}
           </div>
 
-          <div className="flex gap-2 text-sm text-gray-500 font-mono">
+          <div className="flex gap-2 text-xs text-gray-500 font-mono">
             <PaymentBadge data={entry.access} />•
             <div>
               {pipe(
@@ -450,31 +448,28 @@ export function RegisteredUserEntry({
     </li>
   );
 
-  const attendanceSettingsContent =
+  const attendanceSettingsContent = (
     <section className="flex flex-col gap-4 mt-4">
       <li className="flex group items-center group gap-4 py-2 border-y">
         <CustomerAvatar userId={entry.userId} className="w-10 h-10 " />
 
-        <div className="group-last:border-none flex items-center flex-1 pb-2">
-          <div className="flex-1">
+        <div className="group-last:border-none flex items-center flex-1">
+          <div className="flex-1 flex-col gap-1 flex">
             <div className="font-semibold">
               {user.firstName} {user.lastName}
             </div>
 
-            <div className="flex gap-2 text-sm text-gray-500 font-mono">
+            <div className="flex gap-2 text-xs text-gray-500 font-mono">
               {intersperse(
                 [
                   <PaymentBadge key="preview" data={entry.access} />,
                   pipe(
                     Match.value(entry.access),
-                    Match.whenAnd(
-                      { kind: "paid", _v: "2" },
-                      (match) => {
-                        return match.paymentMethod === "cash"
-                          ? "Cash"
-                          : "Transfer";
-                      },
-                    ),
+                    Match.whenAnd({ kind: "paid", _v: "2" }, (match) => {
+                      return match.paymentMethod === "cash"
+                        ? "Cash"
+                        : "Transfer";
+                    }),
                     Match.orElse(() => null),
                   ),
                   <div key="visit_count">
@@ -498,16 +493,14 @@ export function RegisteredUserEntry({
             </div>
           </div>
 
-          <div
-            className={"inline-block text-sm font-semibold text-foreground"}
-          >
+          <div className={"inline-block text-sm font-semibold text-foreground"}>
             {diffFromNow}
           </div>
         </div>
       </li>
 
       <ul className={"flex flex-col gap-4"}>
-        <li className="flex justify-between items-center">
+        <li className="flex justify-between items-center select-none">
           <div className="flex flex-col">
             <span className="font-semibold text-sm items-center inline-flex gap-2">
               <Package2Icon size="1.2em" />
@@ -515,39 +508,56 @@ export function RegisteredUserEntry({
             </span>
           </div>
 
-          <PlanTypeToggle size="full" id={entry.userId} />
+          <PlanTypeToggle
+            disabled={!can_modify_plan}
+            value={entry.access}
+            size="full"
+            userId={entry.userId}
+          />
         </li>
 
-        <li className="flex justify-between items-center">
+        <li className="flex justify-between items-center select-none">
           <span className="font-semibold text-sm items-center inline-flex gap-2">
             <PackageIcon size="1.2em" />
             Pricing plan
           </span>
           <AccessTypeButton
+            disabled={!can_modify_plan}
             size="full"
             value={entry.access}
             id={entry.userId}
           />
         </li>
 
-        <If cond={PlanImpl.type("paid")(entry.access)}>
-          <li className="flex justify-between items-center">
+        <If cond={!isReservation || PlanImpl.type("paid")(entry.access)}>
+          <li className="flex justify-between items-center select-none">
             <span className="font-semibold text-sm items-center inline-flex gap-2">
               <ReceiptIcon size="1.2em" />
               Payment method
             </span>
             <PaymentTypeToggle
+              disabled={!can_modify_plan}
               id={entry.userId}
               value={
-                entry.access
-                  ? PlanImpl.paymentMethod(entry.access)
-                  : undefined
+                entry.access ? PlanImpl.paymentMethod(entry.access) : undefined
               }
             />
           </li>
         </If>
       </ul>
+
+      <If cond={isReservation}>
+        <div className="mt-4 flex justify-start gap-2 select-none text-muted-foreground">
+          <InfoIcon size="1em" />
+          <p className="text-xs text-balance text-start">
+            <span>
+              Record can not be modified. Customer made a reservation.
+            </span>
+          </p>
+        </div>
+      </If>
     </section>
+  );
 
   return (
     <>
@@ -570,7 +580,6 @@ export function RegisteredUserEntry({
             <Drawer.Description className="text-sm">
               Set attendance information
             </Drawer.Description>
-
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
@@ -606,6 +615,7 @@ export function RegisteredUserEntry({
 function AccessTypeButton(props: {
   id: string;
   size: "compact" | "full";
+  disabled?: boolean;
   value?: Pick<AccessStruct, "kind">;
 }) {
   const { id, size = "full", value: _value } = props;
@@ -627,6 +637,7 @@ function AccessTypeButton(props: {
       <Button
         title="Mark as Paying customer"
         size={isCompact ? "icon" : "sm"}
+        disabled={props.disabled}
         variant={value.kind === "paid" ? "outline-active" : "secondary"}
         onClick={() => {
           changePlan_({ userId: id, plan: "daily" });
@@ -638,6 +649,7 @@ function AccessTypeButton(props: {
       <Button
         title="Mark as Free customer"
         size={isCompact ? "icon" : "sm"}
+        disabled={props.disabled}
         variant={value.kind === "free" ? "outline-active" : "secondary"}
         onClick={() => {
           changePlan_({ userId: id, plan: "free" });
@@ -652,6 +664,7 @@ function AccessTypeButton(props: {
 function PaymentTypeToggle(props: {
   id: string;
   value?: "bank_transfer" | "cash";
+  disabled?: boolean;
 }) {
   const { id, value } = props;
   const changePlan = useMutation(api.register.updateTodaysRegisterAccess);
@@ -668,6 +681,7 @@ function PaymentTypeToggle(props: {
     <div className="flex items-center gap-1">
       <Button
         size={"sm"}
+        disabled={props.disabled}
         variant={value === "cash" ? "outline-active" : "secondary"}
         onClick={() => {
           changePlan_({ userId: id, paymentType: "cash" });
@@ -677,6 +691,7 @@ function PaymentTypeToggle(props: {
       </Button>
       <Button
         size={"sm"}
+        disabled={props.disabled}
         variant={value === "bank_transfer" ? "outline-active" : "secondary"}
         onClick={() => {
           changePlan_({ userId: id, paymentType: "bank_transfer" });
@@ -688,61 +703,68 @@ function PaymentTypeToggle(props: {
   );
 }
 
-type DurationOption =
-  | {
-    type: "hourly";
-    show: boolean;
-    value: number;
-  }
-  | { type: "fullday" };
-
 const variants = {
   hidden: { marginLeft: "-20%", transition: { duration: 0.1 } },
   visible: { marginLeft: "0%", transition: { duration: 0.2 } },
 };
 
 function PlanTypeToggle({
-  id,
-  size = "full",
-}: { id: string; size: "compact" | "full" }) {
-  const isCompact = size === "compact";
+  userId: id,
+  value,
+  disabled,
+}: {
+  userId: string;
+  value: AccessStruct | undefined;
+  disabled?: boolean;
+}) {
+  const [showDialog, setShowDialog] = React.useState(false);
+
   const changePlan = useMutation(api.register.updateTodaysRegisterAccess);
-  const [option, setOption] = React.useState<DurationOption>({
-    type: "fullday",
-  });
+
+  const setOption = (value: AccessDuration) => {
+    changePlan({ duration: value, userId: id });
+  };
+
+  const option = PlanImpl.duration(value).pipe(
+    O.getOrElse(() => ({ type: "none" as const }))
+  )
 
   return (
     <div className="flex items-center gap-1">
       <div className="relative">
         <Button
-          size={isCompact ? "icon" : "sm"}
+          size={"sm"}
           variant={option.type === "hourly" ? "outline-active" : "secondary"}
+          disabled={disabled}
           onClick={() => {
-            setOption({ type: "hourly", show: true, value: -1 });
+            setShowDialog(true)
           }}
         >
-          {option.type !== "hourly"
-            ? "Hourly"
-            : `${option.value}hr${option.value > 1 ? "s" : ""}`}
+          {option.type === "hourly"
+            ? `${option.value}hr${option.value > 1 ? "s" : ""}`
+            : "Hourly"}
         </Button>
 
-        {!(option.type === "hourly" && option.show) ? null : (
+        {!showDialog ? null : (
           <div className="absolute top-0 right-0 gap-px bg-gray-50 p-0.5 border shadow-xl rounded-lg inline-flex justify-end">
             {range(1, 5).map((hour) => {
+              const isActive = option.type === "hourly" && option.value === hour;
+
               return (
                 <motion.div
                   key={hour}
                   variants={variants}
                   initial="hidden"
-                  animate={option.type !== "hourly" ? "hidden" : "visible"}
+                  animate={!showDialog ? "hidden" : "visible"}
                 >
                   <Button
                     title="Mark as Free customer"
-                    size={isCompact ? "icon" : "sm"}
-                    variant="outline"
+                    size={"sm"}
+                    variant={isActive ? "outline-active" : "outline"}
                     className="px-2"
                     onClick={() => {
-                      setOption({ type: "hourly", show: false, value: hour });
+                      setShowDialog(false)
+                      setOption({ type: "hourly", value: hour });
                     }}
                   >
                     {hour}hr
@@ -755,7 +777,8 @@ function PlanTypeToggle({
       </div>
 
       <Button
-        size={isCompact ? "icon" : "sm"}
+        size={"sm"}
+        disabled={disabled}
         variant={option.type === "fullday" ? "outline-active" : "secondary"}
         onClick={() => setOption({ type: "fullday" })}
       >

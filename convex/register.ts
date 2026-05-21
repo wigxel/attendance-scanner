@@ -1,9 +1,9 @@
 import { ConvexError, v } from "convex/values";
 import { endOfDay, format, startOfDay, subDays } from "date-fns";
 import { Effect, pipe } from "effect";
+import { isNullable } from "effect/Predicate";
 import { O } from "../lib/fp.helpers";
 import { api } from "./_generated/api";
-import { Doc } from "./_generated/dataModel";
 import { internalMutation, mutation } from "./_generated/server";
 import { PlanImpl } from "./shared";
 
@@ -86,6 +86,7 @@ export const updateTodaysRegisterAccess = mutation({
     paymentType: v.optional(
       v.union(v.literal("cash"), v.literal("bank_transfer")),
     ),
+    duration: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
     const today = new Date();
@@ -115,6 +116,11 @@ export const updateTodaysRegisterAccess = mutation({
       );
     }
 
+    // no one can modify a reserved booking
+    if (!isNullable(record.ticketId)) {
+      throw new ConvexError("Cannot modify a reserved booking.");
+    }
+
     if (args.plan) {
       const plan = await PlanImpl.validatePlan(ctx.db, args.plan);
 
@@ -128,7 +134,7 @@ export const updateTodaysRegisterAccess = mutation({
         PlanImpl.normalize(record.access),
         Effect.andThen(async (access_record) => {
           if (access_record.kind !== "paid") {
-            return Effect.logInfo("Skipping because Access type is free");
+            return Effect.logInfo("Skipping because Access type is `free`");
           }
 
           const modified_access_plan = PlanImpl.toOverwrite(access_record, {
@@ -152,6 +158,24 @@ export const updateTodaysRegisterAccess = mutation({
       await Effect.runPromise(updatePayment).catch((err) => {
         throw new ConvexError(err.message);
       });
+    }
+
+    if (args.duration) {
+      const res = await PlanImpl.validate("duration", args.duration);
+
+      if (!res.success) {
+        console.error(res.error);
+        throw new ConvexError("Invalid duration");
+      };
+
+      if (PlanImpl.type("paid")(record.access)) {
+        await ctx.db.patch(record._id, {
+          access: {
+            ...record.access,
+            duration: res.data
+          }
+        });
+      }
     }
 
     return "success" as const;

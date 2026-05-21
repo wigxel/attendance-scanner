@@ -28,8 +28,19 @@ export const accessPlanStruct = v.union(
     planId: v.string(),
     amountInKobo: v.number(),
     paymentMethod: v.union(v.literal("cash"), v.literal("bank_transfer")),
+    duration: v.optional(v.any())
   }),
 );
+
+const durationSchemaValidator = z.union([
+  z.object({
+    type: z.literal("hourly"),
+    value: z.number().min(1, { message: "Hourly value must be at least 1h" }).max(6, { message: "Hourly value cannot exceed 6" }),
+  }),
+  z.object({
+    type: z.literal("fullday"),
+  })
+]);
 
 export const accessPlanSchemaValidator = z.union([
   z.object({
@@ -46,6 +57,7 @@ export const accessPlanSchemaValidator = z.union([
     planId: z.string(),
     amountInKobo: z.number(),
     paymentMethod: z.union([z.literal("cash"), z.literal("bank_transfer")]),
+    duration: z.optional(durationSchemaValidator),
   }),
 ]);
 
@@ -68,7 +80,7 @@ export const PlanImpl = {
     return plan;
   },
 
-  toStruct(plan: Doc<"accessPlans"> & Partial<AccessStruct>): AccessStruct {
+  toStruct(plan: Doc<"accessPlans"> & Partial<AccessStruct>): AccessFreeStruct | AccessPaidV2 {
     if (plan.key === "free") {
       return { kind: "free" as const };
     }
@@ -79,6 +91,7 @@ export const PlanImpl = {
       planId: plan.key,
       amountInKobo: Math.max(0, plan.price / plan.no_of_days),
       paymentMethod: "bank_transfer",
+      duration: { type: "fullday" }
     };
   },
 
@@ -105,6 +118,7 @@ export const PlanImpl = {
           planId: record.planId,
           amountInKobo: record.amount * 100,
           paymentMethod: "bank_transfer",
+          duration: { type: "fullday" }
         } satisfies AccessPaidV2;
       }
 
@@ -112,24 +126,33 @@ export const PlanImpl = {
     });
   },
 
+  async validate(type: "duration", duration: unknown) {
+    return await durationSchemaValidator.safeParseAsync(duration);
+  },
+
+  duration(access?: AccessStruct): O.Option<AccessDuration> {
+    // @ts-expect-error No worries
+    return access?.kind === "paid" ? O.fromNullable(access?.duration) : O.none();
+  },
+
   type(type: "paid" | "free") {
     const type_is = (access: unknown, value: "paid" | "free") => {
-      const safe_accesss = safeObj(access)
+      const safe_accesss = safeObj(access);
 
-      if (!('kind' in safe_accesss)) return false;
+      if (!("kind" in safe_accesss)) return false;
 
       return safe_accesss.kind === value;
-    }
+    };
 
     if (type === "paid") {
       return (access: unknown): access is AccessPaidV2 => {
         return type_is(access, "paid");
-      }
+      };
     }
 
     return (access: unknown): access is AccessPaidV2 => {
       return type_is(access, "free");
-    }
+    };
   },
 
   paymentMethod(access: AccessStruct): "bank_transfer" | "cash" {
@@ -185,6 +208,7 @@ type AccessPaidV2 = {
   planId: string;
   amountInKobo: number;
   paymentMethod: "cash" | "bank_transfer";
+  duration?: AccessDuration
 };
 
 type AccessPaidV1 = {
@@ -196,11 +220,9 @@ type AccessPaidV1 = {
 
 type AccessFreeStruct = { kind: "free" };
 
-export type AccessStruct =
-  | { kind: "none" }
-  | AccessPaidV1
-  | AccessPaidV2
-  | AccessFreeStruct;
+export type AccessStruct = AccessPaidV1 | AccessPaidV2 | AccessFreeStruct;
+
+export type AccessDuration = z.infer<typeof durationSchemaValidator>
 
 export class PlanError extends TaggedError("PlanError") {
   constructor(public message: string) {
