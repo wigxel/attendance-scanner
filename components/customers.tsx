@@ -1,14 +1,29 @@
 "use client";
 import { DataTableDemo } from "@/components/DataTable";
 import { createColumns } from "@/components/columns";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
+import { type AccessStruct, PlanImpl } from "@/convex/shared";
 import { useCustomer } from "@/hooks/auth";
 import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
 import { DateParse } from "@/lib/date.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
 import { useMutation, useQuery } from "convex/react";
 import {
   differenceInDays,
@@ -20,11 +35,27 @@ import {
   parseISO,
   setHours,
 } from "date-fns";
-import { Option, pipe } from "effect";
-import { ChevronLeft, ChevronRight, Crown, Gift } from "lucide-react";
+import { Match, Option, pipe } from "effect";
+import { range } from "effect/Array";
+import { intersperse } from "effect/Iterable";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Crown,
+  Currency,
+  Gift,
+  HelpCircleIcon,
+  Package,
+  Package2Icon,
+  PackageIcon,
+  ReceiptIcon,
+} from "lucide-react";
+import { motion } from "motion/react";
 import * as React from "react";
 import useEvent from "react-use-event-hook";
 import { toast } from "sonner";
+import { useMediaQuery } from "usehooks-ts";
+import { Drawer } from "vaul";
 import { DateRange } from "./DateRange";
 import { CustomerSheet } from "./customer-info";
 import {
@@ -47,13 +78,6 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "./ui/sheet";
 import { Skeleton } from "./ui/skeleton";
 
 const defaultPaginationOpts = {
@@ -248,6 +272,18 @@ function useAttendanceRegister() {
   };
 }
 
+type DailyRegisterEntry = {
+  _id: string;
+  _creationTime: number;
+  userId: string;
+  timestamp: string;
+  source: "web";
+  device: { browser: string; name: string; visitorId: string };
+  access: AccessStruct;
+  admitted_by: string;
+  ticketId?: string;
+};
+
 export function TodaysCustomers() {
   const attendanceHandler = useAttendanceRegister();
 
@@ -255,7 +291,7 @@ export function TodaysCustomers() {
     useQuery(api.myFunctions.getDailyRegister, {
       ...attendanceHandler.current,
     }),
-  );
+  ) as DailyRegisterEntry[];
 
   return (
     <Card className="min-h-[32rem]">
@@ -336,7 +372,7 @@ export function CustomerAvatar({
   const user = useCustomer({ userId }) ?? { firstName: "", lastName: "" };
 
   return (
-    <Avatar className={className}>
+    <Avatar className={cn(className, "select-none")}>
       <AvatarImage
         src={"undefined"}
         alt="User Avatar"
@@ -347,20 +383,14 @@ export function CustomerAvatar({
   );
 }
 
-type AccessPlan =
-  | { kind: "free" }
-  | { kind: "paid"; amount: number }
-  | undefined;
-
 export function RegisteredUserEntry({
   entry,
+  onSelect,
 }: {
-  entry: {
-    userId: string;
-    timestamp: string;
-    access?: AccessPlan;
-    ticketId?: string;
-  };
+  entry: Partial<DailyRegisterEntry> & { userId: string; timestamp: string };
+  onSelect?: (
+    entry: Partial<DailyRegisterEntry> & { userId: string; timestamp: string },
+  ) => void;
 }) {
   const user = useCustomer({ userId: entry.userId }) ?? {
     firstName: "",
@@ -374,8 +404,17 @@ export function RegisteredUserEntry({
 
   if (!user) return null;
 
-  return (
-    <li className="flex group items-center group gap-4 pt-2 px-4">
+  const handleClick = () => {
+    onSelect?.(entry);
+  };
+
+  const isMobile = useMediaQuery(
+    "(max-width: 768px) and (orientation: portrait)",
+    { defaultValue: true },
+  );
+
+  const content = (
+    <li className="flex w-full group items-center hover:bg-gray-50 group gap-4 pt-2 px-4 cursor-pointer">
       <CustomerAvatar userId={entry.userId} className="w-10 h-10" />
 
       <div className="group-last:border-none border-b flex items-center flex-1 pb-2">
@@ -404,47 +443,323 @@ export function RegisteredUserEntry({
           </div>
         </div>
 
-        <If cond={can_modify_plan}>
-          <RoleChangingButton id={entry.userId} />
-        </If>
-
-        <div
-          className={cn("inline-block text-sm font-semibold text-foreground", {
-            "group-hover:hidden": can_modify_plan,
-          })}
-        >
+        <div className={"inline-block text-sm font-semibold text-foreground"}>
           {diffFromNow}
         </div>
       </div>
     </li>
   );
-}
 
-function RoleChangingButton({ id }: { id: string }) {
-  const changePlan = useMutation(api.register.updateTodaysRegisterAccess);
+  const attendanceSettingsContent =
+    <section className="flex flex-col gap-4 mt-4">
+      <li className="flex group items-center group gap-4 py-2 border-y">
+        <CustomerAvatar userId={entry.userId} className="w-10 h-10 " />
+
+        <div className="group-last:border-none flex items-center flex-1 pb-2">
+          <div className="flex-1">
+            <div className="font-semibold">
+              {user.firstName} {user.lastName}
+            </div>
+
+            <div className="flex gap-2 text-sm text-gray-500 font-mono">
+              {intersperse(
+                [
+                  <PaymentBadge key="preview" data={entry.access} />,
+                  pipe(
+                    Match.value(entry.access),
+                    Match.whenAnd(
+                      { kind: "paid", _v: "2" },
+                      (match) => {
+                        return match.paymentMethod === "cash"
+                          ? "Cash"
+                          : "Transfer";
+                      },
+                    ),
+                    Match.orElse(() => null),
+                  ),
+                  <div key="visit_count">
+                    {pipe(
+                      visitCount,
+                      Option.map(safeNum),
+                      Option.map((visitCount) => {
+                        return (
+                          <React.Fragment key={"visit"}>
+                            {serialNo(visitCount ?? 0)} visit
+                            {visitCount < 2 ? "" : "s"}
+                          </React.Fragment>
+                        );
+                      }),
+                      Option.getOrElse(() => <>-- visits</>),
+                    )}
+                  </div>,
+                ].filter((_e) => _e !== null),
+                <span>•</span>,
+              )}
+            </div>
+          </div>
+
+          <div
+            className={"inline-block text-sm font-semibold text-foreground"}
+          >
+            {diffFromNow}
+          </div>
+        </div>
+      </li>
+
+      <ul className={"flex flex-col gap-4"}>
+        <li className="flex justify-between items-center">
+          <div className="flex flex-col">
+            <span className="font-semibold text-sm items-center inline-flex gap-2">
+              <Package2Icon size="1.2em" />
+              Work duration
+            </span>
+          </div>
+
+          <PlanTypeToggle size="full" id={entry.userId} />
+        </li>
+
+        <li className="flex justify-between items-center">
+          <span className="font-semibold text-sm items-center inline-flex gap-2">
+            <PackageIcon size="1.2em" />
+            Pricing plan
+          </span>
+          <AccessTypeButton
+            size="full"
+            value={entry.access}
+            id={entry.userId}
+          />
+        </li>
+
+        <If cond={PlanImpl.type("paid")(entry.access)}>
+          <li className="flex justify-between items-center">
+            <span className="font-semibold text-sm items-center inline-flex gap-2">
+              <ReceiptIcon size="1.2em" />
+              Payment method
+            </span>
+            <PaymentTypeToggle
+              id={entry.userId}
+              value={
+                entry.access
+                  ? PlanImpl.paymentMethod(entry.access)
+                  : undefined
+              }
+            />
+          </li>
+        </If>
+      </ul>
+    </section>
 
   return (
-    <div className="hidden group-hover:flex items-center gap-1">
+    <>
+      <Drawer.Root>
+        <Drawer.Trigger
+          asChild
+          disabled={!isMobile}
+          className="block lg:hidden cursor-pointer"
+          onClick={handleClick}
+        >
+          {content}
+        </Drawer.Trigger>
+
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 bg-black/40" />
+          <Drawer.Content className="bg-background h-[70vh] fixed bottom-0 left-0 right-0 rounded-t-[10px] outline-none p-4">
+            <Drawer.Title className="font-semibold">
+              Customer Attendance
+            </Drawer.Title>
+            <Drawer.Description className="text-sm">
+              Set attendance information
+            </Drawer.Description>
+
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+
+      <Sheet>
+        <SheetTrigger
+          asChild
+          disabled={isMobile}
+          className="hidden lg:flex cursor-pointer w-full"
+          onClick={handleClick}
+        >
+          {content}
+        </SheetTrigger>
+
+        <SheetContent className="w-full max-w-sm px-4 py-4">
+          <div>
+            <SheetTitle className="font-semibold">
+              Customer Attendance
+            </SheetTitle>
+
+            <SheetDescription className="text-sm">
+              Set attendance information
+            </SheetDescription>
+          </div>
+
+          {attendanceSettingsContent}
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}
+
+function AccessTypeButton(props: {
+  id: string;
+  size: "compact" | "full";
+  value?: Pick<AccessStruct, "kind">;
+}) {
+  const { id, size = "full", value: _value } = props;
+
+  const value = _value ?? { kind: "none" };
+  const isCompact = size === "compact";
+  const changePlan = useMutation(api.register.updateTodaysRegisterAccess);
+
+  const changePlan_ = (...args: Parameters<typeof changePlan>) => {
+    changePlan(...args).catch((error) => {
+      toast.error("Plan update failed", {
+        description: getErrorMessage(error),
+      });
+    });
+  };
+
+  return (
+    <div className="flex items-center gap-1">
       <Button
         title="Mark as Paying customer"
-        size="icon"
-        variant="secondary"
+        size={isCompact ? "icon" : "sm"}
+        variant={value.kind === "paid" ? "outline-active" : "secondary"}
         onClick={() => {
-          changePlan({ userId: id, plan: "daily" });
+          changePlan_({ userId: id, plan: "daily" });
         }}
       >
-        <Crown className="h-4 w-4" />
+        {isCompact ? <Crown className="h-4 w-4" /> : "Paid"}
       </Button>
 
       <Button
         title="Mark as Free customer"
-        size="icon"
-        variant="outline"
+        size={isCompact ? "icon" : "sm"}
+        variant={value.kind === "free" ? "outline-active" : "secondary"}
         onClick={() => {
-          changePlan({ userId: id, plan: "free" });
+          changePlan_({ userId: id, plan: "free" });
         }}
       >
-        <Gift className="h-4 w-4" />
+        {isCompact ? <Gift className="h-4 w-4" /> : "Free"}
+      </Button>
+    </div>
+  );
+}
+
+function PaymentTypeToggle(props: {
+  id: string;
+  value?: "bank_transfer" | "cash";
+}) {
+  const { id, value } = props;
+  const changePlan = useMutation(api.register.updateTodaysRegisterAccess);
+
+  const changePlan_ = (...args: Parameters<typeof changePlan>) => {
+    changePlan(...args).catch((error) => {
+      toast.error("Plan update failed", {
+        description: getErrorMessage(error),
+      });
+    });
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <Button
+        size={"sm"}
+        variant={value === "cash" ? "outline-active" : "secondary"}
+        onClick={() => {
+          changePlan_({ userId: id, paymentType: "cash" });
+        }}
+      >
+        Cash
+      </Button>
+      <Button
+        size={"sm"}
+        variant={value === "bank_transfer" ? "outline-active" : "secondary"}
+        onClick={() => {
+          changePlan_({ userId: id, paymentType: "bank_transfer" });
+        }}
+      >
+        Transfer
+      </Button>
+    </div>
+  );
+}
+
+type DurationOption =
+  | {
+    type: "hourly";
+    show: boolean;
+    value: number;
+  }
+  | { type: "fullday" };
+
+const variants = {
+  hidden: { marginLeft: "-20%", transition: { duration: 0.1 } },
+  visible: { marginLeft: "0%", transition: { duration: 0.2 } },
+};
+
+function PlanTypeToggle({
+  id,
+  size = "full",
+}: { id: string; size: "compact" | "full" }) {
+  const isCompact = size === "compact";
+  const changePlan = useMutation(api.register.updateTodaysRegisterAccess);
+  const [option, setOption] = React.useState<DurationOption>({
+    type: "fullday",
+  });
+
+  return (
+    <div className="flex items-center gap-1">
+      <div className="relative">
+        <Button
+          size={isCompact ? "icon" : "sm"}
+          variant={option.type === "hourly" ? "outline-active" : "secondary"}
+          onClick={() => {
+            setOption({ type: "hourly", show: true, value: -1 });
+          }}
+        >
+          {option.type !== "hourly"
+            ? "Hourly"
+            : `${option.value}hr${option.value > 1 ? "s" : ""}`}
+        </Button>
+
+        {!(option.type === "hourly" && option.show) ? null : (
+          <div className="absolute top-0 right-0 gap-px bg-gray-50 p-0.5 border shadow-xl rounded-lg inline-flex justify-end">
+            {range(1, 5).map((hour) => {
+              return (
+                <motion.div
+                  key={hour}
+                  variants={variants}
+                  initial="hidden"
+                  animate={option.type !== "hourly" ? "hidden" : "visible"}
+                >
+                  <Button
+                    title="Mark as Free customer"
+                    size={isCompact ? "icon" : "sm"}
+                    variant="outline"
+                    className="px-2"
+                    onClick={() => {
+                      setOption({ type: "hourly", show: false, value: hour });
+                    }}
+                  >
+                    {hour}hr
+                  </Button>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <Button
+        size={isCompact ? "icon" : "sm"}
+        variant={option.type === "fullday" ? "outline-active" : "secondary"}
+        onClick={() => setOption({ type: "fullday" })}
+      >
+        Full-day
       </Button>
     </div>
   );
@@ -453,10 +768,11 @@ function RoleChangingButton({ id }: { id: string }) {
 const map = {
   paid: "text-[oklch(0.44_0.3_264.05)]",
   free: "text-foreground",
+  none: "",
   "--": "destructive",
 } as const;
 
-function PaymentBadge({ data }: { data: AccessPlan }) {
+function PaymentBadge({ data }: { data?: AccessStruct }) {
   const _kind = data?.kind ?? "--";
 
   return <span className={cn(map[_kind], "capitalize")}>{_kind ?? "--"}</span>;

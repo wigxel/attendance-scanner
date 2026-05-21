@@ -9,7 +9,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { safeStr, serialNo } from "@/lib/data.helpers";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CalendarIcon, EyeIcon, MoreVertical, User } from "lucide-react";
+import {
+  CalendarIcon,
+  EyeIcon,
+  MoreVertical,
+  User,
+  UserPen,
+} from "lucide-react";
 
 export type UserRow = {
   id: string;

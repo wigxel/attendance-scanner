@@ -156,8 +156,8 @@ export function MonthlyReservationsTable() {
   return (
     <Card className="">
       <div className="space-y-4 p-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap md:flex-nowrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={handlePrevMonth}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -207,7 +207,7 @@ export function MonthlyReservationsTable() {
             </TooltipProvider>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center self-stretch gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">

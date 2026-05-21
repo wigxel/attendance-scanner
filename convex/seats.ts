@@ -49,7 +49,9 @@ export const getAvailableSeats = query({
         )
         .collect();
 
-      bookedSeats.forEach((bs) => bookedSeatIds.add(bs.seatId));
+      for (const bs of bookedSeats) {
+        bookedSeatIds.add(bs.seatId);
+      }
     }
 
     // Return seats that are NOT occupied
@@ -99,7 +101,9 @@ export const getAllSeatsForDateRange = query({
         )
         .collect();
 
-      bookedSeats.forEach((bs) => bookedSeatIds.add(bs.seatId));
+      for (const bs of bookedSeats) {
+        bookedSeatIds.add(bs.seatId);
+      }
     }
 
     // Determine the status of each seat for the given date range

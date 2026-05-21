@@ -80,7 +80,7 @@ const Page = () => {
         </div>
       </section>
 
-      <div className="px-8 gap-4">
+      <div className="px-4 md:px-8 gap-4">
         {tab === "list" ? (
           <ErrorBoundary FallbackComponent={MonthlyReservationsErrorFallback}>
             <MonthlyReservationsTable />

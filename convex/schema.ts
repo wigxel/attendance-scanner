@@ -1,7 +1,7 @@
 import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { accessPlanSchema, featureRequestStatus } from "./shared";
+import { accessPlanStruct, featureRequestStatus } from "./shared";
 
 const accessPlans = defineTable({
   key: v.string(),
@@ -21,7 +21,7 @@ const daily_register = defineTable({
     name: v.string(),
     visitorId: v.string(),
   }),
-  access: accessPlanSchema,
+  access: accessPlanStruct,
   admitted_by: v.string(), // v.id("profile"),
   ticketId: v.optional(v.id("tickets")),
 })

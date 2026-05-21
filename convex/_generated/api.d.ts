@@ -19,6 +19,7 @@ import type * as metrics from "../metrics.js";
 import type * as myFunctions from "../myFunctions.js";
 import type * as register from "../register.js";
 import type * as seats from "../seats.js";
+import type * as seedScanRecords from "../seedScanRecords.js";
 import type * as seedSeats from "../seedSeats.js";
 import type * as shared from "../shared.js";
 import type * as utils from "../utils.js";
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   myFunctions: typeof myFunctions;
   register: typeof register;
   seats: typeof seats;
+  seedScanRecords: typeof seedScanRecords;
   seedSeats: typeof seedSeats;
   shared: typeof shared;
   utils: typeof utils;

@@ -17,8 +17,44 @@ import {
 import { components } from "./_generated/api";
 import { api, internal } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
-import { type MutationCtx, internalMutation, query } from "./_generated/server";
+import {
+  type MutationCtx,
+  internalMutation,
+  mutation,
+  query,
+} from "./_generated/server";
 import { deleteConfig, getConfig, setConfig } from "./config";
+
+export const updateProfile = mutation({
+  args: {
+    userId: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+    phoneNumber: v.optional(v.string()),
+    email: v.optional(v.string()),
+    occupation: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("profile")
+      .withIndex("by_user_id", (q) => q.eq("id", args.userId))
+      .first();
+
+    if (!profile) {
+      throw new ConvexError("Profile not found");
+    }
+
+    await ctx.db.patch(profile._id, {
+      firstName: args.firstName,
+      lastName: args.lastName,
+      phoneNumber: args.phoneNumber,
+      email: args.email,
+      occupation: args.occupation,
+    });
+
+    return profile._id;
+  },
+});
 
 export const getVisitHistory = query({
   args: { paginationOpts: paginationOptsValidator, userId: v.string() },

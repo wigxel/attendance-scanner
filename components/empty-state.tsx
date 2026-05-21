@@ -52,7 +52,7 @@ const EmptyStateDescription = React.forwardRef<
       ref={ref}
       {...props}
       className={cn(
-        "text-sm text-muted-foreground text-balance",
+        "text-sm text-muted-foreground text-center text-balance",
         props.className,
       )}
     />

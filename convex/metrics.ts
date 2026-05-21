@@ -41,8 +41,13 @@ export const sumPaidAccess = query({
 
     const total = paidRegisters.reduce((acc, r) => {
       if (r.access?.kind === "paid") {
+        if ("amountInKobo" in r.access) {
+          return acc + r.access.amountInKobo / 100;
+        }
+
         return acc + r.access.amount;
       }
+
       return acc;
     }, 0);
 

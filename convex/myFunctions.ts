@@ -10,12 +10,13 @@ import {
   setHours,
   subDays,
 } from "date-fns";
+import { isNullable } from "effect/Predicate";
 import { z } from "zod";
 import { logger } from "../config/logger";
 import { safeStr } from "../lib/data.helpers";
 import { components } from "./_generated/api";
 import { api } from "./_generated/api";
-import type { DataModel, Id } from "./_generated/dataModel";
+import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { setExternalId, updateClerkUser } from "./clerk";
 import { visitsAggregate } from "./customers";
@@ -133,10 +134,20 @@ export const getUserById = query({
     userId: v.string(),
   },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const user = await ctx.db
       .query("profile")
       .filter((q) => q.eq(q.field("id"), args.userId))
       .unique();
+
+    if (isNullable(user)) return null;
+
+    const occupation = isNullable(user.occupation)
+      ? await ctx.db.get(user.occupation).then((record) => {
+          return (record as Doc<"occupations">)?.name ?? "unknown";
+        })
+      : "unknown";
+
+    return { ...user, occupation: occupation };
   },
 });
 

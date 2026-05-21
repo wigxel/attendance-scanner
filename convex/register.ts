@@ -1,5 +1,9 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { endOfDay, format, startOfDay, subDays } from "date-fns";
+import { Effect, pipe } from "effect";
+import { O } from "../lib/fp.helpers";
+import { api } from "./_generated/api";
+import { Doc } from "./_generated/dataModel";
 import { internalMutation, mutation } from "./_generated/server";
 import { PlanImpl } from "./shared";
 
@@ -78,14 +82,21 @@ export const setFreeAccess = internalMutation({
 export const updateTodaysRegisterAccess = mutation({
   args: {
     userId: v.string(),
-    plan: v.string(),
+    plan: v.optional(v.string()),
+    paymentType: v.optional(
+      v.union(v.literal("cash"), v.literal("bank_transfer")),
+    ),
   },
   handler: async (ctx, args) => {
     const today = new Date();
     const start = startOfDay(today).toISOString();
     const end = endOfDay(today).toISOString();
 
-    const plan = await PlanImpl.validatePlan(ctx.db, args.plan);
+    const profile = await ctx.runQuery(api.myFunctions.getProfile);
+
+    if (!profile) {
+      throw new ConvexError("User not found.");
+    }
 
     const record = await ctx.db
       .query("daily_register")
@@ -99,10 +110,49 @@ export const updateTodaysRegisterAccess = mutation({
       .first();
 
     if (!record) {
-      throw new Error(`User ${args.userId} not found in today's register`);
+      throw new ConvexError(
+        `${profile.firstName} not found in today's register. Update possibly coming late.`,
+      );
     }
 
-    await ctx.db.patch(record._id, { access: PlanImpl.toStruct(plan) });
+    if (args.plan) {
+      const plan = await PlanImpl.validatePlan(ctx.db, args.plan);
+
+      await ctx.db.patch(record._id, {
+        access: PlanImpl.toStruct(plan),
+      });
+    }
+
+    if (args.paymentType) {
+      const updatePayment = pipe(
+        PlanImpl.normalize(record.access),
+        Effect.andThen(async (access_record) => {
+          if (access_record.kind !== "paid") {
+            return Effect.logInfo("Skipping because Access type is free");
+          }
+
+          const modified_access_plan = PlanImpl.toOverwrite(access_record, {
+            kind: "paid",
+            paymentMethod: args.paymentType,
+          });
+
+          if (O.isSome(modified_access_plan)) {
+            await ctx.db.patch(record._id, {
+              access: modified_access_plan.value,
+            });
+
+            return Effect.logInfo("Update successful");
+          }
+
+          return Effect.logInfo("Skipped. No overwrite needed");
+        }),
+        Effect.flatten,
+      );
+
+      await Effect.runPromise(updatePayment).catch((err) => {
+        throw new ConvexError(err.message);
+      });
+    }
 
     return "success" as const;
   },

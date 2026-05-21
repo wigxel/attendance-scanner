@@ -2,10 +2,10 @@
 import { api } from "@/convex/_generated/api";
 import { useCustomer } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
-import { usePaginatedQuery, useQuery } from "convex/react";
+import { usePaginatedQuery, useMutation, useQuery } from "convex/react";
 import { format, isSameYear } from "date-fns";
-import { Globe } from "lucide-react";
-import React from "react";
+import { Globe, Pencil } from "lucide-react";
+import React, { useState } from "react";
 import { Area, AreaChart } from "recharts";
 import {
   EmptyState,
@@ -18,6 +18,7 @@ import { Button } from "./ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 import { ScrollArea } from "./ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
+import { CustomerEditForm } from "./forms/CustomerEditForm";
 
 function CustomerSheet({
   userId,
@@ -29,6 +30,11 @@ function CustomerSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const customer = useCustomer({ userId: userId ?? "" });
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const updateProfile = useMutation(api.customers.updateProfile);
+
   const {
     results: visits,
     status,
@@ -39,22 +45,68 @@ function CustomerSheet({
     { initialNumItems: 20 },
   );
 
+  const handleSave = async (data: {
+    firstName: string;
+    lastName: string;
+    phoneNumber?: string;
+    email?: string;
+    occupation: string;
+  }) => {
+    if (!userId) return;
+    setIsSubmitting(true);
+    try {
+      await updateProfile({
+        userId,
+        ...data,
+      });
+      setIsEditing(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
         className="w-full sm:max-w-md p-0 flex flex-col h-full overflow-y-auto"
       >
-        <SheetHeader className="p-6 border-b">
+        <SheetHeader className="p-6 border-b flex flex-row items-center justify-between">
           <SheetTitle>Customer Details</SheetTitle>
+          {customer && !isEditing && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+              className="h-8 w-8 p-0"
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+          )}
         </SheetHeader>
         <ScrollArea className="flex-1">
-          {customer && (
+          {customer && isEditing ? (
+            <div className="p-6">
+              <CustomerEditForm
+                initialData={{
+                  firstName: customer.firstName,
+                  lastName: customer.lastName,
+                  phoneNumber: customer.phoneNumber,
+                  email: customer.email,
+                  occupation: customer.occupation,
+                }}
+                onSubmit={handleSave}
+                onCancel={() => setIsEditing(false)}
+                isLoading={isSubmitting}
+              />
+            </div>
+          ) : customer ? (
             <div className="p-6 flex items-start gap-4">
               <CustomerAvatar
                 userId={userId ?? ""}
                 className="w-16 h-16 shrink-0"
               />
+
               <div className="flex-1">
                 <h3 className="font-semibold text-lg">
                   {customer.firstName} {customer.lastName}
@@ -69,9 +121,11 @@ function CustomerSheet({
                   {customer.occupation}
                 </p>
               </div>
+
               {userId && <CustomerVisitTrend userId={userId} />}
             </div>
-          )}
+          ) : null}
+
           <div className="p-6 pt-0 border-t">
             <h4 className="font-semibold mb-4 mt-4">Visit History</h4>
 
