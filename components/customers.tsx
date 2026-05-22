@@ -400,8 +400,6 @@ export function RegisteredUserEntry({
     ? false
     : differenceInHours(Date.now(), entry.timestamp) < 24;
 
-  if (!user) return null;
-
   const handleClick = () => {
     onSelect?.(entry);
   };
@@ -410,6 +408,8 @@ export function RegisteredUserEntry({
     "(max-width: 768px) and (orientation: portrait)",
     { defaultValue: true },
   );
+
+  if (!user) return <p>No user found</p>;
 
   const content = (
     <li className="flex w-full group items-center hover:bg-gray-50 group gap-4 pt-2 px-4 cursor-pointer">
@@ -511,7 +511,6 @@ export function RegisteredUserEntry({
           <PlanTypeToggle
             disabled={!can_modify_plan}
             value={entry.access}
-            size="full"
             userId={entry.userId}
           />
         </li>

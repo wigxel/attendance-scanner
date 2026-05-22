@@ -136,9 +136,8 @@ export const PlanImpl = {
   },
 
   duration(access?: AccessStruct): O.Option<AccessDuration> {
-    // @ts-expect-error No worries
-    return access?.kind === "paid"
-      ? O.fromNullable(access?.duration)
+    return PlanImpl.type("paid")(access)
+      ? O.fromNullable(access.duration)
       : O.none();
   },
 

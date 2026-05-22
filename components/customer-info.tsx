@@ -2,7 +2,7 @@
 import { api } from "@/convex/_generated/api";
 import { useCustomer } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
-import { usePaginatedQuery, useMutation, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { format, isSameYear } from "date-fns";
 import { Globe, Pencil } from "lucide-react";
 import React, { useState } from "react";
@@ -13,12 +13,12 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "./empty-state";
+import { CustomerEditForm } from "./forms/CustomerEditForm";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 import { ScrollArea } from "./ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
-import { CustomerEditForm } from "./forms/CustomerEditForm";
 
 function CustomerSheet({
   userId,
@@ -256,10 +256,7 @@ function CustomerAvatar({
   );
 }
 
-type AccessPlan =
-  | { kind: "free" }
-  | { kind: "paid"; amount: number }
-  | undefined;
+type AccessPlan = { kind: "free" } | { kind: "paid" } | undefined;
 
 function PaymentBadge({ data }: { data: AccessPlan }) {
   const kind = data?.kind ?? "--";
