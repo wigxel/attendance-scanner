@@ -726,8 +726,8 @@ function PlanTypeToggle({
   };
 
   const option = PlanImpl.duration(value).pipe(
-    O.getOrElse(() => ({ type: "none" as const }))
-  )
+    O.getOrElse(() => ({ type: "none" as const })),
+  );
 
   return (
     <div className="flex items-center gap-1">
@@ -737,7 +737,7 @@ function PlanTypeToggle({
           variant={option.type === "hourly" ? "outline-active" : "secondary"}
           disabled={disabled}
           onClick={() => {
-            setShowDialog(true)
+            setShowDialog(true);
           }}
         >
           {option.type === "hourly"
@@ -748,7 +748,8 @@ function PlanTypeToggle({
         {!showDialog ? null : (
           <div className="absolute top-0 right-0 gap-px bg-gray-50 p-0.5 border shadow-xl rounded-lg inline-flex justify-end">
             {range(1, 5).map((hour) => {
-              const isActive = option.type === "hourly" && option.value === hour;
+              const isActive =
+                option.type === "hourly" && option.value === hour;
 
               return (
                 <motion.div
@@ -763,7 +764,7 @@ function PlanTypeToggle({
                     variant={isActive ? "outline-active" : "outline"}
                     className="px-2"
                     onClick={() => {
-                      setShowDialog(false)
+                      setShowDialog(false);
                       setOption({ type: "hourly", value: hour });
                     }}
                   >

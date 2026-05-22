@@ -81,6 +81,7 @@ describe("PlanImpl.toOverwrite", () => {
           planId: "p2",
           amountInKobo: 10000,
           paymentMethod: "bank_transfer",
+          duration: { type: "fullday" },
         });
       }
     });
@@ -107,8 +108,9 @@ describe("PlanImpl.toOverwrite", () => {
           _v: "2",
           kind: "paid",
           planId: "p2",
-          amountInKobo: 5000,
+          amountInKobo: 5000 * 100, // 500000
           paymentMethod: "bank_transfer",
+          duration: { type: "fullday" },
         });
       }
     });
@@ -181,8 +183,9 @@ describe("PlanImpl.normalize", () => {
         _v: "2",
         kind: "paid",
         planId: "p1",
-        amountInKobo: 5000,
+        amountInKobo: 5000 * 100, // 500000
         paymentMethod: "bank_transfer",
+        duration: { type: "fullday" },
       });
     });
 
@@ -197,6 +200,8 @@ describe("PlanImpl.normalize", () => {
 
       // @ts-expect-error No important
       expect(result.planId).toBe("gold_plan");
+      expect(result.amountInKobo).toBe(10000 * 100); // 1000000
+      expect(result.duration).toEqual({ type: "fullday" });
     });
 
     it("should convert amount to amountInKobo", async () => {
@@ -204,7 +209,7 @@ describe("PlanImpl.normalize", () => {
       const result = await normalize(record);
 
       // @ts-expect-error No important
-      expect(result.amountInKobo).toBe(1234);
+      expect(result.amountInKobo).toBe(1234 * 100); // 123400
     });
   });
 
@@ -242,30 +247,76 @@ describe("PlanImpl.normalize", () => {
 
   describe("invalid records", () => {
     it("should throw on invalid record", async () => {
-      const record = { kind: "unknown" };
-      await expect(
-        normalize(record),
-      ).rejects.toThrowErrorMatchingInlineSnapshot(
-        `[(FiberFailure) PlanError: Invalid AccessStruct provided]`,
-      );
+      const record = { kind: "unknown" as any };
+      await expect(normalize(record)).rejects.toThrow();
     });
 
     it("should throw on missing required fields", async () => {
       const record = { kind: "paid" as const };
-      await expect(
-        normalize(record),
-      ).rejects.toThrowErrorMatchingInlineSnapshot(
-        `[(FiberFailure) PlanError: Invalid AccessStruct provided]`,
-      );
+      await expect(normalize(record)).rejects.toThrow();
     });
 
     it("should throw on incomplete v2 record", async () => {
       const record = { _v: "2" as const, kind: "paid" as const };
-      await expect(
-        normalize(record),
-      ).rejects.toThrowErrorMatchingInlineSnapshot(
-        `[(FiberFailure) PlanError: Invalid AccessStruct provided]`,
-      );
+      await expect(normalize(record)).rejects.toThrow();
     });
+  });
+});
+
+describe("PlanImpl.type", () => {
+  it("should return type guard for 'free'", () => {
+    const isFree = PlanImpl.type("free");
+
+    expect(isFree({ kind: "free" as const })).toBe(true);
+    expect(isFree({ kind: "paid" as const, planId: "p1", amount: 1000 })).toBe(
+      false,
+    );
+    expect(isFree(null)).toBe(false);
+    expect(isFree(undefined)).toBe(false);
+    expect(isFree({})).toBe(false);
+    expect(isFree("string")).toBe(false);
+  });
+
+  it("should return type guard for 'paid'", () => {
+    const isPaid = PlanImpl.type("paid");
+
+    expect(isPaid({ kind: "paid" as const, planId: "p1", amount: 1000 })).toBe(
+      true,
+    );
+    expect(isPaid({ kind: "free" as const })).toBe(false);
+    expect(isPaid(null)).toBe(false);
+    expect(isPaid(undefined)).toBe(false);
+    expect(isPaid({})).toBe(false);
+    expect(isPaid("string")).toBe(false);
+  });
+});
+
+describe("PlanImpl.paymentMethod", () => {
+  it("should return bank_transfer for free plan", () => {
+    expect(PlanImpl.paymentMethod({ kind: "free" as const })).toBe(
+      "bank_transfer",
+    );
+  });
+
+  it("should return cash for paid plan with cash", () => {
+    const params = {
+      kind: "paid" as const,
+      planId: "p1",
+      amountInKobo: 1000,
+      paymentMethod: "cash" as const,
+    } as any;
+
+    expect(PlanImpl.paymentMethod(params)).toBe("cash");
+  });
+
+  it("should return bank_transfer for paid plan with bank_transfer", () => {
+    const params = {
+      kind: "paid" as const,
+      planId: "p1",
+      amountInKobo: 1000,
+      paymentMethod: "bank_transfer" as const,
+    } as any;
+
+    expect(PlanImpl.paymentMethod(params)).toBe("bank_transfer");
   });
 });

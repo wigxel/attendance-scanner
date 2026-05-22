@@ -166,14 +166,14 @@ export const updateTodaysRegisterAccess = mutation({
       if (!res.success) {
         console.error(res.error);
         throw new ConvexError("Invalid duration");
-      };
+      }
 
       if (PlanImpl.type("paid")(record.access)) {
         await ctx.db.patch(record._id, {
           access: {
             ...record.access,
-            duration: res.data
-          }
+            duration: res.data,
+          },
         });
       }
     }

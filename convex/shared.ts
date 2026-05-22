@@ -28,18 +28,21 @@ export const accessPlanStruct = v.union(
     planId: v.string(),
     amountInKobo: v.number(),
     paymentMethod: v.union(v.literal("cash"), v.literal("bank_transfer")),
-    duration: v.optional(v.any())
+    duration: v.optional(v.any()),
   }),
 );
 
 const durationSchemaValidator = z.union([
   z.object({
     type: z.literal("hourly"),
-    value: z.number().min(1, { message: "Hourly value must be at least 1h" }).max(6, { message: "Hourly value cannot exceed 6" }),
+    value: z
+      .number()
+      .min(1, { message: "Hourly value must be at least 1h" })
+      .max(6, { message: "Hourly value cannot exceed 6" }),
   }),
   z.object({
     type: z.literal("fullday"),
-  })
+  }),
 ]);
 
 export const accessPlanSchemaValidator = z.union([
@@ -80,7 +83,9 @@ export const PlanImpl = {
     return plan;
   },
 
-  toStruct(plan: Doc<"accessPlans"> & Partial<AccessStruct>): AccessFreeStruct | AccessPaidV2 {
+  toStruct(
+    plan: Doc<"accessPlans"> & Partial<AccessStruct>,
+  ): AccessFreeStruct | AccessPaidV2 {
     if (plan.key === "free") {
       return { kind: "free" as const };
     }
@@ -91,7 +96,7 @@ export const PlanImpl = {
       planId: plan.key,
       amountInKobo: Math.max(0, plan.price / plan.no_of_days),
       paymentMethod: "bank_transfer",
-      duration: { type: "fullday" }
+      duration: { type: "fullday" },
     };
   },
 
@@ -118,7 +123,7 @@ export const PlanImpl = {
           planId: record.planId,
           amountInKobo: record.amount * 100,
           paymentMethod: "bank_transfer",
-          duration: { type: "fullday" }
+          duration: { type: "fullday" },
         } satisfies AccessPaidV2;
       }
 
@@ -132,7 +137,9 @@ export const PlanImpl = {
 
   duration(access?: AccessStruct): O.Option<AccessDuration> {
     // @ts-expect-error No worries
-    return access?.kind === "paid" ? O.fromNullable(access?.duration) : O.none();
+    return access?.kind === "paid"
+      ? O.fromNullable(access?.duration)
+      : O.none();
   },
 
   type(type: "paid" | "free") {
@@ -208,7 +215,7 @@ type AccessPaidV2 = {
   planId: string;
   amountInKobo: number;
   paymentMethod: "cash" | "bank_transfer";
-  duration?: AccessDuration
+  duration?: AccessDuration;
 };
 
 type AccessPaidV1 = {
@@ -222,7 +229,7 @@ type AccessFreeStruct = { kind: "free" };
 
 export type AccessStruct = AccessPaidV1 | AccessPaidV2 | AccessFreeStruct;
 
-export type AccessDuration = z.infer<typeof durationSchemaValidator>
+export type AccessDuration = z.infer<typeof durationSchemaValidator>;
 
 export class PlanError extends TaggedError("PlanError") {
   constructor(public message: string) {
