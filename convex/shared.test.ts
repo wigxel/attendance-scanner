@@ -200,7 +200,9 @@ describe("PlanImpl.normalize", () => {
 
       // @ts-expect-error No important
       expect(result.planId).toBe("gold_plan");
+      // @ts-expect-error No important
       expect(result.amountInKobo).toBe(10000 * 100); // 1000000
+      // @ts-expect-error No important
       expect(result.duration).toEqual({ type: "fullday" });
     });
 

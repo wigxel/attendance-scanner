@@ -1,3 +1,4 @@
+import { expect, it } from 'vitest'
 import { AESAlgo } from "./reversible-hasher";
 
 it("should decipher", () => {
