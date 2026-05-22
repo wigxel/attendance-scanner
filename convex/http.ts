@@ -216,5 +216,152 @@ http.route({
   handler: handleEvents,
 });
 
-// Add any custom HTTP routes here if needed in the future
+// ---------------------------------------------------------------------------
+// AES-256-CBC Encryption helpers (matches reversible-hasher.ts pattern)
+// ---------------------------------------------------------------------------
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = Number.parseInt(hex.slice(i, i + 2), 16);
+  }
+  return bytes;
+}
+
+function bytesToHex(bytes: ArrayBuffer): string {
+  return Array.from(new Uint8Array(bytes))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function deriveAESKey(): Promise<CryptoKey> {
+  const salt = process.env.QR_CODE_SALT;
+  if (!salt) throw new Error("QR_CODE_SALT not set");
+  const keyData = await crypto.subtle.digest("SHA-256", encoder.encode(salt));
+  return crypto.subtle.importKey("raw", keyData, { name: "AES-CBC" }, false, [
+    "encrypt",
+    "decrypt",
+  ]);
+}
+
+function getEncryptionIV(): Uint8Array {
+  const hex = process.env.QR_CODE_VI_HEX;
+  if (!hex) throw new Error("QR_CODE_VI_HEX not set");
+  return hexToBytes(hex);
+}
+
+async function encryptAES(message: string): Promise<string> {
+  const key = await deriveAESKey();
+  const iv = getEncryptionIV();
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-CBC", iv },
+    key,
+    encoder.encode(message),
+  );
+  return bytesToHex(encrypted);
+}
+
+async function decryptAES(encryptedHex: string): Promise<string> {
+  const key = await deriveAESKey();
+  const iv = getEncryptionIV();
+  const encrypted = await crypto.subtle.decrypt(
+    { name: "AES-CBC", iv },
+    key,
+    hexToBytes(encryptedHex),
+  );
+  return decoder.decode(encrypted);
+}
+
+// ---------------------------------------------------------------------------
+// Report / Decrypt API Key
+// ---------------------------------------------------------------------------
+
+const REPORT_API_KEY = "a9f3c17d8b4e2f60c1d9ab73";
+
+// ---------------------------------------------------------------------------
+// GET /reports/daily - Returns encrypted daily report
+// ---------------------------------------------------------------------------
+
+http.route({
+  method: "GET",
+  path: "/reports/daily",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const url = new URL(request.url);
+      const date = url.searchParams.get("date") ?? undefined;
+
+      const report = await ctx.runQuery(api.reports.getDaily, { date });
+
+      const plaintext = JSON.stringify(report);
+      const encrypted = await encryptAES(plaintext);
+
+      return new Response(JSON.stringify({ encrypted }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      console.error("Failed to generate daily report:", err);
+      return new Response(
+        JSON.stringify({ error: (err as Error).message }),
+        { status: 500, headers: { "Content-Type": "application/json" } },
+      );
+    }
+  }),
+});
+
+// ---------------------------------------------------------------------------
+// POST /decrypt - Decrypts data with public key as Bearer token
+// ---------------------------------------------------------------------------
+
+http.route({
+  method: "POST",
+  path: "/decrypt",
+  handler: httpAction(async (_ctx, request) => {
+    try {
+      const authHeader = request.headers.get("Authorization");
+
+      if (!authHeader?.startsWith("Bearer ")) {
+        return new Response(
+          JSON.stringify({ error: "Missing or invalid Authorization header" }),
+          { status: 401, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
+      const token = authHeader.slice("Bearer ".length);
+
+      if (token !== REPORT_API_KEY) {
+        return new Response(
+          JSON.stringify({ error: "Invalid API key" }),
+          { status: 401, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
+      const encrypted = await request.text();
+      if (!encrypted) {
+        return new Response(
+          JSON.stringify({ error: "Missing encrypted data in request body" }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
+      const decrypted = await decryptAES(encrypted);
+      const data = JSON.parse(decrypted);
+
+      return new Response(JSON.stringify(data), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      console.error("Decryption failed:", err);
+      return new Response(
+        JSON.stringify({ error: "Decryption failed" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+  }),
+});
+
 export default http;

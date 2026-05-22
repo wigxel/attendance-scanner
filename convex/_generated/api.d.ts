@@ -18,6 +18,7 @@ import type * as http from "../http.js";
 import type * as metrics from "../metrics.js";
 import type * as myFunctions from "../myFunctions.js";
 import type * as register from "../register.js";
+import type * as reports from "../reports.js";
 import type * as seats from "../seats.js";
 import type * as seedScanRecords from "../seedScanRecords.js";
 import type * as seedSeats from "../seedSeats.js";
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   metrics: typeof metrics;
   myFunctions: typeof myFunctions;
   register: typeof register;
+  reports: typeof reports;
   seats: typeof seats;
   seedScanRecords: typeof seedScanRecords;
   seedSeats: typeof seedSeats;
