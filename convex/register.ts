@@ -4,6 +4,7 @@ import { Effect, pipe } from "effect";
 import { isNullable } from "effect/Predicate";
 import { O } from "../lib/fp.helpers";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { internalMutation, mutation } from "./_generated/server";
 import { PlanImpl } from "./shared";
 
@@ -111,8 +112,10 @@ export const updateTodaysRegisterAccess = mutation({
       .first();
 
     if (!record) {
+      const customer = await ctx.db.get(args.userId as Id<"users">);
+
       throw new ConvexError(
-        `${profile.firstName} not found in today's register. Update possibly coming late.`,
+        `${customer?.name ?? "User"} not found in today's register. Update possibly coming late.`,
       );
     }
 

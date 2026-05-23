@@ -579,6 +579,8 @@ export function RegisteredUserEntry({
             <Drawer.Description className="text-sm">
               Set attendance information
             </Drawer.Description>
+
+            {attendanceSettingsContent}
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
