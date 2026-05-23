@@ -6,6 +6,7 @@ import {
   isSameMonth,
   parseISO,
   startOfMonth,
+  subWeeks,
 } from "date-fns";
 import { formatDateToLocalISO } from "../lib/utils";
 import { api } from "./_generated/api";
@@ -1018,25 +1019,31 @@ export const createManualBooking = mutation({
     const now = new Date();
     const bookingStartDate = parseISO(startDate);
     const bookingEndDate = addDays(bookingStartDate, plan.no_of_days);
-    const todayStr = format(now, "yyyy-MM-dd");
+    const last2Weeks = subWeeks(now, 2);
 
-    if (startDate < todayStr) {
-      throw new ConvexError("Start date cannot be in the past");
+    if (bookingStartDate < last2Weeks) {
+      throw new ConvexError("Start date cannot be later than 2 weeks ago");
     }
 
-    const activeBooking = await ctx.db
+    if (bookingEndDate <= bookingStartDate) {
+      throw new ConvexError("End date must be after start date.");
+    }
+
+    const newStart = format(bookingStartDate, "yyyy-MM-dd");
+    const newEnd = format(bookingEndDate, "yyyy-MM-dd");
+
+    const existingBookings = await ctx.db
       .query("bookings")
       .withIndex("user_id", (q) => q.eq("userId", userId))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("status"), "confirmed"),
-          q.gte(q.field("endDate"), todayStr),
-        ),
-      )
-      .first();
+      .filter((q) => q.eq(q.field("status"), "confirmed"))
+      .collect();
 
-    if (activeBooking) {
-      throw new ConvexError("Customer already has an active booking");
+    for (const existing of existingBookings) {
+      const overlaps =
+        newStart <= existing.endDate && newEnd >= existing.startDate;
+      if (overlaps) {
+        throw new ConvexError("Date range overlaps with an existing booking.");
+      }
     }
 
     const durationType = (() => {
@@ -1135,7 +1142,7 @@ export const getMonthlyReservations = query({
         return startInMonth && !endInMonth;
       }
 
-      return startInMonth && endInMonth;
+      return startInMonth;
     });
 
     const bookingsWithCustomer = await Promise.all(

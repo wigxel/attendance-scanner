@@ -1,5 +1,5 @@
 "use client";
-import { DataTableDemo } from "@/components/DataTable";
+import { AppDataTable } from "@/components/DataTable";
 import { createColumns } from "@/components/columns";
 import {
   Sheet,
@@ -183,7 +183,7 @@ export function CustomersTable() {
 
   return (
     <div className="p-4">
-      <DataTableDemo
+      <AppDataTable
         columns={tableColumns}
         data={users.map((user) => ({
           ...user,

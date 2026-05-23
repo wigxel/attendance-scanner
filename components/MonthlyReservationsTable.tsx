@@ -7,6 +7,8 @@ import { useAction, useQuery } from "convex/react";
 import { format, parseISO, subMonths } from "date-fns";
 import { useState } from "react";
 
+import type { ColumnDef } from "@tanstack/react-table";
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,14 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Tooltip,
   TooltipContent,
@@ -41,12 +35,17 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AttendanceDrawer } from "./AttendanceDrawer";
+import { AppDataTable } from "./DataTable";
+import { EmptyStateContent, EmptyStateTitle } from "./empty-state";
 import { Card } from "./ui/card";
 
-const formatAmount = (amount: number) => currencyFormatter.format(amount / 100); // Convert from kobo to naira
+const formatAmount = (amount: number) => currencyFormatter.format(amount / 100);
 
 const formatDate = (timestamp: number) =>
   format(new Date(timestamp), "MMM d, yyyy");
+
+const formatISODate = (dateStr: string) =>
+  format(parseISO(dateStr), "MMM d, yyyy");
 
 const durationLabels: Record<string, string> = {
   day: "Day",
@@ -80,6 +79,63 @@ type MonthlyReservationsResponse = {
 
 type DurationType = "day" | "week" | "month" | "all";
 
+const columns: ColumnDef<BookingWithCustomer>[] = [
+  {
+    header: "S/N",
+    id: "sn",
+    cell: ({ row }) => <span className="font-medium">{row.index + 1}</span>,
+  },
+  {
+    header: "Customer",
+    accessorKey: "user.name",
+    cell: ({ row }) => (
+      <span className="font-medium">{row.original.user.name}</span>
+    ),
+  },
+  {
+    header: "Duration",
+    id: "durationType",
+    accessorKey: "durationType",
+    cell: ({ row }) => {
+      const dt = row.original.durationType;
+      return (
+        <span
+          className={cn(
+            "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+            dt === "day"
+              ? "bg-blue-100 text-blue-800"
+              : dt === "week"
+                ? "bg-green-100 text-green-800"
+                : "bg-purple-100 text-purple-800",
+          )}
+        >
+          {durationLabels[dt]}
+        </span>
+      );
+    },
+  },
+  {
+    header: "Start Date",
+    accessorKey: "startDate",
+    cell: ({ row }) => formatISODate(row.original.startDate),
+  },
+  {
+    header: "End Date",
+    accessorKey: "endDate",
+    cell: ({ row }) => formatISODate(row.original.endDate),
+  },
+  {
+    header: "Amount",
+    accessorKey: "amount",
+    cell: ({ row }) => formatAmount(row.original.amount),
+  },
+  {
+    header: "Created",
+    accessorKey: "createdAt",
+    cell: ({ row }) => formatDate(row.original.createdAt),
+  },
+];
+
 export function MonthlyReservationsTable() {
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
@@ -101,6 +157,7 @@ export function MonthlyReservationsTable() {
   const [isExporting, setIsExporting] = useState(false);
 
   const isLoading = data === null;
+  const bookings = data?.bookings ?? [];
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -153,198 +210,144 @@ export function MonthlyReservationsTable() {
     return format(date, "MMMM yyyy");
   };
 
+  const handleRowClick = (row: BookingWithCustomer) => {
+    setSelectedBookingId(row._id);
+    setIsDrawerOpen(true);
+  };
+
   return (
-    <Card className="">
-      <div className="space-y-4 p-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex flex-wrap md:flex-nowrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handlePrevMonth}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
+    <div className="space-y-4">
+      {isLoading ? (
+        <>
+          <Skeleton className="h-10 w-full" />
+          <Card>
+            <Skeleton className="h-[50svh] w-full" />
+          </Card>
+        </>
+      ) : (
+        <>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex flex-wrap md:flex-nowrap items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handlePrevMonth}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="min-w-[120px]">
-                  {monthLabel()} <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => handleMonthSelect(0)}>
-                  This Month
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleMonthSelect(1)}>
-                  Last Month
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleMonthSelect(2)}>
-                  2 Months Ago
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleMonthSelect(3)}>
-                  3 Months Ago
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="min-w-[120px]">
+                    {monthLabel()} <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => handleMonthSelect(0)}>
+                    This Month
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleMonthSelect(1)}>
+                    Last Month
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleMonthSelect(2)}>
+                    2 Months Ago
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleMonthSelect(3)}>
+                    3 Months Ago
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            <Button variant="outline" size="sm" onClick={handleNextMonth}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+              <Button variant="outline" size="sm" onClick={handleNextMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
 
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">Show overflow</span>
-                    <Switch checked={overflow} onCheckedChange={setOverflow} />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[250px]">
-                  <p>
-                    Show reservations that started in this month but ended in a
-                    different month (e.g., a monthly pass starting April 15 and
-                    ending May 15).
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">Show overflow</span>
+                      <Switch
+                        checked={overflow}
+                        onCheckedChange={setOverflow}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[250px]">
+                    <p>
+                      Show reservations that started in this month but ended in
+                      a different month (e.g., a monthly pass starting April 15
+                      and ending May 15).
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            <div className="flex items-center self-stretch gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Filter className="mr-2 h-4 w-4" />
+                    {durationType === "all"
+                      ? "All Types"
+                      : durationLabels[durationType]}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setDurationType("all")}>
+                    All Types
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setDurationType("day")}>
+                    Day
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setDurationType("week")}>
+                    Week
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setDurationType("month")}>
+                    Month
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleExport}
+                disabled={isExporting}
+              >
+                {isExporting ? (
+                  <>
+                    <LucideLoader className="size-4 animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <DownloadIcon className="size-4" />
+                    Export
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
-          <div className="flex items-center self-stretch gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Filter className="mr-2 h-4 w-4" />
-                  {durationType === "all"
-                    ? "All Types"
-                    : durationLabels[durationType]}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setDurationType("all")}>
-                  All Types
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setDurationType("day")}>
-                  Day
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setDurationType("week")}>
-                  Week
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setDurationType("month")}>
-                  Month
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <AppDataTable
+            columns={columns}
+            data={bookings}
+            onRowClick={handleRowClick}
+            emptyState={
+              <EmptyStateContent>
+                <EmptyStateTitle>No reservations found</EmptyStateTitle>
+              </EmptyStateContent>
+            }
+          />
 
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleExport}
-              disabled={isExporting}
-            >
-              {isExporting ? (
-                <>
-                  <LucideLoader className="size-4 animate-spin" />
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  <DownloadIcon className="size-4" />
-                  Export
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        <div className="rounded-md border min-h-[50svh]">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">S/N</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Created</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-8" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-32" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-16" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-20" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-24" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : data?.bookings.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
-                    No reservations found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data?.bookings.map((booking, index) => (
-                  <TableRow
-                    key={booking._id}
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setSelectedBookingId(booking._id);
-                      setIsDrawerOpen(true);
-                    }}
-                  >
-                    <TableCell className="font-medium">{index + 1}</TableCell>
-                    <TableCell className="font-medium">
-                      {booking.user.name}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={cn(
-                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                          booking.durationType === "day"
-                            ? "bg-blue-100 text-blue-800"
-                            : booking.durationType === "week"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-purple-100 text-purple-800",
-                        )}
-                      >
-                        {durationLabels[booking.durationType]}
-                      </span>
-                    </TableCell>
-                    <TableCell>{formatAmount(booking.amount)}</TableCell>
-                    <TableCell>{formatDate(booking.createdAt)}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {data && data.bookings.length > 0 && (
-          <div className="text-sm text-muted-foreground">
-            {data.bookings.length} reservation
-            {data.bookings.length !== 1 ? "s" : ""} found
-          </div>
-        )}
-      </div>
-
-      <AttendanceDrawer
-        bookingId={selectedBookingId}
-        isOpen={isDrawerOpen}
-        onClose={() => {
-          setIsDrawerOpen(false);
-          setSelectedBookingId(null);
-        }}
-      />
-    </Card>
+          <AttendanceDrawer
+            bookingId={selectedBookingId}
+            isOpen={isDrawerOpen}
+            onClose={() => {
+              setIsDrawerOpen(false);
+              setSelectedBookingId(null);
+            }}
+          />
+        </>
+      )}
+    </div>
   );
 }

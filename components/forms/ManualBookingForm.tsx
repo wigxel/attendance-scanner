@@ -21,8 +21,10 @@ import { api } from "@/convex/_generated/api";
 import { safeArray } from "@/lib/data.helpers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "convex/react";
-import { format } from "date-fns";
+import { format, subWeeks } from "date-fns";
+import React from "react";
 import { useForm } from "react-hook-form";
+import { MIN_VALUE_REG } from "recharts/types/util/ChartUtils";
 import * as z from "zod";
 
 const manualBookingSchema = z.object({
@@ -46,6 +48,10 @@ export function ManualBookingForm({
   onCancel,
 }: ManualBookingFormProps) {
   const accessPlans = useQuery(api.myFunctions.listAccessPlans);
+  const MIN_DATE = React.useMemo(
+    () => format(subWeeks(new Date(), 2), "yyyy-MM-dd"),
+    [],
+  );
 
   const form = useForm<ManualBookingFormValues>({
     resolver: zodResolver(manualBookingSchema),
@@ -112,7 +118,7 @@ export function ManualBookingForm({
                   type="date"
                   {...field}
                   disabled={isLoading}
-                  min={format(new Date(), "yyyy-MM-dd")}
+                  min={MIN_DATE}
                 />
               </FormControl>
               <FormMessage />
