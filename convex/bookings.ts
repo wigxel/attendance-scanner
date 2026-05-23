@@ -1,6 +1,5 @@
 import { ConvexError, v } from "convex/values";
 import {
-  addDays,
   endOfMonth,
   format,
   isSameMonth,
@@ -8,7 +7,7 @@ import {
   startOfMonth,
   subWeeks,
 } from "date-fns";
-import { formatDateToLocalISO } from "../lib/utils";
+import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
 import { api } from "./_generated/api";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -1018,7 +1017,7 @@ export const createManualBooking = mutation({
 
     const now = new Date();
     const bookingStartDate = parseISO(startDate);
-    const bookingEndDate = addDays(bookingStartDate, plan.no_of_days);
+    const bookingEndDate = calculateEndDate(bookingStartDate, plan.no_of_days);
     const last2Weeks = subWeeks(now, 2);
 
     if (bookingStartDate < last2Weeks) {
