@@ -528,7 +528,7 @@ export function RegisteredUserEntry({
           />
         </li>
 
-        <If cond={!isReservation || PlanImpl.type("paid")(entry.access)}>
+        <If cond={PlanImpl.type("paid")(entry.access) && !isReservation}>
           <li className="flex justify-between items-center select-none">
             <span className="font-semibold text-sm items-center inline-flex gap-2">
               <ReceiptIcon size="1.2em" />

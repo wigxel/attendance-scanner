@@ -3,13 +3,7 @@ import { TableAggregate } from "@convex-dev/aggregate";
 import type { GenericQueryCtx } from "convex/server";
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
-import {
-  formatISO,
-  isWithinInterval,
-  parseISO,
-  setHours,
-  subDays,
-} from "date-fns";
+import { formatISO, isWithinInterval, parseISO, setHours } from "date-fns";
 import { isNullable } from "effect/Predicate";
 import { z } from "zod";
 import { logger } from "../config/logger";
@@ -273,32 +267,18 @@ export const registerUser = mutation({
 
     // RESERVATION MODE: Validate Ticket
     if (args.mode === "reservation") {
-      const userTickets = await ctx.db
-        .query("tickets")
-        .withIndex("by_holder", (q) => q.eq("holderUserId", customer.id))
-        .collect();
+      const reservation = await ctx.runQuery(
+        api.myFunctions.getUserActiveReservation,
+        { userId: customer.id },
+      );
 
-      let activeTicket = null;
-      let activeBooking = null;
-
-      for (const ticket of userTickets) {
-        const booking = await ctx.db.get(ticket.bookingId);
-        if (booking && booking.status === "confirmed") {
-          const isDateActive = isWithinInterval(new Date(), {
-            start: parseISO(booking.startDate),
-            end: parseISO(booking.endDate),
-          });
-
-          if (isDateActive) {
-            activeTicket = ticket;
-            activeBooking = booking;
-            break; // Use the first active ticket found
-          }
-        }
+      if (!reservation) {
+        throw new ConvexError("No active reservation found for this customer.");
       }
 
-      if (!activeTicket || !activeBooking) {
-        throw new ConvexError("No active reservation found for this customer.");
+      const booking = await ctx.db.get(reservation.bookingId as Id<"bookings">);
+      if (!booking) {
+        throw new ConvexError("Booking not found.");
       }
 
       const id = await ctx.db.insert("daily_register", {
@@ -313,10 +293,9 @@ export const registerUser = mutation({
         timestamp: new Date().toISOString(),
         access: {
           kind: "paid",
-          planId: activeBooking.durationType, // e.g., "day", "week"
-          amount: activeBooking.pricePerSeat / activeBooking.duration / 100,
+          planId: booking.durationType,
+          amount: booking.pricePerSeat / booking.duration / 100,
         },
-        ticketId: activeTicket._id,
       });
       const entry = await ctx.db.get(id);
       if (entry) await visitsAggregate.insert(ctx, entry);
@@ -325,32 +304,12 @@ export const registerUser = mutation({
 
     // WALK_IN MODE: Use existing plan-based logic
     if (args.mode === "walk_in") {
-      const thirtyTwoDaysAgo = subDays(new Date(), 32);
+      const reservation = await ctx.runQuery(
+        api.myFunctions.getUserActiveReservation,
+        { userId: customer.id },
+      );
 
-      const userTickets = await ctx.db
-        .query("tickets")
-        .withIndex("by_holder", (q) => q.eq("holderUserId", customer.id))
-        .filter((q) =>
-          q.gte(q.field("_creationTime"), thirtyTwoDaysAgo.getTime()),
-        )
-        .collect();
-
-      let hasActiveBooking = false;
-      for (const ticket of userTickets) {
-        const booking = await ctx.db.get(ticket.bookingId);
-        if (booking && booking.status === "confirmed") {
-          const isDateActive = isWithinInterval(new Date(), {
-            start: parseISO(booking.startDate),
-            end: parseISO(booking.endDate),
-          });
-          if (isDateActive) {
-            hasActiveBooking = true;
-            break;
-          }
-        }
-      }
-
-      if (hasActiveBooking) {
+      if (reservation) {
         throw new ConvexError(
           "This customer has an active reservation. Please use Reservation mode instead.",
         );
@@ -374,6 +333,32 @@ export const registerUser = mutation({
       if (entry) await visitsAggregate.insert(ctx, entry);
       return; // End execution
     }
+  },
+});
+
+export const getUserActiveReservation = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("user_id", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "confirmed"))
+      .collect();
+
+    for (const booking of bookings) {
+      if (
+        isWithinInterval(new Date(), {
+          start: parseISO(booking.startDate),
+          end: parseISO(booking.endDate),
+        })
+      ) {
+        return {
+          bookingId: booking._id,
+          durationType: booking.durationType,
+        };
+      }
+    }
+    return null;
   },
 });
 

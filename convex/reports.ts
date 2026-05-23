@@ -1,6 +1,40 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { parse, format, startOfDay, endOfDay } from "date-fns";
+import { PlanImpl, type AccessStruct, type AccessDuration } from "./shared";
+import { O, pipe } from "../lib/fp.helpers";
+import { Match } from "effect";
+import type { Doc } from "./_generated/dataModel";
+import { api } from "./_generated/api";
+
+const DURATION_TYPE_TO_PLAN_KEY: Record<string, string> = {
+  day: "daily",
+  week: "weekly",
+  month: "monthly",
+};
+
+function calcFee(
+  access: AccessStruct,
+  planKey: string,
+  planMap: Map<string, Doc<"accessPlans">>,
+): number {
+  if (!PlanImpl.type("paid")(access)) return 0;
+
+  return pipe(
+    PlanImpl.duration(access),
+    O.getOrElse(() => null as AccessDuration | null),
+    Match.value,
+    Match.when({ type: "hourly" }, (dur) => 500 + 250 * (dur.value - 1)),
+    Match.orElse(() => {
+      const plan = planMap.get(planKey);
+      if (!plan) {
+        console.warn(`[reports] No plan found for key: "${planKey}"`);
+        return 0;
+      }
+      return plan.price / plan.no_of_days;
+    }),
+  );
+}
 
 export const getDaily = query({
   args: {
@@ -10,44 +44,97 @@ export const getDaily = query({
     const targetDate = args.date
       ? parse(args.date, "yyyy/MM/dd", new Date())
       : new Date();
-    
-    const start = startOfDay(targetDate);
-    const end = endOfDay(targetDate);
-    
-    // Query daily_register for the target date
+
+    const dayStart = startOfDay(targetDate);
+    const dayEnd = endOfDay(targetDate);
+
     const registers = await ctx.db
       .query("daily_register")
       .filter((q) =>
         q.and(
-          q.gte(q.field("timestamp"), start.toISOString()),
-          q.lte(q.field("timestamp"), end.toISOString()),
-        )
+          q.gte(q.field("timestamp"), dayStart.toISOString()),
+          q.lte(q.field("timestamp"), dayEnd.toISOString()),
+        ),
       )
       .collect();
-    
-    // Compute metrics
+
+    // Load all access plans for fee calculation
+    const allPlans = await ctx.db.query("accessPlans").collect();
+    const planMap = new Map(allPlans.map((p) => [p.key, p]));
+
     const uniqueUsers = new Set<string>();
     const uniquePaidUsers = new Set<string>();
     const uniqueFreeUsers = new Set<string>();
     const subscribedUsers = new Set<string>();
-    
+    let totalSales = 0;
+    const staffCounts = new Map<string, number>();
+    let weeklySubscribers = 0;
+    const reservationCache = new Map<
+      string,
+      { bookingId: string; durationType: string } | null
+    >();
+
     for (const reg of registers) {
       uniqueUsers.add(reg.userId);
-      
-      if (reg.access?.kind === "paid") {
+
+      if (PlanImpl.type("paid")(reg.access)) {
         uniquePaidUsers.add(reg.userId);
+
+        if (!reservationCache.has(reg.userId)) {
+          const res = await ctx.runQuery(
+            api.myFunctions.getUserActiveReservation,
+            { userId: reg.userId },
+          );
+          reservationCache.set(reg.userId, res);
+        }
+        const reservation = reservationCache.get(reg.userId);
+
+        const planKey = reservation
+          ? DURATION_TYPE_TO_PLAN_KEY[reservation.durationType]
+          : (DURATION_TYPE_TO_PLAN_KEY[reg.access.planId] ?? reg.access.planId);
+
+        const fee = calcFee(reg.access, planKey, planMap);
+        console.log(
+          `[reports] user: "${reg.userId}" plan: "${planKey}" fee: ${fee}`,
+        );
+        totalSales += fee;
+
+        if (reservation && reservation.durationType === "week") {
+          weeklySubscribers++;
+        }
       }
-      
-      if (reg.access?.kind === "free") {
+
+      if (PlanImpl.type("free")(reg.access)) {
         uniqueFreeUsers.add(reg.userId);
       }
-      
-      // Consider a user subscribed if they have a ticketId
+
       if (reg.ticketId) {
         subscribedUsers.add(reg.userId);
       }
+
+      if (reg.admitted_by) {
+        staffCounts.set(
+          reg.admitted_by,
+          (staffCounts.get(reg.admitted_by) ?? 0) + 1,
+        );
+      }
     }
-    
+
+    // Staff on duty: fetch profile names
+    const staffOnDuty: Array<{ name: string; admissions_count: number }> = [];
+    for (const [staffId, count] of staffCounts) {
+      const profile = await ctx.db
+        .query("profile")
+        .withIndex("by_user_id", (q) => q.eq("id", staffId))
+        .first();
+      if (profile) {
+        staffOnDuty.push({
+          name: `${profile.firstName} ${profile.lastName}`,
+          admissions_count: count,
+        });
+      }
+    }
+
     return {
       dailyReport: {
         date: format(targetDate, "yyyy/MM/dd"),
@@ -55,6 +142,9 @@ export const getDaily = query({
         no_of_paid_customers: uniquePaidUsers.size,
         no_of_free_customer: uniqueFreeUsers.size,
         subscribed_customers: subscribedUsers.size,
+        weekly_subscribers: weeklySubscribers,
+        total_sales: totalSales,
+        staff_on_duty: staffOnDuty,
       },
     };
   },

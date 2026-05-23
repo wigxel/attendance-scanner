@@ -304,10 +304,10 @@ http.route({
       });
     } catch (err) {
       console.error("Failed to generate daily report:", err);
-      return new Response(
-        JSON.stringify({ error: (err as Error).message }),
-        { status: 500, headers: { "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: (err as Error).message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
   }),
 });
@@ -333,10 +333,10 @@ http.route({
       const token = authHeader.slice("Bearer ".length);
 
       if (token !== REPORT_API_KEY) {
-        return new Response(
-          JSON.stringify({ error: "Invalid API key" }),
-          { status: 401, headers: { "Content-Type": "application/json" } },
-        );
+        return new Response(JSON.stringify({ error: "Invalid API key" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        });
       }
 
       const encrypted = await request.text();
@@ -356,10 +356,10 @@ http.route({
       });
     } catch (err) {
       console.error("Decryption failed:", err);
-      return new Response(
-        JSON.stringify({ error: "Decryption failed" }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "Decryption failed" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
   }),
 });
