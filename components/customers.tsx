@@ -422,7 +422,7 @@ export function RegisteredUserEntry({
           </div>
 
           <div className="flex gap-2 text-xs text-gray-500 font-mono">
-            <PaymentBadge data={entry.access} />•
+            <PaymentBadge data={entry.access} hasReservation={isReservation} />•
             <div>
               {pipe(
                 visitCount,
@@ -462,7 +462,11 @@ export function RegisteredUserEntry({
             <div className="flex gap-2 text-xs text-gray-500 font-mono">
               {intersperse(
                 [
-                  <PaymentBadge key="preview" data={entry.access} />,
+                  <PaymentBadge
+                    key="preview"
+                    data={entry.access}
+                    hasReservation={isReservation}
+                  />,
                   pipe(
                     Match.value(entry.access),
                     Match.whenAnd({ kind: "paid", _v: "2" }, (match) => {
@@ -797,10 +801,22 @@ const map = {
   "--": "destructive",
 } as const;
 
-function PaymentBadge({ data }: { data?: AccessStruct }) {
+function PaymentBadge(props: {
+  data?: AccessStruct;
+  hasReservation?: boolean;
+}) {
+  const { data, hasReservation = false } = props;
   const _kind = data?.kind ?? "--";
 
-  return <span className={cn(map[_kind], "capitalize")}>{_kind ?? "--"}</span>;
+  return (
+    <span
+      className={cn("capitalize", map[_kind], {
+        "text-purple-500": hasReservation,
+      })}
+    >
+      {_kind ?? "--"}
+    </span>
+  );
 }
 
 export const CustomerImpl = {
