@@ -13,7 +13,7 @@ export function Footer() {
       <p className="flex gap-6">
         <a href="tel:7045965937" className="hover:underline text-start">
           Need Help?{" "}
-          <span className="whitespace-nowrap">+ (234) 704 596 5937</span>
+          <span className="whitespace-nowrap">+ (234) 913 055 4887</span>
         </a>
         <span>•</span>
         <Link href="/legal/terms" className="hover:underline">

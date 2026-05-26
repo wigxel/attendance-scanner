@@ -67,6 +67,8 @@ export const getDaily = query({
     const uniqueFreeUsers = new Set<string>();
     const subscribedUsers = new Set<string>();
     let totalSales = 0;
+    let cashSales = 0;
+    let transferSales = 0;
     const staffCounts = new Map<string, number>();
     let weeklySubscribers = 0;
     const reservationCache = new Map<
@@ -98,6 +100,12 @@ export const getDaily = query({
           `[reports] user: "${reg.userId}" plan: "${planKey}" fee: ${fee}`,
         );
         totalSales += fee;
+
+        if (PlanImpl.paymentMethod(reg.access) === "cash") {
+          cashSales += fee;
+        } else {
+          transferSales += fee;
+        }
 
         if (reservation && reservation.durationType === "week") {
           weeklySubscribers++;
@@ -144,6 +152,8 @@ export const getDaily = query({
         subscribed_customers: subscribedUsers.size,
         weekly_subscribers: weeklySubscribers,
         total_sales: totalSales,
+        cash_sales: cashSales,
+        transfer_sales: transferSales,
         staff_on_duty: staffOnDuty,
       },
     };
