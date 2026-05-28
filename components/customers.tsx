@@ -23,6 +23,7 @@ import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
 import {
   differenceInDays,
   differenceInHours,
@@ -127,6 +128,8 @@ export function CustomersTable() {
   const [bookingUserName, setBookingUserName] = React.useState<string>("");
   const [isBookingLoading, setIsBookingLoading] = React.useState(false);
 
+  const router = useRouter();
+
   const createBooking = useMutation(api.bookings.createManualBooking);
 
   const handleViewProfile = useEvent((userId: string) => {
@@ -140,6 +143,10 @@ export function CustomersTable() {
       setBookingUserId(userId);
       setBookingUserName(userName);
     }, 16);
+  });
+
+  const handleCreateBookingWithSeat = useEvent((userId: string) => {
+    router.push(`/admin/bookings/create?userId=${userId}`);
   });
 
   const handleBookingSubmit = useEvent(
@@ -174,8 +181,9 @@ export function CustomersTable() {
       createColumns({
         onViewProfile: handleViewProfile,
         onCreateBooking: handleCreateBooking,
+        onCreateBookingWithSeat: handleCreateBookingWithSeat,
       }),
-    [handleViewProfile, handleCreateBooking],
+    [handleViewProfile, handleCreateBooking, handleCreateBookingWithSeat],
   );
 
   if (!users) {

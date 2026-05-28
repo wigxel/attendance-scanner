@@ -10,6 +10,7 @@ import {
 import { safeStr, serialNo } from "@/lib/data.helpers";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
+  Armchair,
   CalendarIcon,
   EyeIcon,
   MoreVertical,
@@ -33,11 +34,13 @@ export type UserRow = {
 interface ColumnActionsProps {
   onViewProfile: (userId: string) => void;
   onCreateBooking: (userId: string, userName: string) => void;
+  onCreateBookingWithSeat: (userId: string) => void;
 }
 
 export function createColumns({
   onViewProfile,
   onCreateBooking,
+  onCreateBookingWithSeat,
 }: ColumnActionsProps): ColumnDef<UserRow>[] {
   return [
     {
@@ -120,6 +123,15 @@ export function createColumns({
                   }}
                 >
                   <CalendarIcon /> Create Booking
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    return setTimeout(() => {
+                      return onCreateBookingWithSeat(userId);
+                    }, 16);
+                  }}
+                >
+                  <Armchair /> Book with Seat
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -996,13 +996,14 @@ export const createManualBooking = mutation({
     userId: v.string(),
     planKey: v.string(),
     startDate: v.string(),
+    seatId: v.optional(v.id("seats")),
   },
   handler: async (ctx, args) => {
     const profileId = await readId(ctx);
 
     if (!profileId) throw new ConvexError("Unauthorized");
 
-    const { userId, planKey, startDate } = args;
+    const { userId, planKey, startDate, seatId } = args;
 
     const profile = await ctx.db
       .query("profile")
@@ -1054,6 +1055,36 @@ export const createManualBooking = mutation({
       return "week" as const;
     })();
 
+    const seatIds: Id<"seats">[] = [];
+
+    if (seatId) {
+      const seat = await ctx.db.get(seatId);
+      if (!seat) throw new ConvexError("Seat not found");
+
+      const conflictingBookedSeats = await ctx.db
+        .query("bookedSeats")
+        .withIndex("by_seat_and_status", (q) =>
+          q.eq("seatId", seatId).eq("status", "confirmed"),
+        )
+        .collect();
+
+      for (const bookedSeat of conflictingBookedSeats) {
+        const booking = await ctx.db.get(bookedSeat.bookingId);
+        if (!booking) continue;
+
+        const datesOverlap = !(
+          booking.endDate < newStart || booking.startDate > newEnd
+        );
+        if (datesOverlap) {
+          throw new ConvexError(
+            `Seat ${seat.seatNumber} is not available for selected dates`,
+          );
+        }
+      }
+
+      seatIds.push(seatId);
+    }
+
     const adminId = await readId(ctx);
     const number_of_seats = 1;
     const amount_paid = plan.price * 100;
@@ -1062,9 +1093,9 @@ export const createManualBooking = mutation({
       throw new ConvexError("pricePerSeat must be non-negative");
     }
 
-    const booking = await ctx.db.insert("bookings", {
+    const bookingId = await ctx.db.insert("bookings", {
       userId,
-      seatIds: [],
+      seatIds,
       duration: plan.no_of_days,
       startDate: format(bookingStartDate, "yyyy-MM-dd"),
       endDate: format(bookingEndDate, "yyyy-MM-dd"),
@@ -1077,7 +1108,15 @@ export const createManualBooking = mutation({
       updatedAt: Date.now(),
     });
 
-    return booking;
+    if (seatId) {
+      await ctx.db.insert("bookedSeats", {
+        bookingId,
+        seatId,
+        status: "confirmed",
+      });
+    }
+
+    return bookingId;
   },
 });
 
