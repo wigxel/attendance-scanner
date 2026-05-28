@@ -12,3 +12,5 @@ export const logger = createConsola({
     date: false,
   },
 });
+
+export const rootLogger = logger;

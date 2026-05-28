@@ -1,4 +1,5 @@
 import { Effect, Option } from "effect";
+import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { PlanImpl } from "./shared";
 
@@ -290,6 +291,197 @@ describe("PlanImpl.type", () => {
     expect(isPaid(undefined)).toBe(false);
     expect(isPaid({})).toBe(false);
     expect(isPaid("string")).toBe(false);
+  });
+});
+
+describe("PlanImpl.fromBooking", () => {
+  const baseBooking = {
+    _id: "" as any,
+    _creationTime: 0,
+    userId: "u1",
+    seatIds: [],
+    startDate: "2024-01-01",
+    endDate: "2024-01-01",
+    amount: 0,
+    status: "confirmed" as const,
+    createdAt: 0,
+    updatedAt: 0,
+  };
+
+  it("should return paid v2 access for day booking", () => {
+    const booking = {
+      ...baseBooking,
+      durationType: "day" as const,
+      pricePerSeat: 5000,
+      duration: 1,
+    };
+    const result = PlanImpl.fromBooking(booking);
+    expect(result).toStrictEqual({
+      _v: "2",
+      kind: "paid",
+      paymentMethod: "bank_transfer",
+      planId: "day",
+      duration: { type: "fullday" },
+      amountInKobo: 5000,
+    });
+  });
+
+  it("should return paid v2 access for week booking", () => {
+    const booking = {
+      ...baseBooking,
+      durationType: "week" as const,
+      pricePerSeat: 14000,
+      duration: 7,
+    };
+    const result = PlanImpl.fromBooking(booking);
+    expect(result).toStrictEqual({
+      _v: "2",
+      kind: "paid",
+      paymentMethod: "bank_transfer",
+      planId: "week",
+      duration: { type: "fullday" },
+      amountInKobo: 2000,
+    });
+  });
+
+  it("should return paid v2 access for month booking", () => {
+    const booking = {
+      ...baseBooking,
+      durationType: "month" as const,
+      pricePerSeat: 30000,
+      duration: 30,
+    };
+    const result = PlanImpl.fromBooking(booking);
+    expect(result).toStrictEqual({
+      _v: "2",
+      kind: "paid",
+      paymentMethod: "bank_transfer",
+      planId: "month",
+      duration: { type: "fullday" },
+      amountInKobo: 1000,
+    });
+  });
+
+  it("should handle zero price", () => {
+    const booking = {
+      ...baseBooking,
+      durationType: "day" as const,
+      pricePerSeat: 0,
+      duration: 1,
+    };
+    const result = PlanImpl.fromBooking(booking);
+    expect(result).toStrictEqual({
+      _v: "2",
+      kind: "paid",
+      paymentMethod: "bank_transfer",
+      planId: "day",
+      duration: { type: "fullday" },
+      amountInKobo: 0,
+    });
+  });
+
+  it("should compute fractional amountInKobo", () => {
+    const booking = {
+      ...baseBooking,
+      durationType: "day" as const,
+      pricePerSeat: 100,
+      duration: 3,
+    };
+    const result = PlanImpl.fromBooking(booking);
+    expect(result).toStrictEqual({
+      _v: "2",
+      kind: "paid",
+      paymentMethod: "bank_transfer",
+      planId: "day",
+      duration: { type: "fullday" },
+      amountInKobo: 100 / 3,
+    });
+  });
+
+  describe("amount property tests", () => {
+    const durationType = fc.constantFrom(
+      "day" as const,
+      "week" as const,
+      "month" as const,
+    );
+    const pricePerSeat = fc.integer({ min: 0, max: 1_000_000 });
+    const duration = fc.integer({ min: 1, max: 365 });
+
+    it("amountInKobo is non-negative for any valid inputs", () => {
+      fc.assert(
+        fc.property(durationType, pricePerSeat, duration, (dt, pps, dur) => {
+          const result = PlanImpl.fromBooking({
+            ...baseBooking,
+            durationType: dt,
+            pricePerSeat: pps,
+            duration: dur,
+          });
+          expect(result.amountInKobo).toBeGreaterThanOrEqual(0);
+        }),
+      );
+    });
+
+    it("amountInKobo is proportional to pricePerSeat", () => {
+      fc.assert(
+        fc.property(
+          durationType,
+          fc.integer({ min: 1, max: 500_000 }),
+          duration,
+          (dt, pps, dur) => {
+            const base = { ...baseBooking, durationType: dt, duration: dur };
+            const low = PlanImpl.fromBooking({
+              ...base,
+              pricePerSeat: pps,
+            }).amountInKobo;
+            const high = PlanImpl.fromBooking({
+              ...base,
+              pricePerSeat: pps * 2,
+            }).amountInKobo;
+            expect(high).toBe(low * 2);
+          },
+        ),
+      );
+    });
+
+    it("amountInKobo is inversely proportional to duration", () => {
+      fc.assert(
+        fc.property(
+          durationType,
+          pricePerSeat,
+          fc.integer({ min: 1, max: 182 }),
+          (dt, pps, dur) => {
+            const base = {
+              ...baseBooking,
+              durationType: dt,
+              pricePerSeat: pps,
+            };
+            const short = PlanImpl.fromBooking({
+              ...base,
+              duration: dur,
+            }).amountInKobo;
+            const long = PlanImpl.fromBooking({
+              ...base,
+              duration: dur * 2,
+            }).amountInKobo;
+            expect(long).toBe(short / 2);
+          },
+        ),
+      );
+    });
+
+    it("amountInKobo is always a finite number", () => {
+      fc.assert(
+        fc.property(durationType, pricePerSeat, duration, (dt, pps, dur) => {
+          const result = PlanImpl.fromBooking({
+            ...baseBooking,
+            durationType: dt,
+            pricePerSeat: pps,
+            duration: dur,
+          });
+          expect(Number.isFinite(result.amountInKobo)).toBe(true);
+        }),
+      );
+    });
   });
 });
 

@@ -291,14 +291,15 @@ export const registerUser = mutation({
         source: "web",
         admitted_by: scannerId as Id<"profile">,
         timestamp: new Date().toISOString(),
-        access: {
-          kind: "paid",
-          planId: booking.durationType,
-          amount: booking.pricePerSeat / booking.duration / 100,
-        },
+        access: PlanImpl.fromBooking(booking),
       });
+
       const entry = await ctx.db.get(id);
-      if (entry) await visitsAggregate.insert(ctx, entry);
+
+      if (entry) {
+        await visitsAggregate.insert(ctx, entry);
+      }
+
       return; // End execution
     }
 

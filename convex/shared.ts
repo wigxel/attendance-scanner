@@ -100,6 +100,17 @@ export const PlanImpl = {
     };
   },
 
+  fromBooking(booking: Doc<"bookings">): AccessPaidV2 {
+    return {
+      _v: "2",
+      kind: "paid",
+      planId: booking.durationType,
+      duration: { type: "fullday" },
+      amountInKobo: booking.pricePerSeat / booking.duration,
+      paymentMethod: "bank_transfer",
+    };
+  },
+
   normalize(record_: unknown) {
     return Effect.gen(function* () {
       const res = yield* Effect.tryPromise(() =>

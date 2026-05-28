@@ -181,6 +181,9 @@ export const createBooking = mutation({
 
     const duration = accessPlan.no_of_days;
     const pricePerSeat = accessPlan.price * 100;
+    if (pricePerSeat < 0) {
+      throw new ConvexError("pricePerSeat must be non-negative");
+    }
 
     const startMs = new Date(args.startDate).getTime();
     let endDate: string;
@@ -1054,6 +1057,10 @@ export const createManualBooking = mutation({
     const adminId = await readId(ctx);
     const number_of_seats = 1;
     const amount_paid = plan.price * 100;
+    const pricePerSeat = amount_paid / number_of_seats;
+    if (pricePerSeat < 0) {
+      throw new ConvexError("pricePerSeat must be non-negative");
+    }
 
     const booking = await ctx.db.insert("bookings", {
       userId,
@@ -1062,7 +1069,7 @@ export const createManualBooking = mutation({
       startDate: format(bookingStartDate, "yyyy-MM-dd"),
       endDate: format(bookingEndDate, "yyyy-MM-dd"),
       durationType,
-      pricePerSeat: amount_paid / number_of_seats,
+      pricePerSeat,
       amount: amount_paid,
       status: "confirmed",
       created_by: adminId ?? "system",

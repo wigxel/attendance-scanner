@@ -1,11 +1,11 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
-import { parse, format, startOfDay, endOfDay } from "date-fns";
-import { PlanImpl, type AccessStruct, type AccessDuration } from "./shared";
-import { O, pipe } from "../lib/fp.helpers";
+import { endOfDay, format, parse, startOfDay } from "date-fns";
 import { Match } from "effect";
-import type { Doc } from "./_generated/dataModel";
+import { O, pipe } from "../lib/fp.helpers";
 import { api } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
+import { query } from "./_generated/server";
+import { type AccessDuration, type AccessStruct, PlanImpl } from "./shared";
 
 const DURATION_TYPE_TO_PLAN_KEY: Record<string, string> = {
   day: "daily",

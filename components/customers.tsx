@@ -55,6 +55,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { Drawer } from "vaul";
 import { DateRange } from "./DateRange";
 import { CustomerSheet } from "./customer-info";
+import { DebugClick } from "./debug-click";
 import {
   EmptyState,
   EmptyStateConceal,
@@ -412,39 +413,49 @@ export function RegisteredUserEntry({
   if (!user) return <p>No user found</p>;
 
   const content = (
-    <li className="flex w-full group items-center hover:bg-gray-50 group gap-4 pt-2 px-4 cursor-pointer">
-      <CustomerAvatar userId={entry.userId} className="w-10 h-10" />
+    <li>
+      <DebugClick input={() => ({ isReservation, entry, user })}>
+        <div className="flex w-full group items-center hover:bg-gray-50 group gap-4 pt-2 px-4 cursor-pointer">
+          <CustomerAvatar userId={entry.userId} className="w-10 h-10" />
 
-      <div className="group-last:border-none border-b flex items-center flex-1 pb-2">
-        <div className="flex-1 flex-col gap-1 flex">
-          <div className="font-semibold">
-            {user.firstName} {user.lastName}
-          </div>
+          <div className="group-last:border-none border-b flex items-center flex-1 pb-2">
+            <div className="flex-1 flex-col gap-1 flex">
+              <div className="font-semibold">
+                {user.firstName} {user.lastName}
+              </div>
 
-          <div className="flex gap-2 text-xs text-gray-500 font-mono">
-            <PaymentBadge data={entry.access} hasReservation={isReservation} />•
-            <div>
-              {pipe(
-                visitCount,
-                Option.map(safeNum),
-                Option.map((visitCount) => {
-                  return (
-                    <React.Fragment key={"visit"}>
-                      {serialNo(visitCount ?? 0)} visit
-                      {visitCount < 2 ? "" : "s"}
-                    </React.Fragment>
-                  );
-                }),
-                Option.getOrElse(() => <>-- visits</>),
-              )}
+              <div className="flex gap-2 text-xs text-gray-500 font-mono">
+                <PaymentBadge
+                  data={entry.access}
+                  hasReservation={isReservation}
+                />
+                •
+                <div>
+                  {pipe(
+                    visitCount,
+                    Option.map(safeNum),
+                    Option.map((visitCount) => {
+                      return (
+                        <React.Fragment key={"visit"}>
+                          {serialNo(visitCount ?? 0)} visit
+                          {visitCount < 2 ? "" : "s"}
+                        </React.Fragment>
+                      );
+                    }),
+                    Option.getOrElse(() => <>-- visits</>),
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={"inline-block text-sm font-semibold text-foreground"}
+            >
+              {diffFromNow}
             </div>
           </div>
         </div>
-
-        <div className={"inline-block text-sm font-semibold text-foreground"}>
-          {diffFromNow}
-        </div>
-      </div>
+      </DebugClick>
     </li>
   );
 
@@ -811,10 +822,10 @@ function PaymentBadge(props: {
   return (
     <span
       className={cn("capitalize", map[_kind], {
-        "text-purple-500": hasReservation,
+        "text-purple-800": hasReservation,
       })}
     >
-      {_kind ?? "--"}
+      {hasReservation ? "Subscriber" : (_kind ?? "--")}
     </span>
   );
 }
