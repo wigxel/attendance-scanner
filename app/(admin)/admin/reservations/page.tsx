@@ -61,10 +61,10 @@ const Page = () => {
 
   return (
     <>
-      <section className="p-8 justify-between flex">
+      <section className="px-4 md:px-8 p-8 justify-between flex">
         <h1 className="text-3xl font-bold mb-4">Reservations</h1>
 
-        <div className="flex gap-4">
+        <div className="flex gap-2">
           <div className="inline-flex gap-1">
             <Button
               onClick={() => setTab("list")}
@@ -88,7 +88,8 @@ const Page = () => {
             className="gap-1"
           >
             <Plus className="h-4 w-4" />
-            New Reservation
+            <span className="hidden md:inline">New Reservation</span>
+            <span className="md:hidden">New</span>
           </Button>
         </div>
       </section>

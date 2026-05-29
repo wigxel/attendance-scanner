@@ -80,7 +80,7 @@ export function AppDataTable<T>({
   return (
     <Card className="w-full">
       <CardContent className="flex flex-col px-4 pb-0 min-h-[60svh]">
-        <div className="flex items-center py-4">
+        <div className="flex items-center py-4 gap-2">
           <div className="relative max-w-sm">
             <Input
               placeholder="Search by name or email..."

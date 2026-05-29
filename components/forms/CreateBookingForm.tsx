@@ -10,7 +10,7 @@ import { calculateEndDate, formatDateToLocalISO } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "convex/react";
 import { format, subWeeks } from "date-fns";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -28,11 +28,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const createBookingSchema = z.object({
   customerId: z.string().min(1, { message: "Customer is required" }),
@@ -96,7 +92,9 @@ export function CreateBookingForm({
 
   const seats = useQuery(
     api.seats.getAllSeatsForDateRange,
-    watchedStartDate && endDate ? { startDate: watchedStartDate, endDate } : "skip",
+    watchedStartDate && endDate
+      ? { startDate: watchedStartDate, endDate }
+      : "skip",
   );
 
   const seatOptions = React.useMemo(() => {
@@ -210,11 +208,23 @@ export function CreateBookingForm({
             <h2 className="text-lg font-semibold mb-1">Select Seat</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Choose an available seat for {selectedPlan?.name ?? ""} starting{" "}
-              <span className="text-foreground">{format(new Date(watchedStartDate), "d MMM")}</span>
-              {endDate ? <>
-                <span>&nbsp;<ArrowRight size="1em" className="inline" />&nbsp;</span>
-                <span className="text-foreground">{format(new Date(endDate), "d MMM, yyyy")}</span>
-              </> : ""}
+              <span className="text-foreground">
+                {format(new Date(watchedStartDate), "d MMM")}
+              </span>
+              {endDate ? (
+                <>
+                  <span>
+                    &nbsp;
+                    <ArrowRight size="1em" className="inline" />
+                    &nbsp;
+                  </span>
+                  <span className="text-foreground">
+                    {format(new Date(endDate), "d MMM, yyyy")}
+                  </span>
+                </>
+              ) : (
+                ""
+              )}
             </p>
 
             {!seats ? (
@@ -247,9 +257,7 @@ export function CreateBookingForm({
 
                   <div className="flex border-t mt-4 pt-4 justify-between">
                     <p className="text-sm mt-1 text-muted-foreground">
-                      {selectedSeat
-                        ? "1 seat selected"
-                        : "No seat selected"}
+                      {selectedSeat ? "1 seat selected" : "No seat selected"}
                     </p>
                   </div>
                 </div>

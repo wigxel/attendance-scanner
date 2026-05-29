@@ -1114,6 +1114,7 @@ export const createManualBooking = mutation({
         seatId,
         status: "confirmed",
       });
+      await ctx.runMutation(api.bookings.generateTickets, { bookingId });
     }
 
     return bookingId;

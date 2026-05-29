@@ -226,7 +226,7 @@ export function MonthlyReservationsTable() {
         </>
       ) : (
         <>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex flex-wrap md:flex-nowrap items-center gap-2">
               <Button variant="outline" size="sm" onClick={handlePrevMonth}>
                 <ChevronLeft className="h-4 w-4" />

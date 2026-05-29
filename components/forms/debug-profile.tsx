@@ -15,8 +15,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
+import { CustomerCombobox } from "./CustomerCombobox";
 
 export function DebugProfile(props: { children: React.ReactNode }) {
   const [userId, setValue] = React.useState("");
@@ -32,14 +32,7 @@ export function DebugProfile(props: { children: React.ReactNode }) {
 
         <ScrollArea className="-mx-6 p-6">
           <div className="max-h-[60vh] flex flex-col gap-4">
-            <Input
-              type="text"
-              placeholder="Enter User ID"
-              onChange={(e) => {
-                e.preventDefault();
-                setValue(e.target.value);
-              }}
-            />
+            <CustomerCombobox value={userId} onChange={setValue} />
 
             {userId ? <MockGenerateQRCode uid={userId} /> : null}
           </div>

@@ -81,7 +81,7 @@ export function CustomerCombobox({
           >
             {value && selectedName ? (
               <span className="flex items-center gap-2">
-                <UserCheck className="h-4 w-4 text-green-500" />
+                <UserCheck className="h-4 w-4 text-muted-foreground" />
                 {selectedName}
               </span>
             ) : (
@@ -122,9 +122,7 @@ export function CustomerCombobox({
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        value === customer.userId
-                          ? "opacity-100"
-                          : "opacity-0",
+                        value === customer.userId ? "opacity-100" : "opacity-0",
                       )}
                     />
                     {customer.firstName} {customer.lastName}

@@ -2,7 +2,7 @@
 
 import { CreateBookingForm } from "@/components/forms/CreateBookingForm";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getErrorMessage } from "@/lib/error.helpers";
@@ -42,14 +42,14 @@ export default function CreateBookingPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 mt-8">
+    <div className="max-w-2xl mx-auto space-y-6 mt-8 px-4 md:px-8">
       <div className="flex items-start gap-2 flex-col">
         <Button variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="h-5 w-5" />
           <span className="text-xs">BACK</span>
         </Button>
 
-        <h1 className="text-3xl font-bold">Create Booking</h1>
+        <h1 className="text-3xl font-bold indent-3">Create Booking</h1>
       </div>
 
       <Card className="flex flex-col gap-8">
