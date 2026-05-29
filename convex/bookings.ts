@@ -13,6 +13,11 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
 import { authGuard, readId } from "./myFunctions"; // Added authGuard
+import {
+  assignSeats,
+  getAvailableSeatsForDay,
+  getUnassignedTicketsForDay,
+} from "./seat-orchestrator";
 
 export const getBooking = query({
   args: {
@@ -38,9 +43,9 @@ export const getBooking = query({
       booking.created_by === "system" || booking.created_by === undefined
         ? Promise.resolve("Booking system")
         : ctx.db
-            .get(booking.created_by as Id<"users">)
-            .then((e) => e?.name ?? "Anonymous")
-            .catch(() => "--"),
+          .get(booking.created_by as Id<"users">)
+          .then((e) => e?.name ?? "Anonymous")
+          .catch(() => "--"),
     ]);
 
     return {
@@ -49,14 +54,14 @@ export const getBooking = query({
       seats: seats.filter((seat) => seat !== null), // filter out any null values
       user: user
         ? {
-            id: user.id,
-            name: `${user.firstName} ${user.lastName}`,
-            email: user.email,
-          }
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+        }
         : {
-            name: "Anonymous User",
-            email: "--",
-          },
+          name: "Anonymous User",
+          email: "--",
+        },
     };
   },
 });
@@ -447,7 +452,10 @@ export const getUserConfirmedBookings = query({
         if (booking.userId === userId) return null;
 
         // fetch the specific seat for this ticket
-        const seat = await ctx.db.get(ticket.seatId);
+        const seat =
+          ticket.seatId !== "unassigned"
+            ? await ctx.db.get(ticket.seatId)
+            : null;
 
         // Return a structure matching the "purchased" one,
         // but 'seats' array only contains the ONE seat I claimed.
@@ -815,7 +823,9 @@ export const getFullyBookedDates = query({
           dateSeatsMap.set(dateKey, new Set());
         }
 
-        dateSeatsMap.get(dateKey)?.add(bookedSeat.seatId);
+        if (bookedSeat.seatId !== "unassigned") {
+          dateSeatsMap.get(dateKey)?.add(bookedSeat.seatId);
+        }
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
@@ -846,7 +856,20 @@ export const generateTickets = mutation({
       .withIndex("by_booking", (q) => q.eq("bookingId", args.bookingId))
       .collect();
 
-    if (existingTickets.length > 0) return;
+    if (existingTickets.length > 0) return "ticket already exists";
+
+    // create a ticket and seat the seat as unassigned
+    if (booking.seatIds.length === 0) {
+      await ctx.db.insert("tickets", {
+        bookingId: booking._id,
+        seatId: "unassigned",
+        holderUserId: booking.userId,
+        status: "claimed",
+        claimedAt: Date.now(),
+      });
+
+      return "create a ticket and seat as unassigned"
+    }
 
     // create a ticket for each seat
     for (let i = 0; i < booking.seatIds.length; i++) {
@@ -879,7 +902,11 @@ export const getBookingWithTickets = query({
 
     const ticketsWithSeatData = await Promise.all(
       tickets.map(async (ticket) => {
-        const seat = await ctx.db.get(ticket.seatId);
+        const seat =
+          ticket.seatId !== "unassigned"
+            ? await ctx.db.get(ticket.seatId)
+            : null;
+
         return {
           ...ticket,
           seatNumber: seat?.seatNumber,
@@ -952,14 +979,14 @@ export const getAllBookings = query({
           seats: seats.filter((seat) => seat !== null), // filter out any null values
           user: user
             ? {
-                id: user.id,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-              }
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+            }
             : {
-                name: "Anonymous User",
-                email: "--",
-              },
+              name: "Anonymous User",
+              email: "--",
+            },
         };
       }),
     );
@@ -1202,15 +1229,15 @@ export const getMonthlyReservations = query({
           ...booking,
           user: user
             ? {
-                id: user.id,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-              }
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+            }
             : {
-                id: booking.userId,
-                name: "Anonymous User",
-                email: null,
-              },
+              id: booking.userId,
+              name: "Anonymous User",
+              email: null,
+            },
         };
       }),
     );
@@ -1272,6 +1299,37 @@ export const exportMonthlyReservations = action({
     );
 
     return { storageUrl: await ctx.storage.getUrl(storageId) };
+  },
+});
+
+export const assignUnassignedSeats = mutation({
+  args: { day: v.string() },
+  handler: async (ctx, { day }) => {
+    const [available, unassigned] = await Promise.all([
+      getAvailableSeatsForDay(ctx, day),
+      getUnassignedTicketsForDay(ctx, day),
+    ]);
+
+    const result = assignSeats(available, unassigned);
+
+    for (const a of result.assignments) {
+      await ctx.db.patch(a.ticketId, { seatId: a.seatId });
+
+      await ctx.db.insert("bookedSeats", {
+        bookingId: a.bookingId,
+        seatId: a.seatId,
+        status: "confirmed",
+      });
+
+      const booking = await ctx.db.get(a.bookingId);
+      if (booking) {
+        await ctx.db.patch(a.bookingId, {
+          seatIds: [...booking.seatIds, a.seatId],
+        });
+      }
+    }
+
+    return result;
   },
 });
 

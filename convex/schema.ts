@@ -113,7 +113,7 @@ const bookings = defineTable({
 
 const bookedSeats = defineTable({
   bookingId: v.id("bookings"),
-  seatId: v.id("seats"),
+  seatId: v.union(v.id("seats"), v.literal("unassigned")),
   status: v.union(
     v.literal("pending"),
     v.literal("confirmed"),
@@ -126,7 +126,7 @@ const bookedSeats = defineTable({
 
 const tickets = defineTable({
   bookingId: v.id("bookings"),
-  seatId: v.id("seats"),
+  seatId: v.union(v.id("seats"), v.literal("unassigned")),
   holderUserId: v.optional(v.string()), // null if unclaimed
   status: v.union(v.literal("reserved"), v.literal("claimed")),
   claimedAt: v.optional(v.number()),

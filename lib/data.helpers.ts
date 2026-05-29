@@ -1,3 +1,5 @@
+import { isRecord } from "effect/Predicate";
+
 const EmptyPrimitives = Object.freeze({
   Array: [],
   Object: {
@@ -93,6 +95,4 @@ export const serialNo = (num: number): string => {
   return String(num).padStart(2, "0");
 };
 
-export function isObject(data: unknown): data is Record<string, unknown> {
-  return Object.name === data?.constructor.name;
-}
+export const isObject = isRecord;

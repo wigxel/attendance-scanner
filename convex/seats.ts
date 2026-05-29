@@ -50,7 +50,7 @@ export const getAvailableSeats = query({
         .collect();
 
       for (const bs of bookedSeats) {
-        bookedSeatIds.add(bs.seatId);
+        if (bs.seatId !== "unassigned") bookedSeatIds.add(bs.seatId);
       }
     }
 
@@ -102,7 +102,7 @@ export const getAllSeatsForDateRange = query({
         .collect();
 
       for (const bs of bookedSeats) {
-        bookedSeatIds.add(bs.seatId);
+        if (bs.seatId !== "unassigned") bookedSeatIds.add(bs.seatId);
       }
     }
 
