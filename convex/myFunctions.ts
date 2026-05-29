@@ -281,10 +281,23 @@ export const registerUser = mutation({
         throw new ConvexError("Booking not found.");
       }
 
-      const tickets = await ctx.db
-        .query("tickets")
-        .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
-        .collect();
+      const tickets = await (async function getTickets() {
+        const existing = await ctx.db
+          .query("tickets")
+          .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
+          .collect();
+
+        if (existing.length > 0) return existing;
+
+        await ctx.runMutation(api.bookings.generateTickets, {
+          bookingId: booking._id,
+        });
+
+        return ctx.db
+          .query("tickets")
+          .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
+          .collect();
+      })();
 
       const ticket =
         tickets.find((t) => t.holderUserId === customer.id) ?? tickets[0];
@@ -300,7 +313,7 @@ export const registerUser = mutation({
         admitted_by: scannerId as Id<"profile">,
         timestamp: new Date().toISOString(),
         access: PlanImpl.fromBooking(booking),
-        ...(ticket ? { ticketId: ticket._id } : {}),
+        ticketId: ticket._id,
       });
 
       const entry = await ctx.db.get(id);
