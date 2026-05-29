@@ -281,6 +281,14 @@ export const registerUser = mutation({
         throw new ConvexError("Booking not found.");
       }
 
+      const tickets = await ctx.db
+        .query("tickets")
+        .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
+        .collect();
+
+      const ticket =
+        tickets.find((t) => t.holderUserId === customer.id) ?? tickets[0];
+
       const id = await ctx.db.insert("daily_register", {
         userId: customer.id,
         device: {
@@ -292,6 +300,7 @@ export const registerUser = mutation({
         admitted_by: scannerId as Id<"profile">,
         timestamp: new Date().toISOString(),
         access: PlanImpl.fromBooking(booking),
+        ...(ticket ? { ticketId: ticket._id } : {}),
       });
 
       const entry = await ctx.db.get(id);
