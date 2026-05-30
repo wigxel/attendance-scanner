@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React from "react";
 
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard" },

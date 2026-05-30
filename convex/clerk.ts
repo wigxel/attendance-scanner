@@ -33,9 +33,7 @@ export async function setExternalId(params: {
   });
 }
 
-export async function deleteClerkUser(params: {
-  clerkUserId: string;
-}) {
+export async function deleteClerkUser(params: { clerkUserId: string }) {
   return clerkFetch(`https://api.clerk.com/v1/users/${params.clerkUserId}`, {
     method: "DELETE",
   });

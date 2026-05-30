@@ -1,9 +1,7 @@
-import { useSeats } from "@/hooks/useSeats";
 import type React from "react";
+import { useSeats } from "@/hooks/useSeats";
 
-export function SelectedSeats(props: {
-  proceedButton?: React.ReactNode;
-}) {
+export function SelectedSeats(props: { proceedButton?: React.ReactNode }) {
   const { selectedSeatNumbers } = useSeats();
 
   return (

@@ -1,6 +1,10 @@
 "use client";
-import { DateRange } from "@/components/DateRange";
+import { useQuery } from "convex/react";
+import { endOfMonth, format, startOfMonth } from "date-fns";
+import { isNullable } from "effect/Predicate";
+import React from "react";
 import { RegisteredUserEntry } from "@/components/customers";
+import { DateRange } from "@/components/DateRange";
 import { If } from "@/components/if";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -14,10 +18,6 @@ import { api } from "@/convex/_generated/api";
 import { currencyFormatter } from "@/lib/currency.helpers";
 import { safeNum, serialNo } from "@/lib/data.helpers";
 import { O, pipe } from "@/lib/fp.helpers";
-import { useQuery } from "convex/react";
-import { endOfMonth, format, startOfMonth } from "date-fns";
-import { isNullable } from "effect/Predicate";
-import React from "react";
 
 type MetricKind =
   | "totalCustomers"

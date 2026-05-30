@@ -1,4 +1,7 @@
 "use client";
+import { useQuery } from "convex/react";
+import { capitalize } from "effect/String";
+import { BookTemplate } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -7,9 +10,6 @@ import {
 } from "@/components/ui/sheet";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { useQuery } from "convex/react";
-import { capitalize } from "effect/String";
-import { BookTemplate } from "lucide-react";
 import { BookingCard } from "./BookingCard";
 import {
   EmptyState,

@@ -1,7 +1,7 @@
-import type { Id } from "@/convex/_generated/dataModel";
-import { safeArray, safeObj } from "@/lib/data.helpers";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { Id } from "@/convex/_generated/dataModel";
+import { safeArray, safeObj } from "@/lib/data.helpers";
 
 export interface BookingState {
   activeTab: string;

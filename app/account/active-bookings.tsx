@@ -1,3 +1,7 @@
+import { useQuery } from "convex/react";
+import { Calendar, ChevronRight, Clock } from "lucide-react";
+import Link from "next/link";
+import type React from "react"; // Added React import for React.ReactNode type
 import { If } from "@/components/if";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,10 +13,6 @@ import {
 } from "@/components/ui/card"; // Assuming Shadcn UI path
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
-import { useQuery } from "convex/react";
-import { Calendar, ChevronRight, Clock } from "lucide-react";
-import Link from "next/link";
-import type React from "react"; // Added React import for React.ReactNode type
 
 // Helper functions for formatting dates and duration types
 const formatDate = (dateString: string): string => {
@@ -119,7 +119,9 @@ function EmptyBookingsCard() {
  */
 export function BookingCalendarBox({
   startDate,
-}: { startDate: string | Date }) {
+}: {
+  startDate: string | Date;
+}) {
   const date = new Date(startDate);
   return (
     <div className="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg shrink-0 border border-gray-200">

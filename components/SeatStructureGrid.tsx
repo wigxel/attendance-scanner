@@ -1,35 +1,31 @@
 "use client";
-import { api } from "@/convex/_generated/api";
-import { safeNum, safeStr } from "@/lib/data.helpers";
-import { getErrorMessage } from "@/lib/error.helpers";
-import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
-import { useQuery } from "convex/react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Grid2X2Icon, RotateCcw, RotateCw } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { hash } from "ohash";
 import React from "react";
+import type { FallbackProps } from "react-error-boundary";
 import useEvent from "react-use-event-hook";
 import { toast } from "sonner";
+import { api } from "@/convex/_generated/api";
+import { safeNum } from "@/lib/data.helpers";
+import { getErrorMessage } from "@/lib/error.helpers";
+import { cn } from "@/lib/utils";
+import {
+  get_pos_key,
+  type Position,
+  reorderSeats,
+  type SLEntry,
+} from "./seat-grid-utils";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Switch } from "./ui/switch";
-
-import { isNullable } from "effect/Predicate";
-import type { FallbackProps } from "react-error-boundary";
-import {
-  type Position,
-  type SLEntry,
-  get_pos_key,
-  orderCells,
-  reorderSeats,
-} from "./seat-grid-utils";
 
 // Define the shape of the data stored within the Control object
 interface ControlData {
@@ -104,7 +100,7 @@ const Control = {
     }
   },
 
-  mouseUp(e: Position, event: React.MouseEvent<HTMLElement>) {
+  mouseUp(e: Position, _event: React.MouseEvent<HTMLElement>) {
     if (Control._data.dragging) {
       // Only process if a drag was initiated
       Control._data.dragging = false;
@@ -114,13 +110,13 @@ const Control = {
     }
   },
 
-  mouseOver(e: Position, event: React.MouseEvent<HTMLElement>) {
+  mouseOver(e: Position, _event: React.MouseEvent<HTMLElement>) {
     if (Control._data.dragging) {
       Control.highlightBounds(Control._data.startPos, e);
     }
   },
 
-  mouseDown(e: Position, event: React.MouseEvent<HTMLElement>) {
+  mouseDown(e: Position, _event: React.MouseEvent<HTMLElement>) {
     Control._data.dragging = true;
     Control._data.startPos = e;
     Control.clearSelection(); // Clear any existing selections when starting a new drag
@@ -302,7 +298,7 @@ export function SeatStructureGrid() {
         columnCount,
       });
       toast.success("Seat layout saved successfully!");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to save seat layout");
     }
   };

@@ -1,8 +1,8 @@
-import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { api } from "@/convex/_generated/api";
 
 export function useCustomer({ userId }: { userId: string }) {
   const profile = useQuery(api.myFunctions.getUserById, {

@@ -1,12 +1,12 @@
 "use client";
-import { api } from "@/convex/_generated/api";
-import { useCustomer } from "@/hooks/auth";
-import { cn } from "@/lib/utils";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { format, isSameYear } from "date-fns";
 import { Globe, Pencil } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Area, AreaChart } from "recharts";
+import { api } from "@/convex/_generated/api";
+import { useCustomer } from "@/hooks/auth";
+import { cn } from "@/lib/utils";
 import {
   EmptyState,
   EmptyStateContent,

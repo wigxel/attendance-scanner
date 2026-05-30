@@ -1,12 +1,5 @@
 "use client";
 
-import { SeatBadge } from "@/app/reserve/components/seats";
-import { DynamicSeatLayout } from "@/components/DynamicSeatLayout";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import type { Seat } from "@/hooks/useSeats";
-import { safeArray } from "@/lib/data.helpers";
-import { calculateEndDate, formatDateToLocalISO } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "convex/react";
 import { format, subWeeks } from "date-fns";
@@ -15,9 +8,8 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
-import { AccessPlanDropdown } from "./AccessPlanDropdown";
-import { CustomerCombobox } from "./CustomerCombobox";
-
+import { SeatBadge } from "@/app/reserve/components/seats";
+import { DynamicSeatLayout } from "@/components/DynamicSeatLayout";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -29,6 +21,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import type { Seat } from "@/hooks/useSeats";
+import { safeArray } from "@/lib/data.helpers";
+import { calculateEndDate, formatDateToLocalISO } from "@/lib/utils";
+import { AccessPlanDropdown } from "./AccessPlanDropdown";
+import { CustomerCombobox } from "./CustomerCombobox";
 
 const createBookingSchema = z.object({
   customerId: z.string().min(1, { message: "Customer is required" }),

@@ -1,11 +1,27 @@
 "use client";
-import { useBookingCalendarLogic } from "@/hooks/useBookingCalendarLogic";
 import {
   Calendar,
   type MonthArrowBackProps,
   type MonthArrowNextProps,
 } from "@demark-pro/react-booking-calendar";
+import { useBookingCalendarLogic } from "@/hooks/useBookingCalendarLogic";
 import "@/app/booking.css";
+import {
+  addDays,
+  addMonths,
+  addWeeks,
+  differenceInDays,
+  formatDate,
+  isSameDay,
+  subDays,
+} from "date-fns";
+import {
+  ArrowRight,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal,
+} from "lucide-react";
 import { BookingCalendarBox } from "@/app/account/active-bookings";
 import {
   Select,
@@ -15,27 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import {
-  addBusinessDays,
-  addDays,
-  addMonths,
-  addWeeks,
-  differenceInDays,
-  formatDate,
-  isMatch,
-  isSameDay,
-  subDays,
-} from "date-fns";
-import { start } from "effect/ScheduleIntervals";
-import {
-  ArrowRight,
-  Calendar as CalendarIcon,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  CircleArrowRight,
-  SlidersHorizontal,
-} from "lucide-react";
 import { If } from "./if";
 import { Button } from "./ui/button";
 
@@ -262,7 +257,11 @@ export function RangePreviewSimple({
   startDate,
   variant = "default",
   endDate,
-}: { startDate: Date; endDate: Date; variant?: "default" | "sm" }) {
+}: {
+  startDate: Date;
+  endDate: Date;
+  variant?: "default" | "sm";
+}) {
   const is_same_day = isSameDay(startDate, endDate);
 
   return (
@@ -299,7 +298,7 @@ export function RangePreviewSimple({
   );
 }
 
-function addWeekOpeningDays(date: Date): Date {
+function _addWeekOpeningDays(date: Date): Date {
   let resultDate = new Date(date); // Create a copy of the original date
   let nonSundayDaysAdded = 0;
   let safetyCounter = 0;

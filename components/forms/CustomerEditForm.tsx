@@ -1,5 +1,9 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "convex/react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,10 +23,6 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
 import { safeArray } from "@/lib/data.helpers";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "convex/react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
 
 const customerEditSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),

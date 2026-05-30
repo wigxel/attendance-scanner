@@ -1,18 +1,12 @@
+import { BadgeDollarSign, Grid2X2Icon, User, Wrench } from "lucide-react";
+import { ErrorBoundary } from "react-error-boundary";
+import OccupationManagement from "@/components/manage-occupation";
+import PricingManagement from "@/components/manage-pricing";
 import {
   SeatStructureGrid,
   SeatStructureGridErrorFallback,
 } from "@/components/SeatStructureGrid";
-import OccupationManagement from "@/components/manage-occupation";
-import PricingManagement from "@/components/manage-pricing";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BadgeDollarSign, Grid2X2Icon, User, Wrench } from "lucide-react";
-import React from "react";
-import {
-  ErrorBoundary,
-  type FallbackProps,
-  getErrorMessage,
-} from "react-error-boundary";
 
 export default function SettingsPage() {
   return (

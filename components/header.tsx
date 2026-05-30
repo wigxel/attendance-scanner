@@ -1,14 +1,14 @@
 "use client";
-import { Logo } from "@/components/logo";
-import { useProfile } from "@/hooks/auth";
 import {
-  SignInButton,
-  SignUpButton,
   SignedIn,
   SignedOut,
+  SignInButton,
+  SignUpButton,
   UserButton,
 } from "@clerk/nextjs";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
+import { useProfile } from "@/hooks/auth";
 
 export function Header() {
   const { data: profile } = useProfile();

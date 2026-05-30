@@ -1,16 +1,15 @@
 "use client";
-import { DateRange } from "@/components/DateRange";
-import {
-  CustomersTable,
-  TopCustomersAvatarGroup,
-} from "@/components/customers";
-import { Button } from "@/components/ui/button";
-import React from "react";
 import {
   ErrorBoundary,
   type FallbackProps,
   getErrorMessage,
 } from "react-error-boundary";
+import {
+  CustomersTable,
+  TopCustomersAvatarGroup,
+} from "@/components/customers";
+import { DateRange } from "@/components/DateRange";
+import { Button } from "@/components/ui/button";
 import { Analytics } from "./analytics";
 
 function CustomersTableErrorFallback({

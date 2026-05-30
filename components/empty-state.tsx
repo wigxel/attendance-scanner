@@ -1,5 +1,5 @@
-import { cn, isSSR } from "@/lib/utils";
 import React, { type ComponentProps } from "react";
+import { cn, isSSR } from "@/lib/utils";
 
 const ContextDefault = {
   isEmpty: true,
@@ -82,7 +82,7 @@ function EmptyState(props: { isEmpty: boolean; children?: React.ReactNode }) {
 export {
   EmptyState,
   EmptyStateConceal,
+  EmptyStateContent,
   EmptyStateDescription,
   EmptyStateTitle,
-  EmptyStateContent,
 };

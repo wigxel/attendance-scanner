@@ -1,14 +1,14 @@
 "use client";
-import { api } from "@/convex/_generated/api";
-import { getErrorMessage } from "@/lib/error.helpers";
-import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAction, useMutation, useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
+import { api } from "@/convex/_generated/api";
+import { getErrorMessage } from "@/lib/error.helpers";
+import { cn } from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -50,7 +50,9 @@ type OnboardingFormValues = z.infer<typeof onboardingSchema>;
 
 function OnboardingForm({
   initial,
-}: { initial: Partial<OnboardingFormValues> }) {
+}: {
+  initial: Partial<OnboardingFormValues>;
+}) {
   const router = useRouter();
   const updateUser = useAction(api.myFunctions.updateUser);
 

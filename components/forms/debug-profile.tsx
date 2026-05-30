@@ -1,12 +1,9 @@
-import { profile } from "node:console";
-import { decodeQRCodeData } from "@/app/actions/encrypt";
-import { api } from "@/convex/_generated/api";
-import { useProfile } from "@/hooks/auth";
-import { safeArray, safeObj } from "@/lib/data.helpers";
 import { useQuery as useTansackQuery } from "@tanstack/react-query";
 import { useQuery } from "convex/react";
-import { decode } from "effect/Schema";
 import React from "react";
+import { decodeQRCodeData } from "@/app/actions/encrypt";
+import { api } from "@/convex/_generated/api";
+import { safeArray, safeObj } from "@/lib/data.helpers";
 import { ResizeableQRCode, useGetProfileHash } from "../CheckInCard";
 import {
   Dialog,

@@ -3,7 +3,6 @@ import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import {
   addDays,
-  addMonths,
   addWeeks,
   format,
   isAfter,
@@ -14,12 +13,11 @@ import {
   startOfWeek,
   subDays,
 } from "date-fns";
-import { components } from "./_generated/api";
-import { api, internal } from "./_generated/api";
+import { api, components, internal } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import {
-  type MutationCtx,
   internalMutation,
+  type MutationCtx,
   mutation,
   query,
 } from "./_generated/server";
@@ -742,7 +740,8 @@ export const getTopCustomers = query({
         if (count === 0) return null;
 
         const sortedByTime = registers.sort(
-          (a, b) => Number.parseInt(b.timestamp) - Number.parseInt(a.timestamp),
+          (a, b) =>
+            Number.parseInt(b.timestamp, 10) - Number.parseInt(a.timestamp, 10),
         );
         const mostRecent = sortedByTime[0];
         const accessPlan = mostRecent.access.kind;

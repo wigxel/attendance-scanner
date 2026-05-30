@@ -1,15 +1,14 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Portal } from "@radix-ui/react-dialog";
 import consola from "consola";
 import { Html5Qrcode } from "html5-qrcode";
 import { LucideLoader, XIcon } from "lucide-react";
 import { motion } from "motion/react";
-import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Dialog } from "./ui/dialog";
 import {
   Select,
@@ -57,7 +56,7 @@ export default function QRCodeScanner({
         });
       }
     };
-  }, []);
+  }, [getScanner]);
 
   function getScanner(): Html5Qrcode | undefined {
     if (!containerRef.current) return;

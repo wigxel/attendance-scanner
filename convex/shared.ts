@@ -142,7 +142,7 @@ export const PlanImpl = {
     });
   },
 
-  async validate(type: "duration", duration: unknown) {
+  async validate(_type: "duration", duration: unknown) {
     return await durationSchemaValidator.safeParseAsync(duration);
   },
 

@@ -8,8 +8,7 @@ import {
   subWeeks,
 } from "date-fns";
 import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
-import { api } from "./_generated/api";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
 import { authGuard, readId } from "./myFunctions"; // Added authGuard
@@ -43,9 +42,9 @@ export const getBooking = query({
       booking.created_by === "system" || booking.created_by === undefined
         ? Promise.resolve("Booking system")
         : ctx.db
-          .get(booking.created_by as Id<"users">)
-          .then((e) => e?.name ?? "Anonymous")
-          .catch(() => "--"),
+            .get(booking.created_by as Id<"users">)
+            .then((e) => e?.name ?? "Anonymous")
+            .catch(() => "--"),
     ]);
 
     return {
@@ -54,14 +53,14 @@ export const getBooking = query({
       seats: seats.filter((seat) => seat !== null), // filter out any null values
       user: user
         ? {
-          id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          email: user.email,
-        }
+            id: user.id,
+            name: `${user.firstName} ${user.lastName}`,
+            email: user.email,
+          }
         : {
-          name: "Anonymous User",
-          email: "--",
-        },
+            name: "Anonymous User",
+            email: "--",
+          },
     };
   },
 });
@@ -444,7 +443,7 @@ export const getUserConfirmedBookings = query({
         const booking = await ctx.db.get(ticket.bookingId);
 
         // if booking doesn't exist or isn't confirmed
-        if (!booking || booking.status !== "confirmed") return null;
+        if (booking?.status !== "confirmed") return null;
 
         // if user is the purchaser of this booking, it is already included
         // in list 1 above
@@ -846,7 +845,7 @@ export const generateTickets = mutation({
   args: { bookingId: v.id("bookings") },
   handler: async (ctx, args) => {
     const booking = await ctx.db.get(args.bookingId);
-    if (!booking || booking.status !== "confirmed") {
+    if (booking?.status !== "confirmed") {
       throw new ConvexError("Booking not found or not confirmed");
     }
 
@@ -868,7 +867,7 @@ export const generateTickets = mutation({
         claimedAt: Date.now(),
       });
 
-      return "create a ticket and seat as unassigned"
+      return "create a ticket and seat as unassigned";
     }
 
     // create a ticket for each seat
@@ -979,14 +978,14 @@ export const getAllBookings = query({
           seats: seats.filter((seat) => seat !== null), // filter out any null values
           user: user
             ? {
-              id: user.id,
-              name: `${user.firstName} ${user.lastName}`,
-              email: user.email,
-            }
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+              }
             : {
-              name: "Anonymous User",
-              email: "--",
-            },
+                name: "Anonymous User",
+                email: "--",
+              },
         };
       }),
     );
@@ -1229,15 +1228,15 @@ export const getMonthlyReservations = query({
           ...booking,
           user: user
             ? {
-              id: user.id,
-              name: `${user.firstName} ${user.lastName}`,
-              email: user.email,
-            }
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+              }
             : {
-              id: booking.userId,
-              name: "Anonymous User",
-              email: null,
-            },
+                id: booking.userId,
+                name: "Anonymous User",
+                email: null,
+              },
         };
       }),
     );

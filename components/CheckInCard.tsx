@@ -1,15 +1,15 @@
 "use client";
+import { LucideLoader, XIcon } from "lucide-react";
+import { motion as m } from "motion/react";
+import { QRCodeSVG } from "qrcode.react";
+import React from "react";
 import { APP_URL, isDevelopment } from "@/config/constants";
 import { useProfile } from "@/hooks/auth";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
 import { safeObj, safeStr } from "@/lib/data.helpers";
 import { cn } from "@/lib/utils";
-import { LucideLoader, XIcon } from "lucide-react";
-import { motion as m } from "motion/react";
-import { QRCodeSVG } from "qrcode.react";
-import React from "react";
-import { ScanTimeCodec } from "./TakeAttendance";
 import { If } from "./if";
+import { ScanTimeCodec } from "./TakeAttendance";
 
 export function useGetProfileHash(profile?: { id: string } | null) {
   const device_meta = useDeviceMeta();
@@ -84,7 +84,10 @@ export function CheckInCard() {
 export function ResizeableQRCode({
   hash,
   className,
-}: { hash?: string; className?: string }) {
+}: {
+  hash?: string;
+  className?: string;
+}) {
   const [size, setSize] = React.useState<number | null>(null);
   const ref = React.useRef<HTMLDivElement>(null);
 

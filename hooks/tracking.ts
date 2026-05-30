@@ -1,9 +1,9 @@
-import { encodeQRCodeData } from "@/app/actions/encrypt";
 import { load } from "@fingerprintjs/fingerprintjs";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
+import { encodeQRCodeData } from "@/app/actions/encrypt";
 
-type Result<A, E> =
+type Result<A, _E> =
   | { status: "loading"; data: undefined }
   | { status: "success"; data: A }
   | { status: "error"; error: Error };

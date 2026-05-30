@@ -12,8 +12,8 @@
     "start": "next start",
     "lint": "next lint",
     "format": "biome format --write .",
-    "check": "biome check --apply .",
-    "fix:unsafe": "biome check --apply --unsafe .",
+    "check": "biome check .",
+    "fix:unsafe": "biome check --unsafe .",
     "generate:hex": "tsx ./scripts/generate-hash.ts",
     "deploy:prod": "convex deploy --cmd \"pnpm run build\"",
     "prepare": "husky"

@@ -1,3 +1,5 @@
+import { pipe } from "effect";
+import { CalendarIcon, RockingChair } from "lucide-react";
 import { SeatBadge } from "@/app/reserve/components/seats";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,8 +8,6 @@ import { safeArray } from "@/lib/data.helpers";
 import { DateParse } from "@/lib/date.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
-import { pipe } from "effect";
-import { CalendarIcon, RockingChair } from "lucide-react";
 import { RangePreviewSimple } from "./BookingCalendar";
 import { CustomerAvatar } from "./customers";
 
@@ -26,7 +26,10 @@ type BookingWithDetails = Omit<Doc<"bookings">, "startDate" | "endDate"> & {
 export function BookingCard({
   booking,
   onClick,
-}: { booking: BookingWithDetails; onClick?: () => void }) {
+}: {
+  booking: BookingWithDetails;
+  onClick?: () => void;
+}) {
   const seats = safeArray(booking.seats);
 
   return (

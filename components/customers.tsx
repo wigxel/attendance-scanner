@@ -1,27 +1,4 @@
 "use client";
-import { AppDataTable } from "@/components/DataTable";
-import { createColumns } from "@/components/columns";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { api } from "@/convex/_generated/api";
-import {
-  type AccessDuration,
-  type AccessStruct,
-  PlanImpl,
-} from "@/convex/shared";
-import { useCustomer } from "@/hooks/auth";
-import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
-import { DateParse } from "@/lib/date.helpers";
-import { getErrorMessage } from "@/lib/error.helpers";
-import { O } from "@/lib/fp.helpers";
-import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "convex/react";
 import {
   differenceInDays,
@@ -54,8 +31,31 @@ import useEvent from "react-use-event-hook";
 import { toast } from "sonner";
 import { useMediaQuery } from "usehooks-ts";
 import { Drawer } from "vaul";
-import { DateRange } from "./DateRange";
+import { createColumns } from "@/components/columns";
+import { AppDataTable } from "@/components/DataTable";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/convex/_generated/api";
+import {
+  type AccessDuration,
+  type AccessStruct,
+  PlanImpl,
+} from "@/convex/shared";
+import { useCustomer } from "@/hooks/auth";
+import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
+import { DateParse } from "@/lib/date.helpers";
+import { getErrorMessage } from "@/lib/error.helpers";
+import { O } from "@/lib/fp.helpers";
+import { cn } from "@/lib/utils";
 import { CustomerSheet } from "./customer-info";
+import { DateRange } from "./DateRange";
 import { DebugClick } from "./debug-click";
 import {
   EmptyState,
@@ -150,10 +150,7 @@ export function CustomersTable() {
   });
 
   const handleBookingSubmit = useEvent(
-    async (values: {
-      planKey: string;
-      startDate: string;
-    }) => {
+    async (values: { planKey: string; startDate: string }) => {
       if (!bookingUserId) return;
       setIsBookingLoading(true);
 
@@ -374,7 +371,10 @@ function useVisitCount({ userId }: { userId: string }) {
 export function CustomerAvatar({
   userId,
   className = "w-8 h-8",
-}: { userId: string; className?: string }) {
+}: {
+  userId: string;
+  className?: string;
+}) {
   const user = useCustomer({ userId }) ?? { firstName: "", lastName: "" };
 
   return (
@@ -914,7 +914,7 @@ export function TopCustomersAvatarGroup() {
               className="h-auto p-2 pl-4 rounded-full flex items-center gap-3"
             >
               <div className="flex -space-x-3">
-                {top6.map((customer, i) => (
+                {top6.map((customer, _i) => (
                   <CustomerAvatar
                     key={customer.userId}
                     userId={customer.userId}

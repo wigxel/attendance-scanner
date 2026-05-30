@@ -1,10 +1,9 @@
 "use client";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
-import type { Seat } from "@/hooks/useSeats";
-import { safeObj } from "@/lib/data.helpers";
 import { useQuery } from "convex/react";
 import { LucideLoader } from "lucide-react";
+import { api } from "@/convex/_generated/api";
+import type { Seat } from "@/hooks/useSeats";
+import { safeObj } from "@/lib/data.helpers";
 import { SLSeatItem, SLTableItem } from "./SeatStructureGrid";
 import type { SLEntry } from "./seat-grid-utils";
 

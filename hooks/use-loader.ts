@@ -43,7 +43,7 @@ export const useFakerXHR = ({ timeout }: { timeout: number }) => {
   return {
     loading: loader.loading.default,
     // biome-ignore lint/suspicious/noExplicitAny: Using any for flexibility in this development hook
-    fire: loader.attachLoader("default", (...a: any[]) => {
+    fire: loader.attachLoader("default", (..._a: any[]) => {
       return new Promise((res) => setTimeout(res, timeout));
     }),
   };

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+import { ClerkProvider } from "@clerk/nextjs";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { QueryProvider } from "@/components/react-query";
 import { Toaster } from "@/components/ui/sonner";
-import { ClerkProvider } from "@clerk/nextjs";
 import { body, mono } from "./font";
 
 export const metadata: Metadata = {

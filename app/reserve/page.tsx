@@ -1,31 +1,29 @@
 "use client";
-import { DestroyFutureStateOnReserve } from "@/components/DestroyFutureState";
-import { api } from "@/convex/_generated/api";
-import { usePaymentHandler } from "@/hooks/usePaymentHandler";
-import { useSeats } from "@/hooks/useSeats";
-import { cn, formatTime } from "@/lib/utils";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
+import { isNullable } from "effect/Predicate";
+import { isEmpty } from "effect/String";
+import { Check, LucideLoader } from "lucide-react";
+import { motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
-import { setActiveTab, useBookingStore } from "./store";
-
+import React, { Suspense, useEffect, useState } from "react";
 import BookingCalendar, { RangePreview } from "@/components/BookingCalendar";
+import { DestroyFutureStateOnReserve } from "@/components/DestroyFutureState";
 import { DynamicSeatLayout } from "@/components/DynamicSeatLayout";
-import PendingBookingsModal from "@/components/PendingBookingsModal";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import PendingBookingsModal from "@/components/PendingBookingsModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SegmentProgressBar } from "@/components/ui/segment-gradient-progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { isNullable } from "effect/Predicate";
-import { isEmpty } from "effect/String";
-import { Check, LucideLoader } from "lucide-react";
-import { motion } from "motion/react";
-import React from "react";
+import { api } from "@/convex/_generated/api";
+import { usePaymentHandler } from "@/hooks/usePaymentHandler";
+import { useSeats } from "@/hooks/useSeats";
+import { cn, formatTime } from "@/lib/utils";
 import { SelectedSeats } from "./components/seats";
+import { setActiveTab, useBookingStore } from "./store";
 
 function BookingStepTrigger({
   value,
@@ -113,7 +111,7 @@ function Content() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [activeTab]);
+  }, []);
 
   const isBookingActive = activeTab === "booking";
   const isChooseActive = activeTab === "choose";

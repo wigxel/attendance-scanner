@@ -1,13 +1,13 @@
 "use client";
 
-import { MonthlyReservationsTable } from "@/components/MonthlyReservationsTable";
-import { Reservations } from "@/components/Reservations";
-import { Button } from "@/components/ui/button";
-import { getErrorMessage } from "@/lib/error.helpers";
 import { GridIcon, ListIcon, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
+import { MonthlyReservationsTable } from "@/components/MonthlyReservationsTable";
+import { Reservations } from "@/components/Reservations";
+import { Button } from "@/components/ui/button";
+import { getErrorMessage } from "@/lib/error.helpers";
 
 function ReservationsErrorFallback({
   error,

@@ -1,15 +1,14 @@
+import { useAuth, useUser } from "@clerk/nextjs";
+import { ConvexHttpClient } from "convex/browser";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import { CONFIG } from "@/app/reserve/constants";
 import { setBookingId, useBookingStore } from "@/app/reserve/store";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { formatDateToLocalISO, loadPaystackScript } from "@/lib/utils";
-import { useAuth, useUser } from "@clerk/nextjs";
-import { ConvexHttpClient } from "convex/browser";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-
-import { toast } from "sonner";
 
 interface PaystackResponse {
   reference: string;

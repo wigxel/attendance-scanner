@@ -1,10 +1,13 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": {
-    "enabled": true
+  "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
   },
   "files": {
-    "ignore": ["./.next", "**/convex/_generated/**"]
+    "includes": ["**", "!.next", "!**/convex/_generated"]
   },
   "linter": {
     "enabled": true,
@@ -25,7 +28,7 @@
   },
   "overrides": [
     {
-      "include": ["*.test.*", "*.spec.*"],
+      "includes": ["**/*.test.*", "**/*.spec.*"],
       "linter": {
         "rules": {
           "style": {

@@ -2,14 +2,14 @@
 import {
   type ColumnDef,
   type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type SortingState,
   useReactTable,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import { ChevronDown, Loader2 } from "lucide-react";
 import * as React from "react";

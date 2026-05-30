@@ -1,3 +1,6 @@
+import { useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import {
   addSelectedSeat,
   removeSelectedSeat,
@@ -6,9 +9,6 @@ import {
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { formatDateToLocalISO } from "@/lib/utils";
-import { useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export interface Seat {
   _id: Id<"seats">;

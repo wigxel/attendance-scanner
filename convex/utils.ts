@@ -333,7 +333,7 @@ export const findUnassigned = internalQuery({
 
     const records = {};
 
-    for (const [table, user_column] of tables.entries()) {
+    for (const [table, _user_column] of tables.entries()) {
       // 1. Get all `userId`s from the `daily_register` table.
       const dailyRegisterRecords = await ctx.db.query(table).collect();
       const dailyRegisterUserIds = new Set(

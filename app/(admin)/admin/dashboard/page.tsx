@@ -1,8 +1,8 @@
 "use client";
-import { TakeAttendance } from "@/components/TakeAttendance";
 import { TodaysCustomers } from "@/components/customers";
 import { Feedbacks } from "@/components/feedbacks";
 import { MetricsChart } from "@/components/metrics";
+import { TakeAttendance } from "@/components/TakeAttendance";
 import { TotalRevenue, TotalVisits } from "../customers/analytics";
 
 const Page = () => {

@@ -1,7 +1,7 @@
+import type { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { loadPaystackScript } from "@/lib/utils";
-import type { ConvexHttpClient } from "convex/browser";
 
 interface BookingArgs {
   userId: string;

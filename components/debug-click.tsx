@@ -1,5 +1,5 @@
-import { rootLogger } from "@/config/logger";
 import { Slot } from "@radix-ui/react-slot";
+import { rootLogger } from "@/config/logger";
 
 /**
  * @description - Logs input to the console for debugging. Hold SHIFT and Click

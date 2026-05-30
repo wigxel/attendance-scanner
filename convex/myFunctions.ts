@@ -8,13 +8,12 @@ import { isNullable } from "effect/Predicate";
 import { z } from "zod";
 import { logger } from "../config/logger";
 import { safeStr } from "../lib/data.helpers";
-import { components } from "./_generated/api";
-import { api } from "./_generated/api";
+import { api, components } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { setExternalId, updateClerkUser } from "./clerk";
 import { visitsAggregate } from "./customers";
-import { PlanImpl, featureRequestStatus } from "./shared";
+import { featureRequestStatus, PlanImpl } from "./shared";
 
 export const authUser = query({
   args: {},
@@ -30,8 +29,8 @@ export const setAccountExternalId = action({
     clerk_user_id: v.string(),
     convex_user_id: v.string(),
   },
-  async handler(ctx, args) {
-    const response = await setExternalId({
+  async handler(_ctx, args) {
+    const _response = await setExternalId({
       clerkUserId: args.clerk_user_id,
       convexUserId: args.convex_user_id,
     });
@@ -58,7 +57,7 @@ export const createUser = mutation({
 
     const user_id = await ctx.db.insert("users", {
       email: args.email,
-      emailVerificationTime: new Date().getTime(),
+      emailVerificationTime: Date.now(),
       phone: args.phone,
       isAnonymous: false,
       name: `${args.firstName} ${args.lastName}`,

@@ -1,10 +1,10 @@
 import { hash } from "ohash";
 import { describe, expect, it } from "vitest";
 import {
-  type Position,
-  type SLEntry,
   orderCells,
+  type Position,
   reorderSeats,
+  type SLEntry,
 } from "./seat-grid-utils";
 
 describe("orderCells", () => {

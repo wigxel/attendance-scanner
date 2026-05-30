@@ -1,13 +1,12 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { api } from "@/convex/_generated/api";
-import { useProfile } from "@/hooks/auth";
 import { useQuery } from "convex/react";
 import { addDays, addMonths, format, formatISO, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion as m } from "motion/react";
-import React from "react";
 import { createStore, useStore } from "zustand";
+import { Button } from "@/components/ui/button";
+import { api } from "@/convex/_generated/api";
+import { useProfile } from "@/hooks/auth";
 import { DateCalendar } from "./DateCalendar";
 
 interface StoreState {

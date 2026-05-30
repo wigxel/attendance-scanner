@@ -31,7 +31,7 @@ export const safeObj = <T>(
 };
 
 export function safeInt(num: unknown, fallback = 0): number {
-  const value = Number.parseInt(num as string);
+  const value = Number.parseInt(num as string, 10);
 
   return !Object.is(Number.NaN, value) ? value : fallback;
 }
@@ -49,13 +49,14 @@ export function safeDict<T>(opt: { map: T; default?: Values<T> }) {
     TFallback,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     TValues = Values<TRecord> | undefined,
-  > = TValues extends Maybe<infer TValues>
-    ? TKey extends keyof TRecord
-      ? TRecord[TKey]
-      : TFallback extends keyof TRecord
-        ? TRecord[TFallback]
-        : null
-    : null;
+  > =
+    TValues extends Maybe<infer TValues>
+      ? TKey extends keyof TRecord
+        ? TRecord[TKey]
+        : TFallback extends keyof TRecord
+          ? TRecord[TFallback]
+          : null
+      : null;
 
   return {
     get: <TKey extends keyof T>(

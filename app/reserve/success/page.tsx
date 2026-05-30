@@ -1,17 +1,16 @@
 "use client";
+import { useQuery } from "convex/react";
+import { LucideLoader } from "lucide-react";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
-import { useQuery } from "convex/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
-import { resetBookingState } from "../store";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import CheckMark from "@/public/checkmark.svg";
-import { LucideLoader } from "lucide-react";
-import Image from "next/image";
+import { resetBookingState } from "../store";
 
 function SuccessPageContent() {
   useEffect(() => {

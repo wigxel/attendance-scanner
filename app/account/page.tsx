@@ -1,4 +1,8 @@
 "use client";
+import { useQuery } from "convex/react";
+import { ArrowRightIcon } from "lucide-react";
+import Link from "next/link";
+import type React from "react";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 import { CheckInCard } from "@/components/CheckInCard";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
@@ -7,10 +11,6 @@ import { Header } from "@/components/header";
 import { If } from "@/components/if";
 import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";
-import { useQuery } from "convex/react";
-import { ArrowRightIcon } from "lucide-react";
-import Link from "next/link";
-import type React from "react";
 import { ActiveBookings } from "./active-bookings";
 
 function greet_time(): string {

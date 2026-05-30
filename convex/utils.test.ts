@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type DuplicateResult, findDuplicatesInRecords } from "./utils";
+import { findDuplicatesInRecords } from "./utils";
 
 describe("findDuplicatesInRecords", () => {
   it("should return empty result for empty array", () => {

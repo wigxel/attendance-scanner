@@ -1,5 +1,8 @@
 "use client";
 
+import { useQuery } from "convex/react";
+import { Check, ChevronsUpDown, Loader2, UserCheck } from "lucide-react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -17,9 +20,6 @@ import {
 } from "@/components/ui/popover";
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
-import { useQuery } from "convex/react";
-import { Check, ChevronsUpDown, Loader2, UserCheck } from "lucide-react";
-import React from "react";
 
 interface CustomerComboboxProps {
   value: string;

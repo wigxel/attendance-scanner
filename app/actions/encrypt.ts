@@ -1,10 +1,10 @@
 "use server";
 
+import { Console, Effect, pipe } from "effect";
 import type { CustomerRegisterTuple } from "@/hooks/tracking";
 import { createReversibleHash } from "@/layers/encryption/presets/reversible-hasher";
 import { ReversibleHash } from "@/layers/encryption/reversible";
 import { safeArray, safeStr } from "@/lib/data.helpers";
-import { Console, Effect, pipe } from "effect";
 
 const HasherLive = createReversibleHash({
   salt: safeStr(process.env.QR_CODE_SALT),

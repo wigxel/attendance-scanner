@@ -1,6 +1,6 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import { SignIn } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 export default function SignInPage() {
   return (

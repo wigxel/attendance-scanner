@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import { AESAlgo } from "./reversible-hasher";
 
 it("should decipher", () => {
-  const SALT = "hello";
+  const _SALT = "hello";
   const IV_HEX = "c28d1b0086ac1d7c82d57ac22d5abbaf";
 
   const instance_lgo = new AESAlgo("hello", IV_HEX);

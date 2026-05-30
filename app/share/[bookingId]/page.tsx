@@ -1,4 +1,8 @@
 "use client";
+import { useMutation, useQuery } from "convex/react";
+import { Calendar, Check, Clock, LucideLoader, UserMinus2 } from "lucide-react";
+import { useParams } from "next/navigation";
+import { toast } from "sonner";
 import { CustomerAvatar } from "@/components/customers";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
@@ -12,10 +16,6 @@ import { DateParse } from "@/lib/date.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
-import { Calendar, Check, Clock, LucideLoader, UserMinus2 } from "lucide-react";
-import { useParams } from "next/navigation";
-import { toast } from "sonner";
 
 export default function SharePage() {
   const { bookingId } = useParams();

@@ -1,11 +1,5 @@
 "use client";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   addDays,
   addMonths,
   addYears,
@@ -16,6 +10,12 @@ import {
 } from "date-fns";
 import { ChevronDown } from "lucide-react";
 import React from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const DateRangeContext = React.createContext<{
   filter: FilterOption;
@@ -65,30 +65,28 @@ function RangeDropdown(props: {
   const { options } = DateRange.useState();
 
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground focus:outline-none hover:underline focus:text-primary">
-          <span>{props.value.label} </span>
-          <ChevronDown size="1em" />
-        </DropdownMenuTrigger>
+    <DropdownMenu>
+      <DropdownMenuTrigger className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground focus:outline-none hover:underline focus:text-primary">
+        <span>{props.value.label} </span>
+        <ChevronDown size="1em" />
+      </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end">
-          {options.map((filter) => {
-            return (
-              <DropdownMenuItem
-                key={filter.label}
-                className="text-xs"
-                onClick={() => {
-                  props.onChange(filter);
-                }}
-              >
-                {filter.label}
-              </DropdownMenuItem>
-            );
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+      <DropdownMenuContent align="end">
+        {options.map((filter) => {
+          return (
+            <DropdownMenuItem
+              key={filter.label}
+              className="text-xs"
+              onClick={() => {
+                props.onChange(filter);
+              }}
+            >
+              {filter.label}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

@@ -75,7 +75,10 @@ export class AESAlgo {
 export function createReversibleHash({
   salt,
   hex,
-}: { salt: string; hex: string }) {
+}: {
+  salt: string;
+  hex: string;
+}) {
   const hasher = new AESAlgo(salt, hex);
   return Layer.succeed(ReversibleHash, {
     encrypt: (value) =>

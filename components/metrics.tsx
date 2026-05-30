@@ -1,4 +1,8 @@
 "use client";
+import { useQuery } from "convex/react";
+import { addDays, format } from "date-fns";
+import * as React from "react";
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import {
   Card,
   CardContent,
@@ -13,10 +17,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { api } from "@/convex/_generated/api";
-import { useQuery } from "convex/react";
-import { addDays, format } from "date-fns";
-import * as React from "react";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { DateRange } from "./DateRange";
 
 const chartConfig = {

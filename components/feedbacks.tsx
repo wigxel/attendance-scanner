@@ -1,9 +1,3 @@
-import { api } from "@/convex/_generated/api";
-import type { Doc } from "@/convex/_generated/dataModel";
-import { useCustomer } from "@/hooks/auth";
-import { useAsyncLoader } from "@/hooks/use-loader";
-import { safeArray, serialNo } from "@/lib/data.helpers";
-import { cn } from "@/lib/utils";
 import { Slot } from "@radix-ui/react-slot";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
@@ -18,8 +12,14 @@ import {
 import { motion } from "motion/react";
 import Image from "next/image";
 import React from "react";
-import { FeatureRequestDialog } from "./FeatureRequestDialog";
+import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
+import { useCustomer } from "@/hooks/auth";
+import { useAsyncLoader } from "@/hooks/use-loader";
+import { safeArray, serialNo } from "@/lib/data.helpers";
+import { cn } from "@/lib/utils";
 import { CustomerAvatar } from "./customers";
+import { FeatureRequestDialog } from "./FeatureRequestDialog";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -58,7 +58,9 @@ export function Feedbacks() {
 
 function FeedbackItem({
   entry: e,
-}: { entry: Doc<"featureRequest"> & { voteCount: number } }) {
+}: {
+  entry: Doc<"featureRequest"> & { voteCount: number };
+}) {
   const user = useCustomer({ userId: e.userId });
 
   return (

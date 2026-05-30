@@ -1,9 +1,9 @@
 "use client";
 
+import { useQuery } from "convex/react";
 import { SelectContent, SelectItem } from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
 import { safeArray } from "@/lib/data.helpers";
-import { useQuery } from "convex/react";
 
 export function AccessPlanDropdown() {
   const accessPlans = useQuery(api.myFunctions.listAccessPlans);

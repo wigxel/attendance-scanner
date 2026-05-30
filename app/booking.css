@@ -4,7 +4,7 @@
 @layer components {
   .calendar__calendar-container span,
   .calendar__calendar-container .calendar__day-content {
-    font-family: var(--font-geist-mono) !important;
+    font-family: var(--font-geist-mono);
   }
 
   .calendar__calendar-container:not([data-scrollable])

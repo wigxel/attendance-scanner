@@ -1,4 +1,6 @@
 "use client";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Armchair, CalendarIcon, EyeIcon, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,15 +10,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { safeStr, serialNo } from "@/lib/data.helpers";
-import type { ColumnDef } from "@tanstack/react-table";
-import {
-  Armchair,
-  CalendarIcon,
-  EyeIcon,
-  MoreVertical,
-  User,
-  UserPen,
-} from "lucide-react";
 
 export type UserRow = {
   id: string;

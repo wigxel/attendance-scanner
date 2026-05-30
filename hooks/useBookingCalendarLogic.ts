@@ -1,3 +1,6 @@
+import { useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   setEndDate,
   setPrice,
@@ -6,12 +9,9 @@ import {
   useBookingStore,
 } from "@/app/reserve/store";
 import { api } from "@/convex/_generated/api";
-import { safeArray, safeInt, safeNum } from "@/lib/data.helpers";
+import { safeArray, safeInt } from "@/lib/data.helpers";
 import { anomaly } from "@/lib/error.helpers";
 import { calculateEndDate } from "@/lib/utils";
-import { useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 type AccessPlanKey = "daily" | "weekly" | "monthly";
 
@@ -21,7 +21,7 @@ const DURATION_TYPE_TO_PLAN_KEY: Record<string, AccessPlanKey> = {
   month: "monthly",
 };
 
-const PLAN_KEY_TO_DURATION_TYPE: Record<AccessPlanKey, string> = {
+const _PLAN_KEY_TO_DURATION_TYPE: Record<AccessPlanKey, string> = {
   daily: "day",
   weekly: "week",
   monthly: "month",

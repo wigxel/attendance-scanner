@@ -1,4 +1,8 @@
 "use client";
+import { useMutation, useQuery } from "convex/react";
+import { Pencil, Plus, Trash } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,10 +25,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { Pencil, Plus, Trash } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 
 export default function OccupationManagement() {
   //state for form values

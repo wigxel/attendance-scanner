@@ -1,9 +1,4 @@
 "use client";
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
-import { api } from "@/convex/_generated/api";
-import { safeStr } from "@/lib/data.helpers";
-import { getErrorMessage } from "@/lib/error.helpers";
 import { useUser } from "@clerk/nextjs";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { LucideLoader } from "lucide-react";
@@ -11,6 +6,11 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import useEffectEvent from "react-use-event-hook";
 import { toast } from "sonner";
+import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
+import { api } from "@/convex/_generated/api";
+import { safeStr } from "@/lib/data.helpers";
+import { getErrorMessage } from "@/lib/error.helpers";
 
 function ValidateConvexProfile() {
   const user = useUser();
