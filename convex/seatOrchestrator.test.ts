@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Id } from "./_generated/dataModel";
-import { assignSeats } from "./seat-orchestrator";
+import { assignSeats } from "./seatOrchestrator";
 
 const tid = (n: number) => `ticket-${n}` as Id<"tickets">;
 const bid = (n: number) => `booking-${n}` as Id<"bookings">;

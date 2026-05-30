@@ -16,7 +16,7 @@ import {
   assignSeats,
   getAvailableSeatsForDay,
   getUnassignedTicketsForDay,
-} from "./seat-orchestrator";
+} from "./seatOrchestrator";
 
 export const getBooking = query({
   args: {
@@ -42,9 +42,9 @@ export const getBooking = query({
       booking.created_by === "system" || booking.created_by === undefined
         ? Promise.resolve("Booking system")
         : ctx.db
-            .get(booking.created_by as Id<"users">)
-            .then((e) => e?.name ?? "Anonymous")
-            .catch(() => "--"),
+          .get(booking.created_by as Id<"users">)
+          .then((e) => e?.name ?? "Anonymous")
+          .catch(() => "--"),
     ]);
 
     return {
@@ -53,14 +53,14 @@ export const getBooking = query({
       seats: seats.filter((seat) => seat !== null), // filter out any null values
       user: user
         ? {
-            id: user.id,
-            name: `${user.firstName} ${user.lastName}`,
-            email: user.email,
-          }
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+        }
         : {
-            name: "Anonymous User",
-            email: "--",
-          },
+          name: "Anonymous User",
+          email: "--",
+        },
     };
   },
 });
@@ -978,14 +978,14 @@ export const getAllBookings = query({
           seats: seats.filter((seat) => seat !== null), // filter out any null values
           user: user
             ? {
-                id: user.id,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-              }
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+            }
             : {
-                name: "Anonymous User",
-                email: "--",
-              },
+              name: "Anonymous User",
+              email: "--",
+            },
         };
       }),
     );
@@ -1228,15 +1228,15 @@ export const getMonthlyReservations = query({
           ...booking,
           user: user
             ? {
-                id: user.id,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-              }
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+            }
             : {
-                id: booking.userId,
-                name: "Anonymous User",
-                email: null,
-              },
+              id: booking.userId,
+              name: "Anonymous User",
+              email: null,
+            },
         };
       }),
     );
