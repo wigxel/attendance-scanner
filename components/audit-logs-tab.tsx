@@ -2,12 +2,27 @@
 
 import { useQuery } from "convex/react";
 import { format } from "date-fns";
+import { Either } from "effect";
+import { isNullable } from "effect/Predicate";
+import { isEmpty } from "effect/String";
 import { ChevronDown, ScrollText, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
+import {
+  bookingDeletedSchema,
+  formatMetadataParts,
+} from "@/lib/audit-metadata";
 import { currencyFormatter } from "@/lib/currency.helpers";
+import { anomaly } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
 import {
   EmptyState,
@@ -23,43 +38,41 @@ type AuditLogEntry = Doc<"auditLog"> & {
   owner: Doc<"profile"> | null;
 };
 
-function DetailsPreview({ metadata }: { metadata: string | undefined }) {
-  let parsed: Record<string, unknown> | null = null;
-  try {
-    parsed = metadata ? JSON.parse(metadata) : null;
-  } catch {
-    parsed = null;
+function parseMetadata(event_key: string, metadata?: string) {
+  const safe_parsed = Either.try(() => {
+    return bookingDeletedSchema.parse(JSON.parse(metadata || ""));
+  });
+
+  if (Either.isLeft(safe_parsed)) {
+    anomaly(new Error("[Audit] Error parsing metadata"), { metadata });
+    return [];
   }
 
-  if (!parsed) return null;
+  return formatMetadataParts(safe_parsed.right).map((e, i) => ({
+    index: i,
+    value: e,
+  }));
+}
 
-  const parts: string[] = [];
-
-  if (parsed.amount !== undefined) {
-    const amount =
-      typeof parsed.amount === "number"
-        ? currencyFormatter.format(parsed.amount / 100)
-        : String(parsed.amount);
-    parts.push(amount);
-  }
-
-  if (parsed.seatIds !== undefined) {
-    const count = Array.isArray(parsed.seatIds) ? parsed.seatIds.length : 1;
-    parts.push(`${count} seat${count !== 1 ? "s" : ""}`);
-  }
-
-  if (parsed.duration !== undefined) {
-    parts.push(`${parsed.duration} ${parsed.durationType ?? "days"}`);
-  }
+function DetailsPreview({
+  eventKey: event_key,
+  metadata,
+}: {
+  eventKey: string;
+  metadata: string | undefined;
+}) {
+  const parts = parseMetadata(event_key, metadata);
 
   if (parts.length === 0) return null;
 
   return (
     <span className="inline-flex items-center gap-1 text-sm text-muted-foreground truncate">
-      {parts.map((part, i) => (
-        <span key={i}>
-          {i > 0 && <span className="mx-0.5 text-muted-foreground/40">·</span>}
-          {part}
+      {parts.map((part) => (
+        <span key={part.index}>
+          {part.index > 0 && (
+            <span className="mx-0.5 text-muted-foreground/40">•</span>
+          )}
+          {part.value}
         </span>
       ))}
     </span>
@@ -144,9 +157,22 @@ function MetadataCard({
 }
 
 export function AuditLogsTab() {
-  const data = useQuery(api.audit.list);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [actionFilter, setActionFilter] = useState<string>("all");
+
+  const data = useQuery(api.audit.list, {
+    actionFilter: actionFilter === "all" ? undefined : actionFilter,
+  });
+
+  const actionTypes = useMemo(() => {
+    if (!data) return [];
+    const unique = [...new Set(data.map((e) => e.action))].sort();
+    return unique.map((action) => ({
+      value: action,
+      label: action.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    }));
+  }, [data]);
 
   const handleToggle = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -155,7 +181,6 @@ export function AuditLogsTab() {
   const filtered = useMemo(() => {
     if (!data) return [];
     if (!search.trim()) return data;
-
     const q = search.toLowerCase();
     return data.filter((entry) => {
       const actionMatch = entry.action.toLowerCase().includes(q);
@@ -202,6 +227,25 @@ export function AuditLogsTab() {
             className="pl-9"
           />
         </div>
+
+        <Select
+          value={actionFilter ?? "all"}
+          onValueChange={(v) => {
+            return setActionFilter(isNullable(v) || isEmpty(v) ? "all" : v);
+          }}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="All Events" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Events</SelectItem>
+            {actionTypes.map((t) => (
+              <SelectItem key={t.value} value={t.value}>
+                {t.label.toLowerCase()}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <EmptyState isEmpty={filtered.length === 0}>
@@ -209,9 +253,11 @@ export function AuditLogsTab() {
           <ScrollText className="h-12 w-12 text-muted-foreground" />
           <EmptyStateTitle>No audit logs found</EmptyStateTitle>
           <EmptyStateDescription>
-            {search
-              ? "Try a different search term."
-              : "Audit logs will appear here when actions like booking deletions are performed."}
+            {actionFilter
+              ? "No logs match the selected event type."
+              : search
+                ? "Try a different search term."
+                : "Audit logs will appear here when actions like booking deletions are performed."}
           </EmptyStateDescription>
         </EmptyStateContent>
 
@@ -300,7 +346,10 @@ export function AuditLogsTab() {
                       isExpanded && "bg-muted/30",
                     )}
                   >
-                    <DetailsPreview metadata={entry.metadata} />
+                    <DetailsPreview
+                      eventKey={entry.action}
+                      metadata={entry.metadata}
+                    />
                   </button>
 
                   {isExpanded && (

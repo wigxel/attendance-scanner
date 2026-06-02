@@ -204,10 +204,10 @@ export function AppDataTable<T>({
 }
 
 export function AppTableActions(props: { children: React.ReactNode }) {
-  // biome-ignore lint/a11y/noStaticElementInteractions: No an actual button. Just a container preventing event click propagation.
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: No an actual button. Just a container preventing event click propagation.
     <div
-      className="flex justify-end pointer-events-none"
+      className="flex justify-end"
       onClick={(evt) => {
         evt.stopPropagation();
       }}

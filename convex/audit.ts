@@ -19,18 +19,26 @@ export const log = internalMutation({
 });
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    actionFilter: v.optional(v.string()),
+  },
+  handler: async (ctx, { actionFilter }) => {
     const adminProfile = await authGuard(ctx, "admin");
     if (!adminProfile) {
       throw new ConvexError("Not authorized");
     }
 
-    const logs = await ctx.db
-      .query("auditLog")
-      .withIndex("by_timestamp")
-      .order("desc")
-      .take(100);
+    const logs = actionFilter
+      ? await ctx.db
+          .query("auditLog")
+          .withIndex("by_action", (q) => q.eq("action", actionFilter))
+          .order("desc")
+          .take(100)
+      : await ctx.db
+          .query("auditLog")
+          .withIndex("by_timestamp")
+          .order("desc")
+          .take(100);
 
     const actorIds = [...new Set(logs.map((l) => l.actorId))];
     const actors = await Promise.all(
