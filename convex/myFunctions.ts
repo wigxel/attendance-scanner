@@ -9,7 +9,7 @@ import { z } from "zod";
 import { logger } from "../config/logger";
 import { safeStr } from "../lib/data.helpers";
 import { api, components } from "./_generated/api";
-import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import type { DataModel, Id } from "./_generated/dataModel";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { setExternalId, updateClerkUser } from "./clerk";
 import { visitsAggregate } from "./customers";
@@ -836,8 +836,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-            .query("featureRequest")
-            .withIndex("by_status", (q) => q.eq("status", status))
+          .query("featureRequest")
+          .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 
