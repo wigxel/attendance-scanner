@@ -672,7 +672,10 @@ export const deleteBooking = mutation({
       throw new ConvexError("Booking not found");
     }
 
-    const ageInHours = differenceInHours(new Date(), new Date(booking.createdAt));
+    const ageInHours = differenceInHours(
+      new Date(),
+      new Date(booking.createdAt),
+    );
     if (ageInHours > 48) {
       throw new ConvexError(
         "Cannot delete bookings older than 48 hours. Contact support if needed.",

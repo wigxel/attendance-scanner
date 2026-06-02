@@ -30,7 +30,7 @@ export const updateProfile = mutation({
     lastName: v.string(),
     phoneNumber: v.optional(v.string()),
     email: v.optional(v.string()),
-    occupation: v.string(),
+    occupation: v.union(v.id("occupations"), v.literal("None")),
   },
   handler: async (ctx, args) => {
     const profile = await ctx.db
@@ -47,7 +47,7 @@ export const updateProfile = mutation({
       lastName: args.lastName,
       phoneNumber: args.phoneNumber,
       email: args.email,
-      occupation: args.occupation,
+      occupation: args.occupation as Id<"occupations"> | "None",
     });
 
     return profile._id;

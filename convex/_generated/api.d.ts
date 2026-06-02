@@ -17,6 +17,7 @@ import type * as crons from "../crons.js";
 import type * as customers from "../customers.js";
 import type * as http from "../http.js";
 import type * as metrics from "../metrics.js";
+import type * as migrations from "../migrations.js";
 import type * as myFunctions from "../myFunctions.js";
 import type * as register from "../register.js";
 import type * as reports from "../reports.js";
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   customers: typeof customers;
   http: typeof http;
   metrics: typeof metrics;
+  migrations: typeof migrations;
   myFunctions: typeof myFunctions;
   register: typeof register;
   reports: typeof reports;

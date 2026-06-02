@@ -46,7 +46,7 @@ const profile = defineTable({
   lastName: v.string(),
   phoneNumber: v.optional(v.string()),
   email: v.optional(v.string()),
-  occupation: v.string(),
+  occupation: v.string(), // v.union(v.id("occupations"), v.literal("None")),
   role: v.optional(v.union(v.literal("admin"), v.literal("user"))),
 })
   .index("occupation", ["occupation"])

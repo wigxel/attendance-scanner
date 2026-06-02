@@ -134,13 +134,13 @@ export const getUserById = query({
 
     if (isNullable(user)) return null;
 
-    const occupation = isNullable(user.occupation)
-      ? await ctx.db.get(user.occupation).then((record) => {
-          return (record as Doc<"occupations">)?.name ?? "unknown";
-        })
-      : "unknown";
+    const occupationId =
+      user.occupation === "None" ? undefined : user.occupation;
+    const occupation = occupationId
+      ? ((await ctx.db.get(occupationId))?.name ?? "unknown")
+      : "None";
 
-    return { ...user, occupation: occupation };
+    return { ...user, occupation, occupationId };
   },
 });
 
@@ -434,7 +434,7 @@ export const updateUser = action({
     firstName: v.string(),
     lastName: v.string(),
     phoneNumber: v.string(),
-    occupation: v.string(),
+    occupation: v.union(v.id("occupations"), v.literal("None")),
     // email: v.string(),
   },
   handler: async (ctx, args) => {
@@ -471,7 +471,7 @@ export const updateProfile = internalMutation({
     firstName: v.string(),
     lastName: v.string(),
     phoneNumber: v.string(),
-    occupation: v.string(),
+    occupation: v.union(v.id("occupations"), v.literal("None")),
   },
   handler: async (ctx, args) => {
     const record = await ctx.db.get(args._id);
@@ -637,16 +637,36 @@ export const getAllUsers = query({
       }
     }
 
+    const occupationIds = [
+      ...new Set(
+        paginatedProfiles
+          .map((p) => p.occupation)
+          .filter((o): o is Id<"occupations"> => o !== "None"),
+      ),
+    ];
+    const occupationRecords = await Promise.all(
+      occupationIds.map((id) => ctx.db.get(id)),
+    );
+    const occupationNameMap = new Map(
+      occupationRecords
+        .filter((r): r is NonNullable<typeof r> => r !== null)
+        .map((r) => [r._id.toString(), r.name]),
+    );
+
     const data = paginatedProfiles.map((profile) => {
       const visitCount = countByUser[profile.id] || 0;
       const eligible = visitCount >= 20;
+      const occupation =
+        profile.occupation === "None"
+          ? "None"
+          : (occupationNameMap.get(profile.occupation.toString()) ?? "unknown");
       return {
         id: profile._id,
         userId: profile.id,
         firstName: profile.firstName,
         lastName: profile.lastName,
         email: profile.email ?? "N/A",
-        occupation: profile.occupation,
+        occupation,
         role: profile.role ?? "user",
         phoneNumber: profile.phoneNumber ?? "N/A",
         visitCount,
@@ -940,9 +960,7 @@ export const getAttendanceForBooking = query({
         return {
           ...record,
           userName: user ? `${user.firstName} ${user.lastName}` : "Unknown",
-          admitterName: admitter
-            ? admitter.name
-            : "Unknown",
+          admitterName: admitter ? admitter.name : "Unknown",
         };
       }),
     );
@@ -1084,7 +1102,34 @@ export const seedAccessPlans = internalMutation({
       features: ["priority-check-in", "booking"],
     });
 
-    return { seeded: 3 };
+    ctx.db.insert("accessPlans", {
+      key: "daily_night",
+      name: "Daily Night",
+      price: 1000,
+      no_of_days: 1,
+      description: "Night session pass (8pm - 8am)",
+      features: [],
+    });
+
+    ctx.db.insert("accessPlans", {
+      key: "weekly_night",
+      name: "Weekly Night",
+      price: 5000,
+      no_of_days: 7,
+      description: "7-night session pass (8pm - 8am)",
+      features: ["priority-check-in"],
+    });
+
+    ctx.db.insert("accessPlans", {
+      key: "monthly_night",
+      name: "Monthly Night",
+      price: 20000,
+      no_of_days: 24,
+      description: "24-night session pass (8pm - 8am)",
+      features: ["priority-check-in", "booking"],
+    });
+
+    return { seeded: 6 };
   },
 });
 

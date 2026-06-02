@@ -6,6 +6,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
+import type { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
@@ -81,7 +82,7 @@ function OnboardingForm({
         firstName: values.firstName,
         lastName: values.lastName,
         phoneNumber: values.phoneNumber,
-        occupation: values.occupation,
+        occupation: values.occupation as Id<"occupations"> | "None",
       });
       toast.success("Profile created successfully");
       router.push("/");

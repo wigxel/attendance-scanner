@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import { safeArray } from "@/lib/data.helpers";
 
@@ -44,7 +45,7 @@ interface CustomerEditFormProps {
     lastName: string;
     phoneNumber?: string;
     email?: string;
-    occupation: string;
+    occupationId: Id<"occupations"> | undefined;
   };
   onSubmit: (values: CustomerEditFormValues) => Promise<void>;
   onCancel: () => void;
@@ -66,7 +67,7 @@ export function CustomerEditForm({
       lastName: initialData.lastName,
       phoneNumber: initialData.phoneNumber ?? "",
       email: initialData.email ?? "",
-      occupation: initialData.occupation,
+      occupation: initialData.occupationId,
     },
   });
 
@@ -163,8 +164,8 @@ export function CustomerEditForm({
                 </FormControl>
 
                 <SelectContent>
-                  {safeArray(occupations).map((occ, idx) => (
-                    <SelectItem key={idx} value={occ.name}>
+                  {safeArray(occupations).map((occ) => (
+                    <SelectItem key={occ.id} value={occ.id}>
                       {occ.name}
                     </SelectItem>
                   ))}

@@ -4,6 +4,7 @@ import { format, isSameYear } from "date-fns";
 import { Globe, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Area, AreaChart } from "recharts";
+import type { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import { useCustomer } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
@@ -58,6 +59,7 @@ function CustomerSheet({
       await updateProfile({
         userId,
         ...data,
+        occupation: data.occupation as Id<"occupations"> | "None",
       });
       setIsEditing(false);
     } finally {
@@ -93,7 +95,7 @@ function CustomerSheet({
                   lastName: customer.lastName,
                   phoneNumber: customer.phoneNumber,
                   email: customer.email,
-                  occupation: customer.occupation,
+                  occupationId: customer.occupationId,
                 }}
                 onSubmit={handleSave}
                 onCancel={() => setIsEditing(false)}

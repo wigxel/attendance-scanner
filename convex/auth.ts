@@ -47,7 +47,7 @@ export const createOrUpdateProfile = mutation({
     lastName: v.string(),
     email: v.string(),
     phoneNumber: v.optional(v.string()),
-    occupation: v.optional(v.string()),
+    occupation: v.optional(v.union(v.id("occupations"), v.literal("None"))),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
