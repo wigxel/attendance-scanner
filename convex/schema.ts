@@ -178,6 +178,19 @@ const config = defineTable({
   value: v.string(),
 }).index("by_key", ["key"]);
 
+const auditLog = defineTable({
+  action: v.string(),
+  actorId: v.string(),
+  targetId: v.optional(v.string()),
+  targetType: v.optional(v.string()),
+  metadata: v.optional(v.string()),
+  timestamp: v.number(),
+})
+  .index("by_action", ["action"])
+  .index("by_actor", ["actorId"])
+  .index("by_target", ["targetId"])
+  .index("by_timestamp", ["timestamp"]);
+
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
   users: authTables.users,
@@ -196,4 +209,5 @@ export default defineSchema({
   app_metrics,
   app_metrics_top_customers,
   config,
+  auditLog,
 });

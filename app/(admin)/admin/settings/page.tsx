@@ -1,4 +1,11 @@
-import { BadgeDollarSign, Grid2X2Icon, User, Wrench } from "lucide-react";
+import { AuditLogsTab } from "@/components/audit-logs-tab";
+import {
+  BadgeDollarSign,
+  Grid2X2Icon,
+  ScrollText,
+  User,
+  Wrench,
+} from "lucide-react";
 import { ErrorBoundary } from "react-error-boundary";
 import OccupationManagement from "@/components/manage-occupation";
 import PricingManagement from "@/components/manage-pricing";
@@ -41,6 +48,10 @@ export default function SettingsPage() {
                   <Grid2X2Icon className="w-4 h-4 mr-2" />
                   Seat Layout
                 </TabsTrigger>
+                <TabsTrigger value="audit" className="justify-start w-full">
+                  <ScrollText className="w-4 h-4 mr-2" />
+                  Audit Logs
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -62,6 +73,10 @@ export default function SettingsPage() {
                 >
                   <SeatStructureGrid />
                 </ErrorBoundary>
+              </TabsContent>
+
+              <TabsContent value="audit">
+                <AuditLogsTab />
               </TabsContent>
             </section>
           </div>

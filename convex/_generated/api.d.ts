@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as audit from "../audit.js";
 import type * as auth from "../auth.js";
 import type * as bookings from "../bookings.js";
 import type * as clerk from "../clerk.js";
@@ -42,6 +43,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  audit: typeof audit;
   auth: typeof auth;
   bookings: typeof bookings;
   clerk: typeof clerk;
