@@ -10,7 +10,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 button-iso",
+          "button-iso [--iso-color:var(--color-primary)] bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 button-iso",
+        pop: "button-iso [--iso-color:var(--color-primary)] text-primary-foreground shadow-xs",
+        "pop-destructive":
+          "[--iso-color:var(--color-destructive)] text-white shadow-xs hover:bg-destructive/90 button-iso",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:

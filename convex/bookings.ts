@@ -42,9 +42,9 @@ export const getBooking = query({
       booking.created_by === "system" || booking.created_by === undefined
         ? Promise.resolve("Booking system")
         : ctx.db
-          .get(booking.created_by as Id<"users">)
-          .then((e) => e?.name ?? "Anonymous")
-          .catch(() => "--"),
+            .get(booking.created_by as Id<"users">)
+            .then((e) => e?.name ?? "Anonymous")
+            .catch(() => "--"),
     ]);
 
     return {
@@ -53,14 +53,14 @@ export const getBooking = query({
       seats: seats.filter((seat) => seat !== null), // filter out any null values
       user: user
         ? {
-          id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          email: user.email,
-        }
+            id: user.id,
+            name: `${user.firstName} ${user.lastName}`,
+            email: user.email,
+          }
         : {
-          name: "Anonymous User",
-          email: "--",
-        },
+            name: "Anonymous User",
+            email: "--",
+          },
     };
   },
 });
@@ -656,6 +656,76 @@ export const cancelBooking = mutation({
   },
 });
 
+export const deleteBooking = mutation({
+  args: {
+    bookingId: v.id("bookings"),
+  },
+  handler: async (ctx, { bookingId }) => {
+    const adminProfile = await authGuard(ctx, "admin");
+    if (!adminProfile) {
+      throw new ConvexError("Not authorized to delete bookings");
+    }
+
+    const booking = await ctx.db.get(bookingId);
+    if (!booking) {
+      throw new ConvexError("Booking not found");
+    }
+
+    const ticketIds: string[] = [];
+    const tickets = await ctx.db
+      .query("tickets")
+      .withIndex("by_booking", (q) => q.eq("bookingId", bookingId))
+      .collect();
+
+    for (const ticket of tickets) {
+      ticketIds.push(ticket._id);
+      const registerEntries = await ctx.db
+        .query("daily_register")
+        .withIndex("by_ticket", (q) => q.eq("ticketId", ticket._id))
+        .collect();
+
+      for (const entry of registerEntries) {
+        await ctx.db.patch(entry._id, { ticketId: undefined });
+      }
+
+      await ctx.db.delete(ticket._id);
+    }
+
+    const bookedSeats = await ctx.db
+      .query("bookedSeats")
+      .filter((q) => q.eq(q.field("bookingId"), bookingId))
+      .collect();
+
+    for (const bookedSeat of bookedSeats) {
+      await ctx.db.delete(bookedSeat._id);
+    }
+
+    for (const seatId of booking.seatIds) {
+      await ctx.db.patch(seatId, { isBooked: false });
+    }
+
+    await ctx.db.delete(bookingId);
+
+    await ctx.scheduler.runAfter(0, internal.audit.log, {
+      action: "booking.deleted",
+      actorId: adminProfile.id,
+      targetId: bookingId,
+      targetType: "booking",
+      metadata: JSON.stringify({
+        ownerUserId: booking.userId,
+        seatIds: booking.seatIds,
+        amount: booking.amount,
+        duration: booking.duration,
+        durationType: booking.durationType,
+        status: booking.status,
+        ticketCount: ticketIds.length,
+      }),
+    });
+
+    return { success: true };
+  },
+});
+
 export const markExpiredPendingBookings = mutation({
   /**
    * Marks pending bookings as expired if they've been pending too long.
@@ -978,14 +1048,14 @@ export const getAllBookings = query({
           seats: seats.filter((seat) => seat !== null), // filter out any null values
           user: user
             ? {
-              id: user.id,
-              name: `${user.firstName} ${user.lastName}`,
-              email: user.email,
-            }
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+              }
             : {
-              name: "Anonymous User",
-              email: "--",
-            },
+                name: "Anonymous User",
+                email: "--",
+              },
         };
       }),
     );
@@ -1228,15 +1298,15 @@ export const getMonthlyReservations = query({
           ...booking,
           user: user
             ? {
-              id: user.id,
-              name: `${user.firstName} ${user.lastName}`,
-              email: user.email,
-            }
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+              }
             : {
-              id: booking.userId,
-              name: "Anonymous User",
-              email: null,
-            },
+                id: booking.userId,
+                name: "Anonymous User",
+                email: null,
+              },
         };
       }),
     );

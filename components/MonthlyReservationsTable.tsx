@@ -33,7 +33,8 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { currencyFormatter } from "@/lib/currency.helpers";
 import { cn } from "@/lib/utils";
 import { AttendanceDrawer } from "./AttendanceDrawer";
-import { AppDataTable } from "./DataTable";
+import { AppDataTable, AppTableActions } from "./DataTable";
+import { DeleteBookingDialog } from "./DeleteBookingDialog";
 import { EmptyStateContent, EmptyStateTitle } from "./empty-state";
 import { Card } from "./ui/card";
 
@@ -131,6 +132,17 @@ const columns: ColumnDef<BookingWithCustomer>[] = [
     header: "Created",
     accessorKey: "createdAt",
     cell: ({ row }) => formatDate(row.original.createdAt),
+  },
+  {
+    header: "",
+    id: "actions",
+    cell: ({ row }) => {
+      return (
+        <AppTableActions>
+          <DeleteBookingDialog bookingId={row.original._id} />
+        </AppTableActions>
+      );
+    },
   },
 ];
 

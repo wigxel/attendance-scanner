@@ -1,9 +1,8 @@
 "use client";
-
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import type * as React from "react";
-
 import { cn } from "@/lib/utils";
+import { Button } from "./button";
 
 function AlertDialog({
   ...props
@@ -123,16 +122,20 @@ function AlertDialogDescription({
 function AlertDialogAction({
   className,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Action>) {
+}: React.ComponentProps<typeof AlertDialogPrimitive.Action> & {
+  variant?: "destructive";
+}) {
   return (
     <AlertDialogPrimitive.Action
       data-slot="alert-dialog-action"
-      className={cn(
-        "ring-offset-background focus:ring-ring bg-primary text-primary-foreground hover:bg-primary/80 inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium ring-2 ring-offset-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-        className,
-      )}
-      {...props}
-    />
+      className={className}
+      asChild
+    >
+      <Button
+        {...props}
+        variant={props.variant === "destructive" ? "pop-destructive" : "pop"}
+      />
+    </AlertDialogPrimitive.Action>
   );
 }
 
@@ -143,12 +146,11 @@ function AlertDialogCancel({
   return (
     <AlertDialogPrimitive.Cancel
       data-slot="alert-dialog-cancel"
-      className={cn(
-        "ring-offset-background focus:ring-ring bg-muted text-muted-foreground hover:bg-muted/80 inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium ring-2 ring-offset-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-        className,
-      )}
-      {...props}
-    />
+      asChild
+      className={className}
+    >
+      <Button variant="ghost" {...props} />
+    </AlertDialogPrimitive.Cancel>
   );
 }
 

@@ -202,3 +202,20 @@ export function AppDataTable<T>({
     </Card>
   );
 }
+
+export function AppTableActions(props: { children: React.ReactNode }) {
+  // biome-ignore lint/a11y/noStaticElementInteractions: No an actual button. Just a container preventing event click propagation.
+  return (
+    <div
+      className="flex justify-end pointer-events-none"
+      onClick={(evt) => {
+        evt.stopPropagation();
+      }}
+      onKeyDown={(evt) => {
+        evt.stopPropagation();
+      }}
+    >
+      {props.children}
+    </div>
+  );
+}

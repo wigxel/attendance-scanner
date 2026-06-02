@@ -39,7 +39,7 @@ export function TakeAttendance() {
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [scanningEnabled, setScanningEnabled] = useState(true);
-  const [scanMode, setScanMode] = useState<ScanMode>("walk_in");
+  const [scanMode, setScanMode] = useState<ScanMode>("reservation");
 
   const register = useMutation(api.myFunctions.registerUser);
 
@@ -124,6 +124,7 @@ export function TakeAttendance() {
       <div className="p-4 flex flex-col gap-4">
         <Tabs
           defaultValue="reservation"
+          value={scanMode}
           onValueChange={(value) => setScanMode(value as ScanMode)}
           className="w-full"
         >

@@ -167,7 +167,7 @@
 }
 
 .button-iso {
-  @apply relative border-2 !leading-[2ex] border-black;
+  @apply relative border-2 !leading-[2ex] bg-(--iso-color) hover:bg-[hsla(from_var(--iso-color)_h_s_l_/_0.9)] border-(--iso-color);
 }
 
 .button-iso::after {
