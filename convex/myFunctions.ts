@@ -934,12 +934,14 @@ export const getAttendanceForBooking = query({
           .query("profile")
           .filter((q) => q.eq(q.field("id"), record.userId))
           .first();
-        const admitter = await ctx.db.get(record.admitted_by as Id<"profile">);
+
+        const admitter = await ctx.db.get(record.admitted_by as Id<"users">);
+
         return {
           ...record,
           userName: user ? `${user.firstName} ${user.lastName}` : "Unknown",
           admitterName: admitter
-            ? `${admitter.firstName} ${admitter.lastName}`
+            ? admitter.name
             : "Unknown",
         };
       }),
