@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import {
+  differenceInHours,
   endOfMonth,
   format,
   isSameMonth,
@@ -669,6 +670,13 @@ export const deleteBooking = mutation({
     const booking = await ctx.db.get(bookingId);
     if (!booking) {
       throw new ConvexError("Booking not found");
+    }
+
+    const ageInHours = differenceInHours(new Date(), new Date(booking.createdAt));
+    if (ageInHours > 48) {
+      throw new ConvexError(
+        "Cannot delete bookings older than 48 hours. Contact support if needed.",
+      );
     }
 
     const ticketIds: string[] = [];
