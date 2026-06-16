@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { FlagsmithProvider as FlagsmithProviderBase } from "@flagsmith/flagsmith/react";
 import type { IState } from "@flagsmith/flagsmith/types";
 import { useEffect, useRef } from "react";
@@ -12,6 +13,7 @@ export function FlagsmithProvider({
   serverState?: IState;
   children: React.ReactNode;
 }) {
+  const auth = useAuth();
   const flagsmith = useRef(createFlagsmith());
 
   useEffect(() => {
@@ -22,6 +24,16 @@ export function FlagsmithProvider({
       preventFetch: !environmentID,
     });
   }, []);
+
+  useEffect(() => {
+    if (!auth.userId) return;
+    if (!flagsmith.current.initialised) return;
+
+    flagsmith.current.setState({
+      api: hostAPI,
+      identity: auth.userId ?? undefined,
+    });
+  }, [auth.userId]);
 
   return (
     <FlagsmithProviderBase

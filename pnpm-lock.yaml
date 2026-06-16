@@ -41,6 +41,9 @@ importers:
       '@next/mdx':
         specifier: ^15.4.5
         version: 15.4.5(@mdx-js/loader@3.1.0(acorn@8.14.1))(@mdx-js/react@3.1.0(@types/react@19.1.2)(react@19.1.0))
+      '@posthog/react':
+        specifier: ^1.10.2
+        version: 1.10.2(@types/react@19.1.2)(posthog-js@1.335.4)(react@19.1.0)
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1353,6 +1356,16 @@ packages:
 
   '@posthog/core@1.14.1':
     resolution: {integrity: sha512-DtmJ1y1IDauX8yAZtIotRAYDRkgCCMLk5S9vFFRX7vufhWblQuRUOgn9WYSJrocJlZKm1aEjDzGQ0uyL7HcdLw==}
+
+  '@posthog/react@1.10.2':
+    resolution: {integrity: sha512-/KXzUZiSByE9/6fHmnfDVVvld/3pvBuM6KFUuT5NkR4XwOHEAT/EwNwhUUFOOJpsyDa0PaEWWHZS6VY9r2CB3Q==}
+    peerDependencies:
+      '@types/react': '>=16.8.0'
+      posthog-js: '>=1.257.2'
+      react: '>=16.8.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   '@posthog/types@1.335.4':
     resolution: {integrity: sha512-kqZYSk212Y/GS//QQmCdHuT4DENVYWJcg+ywRbDPlWxFtQNB58Ne/Np1lLtXeUjdJwWRBbcCPZfUBQcAFA+sCg==}
@@ -6369,6 +6382,13 @@ snapshots:
   '@posthog/core@1.14.1':
     dependencies:
       cross-spawn: 7.0.6
+
+  '@posthog/react@1.10.2(@types/react@19.1.2)(posthog-js@1.335.4)(react@19.1.0)':
+    dependencies:
+      posthog-js: 1.335.4
+      react: 19.1.0
+    optionalDependencies:
+      '@types/react': 19.1.2
 
   '@posthog/types@1.335.4': {}
 

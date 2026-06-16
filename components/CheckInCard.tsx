@@ -75,21 +75,25 @@ function QRCode() {
 export function CheckInCard() {
   const flags = useFlags(["customer_scanning"]);
 
-  if (flags.customer_scanning.enabled) {
-    return (
-      <div className="border overflow-hidden rounded-2xl bg-background dark:bg-gray-950">
-        <QRCode />
-        <p className="p-4 text-center border-t font-mono text-xs">
-          Present QR Code to Staff at Check-in Counter
-        </p>
-      </div>
-    );
+  if (flags?.customer_scanning?.enabled) {
+    return <CustomerWillScanQR />;
   }
 
+  return (
+    <div className="border overflow-hidden rounded-2xl bg-background dark:bg-gray-950">
+      <QRCode />
+      <p className="p-4 text-center border-t font-mono text-xs">
+        Present QR Code to Staff at Check-in Counter
+      </p>
+    </div>
+  );
+}
+
+function CustomerWillScanQR() {
   const button = <Button className="w-full">Check In</Button>;
 
   return (
-    <div className="border select-none overflow-hidden rounded-lg shadow-lg bg-background dark:bg-gray-950">
+    <div className="border border-[red]/50 select-none overflow-hidden rounded-lg shadow-lg bg-background dark:bg-gray-950">
       <div className="p-4 flex flex-col gap-4">
         <div className="flex justify-between w-full gap-4 items-center">
           <div className="h-8 items-center aspect-square shrink-0 flex justify-center text-muted-foreground">
@@ -100,7 +104,7 @@ export function CheckInCard() {
             <p className="tracking-tight text-foreground text-base font-semibold">
               Check In for today
             </p>
-            <p className="text-pretty text-muted-foreground font-semibold text-xs">
+            <p className="text-pretty text-muted-foreground font-medium text-xs">
               It&apos;s important we keep track of your daily attendance for
               security reasons.
             </p>

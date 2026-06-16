@@ -22,24 +22,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <FlagsmithProvider>
-      <ClerkProvider
-        publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-        appearance={{
-          cssLayerName: "clerk",
-        }}
-      >
-        <QueryProvider>
-          <html lang="en" className="scanline-root">
-            <body
-              className={`${body.variable} ${mono.variable} antialiased font-sans`}
-            >
-              <ConvexClientProvider>{children}</ConvexClientProvider>
-              <Toaster />
-            </body>
-          </html>
-        </QueryProvider>
-      </ClerkProvider>
-    </FlagsmithProvider>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      appearance={{
+        cssLayerName: "clerk",
+      }}
+    >
+      <QueryProvider>
+        <html lang="en" className="scanline-root">
+          <body
+            className={`${body.variable} ${mono.variable} antialiased font-sans`}
+          >
+            <ConvexClientProvider>
+              <FlagsmithProvider>{children}</FlagsmithProvider>
+            </ConvexClientProvider>
+            <Toaster />
+          </body>
+        </html>
+      </QueryProvider>
+    </ClerkProvider>
   );
 }
