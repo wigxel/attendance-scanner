@@ -3,6 +3,7 @@ import "./globals.css";
 
 import { ClerkProvider } from "@clerk/nextjs";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
+import { FlagsmithProvider } from "@/components/FlagsmithProvider";
 import { QueryProvider } from "@/components/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { body, mono } from "./font";
@@ -21,22 +22,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      appearance={{
-        cssLayerName: "clerk",
-      }}
-    >
-      <QueryProvider>
-        <html lang="en" className="scanline-root">
-          <body
-            className={`${body.variable} ${mono.variable} antialiased font-sans`}
-          >
-            <ConvexClientProvider>{children}</ConvexClientProvider>
-            <Toaster />
-          </body>
-        </html>
-      </QueryProvider>
-    </ClerkProvider>
+    <FlagsmithProvider>
+      <ClerkProvider
+        publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+        appearance={{
+          cssLayerName: "clerk",
+        }}
+      >
+        <QueryProvider>
+          <html lang="en" className="scanline-root">
+            <body
+              className={`${body.variable} ${mono.variable} antialiased font-sans`}
+            >
+              <ConvexClientProvider>{children}</ConvexClientProvider>
+              <Toaster />
+            </body>
+          </html>
+        </QueryProvider>
+      </ClerkProvider>
+    </FlagsmithProvider>
   );
 }
