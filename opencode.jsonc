@@ -4,7 +4,7 @@
     "effect": {
       "repository": "Effect-TS/effect",
       "branch": "main",
-      "description": "use for implementing complex async business logic",
-    },
-  },
+      "description": "use for implementing complex async business logic"
+    }
+  }
 }

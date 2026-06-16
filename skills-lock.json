@@ -4,8 +4,14 @@
     "frontend": {
       "source": "wigxel/ai-rules",
       "sourceType": "github",
-      "skillPath": "skills/frontend/SKILL.md",
-      "computedHash": "0a16dee37e259e0472a863836a0eed85a131e52226d89de51bb445f863fe696a"
+      "skillPath": "skills/wg-frontend/SKILL.md",
+      "computedHash": "0987683ab13c8eb0dfb1967766ad8745d1c91a116e6ab8c3841abfb3bcc04caf"
+    },
+    "testing": {
+      "source": "wigxel/ai-rules",
+      "sourceType": "github",
+      "skillPath": "skills/wg-testing/SKILL.md",
+      "computedHash": "c8fcbce9f3048d6a312f60dc8a45cc1ce0a2f0f653858750484400832b761c39"
     }
   }
 }
