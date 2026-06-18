@@ -9,6 +9,7 @@ import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { If } from "@/components/if";
+import { SelfCheckInStatus } from "@/components/self-checkin-status";
 import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";
 import { ActiveBookings } from "./active-bookings";
@@ -53,6 +54,8 @@ function Content() {
             </Link>
           </If>
         </div>
+
+        <SelfCheckInStatus />
 
         <NotRegistered>
           <CheckInCard />

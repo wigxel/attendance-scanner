@@ -1,7 +1,8 @@
 "use client";
 import { useMutation } from "convex/react";
 import { format, isToday, isValid } from "date-fns";
-import { Bug } from "lucide-react";
+import { Bug, LucideArrowUpRight, LucideQrCode } from "lucide-react";
+import Link from "next/link";
 import posthog from "posthog-js";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ import { isDevelopment } from "@/config/constants";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getErrorMessage } from "@/lib/error.helpers";
+import { useFlags } from "@/services/flagsmith";
 import { convex } from "./ConvexClientProvider";
 import { DebugProfile } from "./forms/debug-profile";
 import { If } from "./if";
@@ -36,6 +38,7 @@ export const ScanTimeCodec = {
 };
 
 export function TakeAttendance() {
+  const flags = useFlags(["customer_scanning"]);
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [scanningEnabled, setScanningEnabled] = useState(true);
@@ -197,13 +200,32 @@ export function TakeAttendance() {
         </div>
       </div>
 
-      <div className="flex justify-end px-4">
-        <DebugProfile>
-          <Button variant={"outline"} size="lg">
-            <Bug />
-          </Button>
-        </DebugProfile>
-      </div>
+      {flags.customer_scanning.enabled ? <CustomerScanFeature /> :
+        <div className="flex justify-end px-4">
+          <DebugProfile>
+            <Button variant={"outline"} size="lg">
+              <Bug />
+            </Button>
+          </DebugProfile>
+        </div>}
     </Card>
   );
+}
+
+function CustomerScanFeature() {
+  return <div className="flex justify-between gap-2 px-4 border-t pt-4">
+    <Link href="/display-qr" className="flex-1" target="_blank">
+      <Button className="w-full" variant="outline">
+        <LucideQrCode />
+        Goto Check-In Page
+        <LucideArrowUpRight />
+      </Button>
+    </Link>
+
+    <DebugProfile>
+      <Button variant={"outline"} size="icon">
+        <Bug />
+      </Button>
+    </DebugProfile>
+  </div>
 }

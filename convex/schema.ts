@@ -191,6 +191,14 @@ const auditLog = defineTable({
   .index("by_target", ["targetId"])
   .index("by_timestamp", ["timestamp"]);
 
+const ratings = defineTable({
+  userId: v.string(),
+  score: v.number(),
+  presets: v.array(v.string()),
+  comment: v.optional(v.string()),
+  createdAt: v.string(),
+}).index("user_id", ["userId"]);
+
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
   users: authTables.users,
@@ -210,4 +218,5 @@ export default defineSchema({
   app_metrics_top_customers,
   config,
   auditLog,
+  ratings,
 });

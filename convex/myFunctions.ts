@@ -3,7 +3,7 @@ import { TableAggregate } from "@convex-dev/aggregate";
 import type { GenericQueryCtx } from "convex/server";
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
-import { formatISO, isWithinInterval, parseISO, setHours } from "date-fns";
+import { isWithinInterval, parseISO } from "date-fns";
 import { isNullable } from "effect/Predicate";
 import { z } from "zod";
 import { logger } from "../config/logger";
@@ -12,8 +12,13 @@ import { api, components } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { setExternalId, updateClerkUser } from "./clerk";
-import { visitsAggregate } from "./customers";
+
 import { featureRequestStatus, PlanImpl } from "./shared";
+import {
+  insertRegisterAndAggregate,
+  isRegisteredToday,
+  processReservationCheckIn,
+} from "./register-common";
 
 export const authUser = query({
   args: {},
@@ -195,39 +200,16 @@ export const isRegisteredForToday = query({
 
     if (userId === null) return false;
 
-    return await _isUserRegistered(ctx, { userId });
+    return await isRegisteredToday(ctx, userId);
   },
 });
-
-async function _isUserRegistered(
-  ctx: GenericQueryCtx<any>,
-  args: { userId: string },
-) {
-  const today = new Date();
-  const start = formatISO(setHours(today, 0));
-  const end = formatISO(setHours(today, 23));
-
-  // Query attendance records in the date range
-  const first = await ctx.db
-    .query("daily_register")
-    .filter((q) =>
-      q.and(
-        q.eq(q.field("userId"), args.userId),
-        q.gte(q.field("timestamp"), start),
-        q.lte(q.field("timestamp"), end),
-      ),
-    )
-    .first();
-
-  return first !== null;
-}
 
 export const isUserRegisteredForToday = query({
   args: {
     userId: v.string(),
   },
   handler: async (ctx, args) => {
-    return _isUserRegistered(ctx, { userId: args.userId });
+    return isRegisteredToday(ctx, args.userId);
   },
 });
 
@@ -254,78 +236,24 @@ export const registerUser = mutation({
       throw new ConvexError("Customer profile not found.");
     }
 
-    // Fail-fast 3: Check if customer is already registered for today
-    const isAlreadyRegistered = await _isUserRegistered(ctx, {
-      userId: customer.id,
-    });
-    if (isAlreadyRegistered) {
+    if (await isRegisteredToday(ctx, customer.id)) {
       throw new ConvexError("Customer already registered for today.");
     }
 
-    // --- Mode-specific Logic ---
+    const device = {
+      name: "Unknown",
+      visitorId: args.visitorId,
+      browser: args.browser,
+    };
+    const admittedBy = scannerId;
 
-    // RESERVATION MODE: Validate Ticket
     if (args.mode === "reservation") {
-      const reservation = await ctx.runQuery(
-        api.myFunctions.getUserActiveReservation,
-        { userId: customer.id },
-      );
-
-      if (!reservation) {
-        throw new ConvexError("No active reservation found for this customer.");
-      }
-
-      const booking = await ctx.db.get(reservation.bookingId as Id<"bookings">);
-      if (!booking) {
-        throw new ConvexError("Booking not found.");
-      }
-
-      const tickets = await (async function getTickets() {
-        const existing = await ctx.db
-          .query("tickets")
-          .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
-          .collect();
-
-        if (existing.length > 0) return existing;
-
-        await ctx.runMutation(api.bookings.generateTickets, {
-          bookingId: booking._id,
-        });
-
-        return ctx.db
-          .query("tickets")
-          .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
-          .collect();
-      })();
-
-      const ticket =
-        tickets.find((t) => t.holderUserId === customer.id) ?? tickets[0];
-
-      if (isNullable(ticket)) {
-        throw new ConvexError("Ticket not found.");
-      }
-
-      const id = await ctx.db.insert("daily_register", {
+      await processReservationCheckIn(ctx, {
         userId: customer.id,
-        device: {
-          name: "Unknown",
-          visitorId: args.visitorId,
-          browser: args.browser,
-        },
-        source: "web",
-        admitted_by: scannerId as Id<"profile">,
-        timestamp: new Date().toISOString(),
-        access: PlanImpl.fromBooking(booking),
-        ticketId: ticket._id,
+        device,
+        admittedBy,
       });
-
-      const entry = await ctx.db.get(id);
-
-      if (entry) {
-        await visitsAggregate.insert(ctx, entry);
-      }
-
-      return; // End execution
+      return;
     }
 
     // WALK_IN MODE: Use existing plan-based logic
@@ -343,21 +271,13 @@ export const registerUser = mutation({
 
       const plan = await PlanImpl.validatePlan(ctx.db, args.plan);
 
-      const id = await ctx.db.insert("daily_register", {
+      await insertRegisterAndAggregate(ctx, {
         userId: customer.id,
-        device: {
-          name: "Unknown",
-          visitorId: args.visitorId,
-          browser: args.browser,
-        },
-        source: "web",
-        admitted_by: scannerId as Id<"profile">,
+        device,
+        admittedBy,
         timestamp: new Date().toISOString(),
         access: PlanImpl.toStruct(plan),
       });
-      const entry = await ctx.db.get(id);
-      if (entry) await visitsAggregate.insert(ctx, entry);
-      return; // End execution
     }
   },
 });
