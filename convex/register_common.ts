@@ -37,7 +37,7 @@ export async function insertRegisterAndAggregate(
     timestamp: string;
     access: AccessStruct;
     ticketId?: Id<"tickets">;
-    qrAdminId?: string;
+    method: "one-tap" | "qr";
   },
 ): Promise<void> {
   const id = await ctx.db.insert("daily_register", {
@@ -48,7 +48,7 @@ export async function insertRegisterAndAggregate(
     timestamp: params.timestamp,
     access: params.access,
     ticketId: params.ticketId,
-    qrAdminId: params.qrAdminId,
+    method: params.method,
   });
 
   const entry = await ctx.db.get(id);
@@ -63,7 +63,6 @@ export async function processReservationCheckIn(
     userId: string;
     device: { name: string; visitorId: string; browser: string };
     admittedBy: string;
-    qrAdminId?: string;
   },
 ): Promise<void> {
   const reservation = await ctx.runQuery(
@@ -112,6 +111,6 @@ export async function processReservationCheckIn(
     timestamp: new Date().toISOString(),
     access: PlanImpl.fromBooking(booking),
     ticketId: ticket._id,
-    qrAdminId: params.qrAdminId,
+    method: "qr",
   });
 }

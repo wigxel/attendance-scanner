@@ -29,3 +29,20 @@ export const migrateOccupationNamesToIds = internalMutation({
     return { updated };
   },
 });
+
+export const backfillNullMethods = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const registers = await ctx.db.query("daily_register").collect();
+
+    let updated = 0;
+    for (const record of registers) {
+      if ((record as any).method == null) {
+        await ctx.db.patch(record._id, { method: "qr" } as any);
+        updated++;
+      }
+    }
+
+    return { updated };
+  },
+});

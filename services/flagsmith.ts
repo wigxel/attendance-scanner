@@ -21,7 +21,6 @@ export const environmentID =
 
 export { useFlags, useFlagsmith, useFlagsmithLoading };
 
-
 export const FlagsCustomerScan = {
   allow_one_tap(flag: IFlagsmithFeature): boolean {
     if (!flag.enabled) return false;
@@ -31,7 +30,7 @@ export const FlagsCustomerScan = {
       Either.match({
         onLeft: () => false,
         onRight: (v) => v.allow_one_tap,
-      })
-    )
-  }
-}
+      }),
+    );
+  },
+};

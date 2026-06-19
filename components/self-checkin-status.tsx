@@ -49,7 +49,7 @@ function CheckInPrompt() {
         device.status === "success" ? device.data?.visitorId : undefined;
       const browser =
         device.status === "success" ? device.data?.browser : undefined;
-      await selfCheckIn({ visitorId, browser });
+      await selfCheckIn({ method: "one-tap", visitorId, browser });
       toast.success("Checked in successfully!");
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -96,7 +96,11 @@ function CheckInPrompt() {
   );
 }
 
-function CheckOutEntry({ entry }: { entry: NonNullable<ReturnType<typeof useTodaysRegistration>> }) {
+function CheckOutEntry({
+  entry,
+}: {
+  entry: NonNullable<ReturnType<typeof useTodaysRegistration>>;
+}) {
   const [checkingOut, setCheckingOut] = useState(false);
   const selfCheckOut = useSelfCheckOut();
 
@@ -112,21 +116,23 @@ function CheckOutEntry({ entry }: { entry: NonNullable<ReturnType<typeof useToda
     }
   };
 
-  const button = <AlertDialogTrigger asChild>
-    <Button variant="default" className="w-full" disabled={checkingOut}>
-      {checkingOut ? (
-        <>
-          <LucideLoader className="h-4 w-4 animate-spin" />
-          Checking out...
-        </>
-      ) : (
-        <>
-          <LogOut className="h-4 w-4" />
-          Check Out
-        </>
-      )}
-    </Button>
-  </AlertDialogTrigger>
+  const button = (
+    <AlertDialogTrigger asChild>
+      <Button variant="default" className="w-full" disabled={checkingOut}>
+        {checkingOut ? (
+          <>
+            <LucideLoader className="h-4 w-4 animate-spin" />
+            Checking out...
+          </>
+        ) : (
+          <>
+            <LogOut className="h-4 w-4" />
+            Check Out
+          </>
+        )}
+      </Button>
+    </AlertDialogTrigger>
+  );
 
   return (
     <AlertDialog>
@@ -144,13 +150,10 @@ function CheckOutEntry({ entry }: { entry: NonNullable<ReturnType<typeof useToda
               </p>
             </div>
 
-            <div className="hidden sm:inline-flex">
-              {button}
-            </div>
+            <div className="hidden sm:inline-flex">{button}</div>
           </div>
 
-          <div className="sm:hidden">{button}
-          </div>
+          <div className="sm:hidden">{button}</div>
         </div>
       </div>
 
@@ -160,18 +163,17 @@ function CheckOutEntry({ entry }: { entry: NonNullable<ReturnType<typeof useToda
         </AlertDialogHeader>
 
         <p className="text-sm text-foreground text-pretty">
-          Are you sure you want to check out? You're only required to do this when you've closed for the day.
+          Are you sure you want to check out? You're only required to do this
+          when you've closed for the day.
           <br />
           <br />
-          You checked in at{" "} <span className="font-semibold">{formatTime(entry.timestamp)}.</span>
+          You checked in at{" "}
+          <span className="font-semibold">{formatTime(entry.timestamp)}.</span>
         </p>
 
         <AlertDialogFooter className="mt-8">
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={checkingOut}
-            onClick={handleCheckOut}
-          >
+          <AlertDialogAction disabled={checkingOut} onClick={handleCheckOut}>
             {checkingOut ? "Checking out..." : "Yes, Check Out"}
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -180,31 +182,37 @@ function CheckOutEntry({ entry }: { entry: NonNullable<ReturnType<typeof useToda
   );
 }
 
-function SessionSummary({ entry }: { entry: NonNullable<ReturnType<typeof useTodaysRegistration>> & { checkedout_at: string } }) {
+function SessionSummary({
+  entry,
+}: {
+  entry: NonNullable<ReturnType<typeof useTodaysRegistration>> & {
+    checkedout_at: string;
+  };
+}) {
   const todaysRating = useTodaysRating();
 
-  return <div className="border overflow-hidden rounded-lg bg-background dark:bg-gray-950">
-    <div className="p-4">
-      <div className="flex items-center gap-3">
-        <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0" />
-        <div>
-          <p className="font-semibold text-base tracking-tight">
-            Thanks for coming
-          </p>
-          <p className="text-xs text-muted-foreground font-medium">
-            {formatTime(entry.timestamp)} → {formatTime(entry.checkedout_at)}
-          </p>
-          <p className="text-xs text-muted-foreground font-medium">
-            Duration: {formatDuration(entry.timestamp, entry.checkedout_at)}
-          </p>
+  return (
+    <div className="border overflow-hidden rounded-lg bg-background dark:bg-gray-950">
+      <div className="p-4">
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0" />
+          <div>
+            <p className="font-semibold text-base tracking-tight">
+              Thanks for coming
+            </p>
+            <p className="text-xs text-muted-foreground font-medium">
+              {formatTime(entry.timestamp)} → {formatTime(entry.checkedout_at)}
+            </p>
+            <p className="text-xs text-muted-foreground font-medium">
+              Duration: {formatDuration(entry.timestamp, entry.checkedout_at)}
+            </p>
+          </div>
         </div>
       </div>
-    </div>
 
-    {
-      !todaysRating &&
-      <RateExperience />}
-  </div>
+      {!todaysRating && <RateExperience />}
+    </div>
+  );
 }
 
 function RateExperience() {
@@ -288,10 +296,11 @@ function RateExperience() {
                   key={preset}
                   type="button"
                   onClick={() => togglePreset(preset)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${selectedPresets.includes(preset)
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background text-foreground border-border hover:border-foreground"
-                    }`}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    selectedPresets.includes(preset)
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-foreground border-border hover:border-foreground"
+                  }`}
                 >
                   {preset}
                 </button>
@@ -310,10 +319,7 @@ function RateExperience() {
           )}
         </div>
 
-        <Button
-          onClick={handleSubmit}
-          disabled={score === 0 || submitting}
-        >
+        <Button onClick={handleSubmit} disabled={score === 0 || submitting}>
           {submitting ? "Submitting..." : "Submit"}
         </Button>
       </div>
@@ -328,13 +334,19 @@ export function SelfCheckInStatus() {
   if (!flags?.customer_scanning?.enabled) return null;
 
   if (registration === undefined) {
-    return (
-      <Skeleton className="h-20 rounded-lg border" />
-    );
+    return <Skeleton className="h-20 rounded-lg border" />;
   }
 
   if (registration?.checkedout_at) {
-    return <SessionSummary entry={registration as NonNullable<typeof registration> & { checkedout_at: string }} />;
+    return (
+      <SessionSummary
+        entry={
+          registration as NonNullable<typeof registration> & {
+            checkedout_at: string;
+          }
+        }
+      />
+    );
   }
 
   if (FlagsCustomerScan.allow_one_tap(flags.customer_scanning)) {

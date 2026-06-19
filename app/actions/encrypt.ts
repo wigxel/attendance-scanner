@@ -43,7 +43,6 @@ export async function decodeQRCodeData(
   );
 }
 
-
 export async function generateQRToken(adminId: string): Promise<string> {
   const payload = JSON.stringify({ adminId, t: Date.now() });
 

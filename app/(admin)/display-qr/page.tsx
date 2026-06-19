@@ -91,10 +91,7 @@ export default function DisplayQRPage() {
         </div>
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <RefreshCw
-            size="1rem"
-            className={generating ? "animate-spin" : ""}
-          />
+          <RefreshCw size="1rem" className={generating ? "animate-spin" : ""} />
           <span>
             Refreshes in {mins}:{secs.toString().padStart(2, "0")}
           </span>

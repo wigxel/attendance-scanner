@@ -8,7 +8,7 @@ import {
   insertRegisterAndAggregate,
   isRegisteredToday,
   processReservationCheckIn,
-} from "./register-common";
+} from "./register_common";
 
 export const getTodaysRating = query({
   args: {},
@@ -58,9 +58,10 @@ export const getTodaysRegistration = query({
 
 export const selfCheckIn = mutation({
   args: {
+    method: v.union(v.literal("qr"), v.literal("one-tap")),
+    adminId: v.optional(v.string()),
     visitorId: v.optional(v.string()),
     browser: v.optional(v.string()),
-    adminId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await readId(ctx);
@@ -71,6 +72,14 @@ export const selfCheckIn = mutation({
     if (await isRegisteredToday(ctx, userId)) {
       throw new ConvexError("Already registered for today.");
     }
+
+    const admittedBy =
+      args.method === "qr"
+        ? (args.adminId ??
+          (() => {
+            throw new ConvexError("Admin ID required for QR check-in");
+          })())
+        : userId;
 
     const device = {
       name: "Unknown",
@@ -87,8 +96,7 @@ export const selfCheckIn = mutation({
       await processReservationCheckIn(ctx, {
         userId,
         device,
-        admittedBy: userId,
-        qrAdminId: args.adminId,
+        admittedBy,
       });
       return;
     }
@@ -97,10 +105,10 @@ export const selfCheckIn = mutation({
     await insertRegisterAndAggregate(ctx, {
       userId,
       device,
-      admittedBy: userId,
+      admittedBy,
       timestamp: new Date().toISOString(),
       access: { kind: "free" },
-      qrAdminId: args.adminId,
+      method: args.method,
     });
   },
 });

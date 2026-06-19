@@ -200,32 +200,37 @@ export function TakeAttendance() {
         </div>
       </div>
 
-      {flags.customer_scanning.enabled ? <CustomerScanFeature /> :
+      {flags.customer_scanning.enabled ? (
+        <CustomerScanFeature />
+      ) : (
         <div className="flex justify-end px-4">
           <DebugProfile>
             <Button variant={"outline"} size="lg">
               <Bug />
             </Button>
           </DebugProfile>
-        </div>}
+        </div>
+      )}
     </Card>
   );
 }
 
 function CustomerScanFeature() {
-  return <div className="flex justify-between gap-2 px-4 border-t pt-4">
-    <Link href="/display-qr" className="flex-1" target="_blank">
-      <Button className="w-full" variant="outline">
-        <LucideQrCode />
-        Goto Check-In Page
-        <LucideArrowUpRight />
-      </Button>
-    </Link>
+  return (
+    <div className="flex justify-between gap-2 px-4 border-t pt-4">
+      <Link href="/display-qr" className="flex-1" target="_blank">
+        <Button className="w-full" variant="outline">
+          <LucideQrCode />
+          Goto Check-In Page
+          <LucideArrowUpRight />
+        </Button>
+      </Link>
 
-    <DebugProfile>
-      <Button variant={"outline"} size="icon">
-        <Bug />
-      </Button>
-    </DebugProfile>
-  </div>
+      <DebugProfile>
+        <Button variant={"outline"} size="icon">
+          <Bug />
+        </Button>
+      </DebugProfile>
+    </div>
+  );
 }

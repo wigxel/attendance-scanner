@@ -24,6 +24,8 @@ const daily_register = defineTable({
   access: accessPlanStruct,
   admitted_by: v.string(), // v.id("profile"),
   ticketId: v.optional(v.id("tickets")),
+  checkedout_at: v.optional(v.string()), // ISO timestamp
+  method: v.optional(v.union(v.literal("one-tap"), v.literal("qr"))),
 })
   .index("admitted_by", ["admitted_by"])
   .index("unique_visitor", ["device.visitorId"])

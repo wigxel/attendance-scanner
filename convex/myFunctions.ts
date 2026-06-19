@@ -18,7 +18,7 @@ import {
   insertRegisterAndAggregate,
   isRegisteredToday,
   processReservationCheckIn,
-} from "./register-common";
+} from "./register_common";
 
 export const authUser = query({
   args: {},
@@ -277,6 +277,7 @@ export const registerUser = mutation({
         admittedBy,
         timestamp: new Date().toISOString(),
         access: PlanImpl.toStruct(plan),
+        method: "qr",
       });
     }
   },
