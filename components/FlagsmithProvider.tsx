@@ -1,9 +1,10 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
 import { FlagsmithProvider as FlagsmithProviderBase } from "@flagsmith/flagsmith/react";
 import type { IState } from "@flagsmith/flagsmith/types";
-import { useEffect, useRef } from "react";
+import { isNullable } from "effect/Predicate";
+import React, { useEffect, useRef } from "react";
+import { useAuthId } from "@/hooks/auth";
 import { createFlagsmith, environmentID, hostAPI } from "@/services/flagsmith";
 
 export function FlagsmithProvider({
@@ -13,7 +14,8 @@ export function FlagsmithProvider({
   serverState?: IState;
   children: React.ReactNode;
 }) {
-  const auth = useAuth();
+  const auth = useAuthId();
+  const [initialized, setInitialize] = React.useState(false);
   const flagsmith = useRef(createFlagsmith());
 
   useEffect(() => {
@@ -22,18 +24,21 @@ export function FlagsmithProvider({
       api: hostAPI,
       cacheFlags: true,
       preventFetch: !environmentID,
+      realtime: true,
+      onChange() {
+        setInitialize(flagsmith.current.initialised ?? false);
+      },
     });
   }, []);
 
   useEffect(() => {
-    if (!auth.userId) return;
-    if (!flagsmith.current.initialised) return;
+    if (!initialized) return;
+    if (auth.isLoading) return;
 
-    flagsmith.current.setState({
-      api: hostAPI,
-      identity: auth.userId ?? undefined,
-    });
-  }, [auth.userId]);
+    if (isNullable(auth.id)) return;
+
+    flagsmith.current.identify(auth.id);
+  }, [initialized, auth.id, auth.isLoading]);
 
   return (
     <FlagsmithProviderBase

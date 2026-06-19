@@ -163,8 +163,8 @@ function CheckOutEntry({
         </AlertDialogHeader>
 
         <p className="text-sm text-foreground text-pretty">
-          Are you sure you want to check out? You're only required to do this
-          when you've closed for the day.
+          {`Are you sure you want to check out? You're only required to do this
+            when you've closed for the day.`}
           <br />
           <br />
           You checked in at{" "}
@@ -362,7 +362,7 @@ export function SelfCheckInStatus() {
   return null;
 }
 
-function CustomerWillScanQR() {
+export function CustomerWillScanQR() {
   const button = <Button className="w-full">Check In</Button>;
 
   return (

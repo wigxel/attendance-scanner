@@ -51,13 +51,13 @@ export function useProfile() {
   };
 }
 
-export function useAuth() {
+export function useAuthId() {
   const { isSignedIn, isLoaded, user } = useUser();
 
   return {
     isAuthenticated: isSignedIn,
     isLoading: !isLoaded,
-    user,
+    id: user?.externalId,
   };
 }
 

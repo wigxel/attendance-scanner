@@ -1,6 +1,6 @@
 "use client";
-
 import { useUser } from "@clerk/nextjs";
+import { Effect, pipe } from "effect";
 import { CheckCircle2, LucideLoader, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -15,11 +15,13 @@ import {
   useTodaysRegistration,
 } from "@/hooks/self-service";
 import { getErrorMessage } from "@/lib/error.helpers";
+import { O } from "@/lib/fp.helpers";
 
 type CheckInStatus =
   | "verifying-token"
   | "token-expired"
   | "token-invalid"
+  | "timeout"
   | "checking-in"
   | "success"
   | "already-registered"
@@ -45,18 +47,28 @@ function TokenCheckInFlow() {
       return;
     }
 
-    verifyQRToken(token)
-      .then((result) => {
-        setAdminId(result.adminId);
+    const promise = pipe(
+      Effect.tryPromise({
+        try: () => verifyQRToken(token),
+        catch: (e) => new Error(getErrorMessage(e)),
+      }),
+      Effect.timeoutOption(10_000),
+      Effect.runPromise,
+    );
+
+    promise
+      .then((option) => {
+        if (O.isNone(option)) return setStatus("timeout");
+
+        setAdminId(option.value.adminId);
         setStatus("checking-in");
       })
       .catch((err) => {
-        const msg = getErrorMessage(err).toLowerCase();
+        const msg = err.message.toLowerCase();
         if (msg.includes("expired")) {
-          setStatus("token-expired");
-        } else {
-          setStatus("token-invalid");
+          return setStatus("token-expired");
         }
+        return setStatus("token-invalid");
       });
   }, [token]);
 
@@ -153,6 +165,24 @@ function TokenCheckInFlow() {
     );
   }
 
+  if (status === "timeout") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+        <div className="bg-red-50 rounded-full p-6">
+          <XCircle size="3rem" className="text-red-500" />
+        </div>
+        <div className="text-center">
+          <p className="text-xl font-semibold">Connection timed out</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Could not verify the QR code. Please check your connection and try
+            again.
+          </p>
+        </div>
+        <Button onClick={() => window.location.reload()}>Try Again</Button>
+      </div>
+    );
+  }
+
   if (status === "success" || status === "already-registered") {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
@@ -163,7 +193,7 @@ function TokenCheckInFlow() {
           <p className="text-xl font-semibold">
             {status === "success"
               ? `Welcome, ${user?.firstName ?? "there"}!`
-              : "You&apos;re already checked in"}
+              : "You're already checked in"}
           </p>
           {checkedInAt && (
             <p className="text-sm text-muted-foreground mt-1">

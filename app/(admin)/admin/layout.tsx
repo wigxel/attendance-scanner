@@ -1,14 +1,9 @@
-import { currentUser, type User } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { Navbar } from "@/components/navbar";
-
-const ConvexUserImpl = {
-  role(user: User) {
-    return user?.privateMetadata?.role;
-  },
-};
+import { ConvexUserImpl } from "@/lib/user.model";
 
 // @todo: Admin can upgrade any user to an Admin role
 // @todo: Admin can see a list of administrator in the settings page

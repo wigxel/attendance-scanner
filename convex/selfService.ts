@@ -1,8 +1,9 @@
 import { ConvexError, v } from "convex/values";
 import { endOfDay, startOfDay } from "date-fns";
-
-import { mutation, query } from "./_generated/server";
+import { isNullable } from "effect/Predicate";
+import { safeDict } from "../lib/data.helpers";
 import { api } from "./_generated/api";
+import { mutation, query } from "./_generated/server";
 import { readId } from "./myFunctions";
 import {
   insertRegisterAndAggregate,
@@ -65,6 +66,7 @@ export const selfCheckIn = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await readId(ctx);
+
     if (!userId) {
       throw new ConvexError("User not authenticated");
     }
@@ -73,13 +75,18 @@ export const selfCheckIn = mutation({
       throw new ConvexError("Already registered for today.");
     }
 
-    const admittedBy =
-      args.method === "qr"
-        ? (args.adminId ??
-          (() => {
-            throw new ConvexError("Admin ID required for QR check-in");
-          })())
-        : userId;
+    const admittedByMap = safeDict({
+      map: {
+        qr: args.adminId,
+        "one-tap": userId,
+      },
+    });
+
+    const admittedBy = admittedByMap.get(args.method);
+
+    if (isNullable(admittedBy)) {
+      throw new ConvexError("Admin ID required for QR check-in");
+    }
 
     const device = {
       name: "Unknown",

@@ -4,7 +4,7 @@ import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
-import { CheckInCard } from "@/components/CheckInCard";
+import { CheckInCard, NotRegistered } from "@/components/CheckInCard";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
@@ -77,16 +77,6 @@ function Content() {
       </section>
     </div>
   );
-}
-
-function NotRegistered({ children }: { children: React.ReactNode }) {
-  const is_registered = useQuery(api.myFunctions.isRegisteredForToday);
-
-  if (is_registered === undefined) return null;
-
-  if (is_registered) return null;
-
-  return <div>{children}</div>;
 }
 
 export default function Home() {

@@ -1,10 +1,12 @@
 "use client";
 import { useFlags } from "@flagsmith/flagsmith/react";
+import { useQuery } from "convex/react";
 import { LucideLoader, XIcon } from "lucide-react";
 import { motion as m } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
 import React from "react";
 import { APP_URL, isDevelopment } from "@/config/constants";
+import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
 import { safeObj, safeStr } from "@/lib/data.helpers";
@@ -72,6 +74,12 @@ function QRCode() {
 }
 
 export function CheckInCard() {
+  const flags = useFlags(["customer_scanning"]);
+
+  if (flags.customer_scanning.enabled) {
+    return null;
+  }
+
   return (
     <div className="border overflow-hidden rounded-2xl bg-background dark:bg-gray-950">
       <QRCode />
@@ -152,4 +160,14 @@ export function ResizeableQRCode({
       )}
     </div>
   );
+}
+
+export function NotRegistered({ children }: { children: React.ReactNode }) {
+  const is_registered = useQuery(api.myFunctions.isRegisteredForToday);
+
+  if (is_registered === undefined) return null;
+
+  if (is_registered) return null;
+
+  return <div>{children}</div>;
 }
