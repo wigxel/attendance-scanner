@@ -184,7 +184,7 @@ importers:
         version: 1.1.2(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       vitest:
         specifier: ^4.1.5
-        version: 4.1.5(@opentelemetry/api@1.9.0)(@types/node@20.19.1)(vite@8.0.10(@types/node@20.19.1)(esbuild@0.27.0)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.8.0))
+        version: 4.1.5(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.1)(vite@8.0.10(@types/node@20.19.1)(esbuild@0.27.0)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.8.0))
       zod:
         specifier: ^3.24.3
         version: 3.24.3
@@ -195,6 +195,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.4.16
         version: 2.4.16
+      '@edge-runtime/vm':
+        specifier: ^5.0.0
+        version: 5.0.0
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.1.4
@@ -207,6 +210,9 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.1.2(@types/react@19.1.2)
+      convex-test:
+        specifier: ^0.0.53
+        version: 0.0.53(convex@1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0))
       dotenv:
         specifier: ^16.4.7
         version: 16.5.0
@@ -660,6 +666,14 @@ packages:
     peerDependencies:
       react: '>=16.14.0'
       react-dom: '>=16.14.0'
+
+  '@edge-runtime/primitives@6.0.0':
+    resolution: {integrity: sha512-FqoxaBT+prPBHBwE1WXS1ocnu/VLTQyZ6NMUBAdbP7N2hsFTTxMC/jMu2D/8GAlMQfxeuppcPuCUk/HO3fpIvA==}
+    engines: {node: '>=18'}
+
+  '@edge-runtime/vm@5.0.0':
+    resolution: {integrity: sha512-NKBGBSIKUG584qrS1tyxVpX/AKJKQw5HgjYEnPLC0QsTw79JrGn+qUr8CXFb955Iy7GUdiiUv1rJ6JBGvaKb6w==}
+    engines: {node: '>=18'}
 
   '@emnapi/core@0.45.0':
     resolution: {integrity: sha512-DPWjcUDQkCeEM4VnljEOEcXdAD7pp8zSZsgOujk/LGIwCXWbXJngin+MO4zbH429lzeC3WbYLGjE2MaUOwzpyw==}
@@ -3359,6 +3373,11 @@ packages:
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+
+  convex-test@0.0.53:
+    resolution: {integrity: sha512-bouZQTnTvZi8IHljHL++yClj1vcV+/9ZxEcd8JZz7RDxOfPkRKrkMgkk/xlX4M1EAiwcEJPNiQE7VJFvDM3lCQ==}
+    peerDependencies:
+      convex: ^1.32.0
 
   convex@1.41.0:
     resolution: {integrity: sha512-euxVf6yfpB7/VGKOobkLgjpbJidsUgW+b0ezonEyCUPqlpHFwR4/yIiI1hjjErzraiw91GxrtxpXQClMLNqU+w==}
@@ -6204,6 +6223,12 @@ snapshots:
       react-virtualized-auto-sizer: 1.0.26(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react-window: 1.8.11(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
 
+  '@edge-runtime/primitives@6.0.0': {}
+
+  '@edge-runtime/vm@5.0.0':
+    dependencies:
+      '@edge-runtime/primitives': 6.0.0
+
   '@emnapi/core@0.45.0':
     dependencies:
       tslib: 2.8.1
@@ -8730,6 +8755,10 @@ snapshots:
   consola@3.4.2: {}
 
   convert-source-map@2.0.0: {}
+
+  convex-test@0.0.53(convex@1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)):
+    dependencies:
+      convex: 1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
 
   convex@1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0):
     dependencies:
@@ -11638,7 +11667,7 @@ snapshots:
       tsx: 4.19.3
       yaml: 2.8.0
 
-  vitest@4.1.5(@opentelemetry/api@1.9.0)(@types/node@20.19.1)(vite@8.0.10(@types/node@20.19.1)(esbuild@0.27.0)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.8.0)):
+  vitest@4.1.5(@edge-runtime/vm@5.0.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.1)(vite@8.0.10(@types/node@20.19.1)(esbuild@0.27.0)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.8.0)):
     dependencies:
       '@vitest/expect': 4.1.5
       '@vitest/mocker': 4.1.5(vite@8.0.10(@types/node@20.19.1)(esbuild@0.27.0)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.8.0))
@@ -11661,6 +11690,7 @@ snapshots:
       vite: 8.0.10(@types/node@20.19.1)(esbuild@0.27.0)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.8.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
+      '@edge-runtime/vm': 5.0.0
       '@opentelemetry/api': 1.9.0
       '@types/node': 20.19.1
     transitivePeerDependencies:
