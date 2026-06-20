@@ -202,7 +202,7 @@ importers:
         specifier: ^4
         version: 4.1.4
       '@types/node':
-        specifier: ^20.17.32
+        specifier: ^20.19.1
         version: 20.19.1
       '@types/react':
         specifier: ^19
