@@ -12,6 +12,13 @@ import type * as audit from "../audit.js";
 import type * as auth from "../auth.js";
 import type * as bookings from "../bookings.js";
 import type * as clerk from "../clerk.js";
+import type * as components_acl__generated_api from "../components/acl/_generated/api.js";
+import type * as components_acl__generated_server from "../components/acl/_generated/server.js";
+import type * as components_acl_identities from "../components/acl/identities.js";
+import type * as components_acl_permissions from "../components/acl/permissions.js";
+import type * as components_acl_roles from "../components/acl/roles.js";
+import type * as components_acl_seed from "../components/acl/seed.js";
+import type * as components_acl_utils from "../components/acl/utils.js";
 import type * as config from "../config.js";
 import type * as crons from "../crons.js";
 import type * as customers from "../customers.js";
@@ -50,6 +57,13 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   bookings: typeof bookings;
   clerk: typeof clerk;
+  "components/acl/_generated/api": typeof components_acl__generated_api;
+  "components/acl/_generated/server": typeof components_acl__generated_server;
+  "components/acl/identities": typeof components_acl_identities;
+  "components/acl/permissions": typeof components_acl_permissions;
+  "components/acl/roles": typeof components_acl_roles;
+  "components/acl/seed": typeof components_acl_seed;
+  "components/acl/utils": typeof components_acl_utils;
   config: typeof config;
   crons: typeof crons;
   customers: typeof customers;
@@ -81,6 +95,109 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
+  wigxel_acl: {
+    identities: {
+      deleteIdentity: FunctionReference<
+        "mutation",
+        "internal",
+        { identityId: string },
+        any
+      >;
+      hasAll: FunctionReference<
+        "query",
+        "internal",
+        { identity: string; privileges: Array<string> },
+        any
+      >;
+      hasAny: FunctionReference<
+        "query",
+        "internal",
+        { identity: string; privileges: Array<string> },
+        any
+      >;
+      hasPrivilege: FunctionReference<
+        "query",
+        "internal",
+        { identity: string; privilege: string },
+        any
+      >;
+      listIdentities: FunctionReference<"query", "internal", any, any>;
+      registerIdentity: FunctionReference<
+        "mutation",
+        "internal",
+        { identity: string; roleId: string },
+        any
+      >;
+      updateIdentityRole: FunctionReference<
+        "mutation",
+        "internal",
+        { identityId: string; roleId: string },
+        any
+      >;
+    };
+    permissions: {
+      createPermission: FunctionReference<
+        "mutation",
+        "internal",
+        { category: string; description: string; name: string },
+        any
+      >;
+      deletePermission: FunctionReference<
+        "mutation",
+        "internal",
+        { permissionId: string },
+        any
+      >;
+      listPermissions: FunctionReference<"query", "internal", any, any>;
+      listPermissionsByCategory: FunctionReference<
+        "query",
+        "internal",
+        any,
+        any
+      >;
+      updatePermission: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          category: string;
+          description: string;
+          name: string;
+          permissionId: string;
+        },
+        any
+      >;
+    };
+    roles: {
+      createRole: FunctionReference<
+        "mutation",
+        "internal",
+        { description: string; name: string; privileges: Array<string> },
+        any
+      >;
+      deleteRole: FunctionReference<
+        "mutation",
+        "internal",
+        { roleId: string },
+        any
+      >;
+      getRoles: FunctionReference<"query", "internal", any, any>;
+      updateRole: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          description: string;
+          name: string;
+          privileges: Array<string>;
+          roleId: string;
+        },
+        any
+      >;
+    };
+    seed: {
+      seedPermissions: FunctionReference<"mutation", "internal", {}, any>;
+      seedRoles: FunctionReference<"mutation", "internal", {}, any>;
+    };
+  };
   aggregate: {
     btree: {
       aggregateBetween: FunctionReference<
