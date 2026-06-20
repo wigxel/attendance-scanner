@@ -19,7 +19,7 @@ export type UserRow = {
   email: string | null;
   phoneNumber: string | null;
   occupation: string;
-  role: "admin" | "user" | null;
+  role: string;
   visitCount: number;
   eligible: boolean;
 };

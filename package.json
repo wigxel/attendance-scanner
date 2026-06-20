@@ -11,6 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "typecheck": "eslint .",
     "format": "biome format --write .",
     "test": "vitest",
     "test:once": "vitest run",
