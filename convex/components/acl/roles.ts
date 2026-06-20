@@ -3,8 +3,9 @@ import { mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./utils";
 
 export const getRoles = query({
-  handler: async (ctx) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+  args: { callerId: v.string() },
+  handler: async (ctx, { callerId }) => {
+    const auth = await requirePrivilege(ctx, "user:assign:role", callerId);
     if (!auth.success) return [];
 
     return await ctx.db.query("roles").collect();
@@ -13,12 +14,13 @@ export const getRoles = query({
 
 export const createRole = mutation({
   args: {
+    callerId: v.string(),
     name: v.string(),
     description: v.string(),
     privileges: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+    const auth = await requirePrivilege(ctx, "user:assign:role", args.callerId);
     if (!auth.success) return auth;
 
     const existing = await ctx.db
@@ -42,13 +44,14 @@ export const createRole = mutation({
 
 export const updateRole = mutation({
   args: {
+    callerId: v.string(),
     roleId: v.id("roles"),
     name: v.string(),
     description: v.string(),
     privileges: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+    const auth = await requirePrivilege(ctx, "user:assign:role", args.callerId);
     if (!auth.success) return auth;
 
     const role = await ctx.db.get(args.roleId);
@@ -74,9 +77,9 @@ export const updateRole = mutation({
 });
 
 export const deleteRole = mutation({
-  args: { roleId: v.id("roles") },
+  args: { callerId: v.string(), roleId: v.id("roles") },
   handler: async (ctx, args) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+    const auth = await requirePrivilege(ctx, "user:assign:role", args.callerId);
     if (!auth.success) return auth;
 
     const role = await ctx.db.get(args.roleId);

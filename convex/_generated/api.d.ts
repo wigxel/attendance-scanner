@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as acl from "../acl.js";
 import type * as audit from "../audit.js";
 import type * as auth from "../auth.js";
 import type * as bookings from "../bookings.js";
@@ -53,6 +54,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  acl: typeof acl;
   audit: typeof audit;
   auth: typeof auth;
   bookings: typeof bookings;
@@ -100,7 +102,7 @@ export declare const components: {
       deleteIdentity: FunctionReference<
         "mutation",
         "internal",
-        { identityId: string },
+        { callerId: string; identityId: string },
         any
       >;
       hasAll: FunctionReference<
@@ -121,17 +123,22 @@ export declare const components: {
         { identity: string; privilege: string },
         any
       >;
-      listIdentities: FunctionReference<"query", "internal", any, any>;
+      listIdentities: FunctionReference<
+        "query",
+        "internal",
+        { callerId: string },
+        any
+      >;
       registerIdentity: FunctionReference<
         "mutation",
         "internal",
-        { identity: string; roleId: string },
+        { callerId: string; identity: string; roleId: string },
         any
       >;
       updateIdentityRole: FunctionReference<
         "mutation",
         "internal",
-        { identityId: string; roleId: string },
+        { callerId: string; identityId: string; roleId: string },
         any
       >;
     };
@@ -139,26 +146,37 @@ export declare const components: {
       createPermission: FunctionReference<
         "mutation",
         "internal",
-        { category: string; description: string; name: string },
+        {
+          callerId: string;
+          category: string;
+          description: string;
+          name: string;
+        },
         any
       >;
       deletePermission: FunctionReference<
         "mutation",
         "internal",
-        { permissionId: string },
+        { callerId: string; permissionId: string },
         any
       >;
-      listPermissions: FunctionReference<"query", "internal", any, any>;
+      listPermissions: FunctionReference<
+        "query",
+        "internal",
+        { callerId: string },
+        any
+      >;
       listPermissionsByCategory: FunctionReference<
         "query",
         "internal",
-        any,
+        { callerId: string },
         any
       >;
       updatePermission: FunctionReference<
         "mutation",
         "internal",
         {
+          callerId: string;
           category: string;
           description: string;
           name: string;
@@ -171,20 +189,31 @@ export declare const components: {
       createRole: FunctionReference<
         "mutation",
         "internal",
-        { description: string; name: string; privileges: Array<string> },
+        {
+          callerId: string;
+          description: string;
+          name: string;
+          privileges: Array<string>;
+        },
         any
       >;
       deleteRole: FunctionReference<
         "mutation",
         "internal",
-        { roleId: string },
+        { callerId: string; roleId: string },
         any
       >;
-      getRoles: FunctionReference<"query", "internal", any, any>;
+      getRoles: FunctionReference<
+        "query",
+        "internal",
+        { callerId: string },
+        any
+      >;
       updateRole: FunctionReference<
         "mutation",
         "internal",
         {
+          callerId: string;
           description: string;
           name: string;
           privileges: Array<string>;

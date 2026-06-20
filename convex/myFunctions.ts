@@ -16,6 +16,7 @@ import {
   mutation,
   query,
 } from "./_generated/server";
+import { requirePrivilege } from "./acl";
 import { setExternalId, updateClerkUser } from "./clerk";
 
 import { featureRequestStatus, PlanImpl } from "./shared";
@@ -664,13 +665,7 @@ export const addOccupation = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    //Check if user is Admin
-    const profile = await authGuard(ctx, "admin");
-
-    if (!profile) {
-      logger.warn("Not authorized to create an occupation");
-      throw new Error("Not authorized to create an occupation");
-    }
+    await requirePrivilege(ctx, "settings:update");
 
     const occupations = await ctx.db.query("occupations").collect();
     const occupationExists = occupations.some(
@@ -701,12 +696,7 @@ export const updateOccupation = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Admin check
-    const profile = await authGuard(ctx, "admin");
-    if (!profile) {
-      logger.warn("Not authorized to update an occupation");
-      throw new Error("Not authorized to update an occupation");
-    }
+    await requirePrivilege(ctx, "settings:update");
 
     const occupation = await ctx.db.get(args.id);
 
@@ -732,12 +722,7 @@ export const deleteOccupation = mutation({
     id: v.id("occupations"),
   },
   handler: async (ctx, args) => {
-    // Check if user is Admin
-    const profile = await authGuard(ctx, "admin");
-    if (!profile) {
-      logger.warn("Not authorized to delete an occupation");
-      throw new Error("Not authorized to delete an occupation");
-    }
+    await requirePrivilege(ctx, "settings:update");
 
     const occupation = await ctx.db.get(args.id);
 

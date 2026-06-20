@@ -5,33 +5,45 @@ export type Result<T> =
   | { success: true; data: T }
   | { success: false; error: string };
 
-/**
- * Ensures the user is authenticated and returns the user document.
- * Throws an error if not authenticated.
- */
 export const requireAuthSafe = async (
   ctx: GenericQueryCtx<DataModel>,
+  callerId: string,
 ): Promise<Result<Doc<"identities">>> => {
-  const identity = await getCurrentIdentity(ctx);
+  const identity = await ctx.db
+    .query("identities")
+    .withIndex("by_identity", (q) => q.eq("identity", callerId))
+    .unique();
 
   if (!identity) {
+    const count = await ctx.db
+      .query("identities")
+      .collect()
+      .then((r) => r.length);
+
+    if (count === 0) {
+      return {
+        success: false,
+        error:
+          'No ACL identities exist in the system. Run "seedRoles" to create the admin role, then use "registerIdentity" to register yourself.',
+      };
+    }
+
     return {
       success: false,
-      error: "Authentication required. Please sign in.",
+      error:
+        "Your account is not registered as an ACL identity. Contact admin to give create one for you",
     };
   }
+
   return { success: true, data: identity };
 };
 
-/**
- * Ensures the authenticated user has a specific privilege.
- * Throws an error if the user lacks the required privilege.
- */
 export const requirePrivilege = async (
   ctx: GenericQueryCtx<DataModel>,
   privilege: string,
+  callerId: string,
 ): Promise<Result<Doc<"identities">>> => {
-  const authResult = await requireAuthSafe(ctx);
+  const authResult = await requireAuthSafe(ctx, callerId);
   if (!authResult.success) return authResult;
 
   const identity = authResult.data;
@@ -45,19 +57,4 @@ export const requirePrivilege = async (
   }
 
   return { success: true, data: identity };
-};
-
-export const getCurrentIdentity = async (
-  ctx: GenericQueryCtx<DataModel>,
-): Promise<Doc<"identities"> | null> => {
-  const auth = await ctx.auth.getUserIdentity();
-
-  if (!auth) return null;
-
-  const identity = await ctx.db
-    .query("identities")
-    .withIndex("by_identity", (q) => q.eq("identity", auth.subject))
-    .unique();
-
-  return identity;
 };

@@ -217,7 +217,7 @@ export function TakeAttendance() {
 
 function CustomerScanFeature() {
   return (
-    <div className="flex justify-between gap-2 px-4 border-t pt-4">
+    <div className="flex justify-between gap-2 px-4 border-t py-4">
       <Link href="/display-qr" className="flex-1" target="_blank">
         <Button className="w-full" variant="outline">
           <LucideQrCode />

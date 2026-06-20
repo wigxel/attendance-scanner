@@ -3,8 +3,9 @@ import { mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./utils";
 
 export const listIdentities = query({
-  handler: async (ctx) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+  args: { callerId: v.string() },
+  handler: async (ctx, { callerId }) => {
+    const auth = await requirePrivilege(ctx, "user:assign:role", callerId);
     if (!auth.success) return [];
 
     const identities = await ctx.db.query("identities").collect();
@@ -19,12 +20,16 @@ export const listIdentities = query({
 
 export const registerIdentity = mutation({
   args: {
+    callerId: v.string(),
     identity: v.string(),
     roleId: v.id("roles"),
   },
   handler: async (ctx, args) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+    const auth = await requirePrivilege(ctx, "user:assign:role", args.callerId);
     if (!auth.success) return auth;
+
+    const role = await ctx.db.get(args.roleId);
+    if (!role) return { success: false, error: "Role not found." };
 
     const existing = await ctx.db
       .query("identities")
@@ -32,11 +37,16 @@ export const registerIdentity = mutation({
       .first();
 
     if (existing) {
-      return { success: false, error: "This identity is already registered." };
-    }
+      await ctx.db.patch(existing._id, {
+        role: args.roleId,
+        updatedAt: new Date().toISOString(),
+      });
 
-    const role = await ctx.db.get(args.roleId);
-    if (!role) return { success: false, error: "Role not found." };
+      return {
+        success: true,
+        data: { identityId: existing._id, action: "updated" as const },
+      };
+    }
 
     const now = new Date().toISOString();
     const identityId = await ctx.db.insert("identities", {
@@ -46,17 +56,18 @@ export const registerIdentity = mutation({
       updatedAt: now,
     });
 
-    return { success: true, data: { identityId } };
+    return { success: true, data: { identityId, action: "created" as const } };
   },
 });
 
 export const updateIdentityRole = mutation({
   args: {
+    callerId: v.string(),
     identityId: v.id("identities"),
     roleId: v.id("roles"),
   },
   handler: async (ctx, args) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+    const auth = await requirePrivilege(ctx, "user:assign:role", args.callerId);
     if (!auth.success) return auth;
 
     const identity = await ctx.db.get(args.identityId);
@@ -75,9 +86,9 @@ export const updateIdentityRole = mutation({
 });
 
 export const deleteIdentity = mutation({
-  args: { identityId: v.id("identities") },
+  args: { callerId: v.string(), identityId: v.id("identities") },
   handler: async (ctx, args) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+    const auth = await requirePrivilege(ctx, "user:assign:role", args.callerId);
     if (!auth.success) return auth;
 
     const identity = await ctx.db.get(args.identityId);

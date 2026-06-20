@@ -12,7 +12,8 @@ import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
-import { authGuard, readId } from "./myFunctions"; // Added authGuard
+import { requirePrivilege } from "./acl";
+import { readId } from "./myFunctions";
 import {
   assignSeats,
   getAvailableSeatsForDay,
@@ -662,10 +663,10 @@ export const deleteBooking = mutation({
     bookingId: v.id("bookings"),
   },
   handler: async (ctx, { bookingId }) => {
-    const adminProfile = await authGuard(ctx, "admin");
-    if (!adminProfile) {
-      throw new ConvexError("Not authorized to delete bookings");
-    }
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError("Authentication required.");
+
+    await requirePrivilege(ctx, "attendance:delete");
 
     const booking = await ctx.db.get(bookingId);
     if (!booking) {
@@ -719,7 +720,7 @@ export const deleteBooking = mutation({
 
     await ctx.scheduler.runAfter(0, internal.audit.log, {
       action: "booking.deleted",
-      actorId: adminProfile.id,
+      actorId: String(identity.profile_id),
       targetId: bookingId,
       targetType: "booking",
       metadata: JSON.stringify({
@@ -1034,11 +1035,7 @@ export const claimTicket = mutation({
 export const getAllBookings = query({
   handler: async (ctx) => {
     // Add admin check here
-    const adminProfile = await authGuard(ctx, "admin");
-
-    if (!adminProfile) {
-      throw new ConvexError("Not authorized to view all bookings");
-    }
+    await requirePrivilege(ctx, "attendance:read");
 
     const bookings = await ctx.db.query("bookings").collect();
 

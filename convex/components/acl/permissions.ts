@@ -3,8 +3,9 @@ import { mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./utils";
 
 export const listPermissions = query({
-  handler: async (ctx) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+  args: { callerId: v.string() },
+  handler: async (ctx, { callerId }) => {
+    const auth = await requirePrivilege(ctx, "user:assign:role", callerId);
     if (!auth.success) return [];
 
     return await ctx.db.query("permissions").collect();
@@ -12,8 +13,9 @@ export const listPermissions = query({
 });
 
 export const listPermissionsByCategory = query({
-  handler: async (ctx) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+  args: { callerId: v.string() },
+  handler: async (ctx, { callerId }) => {
+    const auth = await requirePrivilege(ctx, "user:assign:role", callerId);
     if (!auth.success) return {};
 
     const all = await ctx.db.query("permissions").collect();
@@ -30,12 +32,13 @@ export const listPermissionsByCategory = query({
 
 export const createPermission = mutation({
   args: {
+    callerId: v.string(),
     name: v.string(),
     description: v.string(),
     category: v.string(),
   },
   handler: async (ctx, args) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+    const auth = await requirePrivilege(ctx, "user:assign:role", args.callerId);
     if (!auth.success) return auth;
 
     const existing = await ctx.db
@@ -62,13 +65,14 @@ export const createPermission = mutation({
 
 export const updatePermission = mutation({
   args: {
+    callerId: v.string(),
     permissionId: v.id("permissions"),
     name: v.string(),
     description: v.string(),
     category: v.string(),
   },
   handler: async (ctx, args) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+    const auth = await requirePrivilege(ctx, "user:assign:role", args.callerId);
     if (!auth.success) return auth;
 
     const permission = await ctx.db.get(args.permissionId);
@@ -97,9 +101,9 @@ export const updatePermission = mutation({
 });
 
 export const deletePermission = mutation({
-  args: { permissionId: v.id("permissions") },
+  args: { callerId: v.string(), permissionId: v.id("permissions") },
   handler: async (ctx, args) => {
-    const auth = await requirePrivilege(ctx, "user:assign:role");
+    const auth = await requirePrivilege(ctx, "user:assign:role", args.callerId);
     if (!auth.success) return auth;
 
     const permission = await ctx.db.get(args.permissionId);

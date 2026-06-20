@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { internalMutation, query } from "./_generated/server";
-import { authGuard } from "./myFunctions";
+import { requirePrivilege } from "./acl";
 
 export const log = internalMutation({
   args: {
@@ -23,10 +23,7 @@ export const list = query({
     actionFilter: v.optional(v.string()),
   },
   handler: async (ctx, { actionFilter }) => {
-    const adminProfile = await authGuard(ctx, "admin");
-    if (!adminProfile) {
-      throw new ConvexError("Not authorized");
-    }
+    await requirePrivilege(ctx, "audit:read");
 
     const logs = actionFilter
       ? await ctx.db

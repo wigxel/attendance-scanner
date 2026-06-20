@@ -40,7 +40,7 @@ export type Mounts = {
     deleteIdentity: FunctionReference<
       "mutation",
       "public",
-      { identityId: string },
+      { callerId: string; identityId: string },
       any
     >;
     hasAll: FunctionReference<
@@ -61,17 +61,22 @@ export type Mounts = {
       { identity: string; privilege: string },
       any
     >;
-    listIdentities: FunctionReference<"query", "public", any, any>;
+    listIdentities: FunctionReference<
+      "query",
+      "public",
+      { callerId: string },
+      any
+    >;
     registerIdentity: FunctionReference<
       "mutation",
       "public",
-      { identity: string; roleId: string },
+      { callerId: string; identity: string; roleId: string },
       any
     >;
     updateIdentityRole: FunctionReference<
       "mutation",
       "public",
-      { identityId: string; roleId: string },
+      { callerId: string; identityId: string; roleId: string },
       any
     >;
   };
@@ -79,21 +84,32 @@ export type Mounts = {
     createPermission: FunctionReference<
       "mutation",
       "public",
-      { category: string; description: string; name: string },
+      { callerId: string; category: string; description: string; name: string },
       any
     >;
     deletePermission: FunctionReference<
       "mutation",
       "public",
-      { permissionId: string },
+      { callerId: string; permissionId: string },
       any
     >;
-    listPermissions: FunctionReference<"query", "public", any, any>;
-    listPermissionsByCategory: FunctionReference<"query", "public", any, any>;
+    listPermissions: FunctionReference<
+      "query",
+      "public",
+      { callerId: string },
+      any
+    >;
+    listPermissionsByCategory: FunctionReference<
+      "query",
+      "public",
+      { callerId: string },
+      any
+    >;
     updatePermission: FunctionReference<
       "mutation",
       "public",
       {
+        callerId: string;
         category: string;
         description: string;
         name: string;
@@ -106,20 +122,26 @@ export type Mounts = {
     createRole: FunctionReference<
       "mutation",
       "public",
-      { description: string; name: string; privileges: Array<string> },
+      {
+        callerId: string;
+        description: string;
+        name: string;
+        privileges: Array<string>;
+      },
       any
     >;
     deleteRole: FunctionReference<
       "mutation",
       "public",
-      { roleId: string },
+      { callerId: string; roleId: string },
       any
     >;
-    getRoles: FunctionReference<"query", "public", any, any>;
+    getRoles: FunctionReference<"query", "public", { callerId: string }, any>;
     updateRole: FunctionReference<
       "mutation",
       "public",
       {
+        callerId: string;
         description: string;
         name: string;
         privileges: Array<string>;
