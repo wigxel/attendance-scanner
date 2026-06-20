@@ -250,7 +250,56 @@ export const upgradeToAdmin = action({
         },
       },
     });
+  },
+});
 
-    // return { success: true };
+export const downgradeFromAdmin = action({
+  args: {
+    identityId: v.string(),
+    email: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ success: boolean; error?: string; data?: unknown }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Authentication required.");
+
+    const caller = identity.profile_id as string | undefined;
+    if (!caller) throw new Error("Authentication required.");
+
+    const { valid } = await ctx.runQuery(
+      components.wigxel_acl.identities.hasPrivilege,
+      { identity: caller, privilege: "user:assign:role" },
+    );
+
+    if (!valid) {
+      throw new Error('Access denied. Required privilege: "user:assign:role".');
+    }
+
+    if (args.email) {
+      try {
+        const clerkUsers = await findUserByEmail(args.email);
+        const clerkUser = Array.isArray(clerkUsers) ? clerkUsers[0] : null;
+        if (clerkUser?.id) {
+          await updateMetadata({
+            clerkUserId: String(clerkUser.id),
+            metadata: {
+              private_metadata: {
+                role: null,
+                privileges: [],
+              },
+            },
+          });
+        }
+      } catch (e) {
+        console.warn("Failed to update Clerk metadata:", e);
+      }
+    }
+
+    return ctx.runMutation(components.wigxel_acl.identities.deleteIdentity, {
+      callerId: caller,
+      identityId: args.identityId as any,
+    });
   },
 });
