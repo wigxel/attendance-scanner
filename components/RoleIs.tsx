@@ -10,7 +10,7 @@ interface RoleIsProps {
 }
 
 export async function RoleIs({ role, children, fallback }: RoleIsProps) {
-  const user = await currentUser();
+  const user = await currentUser().catch(() => null);
   const fallback_ = fallback ?? null;
 
   if (!user) return fallback_;

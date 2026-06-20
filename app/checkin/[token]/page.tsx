@@ -16,7 +16,6 @@ import {
 } from "@/hooks/self-service";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
-import { isNullable } from "effect/Predicate";
 
 type CheckInStatus =
   | "verifying-token"
@@ -44,6 +43,8 @@ function TokenCheckInFlow() {
   const registration = useTodaysRegistration();
   const selfCheckIn = useSelfCheckIn();
   const triggered = useRef(false);
+
+  const isFetchingRegisterData = registration === undefined;
 
   useEffect(() => {
     if (!token) {
@@ -77,7 +78,7 @@ function TokenCheckInFlow() {
 
   useEffect(() => {
     if (status !== "checking-in") return;
-    if (isNullable(registration)) return;
+    if (isFetchingRegisterData) return;
 
     if (registration) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -103,7 +104,7 @@ function TokenCheckInFlow() {
           toast.error(getErrorMessage(err));
         }
       });
-  }, [status, registration, adminId, selfCheckIn]);
+  }, [status, registration, adminId, selfCheckIn, isFetchingRegisterData]);
 
   if (status === "verifying-token" || status === "checking-in") {
     return (
