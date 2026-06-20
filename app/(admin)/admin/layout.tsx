@@ -5,9 +5,6 @@ import { Header } from "@/components/header";
 import { Navbar } from "@/components/navbar";
 import { ConvexUserImpl } from "@/lib/user.model";
 
-// @todo: Admin can upgrade any user to an Admin role
-// @todo: Admin can see a list of administrator in the settings page
-
 export default async function AdminLayout(props: {
   children: React.ReactNode;
 }) {
@@ -17,7 +14,7 @@ export default async function AdminLayout(props: {
     notFound();
   }
 
-  if (["admin", "manager"].includes(ConvexUserImpl.role(user))) {
+  if (!["admin", "manager"].includes(ConvexUserImpl.role(user))) {
     notFound();
   }
 
