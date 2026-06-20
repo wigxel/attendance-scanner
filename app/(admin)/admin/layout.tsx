@@ -17,7 +17,7 @@ export default async function AdminLayout(props: {
     notFound();
   }
 
-  if (ConvexUserImpl.role(user) !== "admin") {
+  if (["admin", "manager"].includes(ConvexUserImpl.role(user))) {
     notFound();
   }
 

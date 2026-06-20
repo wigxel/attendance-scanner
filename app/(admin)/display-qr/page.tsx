@@ -10,7 +10,7 @@ export default async function DisplayQRPage() {
     notFound();
   }
 
-  if (ConvexUserImpl.role(user) !== "admin") {
+  if (!["admin", "manager"].includes(ConvexUserImpl.role(user))) {
     notFound();
   }
 
