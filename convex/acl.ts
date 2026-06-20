@@ -1,7 +1,8 @@
 import { v } from "convex/values";
-import { api, components } from "./_generated/api";
+import { api, components, internal } from "./_generated/api";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
-import { mutation, query } from "./_generated/server";
+import { action, mutation, query } from "./_generated/server";
+import { findUserByEmail, updateMetadata } from "./clerk";
 import { readId } from "./myFunctions";
 
 export async function requirePrivilege(
@@ -67,7 +68,7 @@ export async function requireAny(
 
 export const assignRole = mutation({
   args: {
-    profileId: v.id("profile"),
+    profileId: v.string(),
     roleId: v.string(),
   },
   handler: async (ctx, args) => {
@@ -180,5 +181,76 @@ export const deleteIdentity = mutation({
         identityId: args.identityId as any,
       },
     );
+  },
+});
+
+export const upgradeToAdmin = action({
+  args: {
+    userId: v.string(),
+    role: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Authentication required.");
+
+    const caller = identity.profile_id as string | undefined;
+    if (!caller) throw new Error("Authentication required.");
+
+    const { valid } = await ctx.runQuery(
+      components.wigxel_acl.identities.hasPrivilege,
+      { identity: caller, privilege: "user:assign:role" },
+    );
+
+    if (!valid) {
+      throw new Error('Access denied. Required privilege: "user:assign:role".');
+    }
+
+    const profile = await ctx.runQuery(api.myFunctions.getUserById, {
+      userId: args.userId,
+    });
+
+    if (!profile) {
+      throw new Error(`No profile found for user: ${args.userId}`);
+    }
+
+    const email = profile.email;
+    if (!email) {
+      throw new Error("User profile has no email address.");
+    }
+
+    const clerkUsers = await findUserByEmail(email);
+    const clerkUser = Array.isArray(clerkUsers) ? clerkUsers[0] : null;
+
+    if (!clerkUser?.id) {
+      throw new Error(`No Clerk user found with email: ${email}`);
+    }
+
+    const clerkUserId = String(clerkUser.id);
+
+    const roles = await ctx.runQuery(api.roles.getRoles);
+    const targetRole = roles.find((r) => r.name === args.role);
+
+    if (!targetRole) {
+      throw new Error(
+        `Role "${args.role}" not found. Create it in Settings > Roles first.`,
+      );
+    }
+
+    await ctx.runMutation(api.acl.assignRole, {
+      profileId: profile.id,
+      roleId: targetRole._id,
+    });
+
+    await updateMetadata({
+      clerkUserId,
+      metadata: {
+        private_metadata: {
+          role: targetRole.name,
+          privileges: targetRole.privileges,
+        },
+      },
+    });
+
+    // return { success: true };
   },
 });

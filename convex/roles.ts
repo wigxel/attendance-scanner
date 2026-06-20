@@ -3,6 +3,8 @@ import { components } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { readId } from "./myFunctions";
 
+type Role = { _id: string; name: string; privileges: string[] };
+
 export const getRoles = query({
   args: {},
   handler: async (ctx) => {
@@ -10,9 +12,9 @@ export const getRoles = query({
 
     if (!callerId) return [];
 
-    return await ctx.runQuery(components.wigxel_acl.roles.getRoles, {
+    return (await ctx.runQuery(components.wigxel_acl.roles.getRoles, {
       callerId,
-    });
+    })) as Role[];
   },
 });
 

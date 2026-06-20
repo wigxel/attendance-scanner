@@ -18,6 +18,14 @@ export async function updateMetadata(params: {
   });
 }
 
+export async function findUserByEmail(
+  email: string,
+): Promise<Record<PropertyKey, unknown>[]> {
+  return clerkFetch(`/users?email_address=${encodeURIComponent(email)}`, {
+    method: "GET",
+  });
+}
+
 export async function setExternalId(params: {
   clerkUserId: string;
   convexUserId: string;

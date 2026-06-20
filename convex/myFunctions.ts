@@ -389,6 +389,21 @@ export const updateUser = action({
   },
 });
 
+/**
+ * @deprecated use ACL utils
+ */
+export const updateProfileRole = internalMutation({
+  args: {
+    profileId: v.string(),
+    role: v.string(),
+  },
+  handler: async () => {
+    console.warn("Action deprecated");
+
+    return;
+  },
+});
+
 export const updateProfile = internalMutation({
   args: {
     _id: v.id("profile"),

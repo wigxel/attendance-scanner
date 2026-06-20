@@ -74,7 +74,6 @@ export function CustomerCombobox({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            aria-role="combobox"
             aria-expanded={open}
             disabled={disabled}
             className="w-full justify-between font-normal"

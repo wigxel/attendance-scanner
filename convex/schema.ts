@@ -49,7 +49,8 @@ const profile = defineTable({
   phoneNumber: v.optional(v.string()),
   email: v.optional(v.string()),
   occupation: v.union(v.id("occupations"), v.literal("None")),
-  role: v.optional(v.union(v.literal("admin"), v.literal("user"))),
+  /** @deprecated No longer needed. use ACL utils */
+  role: v.optional(v.string()),
 })
   .index("occupation", ["occupation"])
   .index("by_user_id", ["id"])

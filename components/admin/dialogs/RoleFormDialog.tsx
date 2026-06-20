@@ -49,12 +49,20 @@ export function RoleFormDialog({
 }: RoleFormDialogProps) {
   const createRole = useMutation(api.roles.createRole);
   const updateRole = useMutation(api.roles.updateRole);
-  const permissionsByCategory = useQuery(api.permissions.listPermissionsByCategory);
+  const permissionsByCategory = useQuery(
+    api.permissions.listPermissionsByCategory,
+  );
 
-  const privilegeGroups: { label: string; items: { key: string; label: string }[] }[] = permissionsByCategory
+  const privilegeGroups: {
+    label: string;
+    items: { key: string; label: string }[];
+  }[] = permissionsByCategory
     ? Object.entries(permissionsByCategory).map(([category, perms]) => ({
         label: category,
-        items: (perms as any[]).map((p) => ({ key: p.name, label: p.description })),
+        items: (perms as any[]).map((p) => ({
+          key: p.name,
+          label: p.description,
+        })),
       }))
     : [];
 
@@ -198,25 +206,29 @@ export function RoleFormDialog({
                       {group.label}
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {group.items.map((item: { key: string; label: string }) => {
-                        const isSelected = selectedPrivileges.includes(item.key);
-                        return (
-                          <label
-                            key={item.key}
-                            className="flex items-start space-x-2 cursor-pointer p-2 rounded hover:bg-gray-50"
-                          >
-                            <input
-                              type="checkbox"
-                              className="mt-1 rounded border-gray-300 text-primary focus:ring-primary"
-                              checked={isSelected}
-                              onChange={() => togglePrivilege(item.key)}
-                            />
-                            <span className="text-sm text-gray-700 leading-snug">
-                              {item.label}
-                            </span>
-                          </label>
-                        );
-                      })}
+                      {group.items.map(
+                        (item: { key: string; label: string }) => {
+                          const isSelected = selectedPrivileges.includes(
+                            item.key,
+                          );
+                          return (
+                            <label
+                              key={item.key}
+                              className="flex items-start space-x-2 cursor-pointer p-2 rounded hover:bg-gray-50"
+                            >
+                              <input
+                                type="checkbox"
+                                className="mt-1 rounded border-gray-300 text-primary focus:ring-primary"
+                                checked={isSelected}
+                                onChange={() => togglePrivilege(item.key)}
+                              />
+                              <span className="text-sm text-gray-700 leading-snug">
+                                {item.label}
+                              </span>
+                            </label>
+                          );
+                        },
+                      )}
                     </div>
                   </div>
                 ))

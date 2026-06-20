@@ -1,24 +1,16 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
-import { ChangeRoleDialog } from "@/components/admin/dialogs/ChangeRoleDialog";
+import { Loader2, Trash2 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
+import { InviteTeamMemberDialog } from "@/components/admin/dialogs/InviteTeamMemberDialog";
 
 const roleBadgeStyles: Record<string, string> = {
   admin: "bg-purple-100 text-purple-800",
 };
 
 export function AdminUsersTable() {
-  const [roleChangeUser, setRoleChangeUser] = useState<{
-    identityId: string;
-    name: string;
-    role: string;
-    roleId: string;
-  } | null>(null);
-
   const identitiesResult = useQuery(api.acl.listIdentities);
   const deleteIdentity = useMutation(api.acl.deleteIdentity);
 
@@ -56,6 +48,8 @@ export function AdminUsersTable() {
               control their permissions.
             </p>
           </div>
+
+          <InviteTeamMemberDialog />
         </div>
         <div className="mt-4 overflow-hidden rounded-md border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200">
@@ -128,35 +122,17 @@ export function AdminUsersTable() {
                           : "-"}
                       </td>
                       <td className="relative whitespace-nowrap py-3 pl-3 pr-4 text-right text-sm">
-                        {roleName !== "admin" && (
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setRoleChangeUser({
-                                  identityId: entry._id,
-                                  name,
-                                  role: roleName,
-                                  roleId: entry.role?._id,
-                                })
-                              }
-                              className="h-8 w-8 inline-flex items-center justify-center rounded-md text-gray-400 hover:text-gray-900 hover:bg-gray-100"
-                              title="Change Role"
-                            >
-                              <Pencil className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveUser(entry._id, name)}
-                              className="h-8 w-8 inline-flex items-center justify-center rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50"
-                              title="Remove User"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Delete</span>
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveUser(entry._id, name)}
+                            className="h-8 w-8 inline-flex items-center justify-center rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50"
+                            title="Remove User"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -166,16 +142,6 @@ export function AdminUsersTable() {
           </table>
         </div>
       </div>
-
-      {roleChangeUser && (
-        <ChangeRoleDialog
-          open={!!roleChangeUser}
-          onOpenChange={(open) => {
-            if (!open) setRoleChangeUser(null);
-          }}
-          user={roleChangeUser}
-        />
-      )}
     </>
   );
 }
