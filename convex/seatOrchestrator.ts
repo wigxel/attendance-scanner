@@ -1,4 +1,5 @@
-import type { Doc, Id } from "./_generated/dataModel";
+import { GenericQueryCtx } from "convex/server";
+import type { DataModel, Doc, Id } from "./_generated/dataModel";
 
 // --- Types ---
 
@@ -70,7 +71,7 @@ export function assignSeats(
 // --- Query helpers (internal) ---
 
 export async function getAvailableSeatsForDay(
-  ctx: any,
+  ctx: GenericQueryCtx<DataModel>,
   day: string,
 ): Promise<Id<"seats">[]> {
   const allSeats = await ctx.db.query("seats").collect();
@@ -78,7 +79,7 @@ export async function getAvailableSeatsForDay(
   const overlappingBookings = (
     await ctx.db
       .query("bookings")
-      .filter((q: any) => q.eq(q.field("status"), "confirmed"))
+      .filter((q) => q.eq(q.field("status"), "confirmed"))
       .collect()
   ).filter((b: Doc<"bookings">) => b.startDate <= day && b.endDate >= day);
 
@@ -86,7 +87,7 @@ export async function getAvailableSeatsForDay(
   for (const booking of overlappingBookings) {
     const bookedSeats = await ctx.db
       .query("bookedSeats")
-      .filter((q: any) =>
+      .filter((q) =>
         q.and(
           q.eq(q.field("bookingId"), booking._id),
           q.eq(q.field("status"), "confirmed"),
@@ -107,13 +108,13 @@ export async function getAvailableSeatsForDay(
 }
 
 export async function getUnassignedTicketsForDay(
-  ctx: any,
+  ctx: GenericQueryCtx<DataModel>,
   day: string,
 ): Promise<UnassignedTicket[]> {
   const overlappingBookings = (
     await ctx.db
       .query("bookings")
-      .filter((q: any) => q.eq(q.field("status"), "confirmed"))
+      .filter((q) => q.eq(q.field("status"), "confirmed"))
       .collect()
   ).filter((b: Doc<"bookings">) => b.startDate <= day && b.endDate >= day);
 
@@ -121,7 +122,7 @@ export async function getUnassignedTicketsForDay(
   for (const booking of overlappingBookings) {
     const tickets = await ctx.db
       .query("tickets")
-      .withIndex("by_booking", (q: any) => q.eq("bookingId", booking._id))
+      .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
       .collect();
 
     for (const ticket of tickets) {

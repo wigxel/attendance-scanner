@@ -232,6 +232,13 @@ export const countCustomers = query({
   },
 });
 
+
+type MetricsKeys = "totalCustomers"
+  | "newCustomers"
+  | "activeCustomers"
+  | "repeatCustomerRate"
+  | "avgVisitsPerCustomer"
+  | "lapsedCustomers"
 // ---------------------------------------------------------------------------
 // Core per-day computation helper
 // ---------------------------------------------------------------------------
@@ -294,14 +301,14 @@ async function computeMetricsForDate(
 
   const lapsedCustomers = Math.max(0, totalCustomers - activeCustomers);
 
-  const metrics: Array<{ kind: string; value: number }> = [
+  const metrics = [
     { kind: "totalCustomers", value: totalCustomers },
     { kind: "newCustomers", value: newCustomers },
     { kind: "activeCustomers", value: activeCustomers },
     { kind: "repeatCustomerRate", value: repeatCustomerRate },
     { kind: "avgVisitsPerCustomer", value: avgVisitsPerCustomer },
     { kind: "lapsedCustomers", value: lapsedCustomers },
-  ];
+  ] as const;
 
   // Upsert each metric record.
   for (const metric of metrics) {
@@ -311,7 +318,7 @@ async function computeMetricsForDate(
         q
           .eq("date", date)
           .eq("category", "customer")
-          .eq("kind", metric.kind as any),
+          .eq("kind", metric.kind),
       )
       .unique();
 
@@ -321,7 +328,7 @@ async function computeMetricsForDate(
       await ctx.db.insert("app_metrics", {
         date,
         category: "customer",
-        kind: metric.kind as any,
+        kind: metric.kind,
         value: metric.value,
       });
     }

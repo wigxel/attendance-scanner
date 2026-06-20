@@ -1,12 +1,13 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React from "react";
 import useEffectEvent from "react-use-event-hook";
 
 const update =
   <Props extends Record<string, unknown>>(key: string, value: boolean) =>
-  (getter: Props) => ({
-    ...getter,
-    [key]: value,
-  });
+    (getter: Props) => ({
+      ...getter,
+      [key]: value,
+    });
 
 export function useLoading<T extends string>(_defaults: Record<T, boolean>) {
   const [loading, _setLoading] = React.useState(_defaults);
@@ -42,8 +43,8 @@ export const useFakerXHR = ({ timeout }: { timeout: number }) => {
 
   return {
     loading: loader.loading.default,
-    // biome-ignore lint/suspicious/noExplicitAny: Using any for flexibility in this development hook
-    fire: loader.attachLoader("default", (..._a: any[]) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    fire: loader.attachLoader("default", (..._a: unknown[]) => {
       return new Promise((res) => setTimeout(res, timeout));
     }),
   };

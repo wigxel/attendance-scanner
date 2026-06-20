@@ -1,6 +1,5 @@
 import type { Profile, User } from "@auth/core/types";
 import { TableAggregate } from "@convex-dev/aggregate";
-import type { GenericQueryCtx } from "convex/server";
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { isWithinInterval, parseISO } from "date-fns";
@@ -10,7 +9,7 @@ import { logger } from "../config/logger";
 import { safeStr } from "../lib/data.helpers";
 import { api, components } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
-import { action, internalMutation, mutation, query } from "./_generated/server";
+import { action, GenericCtx, internalMutation, mutation, query } from "./_generated/server";
 import { setExternalId, updateClerkUser } from "./clerk";
 
 import { featureRequestStatus, PlanImpl } from "./shared";
@@ -342,7 +341,7 @@ export const getDailyRegister = query({
  * @param ctx
  * @returns
  */
-export async function readId(ctx: any): Promise<string | null> {
+export async function readId(ctx: GenericCtx): Promise<string | null> {
   const identity = await ctx.auth.getUserIdentity();
 
   const userId = identity?.profile_id ?? null;
@@ -632,7 +631,7 @@ export const listOccupations = query({
 
 // Function for Auth guard
 export const authGuard = async (
-  ctx: GenericQueryCtx<any>,
+  ctx: GenericCtx,
   requiredRole?: string,
 ) => {
   const identity = await ctx.auth.getUserIdentity();
@@ -757,8 +756,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-            .query("featureRequest")
-            .withIndex("by_status", (q) => q.eq("status", status))
+          .query("featureRequest")
+          .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 

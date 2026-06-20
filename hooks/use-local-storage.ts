@@ -65,7 +65,7 @@ export function useLocalStorage<T>(
 
   // Get from local storage then
   // parse stored json or return initialValue
-  const readValue = useCallback((): T => {
+  const readValue = useCallback((key: string): T => {
     const initialValueToUse =
       initialValue instanceof Function ? initialValue() : initialValue;
 
@@ -81,11 +81,11 @@ export function useLocalStorage<T>(
       console.warn(`Error reading localStorage key “${key}”:`, error);
       return initialValueToUse;
     }
-  }, [initialValue, key, deserializer]);
+  }, [initialValue, deserializer]);
 
   const [storedValue, setStoredValue] = useState(() => {
     if (initializeWithValue) {
-      return readValue();
+      return readValue(key);
     }
 
     return initialValue instanceof Function ? initialValue() : initialValue;
@@ -103,7 +103,7 @@ export function useLocalStorage<T>(
 
     try {
       // Allow value to be a function so we have the same API as useState
-      const newValue = value instanceof Function ? value(readValue()) : value;
+      const newValue = value instanceof Function ? value(readValue(key)) : value;
 
       // Save to local storage
       window.localStorage.setItem(key, serializer(newValue));
@@ -141,15 +141,16 @@ export function useLocalStorage<T>(
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    setStoredValue(readValue());
-  }, [key]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setStoredValue(readValue(key));
+  }, [readValue, key]);
 
   const handleStorageChange = useCallback(
     (event: StorageEvent | CustomEvent) => {
       if ((event as StorageEvent).key && (event as StorageEvent).key !== key) {
         return;
       }
-      setStoredValue(readValue());
+      setStoredValue(readValue(key));
     },
     [key, readValue],
   );

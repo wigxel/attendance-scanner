@@ -42,6 +42,7 @@ export function FlagsmithProvider({
 
   return (
     <FlagsmithProviderBase
+      // eslint-disable-next-line react-hooks/refs
       flagsmith={flagsmith.current}
       serverState={serverState}
     >

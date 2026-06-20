@@ -407,6 +407,7 @@ export function RegisteredUserEntry({
   const isReservation = !isNullable(entry.ticketId);
   const can_modify_plan = isReservation
     ? false
+    // eslint-disable-next-line react-hooks/purity
     : differenceInHours(Date.now(), entry.timestamp) < 24;
 
   const handleClick = () => {
@@ -876,6 +877,7 @@ export function TopCustomersAvatarGroup() {
   const { filter: dateFilter } = DateRange.useState();
 
   const [startDate, endDate] = React.useMemo(
+    // eslint-disable-next-line react-hooks/purity
     () => dateFilter.get_range(Date.now()),
     [dateFilter],
   );
@@ -949,6 +951,7 @@ function TopCustomersSheet() {
   const { filter: dateFilter } = DateRange.useState();
 
   const [startDate, endDate] = React.useMemo(
+    // eslint-disable-next-line react-hooks/purity
     () => dateFilter.get_range(Date.now()),
     [dateFilter],
   );

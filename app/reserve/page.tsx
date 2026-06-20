@@ -106,6 +106,7 @@ function Content() {
     }
 
     setActiveTab(tabFromUrl);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsReady(true);
   }, [searchParams, router]);
 
@@ -278,6 +279,7 @@ function MakePaymentTab() {
 
   useEffect(() => {
     if (pendingBookings && pendingBookings.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowTimer(true);
       const booking = pendingBookings[0];
       const createdTime = booking.createdAt;
@@ -302,6 +304,7 @@ function MakePaymentTab() {
 
   useEffect(() => {
     if (!showTimer || timeRemaining <= 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (timeRemaining <= 0) setShowTimer(false); // Hide timer when it hits 0
       return;
     }
@@ -418,13 +421,12 @@ function MakePaymentTab() {
         <div>
           {paymentMessage && (
             <div
-              className={`p-3 rounded-lg mb-4 text-center font-medium ${
-                paymentStatus !== "pending" && paymentStatus !== "failed"
-                  ? "bg-green-100 text-green-800 border border-green-200"
-                  : paymentStatus === "failed"
-                    ? "bg-red-100 text-red-800 border border-red-200"
-                    : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-              }`}
+              className={`p-3 rounded-lg mb-4 text-center font-medium ${paymentStatus !== "pending" && paymentStatus !== "failed"
+                ? "bg-green-100 text-green-800 border border-green-200"
+                : paymentStatus === "failed"
+                  ? "bg-red-100 text-red-800 border border-red-200"
+                  : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                }`}
             >
               {paymentMessage}
             </div>

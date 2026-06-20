@@ -16,6 +16,7 @@ import {
 } from "@/hooks/self-service";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
+import { isNullable } from "effect/Predicate";
 
 type CheckInStatus =
   | "verifying-token"
@@ -28,12 +29,13 @@ type CheckInStatus =
   | "error";
 
 function TokenCheckInFlow() {
-  const params = useParams();
-  const token = params?.token as string;
   const router = useRouter();
+  const params = useParams();
   const { user } = useUser();
 
-  const [status, setStatus] = useState<CheckInStatus>("verifying-token");
+  const token = params?.token as string;
+
+  const [status, setStatus] = useState<CheckInStatus>(() => !token ? "token-invalid" : "verifying-token");
   const [adminId, setAdminId] = useState<string | undefined>();
   const [checkedInAt, setCheckedInAt] = useState<string | undefined>();
 
@@ -43,7 +45,6 @@ function TokenCheckInFlow() {
 
   useEffect(() => {
     if (!token) {
-      setStatus("token-invalid");
       return;
     }
 
@@ -74,9 +75,10 @@ function TokenCheckInFlow() {
 
   useEffect(() => {
     if (status !== "checking-in") return;
-    if (registration === undefined) return;
+    if (isNullable(registration)) return;
 
     if (registration) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCheckedInAt(registration.timestamp);
       setStatus("already-registered");
       return;

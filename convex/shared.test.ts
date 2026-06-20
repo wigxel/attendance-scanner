@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Effect, Option } from "effect";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";

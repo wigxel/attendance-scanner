@@ -40,6 +40,7 @@ function MetricCard({
 }) {
   const { filter } = DateRange.useState();
   const [startObj, endObj] = React.useMemo(
+    // eslint-disable-next-line react-hooks/purity
     () => filter.get_range(Date.now()),
     [filter],
   );

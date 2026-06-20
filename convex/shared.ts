@@ -5,7 +5,7 @@ import { TaggedError } from "effect/Data";
 import { z } from "zod";
 import { safeObj } from "../lib/data.helpers";
 import { O } from "../lib/fp.helpers";
-import type { Doc } from "./_generated/dataModel";
+import type { DataModel, Doc } from "./_generated/dataModel";
 
 export const featureRequestStatus = v.union(
   v.literal("open"),
@@ -65,7 +65,7 @@ export const accessPlanSchemaValidator = z.union([
 ]);
 
 export const PlanImpl = {
-  async validatePlan<TDB extends GenericMutationCtx<any>["db"]>(
+  async validatePlan<TDB extends GenericMutationCtx<DataModel>["db"]>(
     db: TDB,
     plan_string: string,
   ): Promise<Doc<"accessPlans">> {

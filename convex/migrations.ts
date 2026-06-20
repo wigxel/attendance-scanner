@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { isNullable } from "effect/Predicate";
 import { internalMutation } from "./_generated/server";
 
 export const migrateOccupationNamesToIds = internalMutation({
@@ -37,8 +37,8 @@ export const backfillNullMethods = internalMutation({
 
     let updated = 0;
     for (const record of registers) {
-      if ((record as any).method == null) {
-        await ctx.db.patch(record._id, { method: "qr" } as any);
+      if (isNullable(record.method)) {
+        await ctx.db.patch(record._id, { method: "qr" });
         updated++;
       }
     }

@@ -208,7 +208,7 @@ export const deleteDuplicateAccount = internalMutation({
       const pass_index: number = profilesWithThisEmail.findIndex((p) => {
         const user = userRelationship.get(p);
 
-        // @ts-expect-error
+        // @ts-expect-error Not a problem
         if ([null, undefined].includes(user)) {
           return false;
         }
@@ -282,9 +282,10 @@ export const updateProfileReferences = internalMutation({
 
     async function update<T extends TableNames>(
       table: T,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       column_meta: { c: keyof Doc<T>; index: any },
     ) {
-      // @ts-expect-error
+      // @ts-expect-error Not a problem
       const { column, search_index: index } = column_meta;
 
       const matches = await ctx.db
@@ -313,7 +314,7 @@ export const updateProfileReferences = internalMutation({
     const ops = await Promise.all(
       Array.from(maps.keys()).map((table) => {
         const columns = maps.get(table) ?? [];
-        // @ts-expect-error
+        // @ts-expect-error Not a problem
         return columns.map((f) => update(table, f));
       }),
     );

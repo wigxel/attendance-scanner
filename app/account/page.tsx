@@ -1,5 +1,4 @@
 "use client";
-import { useQuery } from "convex/react";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import type React from "react";
@@ -10,7 +9,6 @@ import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { If } from "@/components/if";
 import { SelfCheckInStatus } from "@/components/self-checkin-status";
-import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";
 import { ActiveBookings } from "./active-bookings";
 

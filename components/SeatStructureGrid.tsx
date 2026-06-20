@@ -168,6 +168,7 @@ export function SeatStructureGrid() {
   // Load layout from Convex on mount (only when local state is empty)
   React.useEffect(() => {
     if (seatLayout && cells.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCells(seatLayout.seats || []);
       setRowCount(seatLayout.rowCount || ROW_COUNT);
       setColumnCount(seatLayout.columnCount || COLUMN_COUNT);
@@ -238,10 +239,10 @@ export function SeatStructureGrid() {
         const newSeatNumber =
           entry.length > 0
             ? Math.max(
-                ...entry
-                  .filter((e) => e.type === "seat")
-                  .map((s) => s.seatNumber),
-              ) + 1
+              ...entry
+                .filter((e) => e.type === "seat")
+                .map((s) => s.seatNumber),
+            ) + 1
             : 1;
 
         return [
@@ -481,8 +482,8 @@ export function SeatStructureGrid() {
                   "data-[active=true]:bg-blue-500/25",
                   "data-[selected=true]:bg-pink-500/25!",
                 )}
-                onKeyDown={() => {}}
-                onFocus={() => {}}
+                onKeyDown={() => { }}
+                onFocus={() => { }}
                 onDoubleClick={() => {
                   remove(e);
                 }}
@@ -511,9 +512,9 @@ export function SeatStructureGrid() {
         {cells.map((entry) => {
           const style = entry.position
             ? {
-                gridColumnStart: `${entry.position.colIndex + 1}`,
-                gridRowStart: `${entry.position.rowIndex + 1}`,
-              }
+              gridColumnStart: `${entry.position.colIndex + 1}`,
+              gridRowStart: `${entry.position.rowIndex + 1}`,
+            }
             : {};
 
           if (entry.type === "seat") {
@@ -713,11 +714,11 @@ export function SLSeatItem(
             !isSelected
               ? { translateY: 0, translateX: 0, opacity: 0, scale: 0.25 }
               : {
-                  scale: 1,
-                  opacity: 100,
-                  translateY: "-50%",
-                  translateX: "-50%",
-                }
+                scale: 1,
+                opacity: 100,
+                translateY: "-50%",
+                translateX: "-50%",
+              }
           }
           className="absolute top-0 left-0 bg-white bg-white p-2 rounded-full size-8"
         >
