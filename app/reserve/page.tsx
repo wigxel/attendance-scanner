@@ -421,12 +421,13 @@ function MakePaymentTab() {
         <div>
           {paymentMessage && (
             <div
-              className={`p-3 rounded-lg mb-4 text-center font-medium ${paymentStatus !== "pending" && paymentStatus !== "failed"
-                ? "bg-green-100 text-green-800 border border-green-200"
-                : paymentStatus === "failed"
-                  ? "bg-red-100 text-red-800 border border-red-200"
-                  : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                }`}
+              className={`p-3 rounded-lg mb-4 text-center font-medium ${
+                paymentStatus !== "pending" && paymentStatus !== "failed"
+                  ? "bg-green-100 text-green-800 border border-green-200"
+                  : paymentStatus === "failed"
+                    ? "bg-red-100 text-red-800 border border-red-200"
+                    : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+              }`}
             >
               {paymentMessage}
             </div>

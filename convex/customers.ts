@@ -232,13 +232,13 @@ export const countCustomers = query({
   },
 });
 
-
-type MetricsKeys = "totalCustomers"
+type MetricsKeys =
+  | "totalCustomers"
   | "newCustomers"
   | "activeCustomers"
   | "repeatCustomerRate"
   | "avgVisitsPerCustomer"
-  | "lapsedCustomers"
+  | "lapsedCustomers";
 // ---------------------------------------------------------------------------
 // Core per-day computation helper
 // ---------------------------------------------------------------------------
@@ -315,10 +315,7 @@ async function computeMetricsForDate(
     const existing = await ctx.db
       .query("app_metrics")
       .withIndex("by_date_category_kind", (q) =>
-        q
-          .eq("date", date)
-          .eq("category", "customer")
-          .eq("kind", metric.kind),
+        q.eq("date", date).eq("category", "customer").eq("kind", metric.kind),
       )
       .unique();
 

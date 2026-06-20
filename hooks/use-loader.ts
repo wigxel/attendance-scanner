@@ -4,10 +4,10 @@ import useEffectEvent from "react-use-event-hook";
 
 const update =
   <Props extends Record<string, unknown>>(key: string, value: boolean) =>
-    (getter: Props) => ({
-      ...getter,
-      [key]: value,
-    });
+  (getter: Props) => ({
+    ...getter,
+    [key]: value,
+  });
 
 export function useLoading<T extends string>(_defaults: Record<T, boolean>) {
   const [loading, _setLoading] = React.useState(_defaults);

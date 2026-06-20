@@ -9,7 +9,13 @@ import { logger } from "../config/logger";
 import { safeStr } from "../lib/data.helpers";
 import { api, components } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
-import { action, GenericCtx, internalMutation, mutation, query } from "./_generated/server";
+import {
+  action,
+  GenericCtx,
+  internalMutation,
+  mutation,
+  query,
+} from "./_generated/server";
 import { setExternalId, updateClerkUser } from "./clerk";
 
 import { featureRequestStatus, PlanImpl } from "./shared";
@@ -630,10 +636,7 @@ export const listOccupations = query({
 });
 
 // Function for Auth guard
-export const authGuard = async (
-  ctx: GenericCtx,
-  requiredRole?: string,
-) => {
+export const authGuard = async (ctx: GenericCtx, requiredRole?: string) => {
   const identity = await ctx.auth.getUserIdentity();
   const userId = identity?.profile_id ?? null;
 
@@ -756,8 +759,8 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-          .query("featureRequest")
-          .withIndex("by_status", (q) => q.eq("status", status))
+            .query("featureRequest")
+            .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db.query("featureRequest");
     const feedbacks = await features.order("desc").take(50);
 

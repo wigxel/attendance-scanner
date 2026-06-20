@@ -407,8 +407,8 @@ export function RegisteredUserEntry({
   const isReservation = !isNullable(entry.ticketId);
   const can_modify_plan = isReservation
     ? false
-    // eslint-disable-next-line react-hooks/purity
-    : differenceInHours(Date.now(), entry.timestamp) < 24;
+    : // eslint-disable-next-line react-hooks/purity
+      differenceInHours(Date.now(), entry.timestamp) < 24;
 
   const handleClick = () => {
     onSelect?.(entry);

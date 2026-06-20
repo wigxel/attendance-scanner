@@ -65,23 +65,26 @@ export function useLocalStorage<T>(
 
   // Get from local storage then
   // parse stored json or return initialValue
-  const readValue = useCallback((key: string): T => {
-    const initialValueToUse =
-      initialValue instanceof Function ? initialValue() : initialValue;
+  const readValue = useCallback(
+    (key: string): T => {
+      const initialValueToUse =
+        initialValue instanceof Function ? initialValue() : initialValue;
 
-    // Prevent build error "window is undefined" but keep working
-    if (IS_SERVER) {
-      return initialValueToUse;
-    }
+      // Prevent build error "window is undefined" but keep working
+      if (IS_SERVER) {
+        return initialValueToUse;
+      }
 
-    try {
-      const raw = window.localStorage.getItem(key);
-      return raw ? deserializer(raw) : initialValueToUse;
-    } catch (error) {
-      console.warn(`Error reading localStorage key “${key}”:`, error);
-      return initialValueToUse;
-    }
-  }, [initialValue, deserializer]);
+      try {
+        const raw = window.localStorage.getItem(key);
+        return raw ? deserializer(raw) : initialValueToUse;
+      } catch (error) {
+        console.warn(`Error reading localStorage key “${key}”:`, error);
+        return initialValueToUse;
+      }
+    },
+    [initialValue, deserializer],
+  );
 
   const [storedValue, setStoredValue] = useState(() => {
     if (initializeWithValue) {
@@ -103,7 +106,8 @@ export function useLocalStorage<T>(
 
     try {
       // Allow value to be a function so we have the same API as useState
-      const newValue = value instanceof Function ? value(readValue(key)) : value;
+      const newValue =
+        value instanceof Function ? value(readValue(key)) : value;
 
       // Save to local storage
       window.localStorage.setItem(key, serializer(newValue));

@@ -35,7 +35,9 @@ function TokenCheckInFlow() {
 
   const token = params?.token as string;
 
-  const [status, setStatus] = useState<CheckInStatus>(() => !token ? "token-invalid" : "verifying-token");
+  const [status, setStatus] = useState<CheckInStatus>(() =>
+    !token ? "token-invalid" : "verifying-token",
+  );
   const [adminId, setAdminId] = useState<string | undefined>();
   const [checkedInAt, setCheckedInAt] = useState<string | undefined>();
 
