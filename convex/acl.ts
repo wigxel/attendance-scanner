@@ -1,7 +1,7 @@
 import { v } from "convex/values";
-import { components } from "./_generated/api";
+import { api, components } from "./_generated/api";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { readId } from "./myFunctions";
 
 export async function requirePrivilege(
@@ -96,7 +96,7 @@ export const assignRole = mutation({
 
     const result = (await ctx.runMutation(
       components.wigxel_acl.identities.registerIdentity,
-      { identity: args.profileId, roleId: args.roleId, callerId: caller },
+      { identity: profile.id, roleId: args.roleId, callerId: caller },
     )) as
       | {
           success: true;
@@ -109,5 +109,76 @@ export const assignRole = mutation({
     }
 
     return { action: result.data.action, identityId: result.data.identityId };
+  },
+});
+
+export const listIdentities = query({
+  handler: async (ctx) => {
+    const callerId = await readId(ctx);
+    if (!callerId) return { success: false, error: "Authentication required." };
+
+    const identities = await ctx.runQuery(
+      components.wigxel_acl.identities.listIdentities,
+      { callerId },
+    );
+
+    const enriched = await Promise.all(
+      identities.map(async (entry: any) => {
+        const profile = await ctx.runQuery(api.myFunctions.getUserById, {
+          userId: entry.identity,
+        });
+        return {
+          ...entry,
+          profile: profile
+            ? {
+                _id: profile._id,
+                firstName: profile.firstName,
+                lastName: profile.lastName,
+                email: profile.email,
+              }
+            : null,
+        };
+      }),
+    );
+
+    return { success: true, data: enriched };
+  },
+});
+
+export const updateIdentityRole = mutation({
+  args: {
+    identityId: v.string(),
+    roleId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const callerId = await readId(ctx);
+    if (!callerId) return { success: false, error: "Authentication required." };
+
+    return await ctx.runMutation(
+      components.wigxel_acl.identities.updateIdentityRole,
+      {
+        callerId,
+        identityId: args.identityId as any,
+        roleId: args.roleId as any,
+      },
+    );
+  },
+});
+
+export const deleteIdentity = mutation({
+  args: {
+    identityId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const callerId = await readId(ctx);
+    if (!callerId) return { success: false, error: "Authentication required." };
+
+    return await ctx.runMutation(
+      components.wigxel_acl.identities.deleteIdentity,
+      {
+        callerId,
+        identityId: args.identityId as any,
+      },
+    );
   },
 });

@@ -3,12 +3,16 @@ import {
   BadgeDollarSign,
   Grid2X2Icon,
   ScrollText,
+  Shield,
   User,
+  Users,
   Wrench,
 } from "lucide-react";
 import { ErrorBoundary } from "react-error-boundary";
 import OccupationManagement from "@/components/manage-occupation";
 import PricingManagement from "@/components/manage-pricing";
+import RolesSettingsPage from "@/app/(admin)/admin/settings/roles/page";
+import TeamSettingsPage from "@/app/(admin)/admin/settings/team/page";
 import {
   SeatStructureGrid,
   SeatStructureGridErrorFallback,
@@ -48,6 +52,14 @@ export default function SettingsPage() {
                   <Grid2X2Icon className="w-4 h-4 mr-2" />
                   Seat Layout
                 </TabsTrigger>
+                <TabsTrigger value="roles" className="justify-start w-full">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Roles
+                </TabsTrigger>
+                <TabsTrigger value="team" className="justify-start w-full">
+                  <Users className="w-4 h-4 mr-2" />
+                  Team
+                </TabsTrigger>
                 <TabsTrigger value="audit" className="justify-start w-full">
                   <ScrollText className="w-4 h-4 mr-2" />
                   Audit Logs
@@ -73,6 +85,14 @@ export default function SettingsPage() {
                 >
                   <SeatStructureGrid />
                 </ErrorBoundary>
+              </TabsContent>
+
+              <TabsContent value="roles">
+                <RolesSettingsPage />
+              </TabsContent>
+
+              <TabsContent value="team">
+                <TeamSettingsPage />
               </TabsContent>
 
               <TabsContent value="audit">

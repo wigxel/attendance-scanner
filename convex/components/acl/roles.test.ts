@@ -9,7 +9,9 @@ import schema from "./schema";
 const modules = import.meta.glob("./**/*.ts");
 
 async function seedSystem(t: ReturnType<typeof convexTest>) {
-  const { data: { roleId } } = (await t.mutation(api.seed.seedRoles)) as {
+  const {
+    data: { roleId },
+  } = (await t.mutation(api.seed.seedRoles)) as {
     success: true;
     data: { roleId: string };
   };
@@ -230,8 +232,7 @@ describe("roles", () => {
 
     expect(result).toEqual({
       success: false,
-      error:
-        "Cannot delete a role that is assigned to one or more identities.",
+      error: "Cannot delete a role that is assigned to one or more identities.",
     });
   });
 

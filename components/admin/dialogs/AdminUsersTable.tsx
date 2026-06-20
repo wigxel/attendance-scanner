@@ -1,0 +1,181 @@
+"use client";
+
+import { useMutation, useQuery } from "convex/react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { ChangeRoleDialog } from "@/components/admin/dialogs/ChangeRoleDialog";
+import { api } from "@/convex/_generated/api";
+import { cn } from "@/lib/utils";
+
+const roleBadgeStyles: Record<string, string> = {
+  admin: "bg-purple-100 text-purple-800",
+};
+
+export function AdminUsersTable() {
+  const [roleChangeUser, setRoleChangeUser] = useState<{
+    identityId: string;
+    name: string;
+    role: string;
+    roleId: string;
+  } | null>(null);
+
+  const identitiesResult = useQuery(api.acl.listIdentities);
+  const deleteIdentity = useMutation(api.acl.deleteIdentity);
+
+  const identities: any[] = (identitiesResult as any)?.success
+    ? (identitiesResult as any).data
+    : [];
+
+  const handleRemoveUser = async (identityId: string, userName: string) => {
+    if (
+      !confirm(`Remove ${userName}'s admin access? They will lose all roles.`)
+    ) {
+      return;
+    }
+
+    try {
+      const res = await deleteIdentity({ identityId });
+      if (res && !res.success) alert(res.error);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to remove user.");
+    }
+  };
+
+  const isLoading = identitiesResult === undefined;
+
+  return (
+    <>
+      <div className="rounded-lg bg-white p-6 shadow">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-medium text-gray-900">
+              Administrative Users
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Manage users who can access the admin panel. Assign roles to
+              control their permissions.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 overflow-hidden rounded-md border border-gray-200">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="py-2.5 pl-4 pr-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Joined
+                </th>
+                <th className="relative py-2.5 pl-3 pr-4">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="py-8 text-center text-sm text-gray-500"
+                  >
+                    <Loader2 className="mx-auto h-5 w-5 animate-spin text-gray-400" />
+                  </td>
+                </tr>
+              ) : identities.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="py-8 text-center text-sm text-gray-500"
+                  >
+                    No administrative users found.
+                  </td>
+                </tr>
+              ) : (
+                identities.map((entry: any) => {
+                  const profile = entry.profile;
+                  const name = profile
+                    ? `${profile.firstName} ${profile.lastName}`
+                    : entry.identity;
+                  const email = profile?.email ?? "";
+                  const roleName = entry.role?.name ?? "Unknown";
+
+                  return (
+                    <tr key={entry._id}>
+                      <td className="whitespace-nowrap py-3 pl-4 pr-3 text-sm">
+                        <div className="font-medium text-gray-900">{name}</div>
+                        {email && (
+                          <div className="text-gray-500 text-xs">{email}</div>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-3 text-sm">
+                        <span
+                          className={cn(
+                            "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border border-transparent",
+                            roleBadgeStyles[roleName] ??
+                              "bg-gray-100 text-gray-800",
+                          )}
+                        >
+                          {roleName}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                        {entry.createdAt
+                          ? new Date(entry.createdAt).toLocaleDateString()
+                          : "-"}
+                      </td>
+                      <td className="relative whitespace-nowrap py-3 pl-3 pr-4 text-right text-sm">
+                        {roleName !== "admin" && (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setRoleChangeUser({
+                                  identityId: entry._id,
+                                  name,
+                                  role: roleName,
+                                  roleId: entry.role?._id,
+                                })
+                              }
+                              className="h-8 w-8 inline-flex items-center justify-center rounded-md text-gray-400 hover:text-gray-900 hover:bg-gray-100"
+                              title="Change Role"
+                            >
+                              <Pencil className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveUser(entry._id, name)}
+                              className="h-8 w-8 inline-flex items-center justify-center rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50"
+                              title="Remove User"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {roleChangeUser && (
+        <ChangeRoleDialog
+          open={!!roleChangeUser}
+          onOpenChange={(open) => {
+            if (!open) setRoleChangeUser(null);
+          }}
+          user={roleChangeUser}
+        />
+      )}
+    </>
+  );
+}

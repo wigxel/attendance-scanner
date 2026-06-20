@@ -9,7 +9,9 @@ import schema from "./schema";
 const modules = import.meta.glob("./**/*.ts");
 
 async function seedSystem(t: ReturnType<typeof convexTest>) {
-  const { data: { roleId } } = (await t.mutation(api.seed.seedRoles)) as {
+  const {
+    data: { roleId },
+  } = (await t.mutation(api.seed.seedRoles)) as {
     success: true;
     data: { roleId: string };
   };
@@ -67,7 +69,7 @@ describe("identities", () => {
     const result = await t.mutation(api.identities.registerIdentity, {
       callerId: "admin",
       identity: "new-user",
-      roleId: roleId as any
+      roleId: roleId as any,
     });
 
     expect(result).toMatchObject({
@@ -91,7 +93,7 @@ describe("identities", () => {
     await t.mutation(api.identities.registerIdentity, {
       callerId: "admin",
       identity: "existing-user",
-      roleId: roleId as any
+      roleId: roleId as any,
     });
 
     const result = await t.mutation(api.identities.registerIdentity, {
@@ -200,7 +202,7 @@ describe("identities", () => {
     const result = await t.mutation(api.identities.updateIdentityRole, {
       callerId: "admin",
       identityId: deletedId,
-      roleId: roleId as any
+      roleId: roleId as any,
     });
 
     expect(result).toEqual({ success: false, error: "Identity not found." });

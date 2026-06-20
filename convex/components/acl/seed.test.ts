@@ -24,7 +24,10 @@ describe("seed", () => {
     await t.mutation(api.seed.seedRoles);
     const result = await t.mutation(api.seed.seedRoles);
 
-    expect(result).toEqual({ success: false, error: "Roles have already been seeded." });
+    expect(result).toEqual({
+      success: false,
+      error: "Roles have already been seeded.",
+    });
   });
 
   it("seedPermissions creates all permissions", async () => {

@@ -1,6 +1,6 @@
 import type { Profile, User } from "@auth/core/types";
 import { TableAggregate } from "@convex-dev/aggregate";
-import { paginationOptsValidator } from "convex/server";
+import { type GenericQueryCtx, paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { isWithinInterval, parseISO } from "date-fns";
 import { isNullable } from "effect/Predicate";
@@ -8,23 +8,17 @@ import { z } from "zod";
 import { logger } from "../config/logger";
 import { safeStr } from "../lib/data.helpers";
 import { api, components } from "./_generated/api";
-import type { DataModel, Id } from "./_generated/dataModel";
-import {
-  action,
-  GenericCtx,
-  internalMutation,
-  mutation,
-  query,
-} from "./_generated/server";
+import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import { action, internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { setExternalId, updateClerkUser } from "./clerk";
 
-import { featureRequestStatus, PlanImpl } from "./shared";
 import {
   insertRegisterAndAggregate,
   isRegisteredToday,
   processReservationCheckIn,
 } from "./register_common";
+import { featureRequestStatus, PlanImpl } from "./shared";
 
 export const authUser = query({
   args: {},
@@ -41,7 +35,7 @@ export const setAccountExternalId = action({
     convex_user_id: v.string(),
   },
   async handler(_ctx, args) {
-    const _response = await setExternalId({
+    await setExternalId({
       clerkUserId: args.clerk_user_id,
       convexUserId: args.convex_user_id,
     });
@@ -140,13 +134,14 @@ export const getUserById = query({
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("profile")
-      .filter((q) => q.eq(q.field("id"), args.userId))
+      .withIndex("by_user_id", (q) => q.eq("id", args.userId))
       .unique();
 
     if (isNullable(user)) return null;
 
     const occupationId =
       user.occupation === "None" ? undefined : user.occupation;
+
     const occupation = occupationId
       ? ((await ctx.db.get(occupationId))?.name ?? "unknown")
       : "None";
@@ -348,7 +343,9 @@ export const getDailyRegister = query({
  * @param ctx
  * @returns
  */
-export async function readId(ctx: GenericCtx): Promise<string | null> {
+export async function readId(
+  ctx: GenericQueryCtx<DataModel>,
+): Promise<string | null> {
   const identity = await ctx.auth.getUserIdentity();
 
   const userId = identity?.profile_id ?? null;
@@ -515,7 +512,8 @@ export const getAllUsers = query({
     const emailValidation = emailValidator.safeParse(searchTerm);
     const isEmailSearch = emailValidation.success;
 
-    let profiles;
+    let profiles: Doc<"profile">[];
+
     if (isEmailSearch && emailValidation.data) {
       profiles = await ctx.db
         .query("profile")
@@ -637,7 +635,10 @@ export const listOccupations = query({
 });
 
 // Function for Auth guard
-export const authGuard = async (ctx: GenericCtx, requiredRole?: string) => {
+export const authGuard = async (
+  ctx: GenericQueryCtx<DataModel>,
+  requiredRole?: string,
+) => {
   const identity = await ctx.auth.getUserIdentity();
   const userId = identity?.profile_id ?? null;
 
