@@ -12,11 +12,9 @@ const roleBadgeStyles: Record<string, string> = {
 
 export function AdminUsersTable() {
   const identitiesResult = useQuery(api.acl.listIdentities);
-  const identities: any[] = (identitiesResult as any)?.success
-    ? (identitiesResult as any).data
-    : [];
-
   const downgradeFromAdmin = useAction(api.acl.downgradeFromAdmin);
+
+  const identities = identitiesResult?.success ? identitiesResult.data : [];
 
   const handleRemoveUser = async (identityId: string, email: string) => {
     if (
@@ -91,7 +89,7 @@ export function AdminUsersTable() {
                 </td>
               </tr>
             ) : (
-              identities.map((entry: any) => {
+              identities.map((entry) => {
                 const profile = entry.profile;
                 const name = profile
                   ? `${profile.firstName} ${profile.lastName}`

@@ -1,9 +1,8 @@
 import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
+import type { ACLRole } from "./components/acl/interfaces";
 import { readId } from "./myFunctions";
-
-type Role = { _id: string; name: string; privileges: string[] };
 
 export const getRoles = query({
   args: {},
@@ -14,7 +13,7 @@ export const getRoles = query({
 
     return (await ctx.runQuery(components.wigxel_acl.roles.getRoles, {
       callerId,
-    })) as Role[];
+    })) as ACLRole[];
   },
 });
 
@@ -38,7 +37,7 @@ export const createRole = mutation({
 
 export const updateRole = mutation({
   args: {
-    roleId: v.id("roles"),
+    roleId: v.string(),
     name: v.string(),
     description: v.string(),
     privileges: v.array(v.string()),
@@ -58,7 +57,7 @@ export const updateRole = mutation({
 
 export const deleteRole = mutation({
   args: {
-    roleId: v.id("roles"),
+    roleId: v.string(),
   },
   handler: async (ctx, args) => {
     const callerId = await readId(ctx);

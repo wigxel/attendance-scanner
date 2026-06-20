@@ -9,6 +9,7 @@
  */
 
 import type * as identities from "../identities.js";
+import type * as interfaces from "../interfaces.js";
 import type * as permissions from "../permissions.js";
 import type * as roles from "../roles.js";
 import type * as seed from "../seed.js";
@@ -23,6 +24,7 @@ import { anyApi, componentsGeneric } from "convex/server";
 
 const fullApi: ApiFromModules<{
   identities: typeof identities;
+  interfaces: typeof interfaces;
   permissions: typeof permissions;
   roles: typeof roles;
   seed: typeof seed;

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "convex/react";
+import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,7 +14,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { api } from "@/convex/_generated/api";
-import { Loader2 } from "lucide-react";
 
 const roleSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -53,18 +53,15 @@ export function RoleFormDialog({
     api.permissions.listPermissionsByCategory,
   );
 
-  const privilegeGroups: {
-    label: string;
-    items: { key: string; label: string }[];
-  }[] = permissionsByCategory
-    ? Object.entries(permissionsByCategory).map(([category, perms]) => ({
-        label: category,
-        items: (perms as any[]).map((p) => ({
-          key: p.name,
-          label: p.description,
-        })),
-      }))
-    : [];
+  const privilegeGroups = Object.entries(permissionsByCategory ?? {}).map(
+    ([category, perms]) => ({
+      label: category,
+      items: perms.map((p) => ({
+        key: p.name,
+        label: p.description,
+      })),
+    }),
+  );
 
   const isEditing = !!role;
 
@@ -95,7 +92,7 @@ export function RoleFormDialog({
     try {
       if (isEditing && role) {
         const res = await updateRole({
-          roleId: role._id as any,
+          roleId: role._id,
           name: data.name,
           description: data.description,
           privileges: data.privileges,

@@ -33,7 +33,7 @@ export function DeleteRoleDialog({
 
     setIsDeleting(true);
     try {
-      const res = await deleteRole({ roleId: roleId as any });
+      const res = await deleteRole({ roleId: roleId });
       if (!res.success) {
         throw new Error(res.error);
       }
@@ -51,9 +51,9 @@ export function DeleteRoleDialog({
         <DialogHeader>
           <DialogTitle>Delete Role</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the role "{roleName}"? This action
+            {`Are you sure you want to delete the role "${roleName}"? This action
             cannot be undone. If there are users assigned to this role, the
-            deletion will be blocked.
+            deletion will be blocked.`}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-4">

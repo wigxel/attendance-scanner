@@ -1,8 +1,12 @@
 import { v } from "convex/values";
-import { api, components, internal } from "./_generated/api";
+import type { Prettify } from "../types";
+import { api, components } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { action, mutation, query } from "./_generated/server";
 import { findUserByEmail, updateMetadata } from "./clerk";
+import type { ACLIdentity, ACLRole } from "./components/acl/interfaces";
+import type { Result } from "./components/acl/utils";
 import { readId } from "./myFunctions";
 
 export async function requirePrivilege(
@@ -113,21 +117,37 @@ export const assignRole = mutation({
   },
 });
 
+type OriginalId = Prettify<
+  ACLIdentity & {
+    role: ACLRole | null;
+  }
+>;
+
+interface IdentityResponse extends OriginalId {
+  profile: Pick<
+    Doc<"profile">,
+    "_id" | "email" | "firstName" | "lastName"
+  > | null;
+}
+
 export const listIdentities = query({
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<Result<Array<IdentityResponse>>> => {
     const callerId = await readId(ctx);
     if (!callerId) return { success: false, error: "Authentication required." };
 
-    const identities = await ctx.runQuery(
+    const identities: OriginalId[] = await ctx.runQuery(
       components.wigxel_acl.identities.listIdentities,
-      { callerId },
+      {
+        callerId,
+      },
     );
 
     const enriched = await Promise.all(
-      identities.map(async (entry: any) => {
+      identities.map(async (entry) => {
         const profile = await ctx.runQuery(api.myFunctions.getUserById, {
           userId: entry.identity,
         });
+
         return {
           ...entry,
           profile: profile
@@ -159,8 +179,8 @@ export const updateIdentityRole = mutation({
       components.wigxel_acl.identities.updateIdentityRole,
       {
         callerId,
-        identityId: args.identityId as any,
-        roleId: args.roleId as any,
+        identityId: args.identityId,
+        roleId: args.roleId,
       },
     );
   },
@@ -178,7 +198,7 @@ export const deleteIdentity = mutation({
       components.wigxel_acl.identities.deleteIdentity,
       {
         callerId,
-        identityId: args.identityId as any,
+        identityId: args.identityId,
       },
     );
   },
@@ -299,7 +319,7 @@ export const downgradeFromAdmin = action({
 
     return ctx.runMutation(components.wigxel_acl.identities.deleteIdentity, {
       callerId: caller,
-      identityId: args.identityId as any,
+      identityId: args.identityId,
     });
   },
 });

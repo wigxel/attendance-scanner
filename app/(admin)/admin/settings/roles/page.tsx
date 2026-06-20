@@ -7,6 +7,7 @@ import { DeleteRoleDialog } from "@/components/admin/dialogs/DeleteRoleDialog";
 import { RoleFormDialog } from "@/components/admin/dialogs/RoleFormDialog";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
+import type { ACLRole } from "@/convex/components/acl/interfaces";
 
 export default function RolesSettingsPage() {
   const roles = useQuery(api.roles.getRoles);
@@ -25,7 +26,7 @@ export default function RolesSettingsPage() {
     name: string;
   } | null>(null);
 
-  const handleEdit = (role: any) => {
+  const handleEdit = (role: ACLRole) => {
     setSelectedRole({
       _id: role._id,
       name: role.name,
@@ -35,7 +36,7 @@ export default function RolesSettingsPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (role: any) => {
+  const handleDelete = (role: ACLRole) => {
     setRoleToDelete({
       _id: role._id,
       name: role.name,
@@ -94,7 +95,7 @@ export default function RolesSettingsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {(roles as any[]).map((role) => (
+              {roles.map((role) => (
                 <tr
                   key={role._id}
                   className="hover:bg-gray-50 transition-colors group"
