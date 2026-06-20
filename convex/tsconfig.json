@@ -17,7 +17,8 @@
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": ["node", "vite/client", "vitest/globals"]
   },
   "include": ["./**/*", "../genKeys.mjs"],
   "exclude": ["./_generated"]
