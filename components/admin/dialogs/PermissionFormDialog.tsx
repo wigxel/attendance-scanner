@@ -183,17 +183,10 @@ export function PermissionFormDialog({
 
           <SheetFooter className="sticky bottom-0 bg-white flex flex-row justify-end pt-4 !px-0">
             <SheetTrigger>
-              <Button
-                variant={'outline'}
-              >
-                Cancel
-              </Button>
+              <Button variant={"outline"}>Cancel</Button>
             </SheetTrigger>
 
-            <Button
-              type="submit"
-              disabled={formState.isSubmitting}
-            >
+            <Button type="submit" disabled={formState.isSubmitting}>
               {formState.isSubmitting
                 ? isEditing
                   ? "Saving..."

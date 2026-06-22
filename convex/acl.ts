@@ -75,10 +75,10 @@ export const hasPrivilege = query({
   handler: async (ctx, { privilege }) => {
     const caller = await readId(ctx);
     if (!caller) return { valid: false };
-    return await ctx.runQuery(
-      components.wigxel_acl.identities.hasPrivilege,
-      { identity: caller, privilege },
-    );
+    return await ctx.runQuery(components.wigxel_acl.identities.hasPrivilege, {
+      identity: caller,
+      privilege,
+    });
   },
 });
 
@@ -87,10 +87,10 @@ export const hasAll = query({
   handler: async (ctx, { privileges }) => {
     const caller = await readId(ctx);
     if (!caller) return { valid: false };
-    return await ctx.runQuery(
-      components.wigxel_acl.identities.hasAll,
-      { identity: caller, privileges },
-    );
+    return await ctx.runQuery(components.wigxel_acl.identities.hasAll, {
+      identity: caller,
+      privileges,
+    });
   },
 });
 
@@ -99,10 +99,10 @@ export const hasAny = query({
   handler: async (ctx, { privileges }) => {
     const caller = await readId(ctx);
     if (!caller) return { valid: false };
-    return await ctx.runQuery(
-      components.wigxel_acl.identities.hasAny,
-      { identity: caller, privileges },
-    );
+    return await ctx.runQuery(components.wigxel_acl.identities.hasAny, {
+      identity: caller,
+      privileges,
+    });
   },
 });
 

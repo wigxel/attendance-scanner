@@ -63,7 +63,7 @@ export const updatePermission = mutation({
       components.wigxel_acl.permissions.updatePermission,
       {
         callerId,
-        permissionId: args.permissionId as any,
+        permissionId: args.permissionId,
         name: args.name,
         description: args.description,
         category: args.category,
@@ -83,7 +83,7 @@ export const deletePermission = mutation({
       components.wigxel_acl.permissions.deletePermission,
       {
         callerId,
-        permissionId: args.permissionId as any,
+        permissionId: args.permissionId,
       },
     );
   },

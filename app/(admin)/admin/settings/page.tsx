@@ -67,7 +67,10 @@ export default function SettingsPage() {
                     Team
                   </TabsTrigger>
 
-                  <TabsTrigger value="permissions" className="justify-start w-full">
+                  <TabsTrigger
+                    value="permissions"
+                    className="justify-start w-full"
+                  >
                     <KeyRound className="w-4 h-4 mr-2" />
                     Permissions
                   </TabsTrigger>

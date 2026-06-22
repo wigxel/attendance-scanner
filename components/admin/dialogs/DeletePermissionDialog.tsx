@@ -67,8 +67,12 @@ export function DeletePermissionDialog({
         </DialogHeader>
 
         <div className="mt-2">
-          <label htmlFor="" className="block text-sm font-medium text-muted-foreground mb-1">
-            Type <span className="text-foreground">{permissionName}</span> to confirm:
+          <label
+            htmlFor=""
+            className="block text-sm font-medium text-muted-foreground mb-1"
+          >
+            Type <span className="text-foreground">{permissionName}</span> to
+            confirm:
           </label>
           <Input
             value={confirmText}
