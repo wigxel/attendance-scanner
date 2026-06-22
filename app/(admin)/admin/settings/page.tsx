@@ -1,4 +1,3 @@
-import { AuditLogsTab } from "@/components/audit-logs-tab";
 import {
   BadgeDollarSign,
   Grid2X2Icon,
@@ -9,10 +8,12 @@ import {
   Wrench,
 } from "lucide-react";
 import { ErrorBoundary } from "react-error-boundary";
-import OccupationManagement from "@/components/manage-occupation";
-import PricingManagement from "@/components/manage-pricing";
 import RolesSettingsPage from "@/app/(admin)/admin/settings/roles/page";
 import TeamSettingsPage from "@/app/(admin)/admin/settings/team/page";
+import { AuditLogsTab } from "@/components/audit-logs-tab";
+import OccupationManagement from "@/components/manage-occupation";
+import PricingManagement from "@/components/manage-pricing";
+import { RoleHas } from "@/components/RoleHas";
 import {
   SeatStructureGrid,
   SeatStructureGridErrorFallback,
@@ -52,18 +53,25 @@ export default function SettingsPage() {
                   <Grid2X2Icon className="w-4 h-4 mr-2" />
                   Seat Layout
                 </TabsTrigger>
-                <TabsTrigger value="roles" className="justify-start w-full">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Roles
-                </TabsTrigger>
-                <TabsTrigger value="team" className="justify-start w-full">
-                  <Users className="w-4 h-4 mr-2" />
-                  Team
-                </TabsTrigger>
-                <TabsTrigger value="audit" className="justify-start w-full">
-                  <ScrollText className="w-4 h-4 mr-2" />
-                  Audit Logs
-                </TabsTrigger>
+
+                <RoleHas privileges={["user:assign:role"]}>
+                  <TabsTrigger value="roles" className="justify-start w-full">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Roles
+                  </TabsTrigger>
+
+                  <TabsTrigger value="team" className="justify-start w-full">
+                    <Users className="w-4 h-4 mr-2" />
+                    Team
+                  </TabsTrigger>
+                </RoleHas>
+
+                <RoleHas privileges={["audit:read"]}>
+                  <TabsTrigger value="audit" className="justify-start w-full">
+                    <ScrollText className="w-4 h-4 mr-2" />
+                    Audit Logs
+                  </TabsTrigger>
+                </RoleHas>
               </TabsList>
             </div>
 
@@ -88,15 +96,21 @@ export default function SettingsPage() {
               </TabsContent>
 
               <TabsContent value="roles">
-                <RolesSettingsPage />
+                <RoleHas privileges={["user:assign:role"]}>
+                  <RolesSettingsPage />
+                </RoleHas>
               </TabsContent>
 
               <TabsContent value="team">
-                <TeamSettingsPage />
+                <RoleHas privileges={["user:assign:role"]}>
+                  <TeamSettingsPage />
+                </RoleHas>
               </TabsContent>
 
               <TabsContent value="audit">
-                <AuditLogsTab />
+                <RoleHas privileges={["audit:read"]}>
+                  <AuditLogsTab />
+                </RoleHas>
               </TabsContent>
             </section>
           </div>

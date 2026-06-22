@@ -70,6 +70,42 @@ export async function requireAny(
   }
 }
 
+export const hasPrivilege = query({
+  args: { privilege: v.string() },
+  handler: async (ctx, { privilege }) => {
+    const caller = await readId(ctx);
+    if (!caller) return { valid: false };
+    return await ctx.runQuery(
+      components.wigxel_acl.identities.hasPrivilege,
+      { identity: caller, privilege },
+    );
+  },
+});
+
+export const hasAll = query({
+  args: { privileges: v.array(v.string()) },
+  handler: async (ctx, { privileges }) => {
+    const caller = await readId(ctx);
+    if (!caller) return { valid: false };
+    return await ctx.runQuery(
+      components.wigxel_acl.identities.hasAll,
+      { identity: caller, privileges },
+    );
+  },
+});
+
+export const hasAny = query({
+  args: { privileges: v.array(v.string()) },
+  handler: async (ctx, { privileges }) => {
+    const caller = await readId(ctx);
+    if (!caller) return { valid: false };
+    return await ctx.runQuery(
+      components.wigxel_acl.identities.hasAny,
+      { identity: caller, privileges },
+    );
+  },
+});
+
 export const assignRole = mutation({
   args: {
     profileId: v.string(),

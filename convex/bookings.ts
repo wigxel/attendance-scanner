@@ -666,7 +666,7 @@ export const deleteBooking = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new ConvexError("Authentication required.");
 
-    await requirePrivilege(ctx, "attendance:delete");
+    await requirePrivilege(ctx, "booking:delete");
 
     const booking = await ctx.db.get(bookingId);
     if (!booking) {

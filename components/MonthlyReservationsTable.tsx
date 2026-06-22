@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { AttendanceDrawer } from "./AttendanceDrawer";
 import { AppDataTable, AppTableActions } from "./DataTable";
 import { DeleteBookingDialog } from "./DeleteBookingDialog";
+import { RoleHasCSR } from "./RoleHasCSR";
 import { EmptyStateContent, EmptyStateTitle } from "./empty-state";
 import { Card } from "./ui/card";
 
@@ -139,7 +140,9 @@ const columns: ColumnDef<BookingWithCustomer>[] = [
     cell: ({ row }) => {
       return (
         <AppTableActions>
-          <DeleteBookingDialog bookingId={row.original._id} />
+          <RoleHasCSR privileges={["booking:delete"]}>
+            <DeleteBookingDialog bookingId={row.original._id} />
+          </RoleHasCSR>
         </AppTableActions>
       );
     },
