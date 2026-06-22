@@ -1,6 +1,7 @@
 import {
   BadgeDollarSign,
   Grid2X2Icon,
+  KeyRound,
   ScrollText,
   Shield,
   User,
@@ -10,6 +11,7 @@ import {
 import { ErrorBoundary } from "react-error-boundary";
 import RolesSettingsPage from "@/app/(admin)/admin/settings/roles/page";
 import TeamSettingsPage from "@/app/(admin)/admin/settings/team/page";
+import PermissionsSettingsPage from "@/app/(admin)/admin/settings/permissions/page";
 import { AuditLogsTab } from "@/components/audit-logs-tab";
 import OccupationManagement from "@/components/manage-occupation";
 import PricingManagement from "@/components/manage-pricing";
@@ -64,6 +66,11 @@ export default function SettingsPage() {
                     <Users className="w-4 h-4 mr-2" />
                     Team
                   </TabsTrigger>
+
+                  <TabsTrigger value="permissions" className="justify-start w-full">
+                    <KeyRound className="w-4 h-4 mr-2" />
+                    Permissions
+                  </TabsTrigger>
                 </RoleHas>
 
                 <RoleHas privileges={["audit:read"]}>
@@ -104,6 +111,12 @@ export default function SettingsPage() {
               <TabsContent value="team">
                 <RoleHas privileges={["user:assign:role"]}>
                   <TeamSettingsPage />
+                </RoleHas>
+              </TabsContent>
+
+              <TabsContent value="permissions">
+                <RoleHas privileges={["user:assign:role"]}>
+                  <PermissionsSettingsPage />
                 </RoleHas>
               </TabsContent>
 
