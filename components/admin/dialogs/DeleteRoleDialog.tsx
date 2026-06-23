@@ -26,7 +26,7 @@ export function DeleteRoleDialog({
   roleName,
 }: DeleteRoleDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const deleteRole = useMutation(api.roles.deleteRole);
+  const deleteRole = useMutation(api.acl.deleteRole);
 
   const handleDelete = async () => {
     if (!roleId) return;

@@ -9,9 +9,9 @@ import {
   Wrench,
 } from "lucide-react";
 import { ErrorBoundary } from "react-error-boundary";
+import PermissionsSettingsPage from "@/app/(admin)/admin/settings/permissions/page";
 import RolesSettingsPage from "@/app/(admin)/admin/settings/roles/page";
 import TeamSettingsPage from "@/app/(admin)/admin/settings/team/page";
-import PermissionsSettingsPage from "@/app/(admin)/admin/settings/permissions/page";
 import { AuditLogsTab } from "@/components/audit-logs-tab";
 import OccupationManagement from "@/components/manage-occupation";
 import PricingManagement from "@/components/manage-pricing";

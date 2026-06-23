@@ -47,8 +47,8 @@ export function RoleFormDialog({
   role,
   onSuccess,
 }: RoleFormDialogProps) {
-  const createRole = useMutation(api.roles.createRole);
-  const updateRole = useMutation(api.roles.updateRole);
+  const createRole = useMutation(api.acl.createRole);
+  const updateRole = useMutation(api.acl.updateRole);
   const permissionsByCategory = useQuery(
     api.permissions.listPermissionsByCategory,
   );

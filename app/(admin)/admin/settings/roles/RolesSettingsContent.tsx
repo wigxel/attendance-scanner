@@ -10,7 +10,7 @@ import { api } from "@/convex/_generated/api";
 import type { ACLRole } from "@/convex/components/acl/interfaces";
 
 export function RolesSettingsContent() {
-  const roles = useQuery(api.roles.getRoles);
+  const roles: ACLRole[] | undefined = useQuery(api.acl.getRoles);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<{

@@ -5,6 +5,7 @@ import type { Doc } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { action, mutation, query } from "./_generated/server";
 import { findUserByEmail, updateMetadata } from "./clerk";
+import type { IdentityWithRole } from "./components/acl/identities";
 import type { ACLIdentity, ACLRole } from "./components/acl/interfaces";
 import type { Result } from "./components/acl/utils";
 import { readId } from "./myFunctions";
@@ -102,6 +103,82 @@ export const hasAny = query({
     return await ctx.runQuery(components.wigxel_acl.identities.hasAny, {
       identity: caller,
       privileges,
+    });
+  },
+});
+
+export const getRoles = query({
+  args: {},
+  handler: async (ctx) => {
+    const callerId = await readId(ctx);
+    if (!callerId) return [];
+    return await ctx.runQuery(components.wigxel_acl.roles.getRoles, {
+      callerId,
+    });
+  },
+});
+
+export const createRole = mutation({
+  args: {
+    name: v.string(),
+    description: v.string(),
+    privileges: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const callerId = await readId(ctx);
+    if (!callerId) return { success: false, error: "Authentication required." };
+    return await ctx.runMutation(components.wigxel_acl.roles.createRole, {
+      callerId,
+      name: args.name,
+      description: args.description,
+      privileges: args.privileges,
+    });
+  },
+});
+
+export const updateRole = mutation({
+  args: {
+    roleId: v.string(),
+    name: v.string(),
+    description: v.string(),
+    privileges: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const callerId = await readId(ctx);
+    if (!callerId) return { success: false, error: "Authentication required." };
+
+    const result = await ctx.runMutation(
+      components.wigxel_acl.roles.updateRole,
+      {
+        callerId,
+        roleId: args.roleId,
+        name: args.name,
+        description: args.description,
+        privileges: args.privileges,
+      },
+    );
+
+    if (result?.success ?? true) {
+      await ctx.scheduler.runAfter(0, api.acl.syncRolePrivileges, {
+        roleId: args.roleId,
+        callerId,
+      });
+    }
+
+    return result;
+  },
+});
+
+export const deleteRole = mutation({
+  args: {
+    roleId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const callerId = await readId(ctx);
+    if (!callerId) return { success: false, error: "Authentication required." };
+    return await ctx.runMutation(components.wigxel_acl.roles.deleteRole, {
+      callerId,
+      roleId: args.roleId,
     });
   },
 });
@@ -283,8 +360,10 @@ export const upgradeToAdmin = action({
 
     const clerkUserId = String(clerkUser.id);
 
-    const roles = await ctx.runQuery(api.roles.getRoles);
-    const targetRole = roles.find((r) => r.name === args.role);
+    const roles = await ctx.runQuery(api.acl.getRoles);
+    const targetRole = roles.find(
+      (r: { name: string }) => r.name === args.role,
+    );
 
     if (!targetRole) {
       throw new Error(
@@ -357,5 +436,79 @@ export const downgradeFromAdmin = action({
       callerId: caller,
       identityId: args.identityId,
     });
+  },
+});
+
+export const syncRolePrivileges = action({
+  args: {
+    roleId: v.string(),
+    callerId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { valid } = await ctx.runQuery(
+      components.wigxel_acl.identities.hasPrivilege,
+      { identity: args.callerId, privilege: "user:assign:role" },
+    );
+
+    if (!valid) {
+      throw new Error('Access denied. Required privilege: "user:assign:role".');
+    }
+
+    const identities = (await ctx.runQuery(
+      components.wigxel_acl.identities.listIdentities,
+      { callerId: args.callerId },
+    )) as IdentityWithRole[];
+
+    const affected = identities.filter(
+      (e) => String(e.role?._id) === args.roleId,
+    );
+
+    if (!affected.length) return { synced: 0, failed: 0 };
+
+    const privileges: string[] = affected[0].role?.privileges ?? [];
+    let synced = 0;
+    let failed = 0;
+
+    for (const entry of affected) {
+      try {
+        const profile = await ctx.runQuery(api.myFunctions.getUserById, {
+          userId: entry.identity,
+        });
+
+        if (!profile?.email) {
+          failed++;
+          continue;
+        }
+
+        const clerkUsers = await findUserByEmail(profile.email);
+        const clerkUser = Array.isArray(clerkUsers) ? clerkUsers[0] : null;
+
+        if (!clerkUser?.id) {
+          failed++;
+          continue;
+        }
+
+        await updateMetadata({
+          clerkUserId: String(clerkUser.id),
+          metadata: {
+            private_metadata: {
+              role: entry.role?.name ?? null,
+              privileges,
+            },
+          },
+        });
+
+        synced++;
+      } catch (e) {
+        console.warn(
+          "Failed to sync privileges for identity:",
+          entry.identity,
+          e,
+        );
+        failed++;
+      }
+    }
+
+    return { synced, failed };
   },
 });

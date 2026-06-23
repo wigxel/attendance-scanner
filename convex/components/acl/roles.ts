@@ -12,6 +12,19 @@ export const getRoles = query({
   },
 });
 
+export const getRolesById = query({
+  args: { callerId: v.string(), roleId: v.string() },
+  handler: async (ctx, { callerId, roleId }) => {
+    const auth = await requirePrivilege(ctx, "user:assign:role", callerId);
+    if (!auth.success) return [];
+
+    return await ctx.db
+      .query("roles")
+      .filter((q) => q.eq(q.field("_id"), roleId))
+      .first();
+  },
+});
+
 export const createRole = mutation({
   args: {
     callerId: v.string(),
@@ -88,13 +101,12 @@ export const deleteRole = mutation({
     const identitiesWithRole = await ctx.db
       .query("identities")
       .withIndex("by_role", (q) => q.eq("role", args.roleId))
-      .first();
+      .collect();
 
-    if (identitiesWithRole) {
+    if (identitiesWithRole.length > 0) {
       return {
         success: false,
-        error:
-          "Cannot delete a role that is assigned to one or more identities.",
+        error: `Cannot delete role "${role.name}": ${identitiesWithRole.length} user(s) are assigned to it.`,
       };
     }
 

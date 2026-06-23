@@ -525,6 +525,19 @@ export function RegisteredUserEntry({
 
       <ul className={"flex flex-col gap-4"}>
         <li className="flex justify-between items-center select-none">
+          <span className="font-semibold text-sm items-center inline-flex gap-2">
+            <PackageIcon size="1.2em" />
+            Pricing plan
+          </span>
+          <AccessTypeButton
+            disabled={!can_modify_plan}
+            size="full"
+            value={entry.access}
+            id={entry.userId}
+          />
+        </li>
+
+        <li className="flex justify-between items-center select-none">
           <div className="flex flex-col">
             <span className="font-semibold text-sm items-center inline-flex gap-2">
               <Package2Icon size="1.2em" />
@@ -536,19 +549,6 @@ export function RegisteredUserEntry({
             disabled={!can_modify_plan}
             value={entry.access}
             userId={entry.userId}
-          />
-        </li>
-
-        <li className="flex justify-between items-center select-none">
-          <span className="font-semibold text-sm items-center inline-flex gap-2">
-            <PackageIcon size="1.2em" />
-            Pricing plan
-          </span>
-          <AccessTypeButton
-            disabled={!can_modify_plan}
-            size="full"
-            value={entry.access}
-            id={entry.userId}
           />
         </li>
 

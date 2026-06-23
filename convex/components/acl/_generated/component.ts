@@ -149,6 +149,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
+      getRolesById: FunctionReference<
+        "query",
+        "internal",
+        { callerId: string; roleId: string },
+        any,
+        Name
+      >;
       updateRole: FunctionReference<
         "mutation",
         "internal",

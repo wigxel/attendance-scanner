@@ -26,7 +26,7 @@ export function SelectRole({
   placeholder = "Select a role",
   className,
 }: SelectRoleProps) {
-  const roles: Role | undefined = useQuery(api.roles.getRoles);
+  const roles: Role | undefined = useQuery(api.acl.getRoles);
 
   return (
     <Select value={value} onValueChange={onValueChange}>

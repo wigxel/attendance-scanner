@@ -1,14 +1,19 @@
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./utils";
 
+export type IdentityWithRole = Omit<Doc<"identities">, "role"> & {
+  role: Doc<"roles"> | null;
+};
+
 export const listIdentities = query({
   args: { callerId: v.string() },
-  handler: async (ctx, { callerId }) => {
+  handler: async (ctx, { callerId }): Promise<IdentityWithRole[]> => {
     const auth = await requirePrivilege(ctx, "user:assign:role", callerId);
     if (!auth.success) return [];
-
     const identities = await ctx.db.query("identities").collect();
+
     return Promise.all(
       identities.map(async (identity) => {
         const role = await ctx.db.get(identity.role);
