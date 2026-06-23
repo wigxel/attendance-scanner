@@ -578,17 +578,17 @@ export const markExpiredSeatsAvailable = mutation({
    *
    * This mutation:
    * - Finds all confirmed bookings that have passed their end date
-   * - Updates their status to "expired"
+   * - Updates their status to "used-up"
    *
-   * Is called periodically to automatically handle expired bookings.
+   * Is called periodically to automatically handle completed bookings.
    *
    * @returns Object containing:
-   * - expiredBookingIds: Array of booking IDs that were marked as expired
+   * - expiredBookingIds: Array of booking IDs that were marked as used-up
    */
   handler: async (ctx) => {
     const today = formatDateToLocalISO(new Date());
 
-    // Find all confirmed bookings that have expired
+    // Find all confirmed bookings that have completed
     const expiredBookings = await ctx.db
       .query("bookings")
       .filter((q) =>
@@ -606,7 +606,7 @@ export const markExpiredSeatsAvailable = mutation({
     for (const booking of expiredBookings) {
       // Update booking status to expired
       await ctx.db.patch(booking._id, {
-        status: "expired",
+        status: "used-up",
         updatedAt: Date.now(),
       });
 
@@ -790,7 +790,7 @@ export const markExpiredPendingBookings = mutation({
   },
 });
 
-export const markCompletedBookingsAsExpired = mutation({
+export const markCompletedBookingsAsUsedUp = mutation({
   handler: async (ctx) => {
     const now = Date.now();
     const nowISO = new Date(now).toISOString();
@@ -805,30 +805,29 @@ export const markCompletedBookingsAsExpired = mutation({
       )
       .collect();
 
-    const expiredBookings = [];
+    const usedUpBookings = [];
 
     for (const booking of completedBookings) {
       await ctx.db.patch(booking._id, {
-        status: "expired",
+        status: "used-up",
         updatedAt: now,
       });
 
-      expiredBookings.push(booking._id);
+      usedUpBookings.push(booking._id);
 
       const bookedSeats = await ctx.db
         .query("bookedSeats")
         .filter((q) => q.eq(q.field("bookingId"), booking._id))
         .collect();
 
-      // mark associated bookedSeats as expired
       for (const bookedSeat of bookedSeats) {
         await ctx.db.patch(bookedSeat._id, {
-          status: "expired",
+          status: "used-up",
         });
       }
     }
     return {
-      expiredBookings,
+      usedUpBookings,
       processedAt: now,
     };
   },
@@ -1279,7 +1278,8 @@ export const getMonthlyReservations = query({
       .collect();
 
     const filtered = bookings.filter((booking) => {
-      if (booking.status !== "confirmed") return false;
+      if (booking.status !== "confirmed" && booking.status !== "used-up")
+        return false;
 
       if (args.durationType && args.durationType !== "all") {
         if (booking.durationType !== args.durationType) return false;

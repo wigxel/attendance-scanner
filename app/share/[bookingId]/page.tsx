@@ -112,7 +112,7 @@ export default function SharePage() {
                 </p>
                 <div className="flex items-center sm:justify-start justify-end gap-2 text-sm font-medium text-gray-900 capitalize">
                   <div
-                    className={`w-1.5 h-1.5 rounded-full ${data.status === "confirmed" ? "bg-green-500" : "bg-yellow-500"}`}
+                    className={`w-1.5 h-1.5 rounded-full ${data.status === "confirmed" ? "bg-green-500" : data.status === "used-up" ? "bg-gray-400" : "bg-yellow-500"}`}
                   />
                   {data.status}
                 </div>

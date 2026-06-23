@@ -102,6 +102,7 @@ const bookings = defineTable({
     v.literal("confirmed"),
     v.literal("cancelled"),
     v.literal("expired"),
+    v.literal("used-up"),
   ),
   paymentReference: v.optional(v.string()),
   created_by: v.optional(v.string()),
@@ -122,6 +123,7 @@ const bookedSeats = defineTable({
     v.literal("confirmed"),
     v.literal("cancelled"),
     v.literal("expired"),
+    v.literal("used-up"),
   ),
 })
   .index("by_seat_and_status", ["seatId", "status"])

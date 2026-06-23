@@ -62,7 +62,7 @@ type BookingWithCustomer = {
   durationType: "day" | "week" | "month";
   pricePerSeat: number;
   amount: number;
-  status: "pending" | "confirmed" | "cancelled" | "expired";
+  status: "pending" | "confirmed" | "cancelled" | "expired" | "used-up";
   createdAt: number;
   updatedAt: number;
   user: {

@@ -23,9 +23,9 @@ crons.interval(
 );
 
 crons.interval(
-  "mark completed bookings as expired",
+  "mark completed bookings as used-up",
   { minutes: 5 },
-  api.bookings.markCompletedBookingsAsExpired,
+  api.bookings.markCompletedBookingsAsUsedUp,
 );
 
 export default crons;

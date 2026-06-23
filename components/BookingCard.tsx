@@ -39,7 +39,13 @@ export function BookingCard({
           #{booking._id.slice(0, 6)}
         </CardTitle>
         <Badge
-          variant={booking.status === "confirmed" ? "success" : "destructive"}
+          variant={
+            booking.status === "confirmed"
+              ? "success"
+              : booking.status === "used-up"
+                ? "outline"
+                : "destructive"
+          }
         >
           {booking.status}
         </Badge>
