@@ -1,4 +1,5 @@
 import createMDX from "@next/mdx";
+import { withVoxx } from "@prudentbird/voxx-core/next";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -7,4 +8,4 @@ const nextConfig: NextConfig = {
 
 const withMdx = createMDX({});
 
-export default withMdx(nextConfig);
+export default withVoxx(withMdx(nextConfig));
