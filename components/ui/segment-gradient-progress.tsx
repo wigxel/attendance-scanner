@@ -47,12 +47,11 @@ export const SegmentProgressBar = (props: {
         const progressPercent =
           activeSegments > 0 ? (index / activeSegments) * 100 : 0;
 
-        let style = {};
-        if (isActive) {
-          style = {
-            backgroundColor: `color-mix(in srgb, ${gradient.startColor} ${100 - progressPercent}%, ${gradient.endColor} ${progressPercent}%)`,
-          };
-        }
+        const style = isActive
+          ? {
+              backgroundColor: `color-mix(in srgb, ${gradient.startColor} ${100 - progressPercent}%, ${gradient.endColor} ${progressPercent}%)`,
+            }
+          : {};
 
         return (
           <div
