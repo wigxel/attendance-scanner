@@ -350,7 +350,9 @@ export async function readId(
 
   const userId = identity?.profile_id ?? null;
 
-  return String(userId) || null;
+  if (userId == null) return null;
+
+  return String(userId);
 }
 
 export const updateUser = action({

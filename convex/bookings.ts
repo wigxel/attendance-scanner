@@ -1106,6 +1106,8 @@ export const createManualBooking = mutation({
 
     if (!profileId) throw new ConvexError("Unauthorized");
 
+    await requirePrivilege(ctx, "booking:create");
+
     const { userId, planKey, startDate, seatId } = args;
 
     const profile = await ctx.db
@@ -1120,7 +1122,9 @@ export const createManualBooking = mutation({
       .withIndex("plan_key", (q) => q.eq("key", planKey))
       .first();
 
-    if (!plan) throw new ConvexError("Invalid plan");
+    if (plan == null) {
+      throw new ConvexError("Invalid plan");
+    }
 
     const now = new Date();
     const bookingStartDate = parseISO(startDate);
@@ -1160,35 +1164,39 @@ export const createManualBooking = mutation({
 
     const seatIds: Id<"seats">[] = [];
 
-    if (seatId) {
-      const seat = await ctx.db.get(seatId);
-      if (!seat) throw new ConvexError("Seat not found");
-
-      const conflictingBookedSeats = await ctx.db
-        .query("bookedSeats")
-        .withIndex("by_seat_and_status", (q) =>
-          q.eq("seatId", seatId).eq("status", "confirmed"),
-        )
-        .collect();
-
-      for (const bookedSeat of conflictingBookedSeats) {
-        const booking = await ctx.db.get(bookedSeat.bookingId);
-        if (!booking) continue;
-
-        const datesOverlap = !(
-          booking.endDate < newStart || booking.startDate > newEnd
-        );
-        if (datesOverlap) {
-          throw new ConvexError(
-            `Seat ${seat.seatNumber} is not available for selected dates`,
-          );
-        }
-      }
-
-      seatIds.push(seatId);
+    if (seatId == null) {
+      throw new ConvexError("Please select a Seat");
     }
 
-    const adminId = await readId(ctx);
+    const seat = await ctx.db.get(seatId);
+
+    if (!seat) {
+      throw new ConvexError("Seat not found");
+    }
+
+    const conflictingBookedSeats = await ctx.db
+      .query("bookedSeats")
+      .withIndex("by_seat_and_status", (q) =>
+        q.eq("seatId", seatId).eq("status", "confirmed"),
+      )
+      .collect();
+
+    for (const bookedSeat of conflictingBookedSeats) {
+      const booking = await ctx.db.get(bookedSeat.bookingId);
+      if (!booking) continue;
+
+      const datesOverlap = !(
+        booking.endDate < newStart || booking.startDate > newEnd
+      );
+      if (datesOverlap) {
+        throw new ConvexError(
+          `Seat ${seat.seatNumber} is not available for selected dates`,
+        );
+      }
+    }
+
+    seatIds.push(seatId);
+
     const number_of_seats = 1;
     const amount_paid = plan.price * 100;
     const pricePerSeat = amount_paid / number_of_seats;
@@ -1206,19 +1214,18 @@ export const createManualBooking = mutation({
       pricePerSeat,
       amount: amount_paid,
       status: "confirmed",
-      created_by: adminId ?? "system",
+      created_by: profileId,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
 
-    if (seatId) {
-      await ctx.db.insert("bookedSeats", {
-        bookingId,
-        seatId,
-        status: "confirmed",
-      });
-      await ctx.runMutation(api.bookings.generateTickets, { bookingId });
-    }
+    await ctx.db.insert("bookedSeats", {
+      bookingId,
+      seatId,
+      status: "confirmed",
+    });
+
+    await ctx.runMutation(api.bookings.generateTickets, { bookingId });
 
     return bookingId;
   },

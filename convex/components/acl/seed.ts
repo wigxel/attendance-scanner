@@ -28,6 +28,7 @@ export const seedRoles = mutation({
         "audit:read",
         "notification:read",
         "notification:send",
+        "booking:create",
         "booking:delete",
       ],
     });
@@ -111,6 +112,11 @@ export const seedPermissions = mutation({
         name: "notification:send",
         description: "Send notifications",
         category: "Notifications",
+      },
+      {
+        name: "booking:create",
+        description: "Create manual bookings for customers",
+        category: "Bookings",
       },
       {
         name: "booking:delete",
