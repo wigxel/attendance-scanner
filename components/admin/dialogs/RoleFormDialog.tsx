@@ -152,7 +152,7 @@ export function RoleFormDialog({
                 id="name"
                 type="text"
                 {...register("name")}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="mt-1 w-full rounded-md border border-(--border) px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 disabled={role?.name === "admin"}
               />
               {form.formState.errors.name && (
@@ -173,7 +173,7 @@ export function RoleFormDialog({
                 id="description"
                 rows={3}
                 {...register("description")}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="mt-1 w-full rounded-md border border-(--border) px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               {form.formState.errors.description && (
                 <p className="mt-1 text-xs text-red-600">
@@ -211,7 +211,7 @@ export function RoleFormDialog({
                           return (
                             <label
                               key={item.key}
-                              className="flex items-start space-x-2 cursor-pointer p-2 rounded hover:bg-gray-50"
+                              className="flex items-start space-x-2 cursor-pointer p-2 rounded hover:bg-background"
                             >
                               <input
                                 type="checkbox"
@@ -237,7 +237,7 @@ export function RoleFormDialog({
             <button
               type="button"
               onClick={() => handleOpenChange(false)}
-              className="w-full sm:w-auto rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="w-full sm:w-auto rounded-md border border-(--border) bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-background"
             >
               Cancel
             </button>

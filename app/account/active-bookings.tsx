@@ -52,29 +52,31 @@ interface BookingsCardWrapperProps {
 
 function BookingsCardWrapper({
   title,
-  headerRightContent,
   children,
+  headerRightContent,
 }: BookingsCardWrapperProps) {
   return (
-    <Card className="flex flex-col gap-2 p-0">
-      <CardHeader className="flex flex-row items-center justify-between px-6 pb-3 border-b">
-        <CardTitle className="text-xl font-medium">{title}</CardTitle>
-        {headerRightContent && (
-          // The right content typically has text-sm text-gray-500, so we wrap it.
-          // If more complex elements are needed, headerRightContent could render its own span/div.
-          <span className="text-sm text-gray-500">{headerRightContent}</span>
-        )}
-      </CardHeader>
+    <Card className="overflow-hidden">
+      <div className="flex flex-col gap-2">
+        <CardHeader className="flex flex-row items-center justify-between px-6 pb-3">
+          <CardTitle className="text-xl font-medium">{title}</CardTitle>
+          {headerRightContent && (
+            // The right content typically has text-sm text-gray-500, so we wrap it.
+            // If more complex elements are needed, headerRightContent could render its own span/div.
+            <span className="text-sm text-gray-500">{headerRightContent}</span>
+          )}
+        </CardHeader>
 
-      {children}
+        {children}
 
-      <CardFooter className="bg-gray-100 py-2 flex justify-center items-center">
-        <Link href="/reserve?tab=booking">
-          <Button variant="link" className="cursor-pointer">
-            Reserve Seat
-          </Button>
-        </Link>
-      </CardFooter>
+        <CardFooter className="py-2 flex justify-center items-center">
+          <Link href="/reserve?tab=booking">
+            <Button variant="link" className="cursor-pointer">
+              Reserve Seat
+            </Button>
+          </Link>
+        </CardFooter>
+      </div>
     </Card>
   );
 }
@@ -105,8 +107,8 @@ function EmptyBookingsCard() {
     <BookingsCardWrapper title="Bookings">
       <CardContent className="px-6 py-8 text-center">
         <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600 mb-2">No bookings found</p>
-        <p className="text-sm text-gray-500">
+        <p className="text-foreground mb-2">No bookings found</p>
+        <p className="text-sm text-muted-foreground">
           Your bookings will appear here once you make a reservation.
         </p>
       </CardContent>
@@ -124,7 +126,7 @@ export function BookingCalendarBox({
 }) {
   const date = new Date(startDate);
   return (
-    <div className="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg shrink-0 border border-gray-200">
+    <div className="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg shrink-0 border border-(--border)">
       <span className="text-[10px] font-bold text-gray-500 uppercase">
         {date.toLocaleString("default", { month: "short" })}
       </span>
@@ -172,7 +174,7 @@ function BookingActionStatus({ role }: Pick<Booking, "role">) {
   if (role === "guest") {
     return (
       <div className="flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
-        <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+        <span className="w-1.5 h-1.5 rounded-full bg-background0" />
         Guest
       </div>
     );
@@ -180,8 +182,8 @@ function BookingActionStatus({ role }: Pick<Booking, "role">) {
 
   // Purchaser with single seat
   return (
-    <div className="flex items-center gap-1 text-xs font-medium text-[#0000FF] bg-blue-50 px-2 py-1 rounded-full">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#0000FF]" />
+    <div className="flex items-center gap-1 text-xs font-medium text-(--primary) bg-blue-50 px-2 py-1 rounded-full">
+      <span className="w-1.5 h-1.5 rounded-full bg-(--primary" />
       Confirmed
     </div>
   );
@@ -200,7 +202,7 @@ function BookingSeatNumbers({ seats }: Pick<Booking, "seats">) {
         {seats?.map((seat, index) => (
           <span
             key={seat?._id || index}
-            className="text-sm font-mono font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200"
+            className="text-sm font-mono font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-(--border)"
           >
             {seat?.seatNumber}
           </span>

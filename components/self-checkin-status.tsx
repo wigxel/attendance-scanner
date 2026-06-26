@@ -265,7 +265,7 @@ function RateExperience() {
   return (
     <div className="overflow-hidden">
       <div className="p-4 flex flex-col gap-4">
-        <div className="p-4 flex flex-col gap-4 bg-gray-50 shadow-inner rounded-[10px] border border-gray-200">
+        <div className="p-4 flex flex-col gap-4 bg-background shadow-inner rounded-[10px] border border-(--border)">
           <p className="font-semibold text-sm text-center tracking-tight">
             How was your experience today?
           </p>

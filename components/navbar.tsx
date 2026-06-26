@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard" },
@@ -13,7 +14,7 @@ export function Navbar() {
   const pathname = usePathname();
 
   return (
-    <nav className="w-full border-b bg-white dark:bg-black">
+    <nav className="w-full border-b bg-background">
       <div className="mx-auto flex h-14 container items-center">
         <div className="flex flex-1 gap-2">
           <div className="flex gap-4">
@@ -24,11 +25,12 @@ export function Navbar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={cn(
+                    "px-3 py-2 rounded-md text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-gray-100 dark:bg-gray-800 text-black dark:text-white"
-                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 hover:text-black dark:hover:text-white"
-                  }`}
+                      ? "bg-foreground/5 text-foreground"
+                      : "text-muted-foreground hover:bg-background hover:text-foreground dark:hover:text-foreground",
+                  )}
                 >
                   {item.name}
                 </Link>

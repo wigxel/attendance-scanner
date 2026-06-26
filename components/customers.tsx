@@ -424,7 +424,7 @@ export function RegisteredUserEntry({
   const content = (
     <li>
       <DebugClick input={() => ({ isReservation, entry, user })}>
-        <div className="flex w-full group items-center hover:bg-gray-50 group gap-4 pt-2 px-4 cursor-pointer">
+        <div className="flex w-full group items-center hover:bg-background group gap-4 pt-2 px-4 cursor-pointer">
           <CustomerAvatar userId={entry.userId} className="w-10 h-10" />
 
           <div className="group-last:border-none border-b flex items-center flex-1 pb-2">
@@ -771,7 +771,7 @@ function PlanTypeToggle({
         </Button>
 
         {!showDialog ? null : (
-          <div className="absolute top-0 right-0 gap-px bg-gray-50 p-0.5 border shadow-xl rounded-lg inline-flex justify-end">
+          <div className="absolute top-0 right-0 gap-px bg-background p-0.5 border shadow-xl rounded-lg inline-flex justify-end">
             {range(1, 5).map((hour) => {
               const isActive =
                 option.type === "hourly" && option.value === hour;

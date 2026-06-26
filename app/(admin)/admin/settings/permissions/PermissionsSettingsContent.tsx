@@ -86,9 +86,9 @@ export function PermissionsSettingsContent() {
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider px-1">
                 {category}
               </h3>
-              <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <div className="rounded-lg border border-(--border) bg-background shadow-sm overflow-hidden">
+                <table className="min-w-full divide-y divide-(--border)">
+                  <thead className="bg-background">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Name
@@ -101,11 +101,11 @@ export function PermissionsSettingsContent() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-(--border)">
                     {perms.map((perm) => (
                       <tr
                         key={perm._id}
-                        className="hover:bg-gray-50 transition-colors group"
+                        className="hover:bg-background transition-colors group"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <code className="text-sm font-mono text-gray-900">

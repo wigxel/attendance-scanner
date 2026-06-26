@@ -70,7 +70,7 @@ export default function SharePage() {
       <div className="z-[2] relative">
         <Header />
         <main className="max-w-xl mx-auto py-12 px-4 min-h-screen">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-(--border)">
             <h1 className="text-2xl font-bold mb-2">Group Booking Invite</h1>
             <p className="text-gray-500 mb-6">
               {isPurchaser
@@ -95,7 +95,7 @@ export default function SharePage() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-y-4 gap-x-8 mb-8 p-5 bg-gray-50/50 rounded-2xl border border-gray-100">
+            <div className="grid grid-cols-2 gap-y-4 gap-x-8 mb-8 p-5 bg-background/50 rounded-2xl border border-gray-100">
               <div className="space-y-1">
                 <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">
                   Duration
@@ -249,7 +249,9 @@ function SlotItem({
     <li
       className={cn(
         "flex items-center justify-between p-4 rounded-lg border",
-        isClaimed ? "bg-gray-50 border-gray-200" : "bg-white border-green-200",
+        isClaimed
+          ? "bg-background border-gray-200"
+          : "bg-white border-green-200",
       )}
     >
       <div className="flex flex-col items-start gap-2">

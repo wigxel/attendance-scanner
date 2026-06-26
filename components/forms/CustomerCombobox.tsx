@@ -63,7 +63,7 @@ export function CustomerCombobox({
       <Input
         value={selectedName ?? "Loading..."}
         disabled
-        className="bg-gray-50"
+        className="bg-background"
       />
     );
   }

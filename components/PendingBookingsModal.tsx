@@ -65,7 +65,7 @@ function PendingBookingItem({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+          className="flex-1 border border-(--border) text-gray-700 py-2 rounded-lg font-medium hover:bg-background transition-colors cursor-pointer"
         >
           Cancel
         </button>

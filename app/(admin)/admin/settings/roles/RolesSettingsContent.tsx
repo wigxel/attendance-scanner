@@ -48,11 +48,11 @@ export function RolesSettingsContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-            <Shield className="h-5 w-5 text-gray-400" />
+          <h2 className="text-lg font-medium text-foreground flex items-center gap-2">
+            <Shield className="h-5 w-5 text-muted-foreground" />
             Roles & Privileges
           </h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Manage custom roles and assign privileges to control what users can
             do in the application.
           </p>
@@ -69,44 +69,46 @@ export function RolesSettingsContent() {
         </Button>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-lg border border-(--border) bg-background shadow-sm overflow-hidden">
         {roles === undefined ? (
           <div className="flex justify-center p-8">
             <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
           </div>
         ) : roles.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No roles found.</div>
+          <div className="p-8 text-center text-muted-foreground">
+            No roles found.
+          </div>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-(--border)">
+            <thead className="bg-background">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Description
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Privileges
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-background divide-y divide-(--border)">
               {roles.map((role) => (
                 <tr
                   key={role._id}
-                  className="hover:bg-gray-50 transition-colors group"
+                  className="hover:bg-background transition-colors group"
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-foreground">
                       {role.name}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500 max-w-xs truncate">
+                    <div className="text-sm text-muted-foreground max-w-xs truncate">
                       {role.description}
                     </div>
                   </td>
@@ -121,7 +123,7 @@ export function RolesSettingsContent() {
                         </span>
                       ))}
                       {role.privileges.length > 3 && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-muted-foreground">
                           +{role.privileges.length - 3} more
                         </span>
                       )}
@@ -133,7 +135,7 @@ export function RolesSettingsContent() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(role)}
-                        className="h-8 w-8 text-gray-400 hover:text-gray-900 hover:bg-gray-100"
+                        className="h-8 w-8 text-gray-400 hover:text-foreground hover:bg-gray-100"
                         title="Edit Role"
                       >
                         <Pencil className="h-4 w-4" />

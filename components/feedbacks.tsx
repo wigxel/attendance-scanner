@@ -69,7 +69,7 @@ function FeedbackItem({
         <div className="flex gap-2 items-center">
           <div
             className={cn("w-min border shadow-inner py-1 px-2 rounded-sm", {
-              "text-black": e.status === "open",
+              "text-foreground": e.status === "open",
               "text-green-500": e.status === "completed",
               "text-red-500": e.status === "rejected",
             })}
@@ -151,9 +151,9 @@ export function VotingSection() {
         {/* Add voting controls or content here */}
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="overflow-hidden flex items-center py-3 rounded-b-xl">
         <FeatureRequestDialog>
-          <Button variant="outline" className="w-full">
+          <Button variant="ghost" className="w-full">
             Make a suggestion
           </Button>
         </FeatureRequestDialog>

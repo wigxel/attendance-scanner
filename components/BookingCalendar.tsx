@@ -94,7 +94,7 @@ const BookingCalendar = () => {
           <span className="text-sm text-gray-600">Fully Booked</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-4 h-4 border border-gray-300 rounded" />
+          <div className="w-4 h-4 border border-(--border) rounded" />
           <span className="text-sm text-gray-600">Available</span>
         </div>
       </div>
@@ -198,7 +198,7 @@ export function RangePreview({
         <div className="flex gap-x-3 tabular-nums items-start">
           <BookingCalendarBox startDate={selectedDate} />
           <div className="text-sm">
-            <h5 className="text-black">
+            <h5 className="text-foreground">
               {opening_hour} — {closing_hour}
             </h5>
             <p className="text-muted-foreground">Day Plan</p>
@@ -217,7 +217,7 @@ export function RangePreview({
         <div className="flex gap-x-3 tabular-nums items-start">
           <BookingCalendarBox startDate={endDate} />
           <div className="text-sm">
-            <h5 className="text-black">
+            <h5 className="text-foreground">
               {opening_hour} — {closing_hour}
             </h5>
             <p className="text-muted-foreground">Day Plan</p>
