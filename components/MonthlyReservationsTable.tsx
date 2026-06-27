@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -51,6 +52,25 @@ const durationLabels: Record<string, string> = {
   day: "Day",
   week: "Week",
   month: "Month",
+};
+
+const statusLabels: Record<string, string> = {
+  pending: "Pending",
+  confirmed: "Confirmed",
+  cancelled: "Cancelled",
+  expired: "Expired",
+  "used-up": "Used Up",
+};
+
+const statusVariant: Record<
+  BookingWithCustomer["status"],
+  "success" | "info" | "secondary" | "destructive" | "outline"
+> = {
+  confirmed: "success",
+  "used-up": "info",
+  pending: "secondary",
+  cancelled: "destructive",
+  expired: "outline",
 };
 
 type BookingWithCustomer = {
@@ -128,6 +148,16 @@ const columns: ColumnDef<BookingWithCustomer>[] = [
     header: "Amount",
     accessorKey: "amount",
     cell: ({ row }) => formatAmount(row.original.amount),
+  },
+  {
+    header: "Status",
+    accessorKey: "status",
+    id: "status",
+    cell: ({ row }) => (
+      <Badge variant={statusVariant[row.original.status]}>
+        {statusLabels[row.original.status]}
+      </Badge>
+    ),
   },
   {
     header: "Created",
