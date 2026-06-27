@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/@prudentbird/voxx-core/voxx.schema.json",
   "site": {
-    "title": "InSpace — First Makers",
+    "title": "The Makers",
     "description": "Stories for the creatives",
     "url": "https://inspace.wigxel.io",
     "locale": "en-US"

@@ -1,12 +1,12 @@
 import "server-only";
-import { cacheLife } from "next/cache";
 import {
-  findPost,
   getPosts as coreGetPosts,
   loadConfig as coreLoadConfig,
+  findPost,
   type Post,
   type VoxxConfig,
 } from "@prudentbird/voxx-core";
+import { cacheLife } from "next/cache";
 import { CONTENT_VERSION } from "./content-version";
 
 async function getPostsCached(version: number): Promise<Post[]> {

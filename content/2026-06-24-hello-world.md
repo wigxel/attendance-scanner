@@ -1,8 +1,9 @@
 ---
 title: Hello, world
 description: Your very first Voxx post — edit or delete me.
-date: 2026-06-24
+date: 2026-06-23
 tags: [getting-started]
+draft: true
 category: General
 author: { name: "Your Name", url: "https://example.com" }
 ---

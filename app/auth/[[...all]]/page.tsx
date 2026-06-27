@@ -1,10 +1,10 @@
-"use client";
 import { SignIn } from "@clerk/nextjs";
+import { Posts } from "@/app/posts";
 import { Button } from "@/components/ui/button";
 
 export default function SignInPage() {
   return (
-    <>
+    <div className="scanline-container">
       <div className="py-2 px-4">
         <div className="flex justify-end mx-auto">
           <a
@@ -28,7 +28,7 @@ export default function SignInPage() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-8 w-96 mx-auto h-screen justify-center items-center">
+      <div className="flex flex-col gap-8 w-96 mx-auto min-h-[85svh] justify-center items-center">
         <h1 className="font-semibold text-3xl tracking-[-1.5px]">
           Welcome to InSpace
         </h1>
@@ -37,6 +37,8 @@ export default function SignInPage() {
 
         <SignIn />
       </div>
-    </>
+
+      <Posts />
+    </div>
   );
 }
