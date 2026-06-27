@@ -200,7 +200,11 @@ function CompleteAlert({
         <AlertDialogHeader>
           <AlertDialogTitle>Mark suggestion as completed?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will mark <span className="text-foreground font-medium">&ldquo;{title}&rdquo;</span> as completed.
+            This will mark{" "}
+            <span className="text-foreground font-medium">
+              &ldquo;{title}&rdquo;
+            </span>{" "}
+            as completed.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -294,7 +298,6 @@ function FeedbackItem({ suggestion }: { suggestion: Suggestion }) {
         </div>
 
         <div className="flex gap-2 items-center">
-
           <div className="w-min">Votes</div>
           <div
             className={cn("w-min flex gap-2 items-center", {
@@ -329,11 +332,7 @@ function FeedbackItem({ suggestion }: { suggestion: Suggestion }) {
                 suggestionId={suggestion._id}
                 title={suggestion.title}
               >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto p-1"
-                >
+                <Button variant="ghost" size="sm" className="h-auto p-1">
                   <CheckCircle2 size="1rem" />
                 </Button>
               </CompleteAlert>

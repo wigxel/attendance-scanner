@@ -86,7 +86,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Tabs Content */}
-            <section className="flex-1 p-6 shadow-inner rounded-lg bg-(--background-lv1)">
+            <section className="flex-1 self-stretch p-6 shadow-inner rounded-lg bg-(--background-lv1)">
               <TabsContent value="onboarding">
                 <OccupationManagement />
               </TabsContent>

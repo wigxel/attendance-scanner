@@ -181,8 +181,8 @@ export function PermissionFormDialog({
             </div>
           </div>
 
-          <SheetFooter className="sticky bottom-0 bg-white flex flex-row justify-end pt-4 !px-0">
-            <SheetTrigger>
+          <SheetFooter className="sticky bottom-0 bg-(--background) flex flex-row justify-end pt-4 !px-0">
+            <SheetTrigger asChild>
               <Button variant={"outline"}>Cancel</Button>
             </SheetTrigger>
 
