@@ -32,9 +32,9 @@ export default function SettingsPage() {
 
       <Tabs defaultValue="onboarding">
         <section className="flex min-h-[400px]">
-          <div className="flex w-full mx-auto bg-white p-1  dark:bg-black rounded-lg gap-4">
+          <div className="flex w-full mx-auto bg-white p-1 items-start dark:bg-black rounded-lg gap-4">
             {/* Tabs List (Sidebar) */}
-            <div className="w-96 p-4">
+            <div className="w-96 p-4 sticky top-0">
               <TabsList className="flex flex-col gap-2 w-full bg-transparent p-0">
                 <TabsTrigger
                   value="onboarding"
@@ -86,7 +86,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Tabs Content */}
-            <section className="flex-1 p-6 shadow-inner rounded-lg bg-gray-50">
+            <section className="flex-1 self-stretch p-6 shadow-inner rounded-lg bg-(--background-lv1)">
               <TabsContent value="onboarding">
                 <OccupationManagement />
               </TabsContent>

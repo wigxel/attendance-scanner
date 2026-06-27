@@ -350,7 +350,9 @@ export async function readId(
 
   const userId = identity?.profile_id ?? null;
 
-  return String(userId) || null;
+  if (userId == null) return null;
+
+  return String(userId);
 }
 
 export const updateUser = action({
@@ -762,7 +764,10 @@ export const listSuggestions = query({
         ? ctx.db
             .query("featureRequest")
             .withIndex("by_status", (q) => q.eq("status", status))
-        : ctx.db.query("featureRequest");
+        : ctx.db
+            .query("featureRequest")
+            .filter((q) => q.neq(q.field("status"), "rejected"));
+
     const feedbacks = await features.order("desc").take(50);
 
     return {
@@ -831,6 +836,59 @@ export const voteFeatureRequest = mutation({
     if (entry) await aggregateBySuggestion.insert(ctx, entry);
 
     return voteId;
+  },
+});
+
+export const deleteSuggestion = mutation({
+  args: { suggestionId: v.id("featureRequest") },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "feedback:delete");
+
+    const suggestion = await ctx.db.get(args.suggestionId);
+    if (!suggestion) throw new ConvexError("Suggestion not found");
+
+    const votes = await ctx.db
+      .query("featureVotes")
+      .withIndex("request", (q) => q.eq("entityId", args.suggestionId))
+      .collect();
+
+    for (const vote of votes) {
+      await aggregateBySuggestion.delete(ctx, vote);
+      await ctx.db.delete(vote._id);
+    }
+
+    await ctx.db.delete(args.suggestionId);
+  },
+});
+
+export const approveSuggestion = mutation({
+  args: { suggestionId: v.id("featureRequest"), comment: v.string() },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "feedback:update");
+
+    const suggestion = await ctx.db.get(args.suggestionId);
+    if (!suggestion) throw new ConvexError("Suggestion not found");
+    if (suggestion.status !== "open")
+      throw new ConvexError("Suggestion is not open");
+
+    await ctx.db.patch(args.suggestionId, {
+      status: "approved",
+      comment: args.comment,
+    });
+  },
+});
+
+export const completeSuggestion = mutation({
+  args: { suggestionId: v.id("featureRequest") },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "feedback:update");
+
+    const suggestion = await ctx.db.get(args.suggestionId);
+    if (!suggestion) throw new ConvexError("Suggestion not found");
+    if (suggestion.status !== "approved")
+      throw new ConvexError("Suggestion must be approved first");
+
+    await ctx.db.patch(args.suggestionId, { status: "completed" });
   },
 });
 

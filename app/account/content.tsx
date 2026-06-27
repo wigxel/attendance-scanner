@@ -1,9 +1,9 @@
 "use client";
 import type { ReactNode } from "react";
-import { SelfCheckInStatus } from "@/components/self-checkin-status";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 import { CheckInCard, NotRegistered } from "@/components/CheckInCard";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
+import { SelfCheckInStatus } from "@/components/self-checkin-status";
 import { useProfile } from "@/hooks/auth";
 import { ActiveBookings } from "./active-bookings";
 
@@ -50,7 +50,7 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
 
         <AttendanceCalendar />
 
-        <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-gray-500">
+        <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-background0">
           <span />
           <span />
           <span />

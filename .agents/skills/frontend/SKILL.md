@@ -36,17 +36,7 @@ description: Frontend development rules and patterns for Next.js/React projects
 - Use kebab-case for file names (e.g., `DocumentGetting.tsx` → `document-getting.tsx`, `useDocument` → `use-document.ts`)
 
 ### Code Style
-- Use `//` for single-line comments
-- Keep functions under 50 lines where possible
-- Limit nesting to 3 levels
-- Use meaningful variable names
-- Add JSDoc for complex functions
-- Prefer `const` over `let`; avoid re-assignment
-- Prefer immutability and functional style
-- Wrap complex business logic into functions
-- Don't use `.forEach` loop
-- Always use date-fns for date manipulation
-- Use TypeScript path aliases for imports more than 2 levels deep (e.g., `../../../`)
+> See [code-style.mdc](./code-style.mdc) for full details.
 
 #### Import Order
 1. React and Next.js imports
@@ -57,34 +47,18 @@ description: Frontend development rules and patterns for Next.js/React projects
 6. CSS/style imports
 
 ### Component Structure
-- Path: `components/`
-- UI components: `components/ui/`
+- Components: `components/`
+- ShadcnUI derived components: `components/ui/`
 - Feature components: `components/[feature]/`
 
 ### Component Patterns
-- Prefer controlled components over uncontrolled ones
-- Implement proper error boundaries
-- Extract reusable hooks for shared logic
-- Prefer `AbortController.signal` over `removeEventListener`
-- Must not use `forwardRef` from React 19 up — ref is automatically injected into props
-- Extract `.map()` rendering into a dedicated Item component when the map closure exceeds 15 lines; simpler inline maps are acceptable
+> See [react.mdc](./react.mdc) for full details.
 
 ### UI Guidelines
-- Prefer shadcn components over custom ones
-- Use Lucide React icons exclusively
-- Use appropriate color variables from the theme
-- Add colors to the theme (Tailwind CSS config) if they don't exist
-- Use small, composable components over large monolithic ones
-- Use `cn` helper for conditional and dynamic classname concatenation
-- Use shadcn component `variant` props (e.g. `variant="destructive"`, `size="sm"`, `asChild`) instead of custom CSS classes — applies to Button, Badge, Alert, Card, Input, Label, and all other shadcn components
+> See [ui.mdc](./ui.mdc) for full details.
 
 ### Layout
-- Every form must be in a section/dialog/card/sheet/drawer
-- Card forms have a title, content (form), and footer area
-- Use Shadcn Card component
-- Ensure all fields are fullwidth unless specified otherwise
-- Action buttons should be at the footer area (bottom right): Save, Cancel, etc.
-- Submit button must have a loading state for better UX
+> See [layout.mdc](./layout.mdc) for full details (form placement, data-fetching states, grid rules).
 
 #### Data Fetching: Three States
 Every data-fetching component must handle:
@@ -118,10 +92,7 @@ Prefer shadcn `Skeleton` component for loading.
 - 1 column for mobile
 
 ### Form Pattern
-Dialog → Integrated → Form:
-- `FooDialog.tsx` — Dialog wrapper with trigger button
-- `FooIntegrated.tsx` — Form logic + submission handling
-- `FooForm.tsx` — Pure form with react-hook-form + zod validation
+> See [form.mdc](./form.mdc) and [form.dialog.mdc](./form.dialog.mdc) for full form and dialog patterns.
 
 #### Form Generation Rules
 - Use Shadcn Form components
@@ -160,22 +131,13 @@ Dialog → Integrated → Form:
    - Props: `initialFormData?`, `submitHandler`, `ref?`
 
 ### Tables
-All tables must use TanStack Table via the `AppDataTable` wrapper component from `@/components/DataTable`.
-
-- **Use `AppDataTable` only** — never import `useReactTable`, `flexRender`, `getCoreRowModel`, or raw TanStack Table components directly
-- **Column definitions at module scope** — never define `ColumnDef<T>[]` inside a component render
-  - Simple tables (no callbacks): export `const columns: ColumnDef<T>[]` at module scope
-  - Tables with actions: use a `createColumns()` factory function exported from a dedicated `columns.ts`
-- **Hidable columns** — every column must have an explicit `id` property for the visibility menu
-- **Empty state** — `AppDataTable` handles this via the `emptyState` prop; callers must not add their own empty-state conditionals
+> See [table.mdc](./table.mdc) for full TanStack Table rules via AppDataTable.
 
 ### Routing
-- Nested/layout route root file should be `route.tsx` instead of `index.tsx`
+> See [tanstack-router.mdc](./tanstack-router.mdc) for routing conventions.
 
 ### Next.js
-- Use Next.js `Image` component instead of HTML img tags
-- Always add metadata property/functions in page components
-- Always add the `Props` interface of default Page components using the `type` keyword
+> See [next-js.mdc](./next-js.mdc) for Next.js-specific rules.
 
 ### Hooks
 - Path: `hooks/`
@@ -208,23 +170,10 @@ mutate({ arg });
 ```
 
 ### React Hook Form + Zod
-```typescript
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-const schema = z.object({
-  name: z.string().min(1, "Required"),
-});
-
-const { register, handleSubmit } = useForm({
-  resolver: zodResolver(schema),
-});
-```
+> See [form.mdc](./form.mdc) for full form generation rules.
 
 ### Alerts and Dialogs
-- Use shadcn `AlertDialog` for destructive actions
-- Use shadcn `Dialog` for forms
+> See [form.dialog.mdc](./form.dialog.mdc) for the full form-in-dialog pattern.
 
 ### Tabs
 - Use shadcn `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`
@@ -344,3 +293,6 @@ export { ButtonGroup } from "./button-group";
 export const Button = Object.assign(ButtonRoot, { Group: ButtonGroup });
 // Usage: <Button.Group>
 ```
+
+### cleanup
+- run format script after make changes. `bun format`, `pnpm format`

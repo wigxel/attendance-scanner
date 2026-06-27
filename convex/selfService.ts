@@ -124,6 +124,7 @@ export const selfCheckOut = mutation({
   args: {},
   handler: async (ctx) => {
     const userId = await readId(ctx);
+
     if (!userId) {
       throw new ConvexError("User not authenticated");
     }

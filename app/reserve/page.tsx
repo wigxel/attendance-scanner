@@ -399,7 +399,7 @@ function MakePaymentTab() {
           />
         </section>
 
-        <ul className="border-gray-200 divide-y divide-gray-200 border rounded-lg flex flex-col *:py-2 *:px-4">
+        <ul className="border-gray-200 divide-y divide-(--border) border rounded-lg flex flex-col *:py-2 *:px-4">
           <li className="flex justify-between items-center">
             <p className="text-muted-foreground">Payment Status</p>
             <p>
@@ -414,7 +414,9 @@ function MakePaymentTab() {
           </li>
           <li className="flex justify-between items-center">
             <p className="text-muted-foreground">Total Price</p>
-            <p className="text-3xl text-black">{formatPrice(totalPrice)}</p>
+            <p className="text-3xl text-foreground">
+              {formatPrice(totalPrice)}
+            </p>
           </li>
         </ul>
 
@@ -435,7 +437,7 @@ function MakePaymentTab() {
         </div>
 
         {showTimer && (
-          <div className="border border-gray-200 rounded-lg p-4 mb-2">
+          <div className="border border-(--border) rounded-lg p-4 mb-2">
             <div className="flex items-center justify-between mb-3 text-sm">
               <h3 className="text-foreground">Time Remaining</h3>
               <Badge

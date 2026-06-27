@@ -49,8 +49,8 @@ export function PermissionsSettingsContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-            <KeyRound className="h-5 w-5 text-gray-400" />
+          <h2 className="text-lg font-medium text-foreground flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-muted-foreground" />
             Permissions
           </h2>
         </div>
@@ -66,7 +66,7 @@ export function PermissionsSettingsContent() {
         </Button>
       </div>
 
-      <p className="mt-1 text-sm text-gray-500 text-pretty">
+      <p className="mt-1 text-sm text-muted-foreground text-pretty">
         Manage permission keys and their descriptions. Permissions are grouped
         by category and assigned to roles.
       </p>
@@ -76,44 +76,44 @@ export function PermissionsSettingsContent() {
           <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
         </div>
       ) : Object.keys(grouped).length === 0 ? (
-        <div className="p-8 text-center text-gray-500">
+        <div className="p-8 text-center text-muted-foreground">
           No permissions found.
         </div>
       ) : (
         (Object.entries(grouped) as [string, Permission[]][]).map(
           ([category, perms]) => (
             <div key={category} className="space-y-2">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider px-1">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
                 {category}
               </h3>
-              <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <div className="rounded-lg border border-(--border) bg-background shadow-sm overflow-hidden">
+                <table className="min-w-full divide-y divide-(--border)">
+                  <thead className="bg-background">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Name
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Description
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-(--background-lv1) divide-y divide-(--border)">
                     {perms.map((perm) => (
                       <tr
                         key={perm._id}
-                        className="hover:bg-gray-50 transition-colors group"
+                        className="hover:bg-background transition-colors group"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <code className="text-sm font-mono text-gray-900">
+                          <code className="text-sm font-mono text-foreground">
                             {perm.name}
                           </code>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-500 max-w-xs truncate">
+                          <div className="text-sm text-muted-foreground max-w-xs truncate">
                             {perm.description}
                           </div>
                         </td>
@@ -123,7 +123,7 @@ export function PermissionsSettingsContent() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(perm)}
-                              className="h-8 w-8 text-gray-400 hover:text-gray-900 hover:bg-gray-100"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-gray-100"
                               title="Edit Permission"
                             >
                               <Pencil className="h-4 w-4" />
@@ -133,7 +133,7 @@ export function PermissionsSettingsContent() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDelete(perm)}
-                              className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                              className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
                               title="Delete Permission"
                             >
                               <Trash2 className="h-4 w-4" />

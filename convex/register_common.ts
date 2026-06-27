@@ -1,10 +1,10 @@
-import { endOfDay, startOfDay } from "date-fns";
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { ConvexError } from "convex/values";
+import { endOfDay, startOfDay } from "date-fns";
 import { api } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { visitsAggregate } from "./customers";
-import { PlanImpl, type AccessStruct } from "./shared";
+import { type AccessStruct, PlanImpl } from "./shared";
 
 export async function isRegisteredToday(
   ctx: GenericQueryCtx<DataModel>,
@@ -40,6 +40,12 @@ export async function insertRegisterAndAggregate(
     method: "one-tap" | "qr";
   },
 ): Promise<void> {
+  const user_record = ctx.db.get(params?.userId as Id<"users">);
+
+  if (user_record == null) {
+    throw new ConvexError("User doesn't exist");
+  }
+
   const id = await ctx.db.insert("daily_register", {
     userId: params.userId,
     device: params.device,

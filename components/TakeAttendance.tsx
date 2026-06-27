@@ -186,8 +186,8 @@ export function TakeAttendance() {
           )}
         </If>
 
-        <div className="p-4 border rounded-lg bg-yellow-100">
-          <h2 className="text-lg font-medium mb-2">Instructions:</h2>
+        <div className="p-4 border border-(--border) rounded-lg text-orange-800 dark:text-orange-500">
+          <h2 className="text-xs font-medium mb-2">Instructions:</h2>
           <ul className="text-xs list-disc list-inside">
             <li>Select the check-in mode (Walk-in or Reservation).</li>
             <li>

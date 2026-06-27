@@ -28,7 +28,12 @@ export const seedRoles = mutation({
         "audit:read",
         "notification:read",
         "notification:send",
+        "booking:read",
+        "booking:create",
+        "booking:update",
         "booking:delete",
+        "feedback:update",
+        "feedback:delete",
       ],
     });
 
@@ -113,9 +118,34 @@ export const seedPermissions = mutation({
         category: "Notifications",
       },
       {
+        name: "booking:create",
+        description: "Create manual bookings for customers",
+        category: "Bookings",
+      },
+      {
+        name: "booking:read",
+        description: "View any booking details",
+        category: "Bookings",
+      },
+      {
+        name: "booking:update",
+        description: "Modify or cancel any booking",
+        category: "Bookings",
+      },
+      {
         name: "booking:delete",
         description: "Delete bookings/reservations",
         category: "Bookings",
+      },
+      {
+        name: "feedback:update",
+        description: "Approve or complete suggestions",
+        category: "Feedback",
+      },
+      {
+        name: "feedback:delete",
+        description: "Delete suggestions and feedback",
+        category: "Feedback",
       },
     ];
 

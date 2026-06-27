@@ -38,6 +38,7 @@ const featureRequest = defineTable({
   title: v.string(),
   description: v.string(),
   status: featureRequestStatus,
+  comment: v.optional(v.string()),
 })
   .index("user_id", ["userId"])
   .index("by_status", ["status"]);

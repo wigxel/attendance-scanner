@@ -307,7 +307,7 @@ export function AuditLogsTab() {
                         !isExpanded && "-rotate-90",
                       )}
                     />
-                    <span className="font-mono text-sm text-black">
+                    <span className="font-mono text-sm text-foreground">
                       {format(entry.timestamp, "MMM dd HH:mm")}
                     </span>
                   </button>
@@ -320,7 +320,7 @@ export function AuditLogsTab() {
                       isExpanded && "bg-muted/30",
                     )}
                   >
-                    <span className="font-mono text-sm text-black">
+                    <span className="font-mono text-sm text-foreground">
                       {entry.action}
                     </span>
                   </button>

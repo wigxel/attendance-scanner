@@ -65,10 +65,6 @@ function QRCode() {
       ) : null}
 
       <ResizeableQRCode hash={qr_hash.data} />
-
-      <If cond={isDevelopment}>
-        <p>ProfileId: {JSON.stringify(Object.keys(safeObj(profile.data)))}</p>
-      </If>
     </m.div>
   );
 }
@@ -82,12 +78,31 @@ export function CheckInCard() {
 
   return (
     <div className="border overflow-hidden rounded-2xl bg-background dark:bg-gray-950">
-      <QRCode />
+      <Refresh component={QRCode} interval={10} />
       <p className="p-4 text-center border-t font-mono text-xs">
         Present QR Code to Staff at Check-in Counter
       </p>
     </div>
   );
+}
+
+function Refresh({
+  component: Component,
+  interval,
+}: {
+  component: React.ComponentType<unknown>;
+  interval: number;
+}) {
+  const [count, setCount] = React.useState(() => crypto.randomUUID());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCount(crypto.randomUUID());
+    }, interval * 1000);
+    return () => clearInterval(timer);
+  }, [interval]);
+
+  return <Component key={count} />;
 }
 
 export function ResizeableQRCode({
@@ -100,7 +115,7 @@ export function ResizeableQRCode({
   const [size, setSize] = React.useState<number | null>(null);
   const ref = React.useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const abortController = new AbortController();
 
     if (ref.current) {

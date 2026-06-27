@@ -129,7 +129,7 @@ export function PermissionFormDialog({
                 type="text"
                 {...register("name")}
                 placeholder="e.g. reports:export"
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="mt-1 w-full rounded-md border border-(--border) px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               {formState.errors.name && (
                 <p className="mt-1 text-xs text-red-600">
@@ -150,7 +150,7 @@ export function PermissionFormDialog({
                 rows={3}
                 {...register("description")}
                 placeholder="e.g. Export reports to CSV"
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="mt-1 w-full rounded-md border border-(--border) px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               {formState.errors.description && (
                 <p className="mt-1 text-xs text-red-600">
@@ -171,7 +171,7 @@ export function PermissionFormDialog({
                 type="text"
                 {...register("category")}
                 placeholder="e.g. Reports"
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="mt-1 w-full rounded-md border border-(--border) px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               {formState.errors.category && (
                 <p className="mt-1 text-xs text-red-600">
@@ -181,8 +181,8 @@ export function PermissionFormDialog({
             </div>
           </div>
 
-          <SheetFooter className="sticky bottom-0 bg-white flex flex-row justify-end pt-4 !px-0">
-            <SheetTrigger>
+          <SheetFooter className="sticky bottom-0 bg-(--background) flex flex-row justify-end pt-4 !px-0">
+            <SheetTrigger asChild>
               <Button variant={"outline"}>Cancel</Button>
             </SheetTrigger>
 

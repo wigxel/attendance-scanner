@@ -1,14 +1,24 @@
 import Link from "next/link";
+import { ThemeSelect } from "@/components/theme-select";
 
 export function Footer() {
   return (
-    <footer className="mt-4 p-4 flex flex-col gap-2 sm:flex-row justify-between text-xs border-t w-full text-center">
-      <p className="order-3 sm:order-0 text-start sm:text-center ">
-        Designed & Crafted by{" "}
-        <a className="underline" href="https://wigxel.io">
-          Wigxel
-        </a>
-      </p>
+    <footer className="mt-4 p-4 flex flex-col gap-2 sm:flex-row items-center justify-between text-xs border-t w-full text-center">
+      <div className="inline-flex gap-4 items-center">
+        <p className="order-3 sm:order-0 text-start sm:text-center ">
+          Designed & Crafted by{" "}
+          <a
+            href="https://wigxel.io"
+            className="underline"
+            target="_blank"
+            rel="noopener"
+          >
+            Wigxel
+          </a>
+        </p>
+
+        <ThemeSelect />
+      </div>
 
       <p className="flex gap-6">
         <a href="tel:7045965937" className="hover:underline text-start">
@@ -19,6 +29,7 @@ export function Footer() {
         <Link href="/legal/terms" className="hover:underline">
           Terms &amp; Conditions
         </Link>
+        <span>•</span>
       </p>
     </footer>
   );

@@ -228,10 +228,10 @@ export function CreateBookingForm({
 
             {!seats ? (
               <div className="h-48 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <div className="p-3 mb-3 -mx-4 bg-gray-100 min-h-[400px] rounded-lg">
+              <div className="p-3 mb-3 -mx-4 bg-(--background-lv1) min-h-[400px] rounded-lg">
                 <DynamicSeatLayout
                   seats={seatOptions}
                   selectedSeatNumbers={
@@ -240,11 +240,11 @@ export function CreateBookingForm({
                   onSeatClick={handleSeatClick}
                 />
 
-                <div className="border-gray-200 flex flex-col bg-white border p-4 rounded-lg mt-4">
+                <div className="flex flex-col bg-(--background) border p-4 rounded-lg mt-4">
                   <div>
-                    <p className="text-gray-900 text-sm">Selected Seat:</p>
+                    <p className="text-foreground text-sm">Selected Seat:</p>
                     <div className="text-sm text-gray-600 mt-1">
-                      <p className="font-semibold inline-flex text-gray-900 gap-2">
+                      <p className="font-semibold inline-flex text-foreground gap-2">
                         {selectedSeat && (
                           <SeatBadge>
                             {String(selectedSeat.seatNumber)}
