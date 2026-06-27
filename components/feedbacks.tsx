@@ -200,7 +200,7 @@ function CompleteAlert({
         <AlertDialogHeader>
           <AlertDialogTitle>Mark suggestion as completed?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will mark &ldquo;{title}&rdquo; as completed.
+            This will mark <span className="text-foreground font-medium">&ldquo;{title}&rdquo;</span> as completed.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -294,6 +294,21 @@ function FeedbackItem({ suggestion }: { suggestion: Suggestion }) {
         </div>
 
         <div className="flex gap-2 items-center">
+
+          <div className="w-min">Votes</div>
+          <div
+            className={cn("w-min flex gap-2 items-center", {
+              "font-semibold": suggestion.voteCount > 0,
+            })}
+          >
+            {suggestion.voteCount < 0 ? (
+              <ArrowDown size="1rem" className="text-red-500" />
+            ) : (
+              <ArrowUp size="1rem" className="text-green-500" />
+            )}
+            <span>{suggestion.voteCount}</span>
+          </div>
+
           <RoleHasCSR privileges={["feedback:update"]}>
             {suggestion.status === "open" && (
               <ApproveDialog
@@ -317,27 +332,13 @@ function FeedbackItem({ suggestion }: { suggestion: Suggestion }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-auto p-1 text-muted-foreground hover:text-violet-600"
+                  className="h-auto p-1"
                 >
                   <CheckCircle2 size="1rem" />
                 </Button>
               </CompleteAlert>
             )}
           </RoleHasCSR>
-
-          <div className="w-min">Votes</div>
-          <div
-            className={cn("w-min flex gap-2 items-center", {
-              "font-semibold": suggestion.voteCount > 0,
-            })}
-          >
-            {suggestion.voteCount < 0 ? (
-              <ArrowDown size="1rem" className="text-red-500" />
-            ) : (
-              <ArrowUp size="1rem" className="text-green-500" />
-            )}
-            <span>{suggestion.voteCount}</span>
-          </div>
 
           <RoleHasCSR privileges={["feedback:delete"]}>
             <DeleteAlert suggestionId={suggestion._id} title={suggestion.title}>
