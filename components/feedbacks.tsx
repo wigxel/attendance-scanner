@@ -7,11 +7,13 @@ import {
   ArrowDown,
   ArrowUp,
   LightbulbIcon,
+  Trash2,
   XIcon,
 } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import React from "react";
+import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { useCustomer } from "@/hooks/auth";
@@ -20,6 +22,18 @@ import { safeArray, serialNo } from "@/lib/data.helpers";
 import { cn } from "@/lib/utils";
 import { CustomerAvatar } from "./customers";
 import { FeatureRequestDialog } from "./FeatureRequestDialog";
+import { RoleHasCSR } from "./RoleHasCSR";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -62,6 +76,10 @@ function FeedbackItem({
   entry: Doc<"featureRequest"> & { voteCount: number };
 }) {
   const user = useCustomer({ userId: e.userId });
+  const deleteSuggestion = useMutation(api.myFunctions.deleteSuggestion);
+  const { loading: isDeleting, attachLoader } = useAsyncLoader({
+    default: false,
+  });
 
   return (
     <li key={e._id} className="flex flex-col not-first:border-t py-4">
@@ -78,7 +96,7 @@ function FeedbackItem({
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <div className="w-min">Votes</div>
           <div
             className={cn("w-min flex gap-2 items-center", {
@@ -92,6 +110,50 @@ function FeedbackItem({
             )}
             <span>{e.voteCount}</span>
           </div>
+
+          <RoleHasCSR privileges={["feedback:delete"]}>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto p-1 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 size="1rem" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete suggestion?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete &ldquo;{e.title}&rdquo; and all
+                    its votes.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={isDeleting.default}
+                    onClick={attachLoader("default", async () => {
+                      try {
+                        await deleteSuggestion({ suggestionId: e._id });
+                        toast.success("Suggestion deleted");
+                      } catch (error) {
+                        toast.error("Failed to delete suggestion", {
+                          description:
+                            error instanceof Error
+                              ? error.message
+                              : "Unknown error",
+                        });
+                      }
+                    })}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </RoleHasCSR>
         </div>
       </div>
 

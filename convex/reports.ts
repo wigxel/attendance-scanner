@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { endOfDay, format, parse, startOfDay } from "date-fns";
 import { Match } from "effect";
+import { HOURLY_RATE } from "../config/constants";
 import { O, pipe } from "../lib/fp.helpers";
 import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
@@ -24,7 +25,7 @@ function calcFee(
     PlanImpl.duration(access),
     O.getOrElse(() => null as AccessDuration | null),
     Match.value,
-    Match.when({ type: "hourly" }, (dur) => 500 + 250 * (dur.value - 1)),
+    Match.when({ type: "hourly" }, (dur) => dur.value * HOURLY_RATE),
     Match.orElse(() => {
       const plan = planMap.get(planKey);
       if (!plan) {

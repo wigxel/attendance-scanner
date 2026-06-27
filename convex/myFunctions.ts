@@ -836,6 +836,28 @@ export const voteFeatureRequest = mutation({
   },
 });
 
+export const deleteSuggestion = mutation({
+  args: { suggestionId: v.id("featureRequest") },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "feedback:delete");
+
+    const suggestion = await ctx.db.get(args.suggestionId);
+    if (!suggestion) throw new ConvexError("Suggestion not found");
+
+    const votes = await ctx.db
+      .query("featureVotes")
+      .withIndex("request", (q) => q.eq("entityId", args.suggestionId))
+      .collect();
+
+    for (const vote of votes) {
+      await aggregateBySuggestion.delete(ctx, vote);
+      await ctx.db.delete(vote._id);
+    }
+
+    await ctx.db.delete(args.suggestionId);
+  },
+});
+
 const aggregateBySuggestion = new TableAggregate<{
   Namespace: Id<"featureRequest">;
   Key: number; // [number, string];

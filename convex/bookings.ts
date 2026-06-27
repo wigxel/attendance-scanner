@@ -25,6 +25,8 @@ export const getBooking = query({
     bookingId: v.id("bookings"),
   },
   handler: async (ctx, { bookingId }) => {
+    await requirePrivilege(ctx, "booking:read");
+
     const booking = await ctx.db.get(bookingId);
 
     if (!booking) {
@@ -537,6 +539,8 @@ export const confirmBooking = mutation({
     bookingId: v.id("bookings"),
   },
   handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "booking:update");
+
     const booking = await ctx.db.get(args.bookingId);
     if (!booking) throw new ConvexError("Booking not found");
 
@@ -626,6 +630,9 @@ export const cancelBooking = mutation({
     bookingId: v.id("bookings"),
   },
   handler: async (ctx, { bookingId }) => {
+    const caller = await readId(ctx);
+    if (!caller) throw new ConvexError("Authentication required.");
+
     const booking = await ctx.db.get(bookingId);
     if (!booking) {
       throw new ConvexError("Booking not found");
@@ -635,6 +642,10 @@ export const cancelBooking = mutation({
       throw new ConvexError(
         `Cannot cancel booking with status: ${booking.status}`,
       );
+    }
+
+    if (booking.userId !== caller) {
+      await requirePrivilege(ctx, "booking:update");
     }
 
     await ctx.db.patch(bookingId, {
@@ -838,6 +849,8 @@ export const markBookingAsExpired = mutation({
     bookingId: v.id("bookings"),
   },
   handler: async (ctx, { bookingId }) => {
+    await requirePrivilege(ctx, "booking:update");
+
     const booking = await ctx.db.get(bookingId);
     if (!booking) {
       throw new ConvexError("Booking not found");
@@ -972,6 +985,8 @@ export const generateTickets = mutation({
 export const getBookingWithTickets = query({
   args: { bookingId: v.id("bookings") },
   handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "booking:read");
+
     const booking = await ctx.db.get(args.bookingId);
     if (!booking) return null;
 
@@ -1269,6 +1284,8 @@ export const getMonthlyReservations = query({
     overflow: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "reports:read");
+
     const validatedMonth = parseMonthArg(args.month, "month");
     const targetDate = parseISO(`${validatedMonth}-01`);
     const monthStart = startOfMonth(targetDate);
@@ -1347,6 +1364,15 @@ export const exportMonthlyReservations = action({
     overflow: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const { valid } = await ctx.runQuery(api.acl.hasPrivilege, {
+      privilege: "reports:read",
+    });
+    if (!valid) {
+      throw new ConvexError(
+        'Access denied. Required privilege: "reports:read".',
+      );
+    }
+
     const bookings = await ctx.runQuery(api.bookings.getMonthlyReservations, {
       month: args.month,
       durationType: args.durationType,
