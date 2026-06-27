@@ -764,7 +764,10 @@ export const listSuggestions = query({
         ? ctx.db
             .query("featureRequest")
             .withIndex("by_status", (q) => q.eq("status", status))
-        : ctx.db.query("featureRequest");
+        : ctx.db
+            .query("featureRequest")
+            .filter((q) => q.neq(q.field("status"), "rejected"));
+
     const feedbacks = await features.order("desc").take(50);
 
     return {
@@ -855,6 +858,37 @@ export const deleteSuggestion = mutation({
     }
 
     await ctx.db.delete(args.suggestionId);
+  },
+});
+
+export const approveSuggestion = mutation({
+  args: { suggestionId: v.id("featureRequest"), comment: v.string() },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "feedback:update");
+
+    const suggestion = await ctx.db.get(args.suggestionId);
+    if (!suggestion) throw new ConvexError("Suggestion not found");
+    if (suggestion.status !== "open")
+      throw new ConvexError("Suggestion is not open");
+
+    await ctx.db.patch(args.suggestionId, {
+      status: "approved",
+      comment: args.comment,
+    });
+  },
+});
+
+export const completeSuggestion = mutation({
+  args: { suggestionId: v.id("featureRequest") },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "feedback:update");
+
+    const suggestion = await ctx.db.get(args.suggestionId);
+    if (!suggestion) throw new ConvexError("Suggestion not found");
+    if (suggestion.status !== "approved")
+      throw new ConvexError("Suggestion must be approved first");
+
+    await ctx.db.patch(args.suggestionId, { status: "completed" });
   },
 });
 

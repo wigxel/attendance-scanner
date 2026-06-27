@@ -1,5 +1,5 @@
 import type { LogType } from "consola";
-import { safeNum } from "@/lib/data.helpers";
+import { safeNum } from "../lib/data.helpers";
 
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL as string;
 export const isDevelopment = process.env.NODE_ENV === "development";

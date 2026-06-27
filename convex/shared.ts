@@ -9,6 +9,7 @@ import type { DataModel, Doc } from "./_generated/dataModel";
 
 export const featureRequestStatus = v.union(
   v.literal("open"),
+  v.literal("approved"),
   v.literal("completed"),
   v.literal("rejected"),
 );

@@ -1,0 +1,59 @@
+## React Patterns
+- Prefer controlled components over uncontrolled ones
+- Implement proper error boundaries
+- Extract reusable hooks for shared logic
+- Prefer abortController.signal over removeEventListener
+- Must not use forwardRef from react 19 up. ref is now automatically injected into the props
+
+
+## React Components
+- Extract `.map()` rendering into a dedicated Item component **when the map closure exceeds 15 lines**. Simpler inline maps (e.g., basic list items, dropdown options) are acceptable.
+  ```tsx
+  // Acceptable: Simple inline map (under 15 lines)
+  {items.map(item => (
+    <SelectItem key={item.id} value={item.id}>
+      {item.label}
+    </SelectItem>
+  ))}
+  
+  // Refactor: Map closure exceeds 15 lines → extract to Item component
+  {records.map(record => (
+    <AttendanceRecord
+      key={record._id}
+      record={record}
+      onApprove={handleApprove}
+      onReject={handleReject}
+    />
+  ))}
+  ```
+- Move constant objects/maps/sets (values that never change) outside the
+  component to avoid recreating them on every render. However, if the
+  module is eagerly imported (e.g., barrel export) and the component is
+  rarely used, keeping them inside the component scope wrapped in
+  `React.useMemo` is acceptable to avoid allocating memory for unused
+  constants at module load time. Ignore this rule if react-compiler is
+  enabled in the project.
+  ```tsx
+  // ✅ Good when component renders frequently or module is code-split
+  const STATUS_COLORS = {
+    open: "text-foreground",
+    approved: "text-green-500",
+    completed: "text-violet-500",
+    rejected: "text-red-500",
+  } as const;
+
+  function StatusBadge({ status }: { status: keyof typeof STATUS_COLORS }) {
+    return <span className={STATUS_COLORS[status]}>{status}</span>;
+  }
+
+  // ✅ Good when component is rarely used but module is eagerly imported
+  function RarelyUsedStatusBadge({ status }: { status: string }) {
+    const statusColorMap = React.useMemo(() => ({
+      open: "text-foreground",
+      approved: "text-green-500",
+      completed: "text-violet-500",
+      rejected: "text-red-500",
+    } as const), []);
+    return <span className={statusColorMap[status] ?? ""}>{status}</span>;
+  }
+  ```
