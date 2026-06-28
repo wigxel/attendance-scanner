@@ -1,7 +1,7 @@
 import "./_voxx/voxx.css";
 
-import type { ReactNode } from "react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { getConfig } from "./_voxx/data";
 import { ThemeToggle } from "./_voxx/theme-toggle";
 
@@ -13,7 +13,11 @@ export default async function BlogLayout({
   const config = await getConfig();
   return (
     <div className="voxx">
-      <header className="voxx-header">
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="scanline-container" />
+      </div>
+
+      <header className="voxx-header sticky z-10">
         <Link
           href={config.site.titleHref ?? "/"}
           className="voxx-header__title"
@@ -41,6 +45,7 @@ export default async function BlogLayout({
           <ThemeToggle />
         </div>
       </header>
+
       {children}
     </div>
   );

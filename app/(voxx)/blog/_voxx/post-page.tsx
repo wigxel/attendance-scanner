@@ -8,7 +8,7 @@ export function PostPage({ post, config }: { post: Post; config: VoxxConfig }) {
   const showToc = config.features.toc && post.toc.length > 0;
 
   return (
-    <SoftExit className="voxx voxx-layout">
+    <SoftExit className="voxx voxx-layout items-start">
       <article className="voxx-article">
         <Link
           href={config.content.basePath || "/"}

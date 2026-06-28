@@ -1,5 +1,5 @@
 .voxx {
-  --voxx-bg: #ffffff;
+  --voxx-bg: var(--background);
   --voxx-fg: #09090b;
   --voxx-muted: #f4f4f5;
   --voxx-muted-fg: #71717a;
@@ -22,7 +22,6 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .voxx {
-    --voxx-bg: #09090b;
     --voxx-fg: #fafafa;
     --voxx-muted: #18181b;
     --voxx-muted-fg: #a1a1aa;
@@ -33,7 +32,6 @@
 
 .dark .voxx,
 .voxx.dark {
-  --voxx-bg: #09090b;
   --voxx-fg: #fafafa;
   --voxx-muted: #18181b;
   --voxx-muted-fg: #a1a1aa;
@@ -770,6 +768,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -779,6 +778,7 @@
   from {
     transform: translateX(-100%);
   }
+
   to {
     transform: none;
   }

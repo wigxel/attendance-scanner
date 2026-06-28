@@ -48,7 +48,7 @@ export function SoftExit({ children, ...props }: React.ComponentProps<"div">) {
     <div ref={ref}>
       <div
         id="soft"
-        className="w-full sticky h-(--blur-size) top-0 transition-all bg-gradient-to-b from-(--voxx-bg) via-(--voxx-bg) to-transparent"
+        className="w-full sticky h-(--blur-size) top-0 transition-all pointer-events-none bg-gradient-to-b from-(--voxx-bg) via-(--voxx-bg) to-transparent"
       />
       <div {...props}>{children}</div>
     </div>
