@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Suspense } from "react";
 
 import { ClerkProvider } from "@clerk/nextjs";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
@@ -27,26 +28,28 @@ export default function RootLayout({
       <body
         className={`${body.variable} ${mono.variable} antialiased font-sans`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <ClerkProvider
-            publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-            appearance={{
-              cssLayerName: "clerk",
-            }}
+        <Suspense>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
           >
-            <QueryProvider>
-              <ConvexClientProvider>
-                <FlagsmithProvider>{children}</FlagsmithProvider>
-              </ConvexClientProvider>
-            </QueryProvider>
-          </ClerkProvider>
-          <Toaster />
-        </ThemeProvider>
+            <ClerkProvider
+              publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+              appearance={{
+                cssLayerName: "clerk",
+              }}
+            >
+              <QueryProvider>
+                <ConvexClientProvider>
+                  <FlagsmithProvider>{children}</FlagsmithProvider>
+                </ConvexClientProvider>
+              </QueryProvider>
+            </ClerkProvider>
+            <Toaster />
+          </ThemeProvider>
+        </Suspense>
       </body>
     </html>
   );

@@ -7,8 +7,6 @@ import { PostPage } from "../_voxx/post-page";
 
 type Params = { params: Promise<{ slug: string }> };
 
-export const maxDuration = 1000 * 60 * 60 * 12;
-
 export async function generateStaticParams() {
   const posts = await getReachablePosts();
   return posts.map((post) => ({ slug: post.slug }));

@@ -1,4 +1,3 @@
-"use server";
 import { getPosts } from "@prudentbird/voxx-core";
 import Link from "next/link";
 import { DateParse } from "@/lib/date.helpers";

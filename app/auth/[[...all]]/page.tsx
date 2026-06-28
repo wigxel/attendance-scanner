@@ -1,8 +1,10 @@
 import { SignIn } from "@clerk/nextjs";
 import { Posts } from "@/app/posts";
 import { Button } from "@/components/ui/button";
+import { cookies } from "next/headers";
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  await cookies();
   return (
     <div className="relative">
       <section className="relative w-[calc(100svw-52px)] mt-4 mx-auto">
