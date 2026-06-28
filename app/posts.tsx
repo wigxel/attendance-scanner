@@ -3,6 +3,7 @@ import { getPosts } from "@prudentbird/voxx-core";
 import Link from "next/link";
 import { DateParse } from "@/lib/date.helpers";
 import { O } from "@/lib/fp.helpers";
+import { heading } from "./font";
 
 export async function Posts() {
   const items = await getPosts({
@@ -10,50 +11,69 @@ export async function Posts() {
   });
 
   return (
-    <section className={"flex flex-col pt-12 pb-64 bg-[beige]"}>
+    <section className={"flex flex-col pb-64 px-8 container mx-auto"}>
       <div className="container mx-auto">
-        <hgroup className=" flex-col flex gap-12 w-6/12">
-          <h2 className="tracking-tighter leading-[2ex] text-[10ch] font-[Eyes_For_Serif] font-bold">
-            Content for the <br /> Makers.
+        <hgroup className="flex-col flex gap-8 md:gap-12">
+          <h2 className={`${heading.className} tracking-tighter md:grid grid-cols-12 leading-[2ex] text-5xl md:text-[7vw] font-bold`}>
+            <span className="col-span-5" />
+            <span className="col-span-7">Inspiration For&nbsp;</span>
+            <span className="col-span-7">The Makers.</span>
+            <span />
           </h2>
-          <p className="text-3xl">
+
+          <p className="text-lg md:text-2xl text-muted-foreground text-balance">
             To be a Maker, one must think like different. <br />
             <span>Enlighten your mindset.</span>
           </p>
         </hgroup>
 
-        <div className="grid grid-cols-12">
+        <div className="grid grid-cols-1 md:grid-cols-12">
           <div className="col-span-5" />
-          <div className="col-span-7 mt-32 relative">
-            <span className="font-bold pointer-events-none select-none translate-x-[-75%] translate-y-[-50%] text-[10svw] absolute top opacity-5">
-              #
-            </span>
-
+          <div className="col-span-7 mt-24 md:mt-32 relative">
             <ul className="flex flex-col gap-12">
-              {items.map((e) => {
+              {items.map((e, index) => {
                 return (
-                  <section
+                  <Link
                     key={e.title}
-                    className="group border-t border-black/16 "
-                  >
-                    <p className="flex gap-3 mb-2">
-                      <span className="font-mono">
-                        {DateParse.presets
-                          .dateOnly(e.date)
-                          .pipe(O.getOrElse(() => "--"))}
-                      </span>
-                      <span>•</span>
-                      <span className="font-mono">{e.category}</span>
-                    </p>
+                    href={e.url}>
 
-                    <Link href={e.url}>
-                      <h2 className="text-lg font-medium group-hover:underline">
-                        {e.title}
-                      </h2>
-                    </Link>
+                    <section
+                      className="group relative pt-4"
+                    >
+                      <div className="grid grid-cols-12">
+                        <span className="font-bold flex pointer-events-none group-hover:opacity-25 leading-[1ex] pt-2 font-mono -tracking-[0.8svw] select-none text-[12svw] top opacity-5 col-span-3">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
 
-                    <p className="text-lg mb-3 text-black">{e.description}</p>
-                  </section>
+                        <div className="col-span-9">
+                          <h2 className="text-lg text-foreground font-medium group-hover:underline">
+                            {e.title}
+                          </h2>
+
+                          <p className="text-base text-pretty md:text-lg mb-3 text-muted-foreground">
+                            {e.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-(--border) my-4" />
+
+                      <div className="grid grid-cols-12">
+                        <div className="col-span-3" />
+
+                        <p className="flex col-span-9 gap-3 text-xs mb-2 justify-start text-muted-foreground w-full">
+                          <span className="font-mono">
+                            {DateParse.presets
+                              .dateOnly(e.date)
+                              .pipe(O.getOrElse(() => "--"))}
+                          </span>
+                          <span>•</span>
+                          <span className="font-mono">{e.category}</span>
+                        </p>
+                      </div>
+
+                    </section>
+                  </Link>
                 );
               })}
             </ul>

@@ -4,6 +4,7 @@ description: I'm sure you're asking why we need another Co-working/Creative spac
 date: 2026-06-24
 tags: [getting-started]
 category: General
+draft: true
 author: { name: "Joseph Julius Owonvwon", url: "https://linkedin.com/in/owonwo" }
 ---
 
