@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "convex/react";
-import { LucideLoader } from "lucide-react";
+import { AppLoader } from "@/components/loader";
 import { api } from "@/convex/_generated/api";
 import type { Seat } from "@/hooks/useSeats";
 import { safeObj } from "@/lib/data.helpers";
@@ -24,14 +24,8 @@ export function DynamicSeatLayout({
 
   if (seatLayout === undefined) {
     return (
-      <div className="h-96 bg-gray-100 rounded-lg flex justify-center items-center">
-        <div className="bg-white rounded-full p-4">
-          <LucideLoader
-            size={"2rem"}
-            strokeWidth={1}
-            className="animate-spin"
-          />
-        </div>
+      <div className="h-96 bg-(--background-lv1) rounded-lg flex justify-center items-center">
+        <AppLoader />
       </div>
     );
   }

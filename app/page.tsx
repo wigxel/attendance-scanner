@@ -1,13 +1,13 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { LucideLoader } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import useEffectEvent from "react-use-event-hook";
 import { toast } from "sonner";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { AppLoader } from "@/components/loader";
 import { api } from "@/convex/_generated/api";
 import { safeStr } from "@/lib/data.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
@@ -71,13 +71,7 @@ function ValidateConvexProfile() {
 
   return (
     <div className="flex h-full items-center justify-center">
-      <div className="bg-white rounded-full p-4">
-        <LucideLoader
-          size={"2rem"}
-          strokeWidth={1}
-          className="animate animate-spin"
-        />
-      </div>
+      <AppLoader />
     </div>
   );
 }

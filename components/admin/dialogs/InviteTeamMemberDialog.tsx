@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAction } from "convex/react";
-import { Loader2 } from "lucide-react";
+import { AppSpinner } from "@/components/loader";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -116,9 +116,7 @@ export function InviteTeamMemberDialog() {
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              {isSubmitting && <AppSpinner className="mr-2" />}
               {isSubmitting ? "Adding\u2026" : "Add Member"}
             </Button>
           </DialogFooter>

@@ -3,7 +3,7 @@ import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { isNullable } from "effect/Predicate";
 import { isEmpty } from "effect/String";
-import { Check, LucideLoader } from "lucide-react";
+import { Check } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useState } from "react";
@@ -12,6 +12,7 @@ import { DestroyFutureStateOnReserve } from "@/components/DestroyFutureState";
 import { DynamicSeatLayout } from "@/components/DynamicSeatLayout";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { AppLoader, AppSpinner } from "@/components/loader";
 import PendingBookingsModal from "@/components/PendingBookingsModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -203,14 +204,8 @@ function PickSeatTab() {
 
   if (isLoading) {
     return (
-      <div className="h-96 bg-gray-100 rounded-lg flex justify-center items-center">
-        <div className="bg-white rounded-full p-4">
-          <LucideLoader
-            size={"2rem"}
-            strokeWidth={1}
-            className="animate-spin"
-          />
-        </div>
+      <div className="h-96 bg-(--background-lv1) rounded-lg flex justify-center items-center">
+        <AppLoader />
       </div>
     );
   }
@@ -457,15 +452,7 @@ function MakePaymentTab() {
         )}
 
         <Button size="lg" onClick={handlePayNowClick}>
-          {paymentLoading ? (
-            <LucideLoader
-              size={"1.5rem"}
-              strokeWidth={1}
-              className="animate animate-spin"
-            />
-          ) : (
-            "Pay Now"
-          )}
+          {paymentLoading ? <AppSpinner size="lg" /> : "Pay Now"}
         </Button>
       </div>
     </>
@@ -487,7 +474,7 @@ export default function ReservePage() {
           <Suspense
             fallback={
               <div className="flex justify-center items-center h-96">
-                <LucideLoader className="animate-spin" />
+                <AppSpinner />
               </div>
             }
           >

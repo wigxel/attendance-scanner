@@ -1,8 +1,9 @@
 "use client";
 
 import { useAction, useQuery } from "convex/react";
-import { Loader2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { InviteTeamMemberDialog } from "@/components/admin/dialogs/InviteTeamMemberDialog";
+import { AppSpinner } from "@/components/loader";
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +77,7 @@ export function AdminUsersTable() {
                   colSpan={4}
                   className="py-8 text-center text-sm text-gray-500"
                 >
-                  <Loader2 className="mx-auto h-5 w-5 animate-spin text-gray-400" />
+                  <AppSpinner className="mx-auto " />
                 </td>
               </tr>
             ) : identities.length === 0 ? (

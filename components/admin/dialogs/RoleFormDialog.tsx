@@ -2,10 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "convex/react";
-import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { AppSpinner } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -192,7 +192,7 @@ export function RoleFormDialog({
             <div className="space-y-6">
               {permissionsByCategory === undefined ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                  <AppSpinner />
                 </div>
               ) : privilegeGroups.length === 0 ? (
                 <p className="text-sm text-gray-500">

@@ -9,8 +9,8 @@ import {
   ChevronRight,
   DownloadIcon,
   Filter,
-  LucideLoader,
 } from "lucide-react";
+import { AppSpinner } from "@/components/loader";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -357,7 +357,7 @@ export function MonthlyReservationsTable() {
               >
                 {isExporting ? (
                   <>
-                    <LucideLoader className="size-4 animate-spin" />
+                    <AppSpinner />
                     Exporting...
                   </>
                 ) : (

@@ -1,10 +1,11 @@
 "use client";
 import { useFlags } from "@flagsmith/flagsmith/react";
 import { useQuery } from "convex/react";
-import { LucideLoader, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { motion as m } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
 import React from "react";
+import { AppLoader } from "@/components/loader";
 import { APP_URL, isDevelopment } from "@/config/constants";
 import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";
@@ -54,13 +55,7 @@ function QRCode() {
     >
       {isLoading ? (
         <div className="absolute inset-0 bg-white/[0.3] z-20 backdrop-blur-lg flex justify-center items-center">
-          <div className="bg-white rounded-full p-4">
-            <LucideLoader
-              size={"2rem"}
-              strokeWidth={1}
-              className="animate animate-spin"
-            />
-          </div>
+          <AppLoader />
         </div>
       ) : null}
 

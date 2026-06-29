@@ -17,4 +17,4 @@ export const heading = localFont({
     { path: "../public/fonts/EyesforSerifs-Bold.woff2", weight: "700" },
   ],
   variable: "--font-heading",
-})
+});

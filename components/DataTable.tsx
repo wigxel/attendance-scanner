@@ -11,8 +11,9 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import * as React from "react";
+import { AppSpinner } from "@/components/loader";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -89,7 +90,7 @@ export function AppDataTable<T>({
               className="bg-white pr-10"
             />
             {isLoading && (
-              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              <AppSpinner className="absolute right-3 top-1/2 -translate-y-1/2 " />
             )}
           </div>
 

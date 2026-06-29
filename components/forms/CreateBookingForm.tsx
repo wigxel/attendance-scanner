@@ -3,13 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "convex/react";
 import { format, subWeeks } from "date-fns";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { SeatBadge } from "@/app/reserve/components/seats";
 import { DynamicSeatLayout } from "@/components/DynamicSeatLayout";
+import { AppSpinner } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -228,7 +229,7 @@ export function CreateBookingForm({
 
             {!seats ? (
               <div className="h-48 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <AppSpinner size="lg" />
               </div>
             ) : (
               <div className="p-3 mb-3 -mx-4 bg-(--background-lv1) min-h-[400px] rounded-lg">
@@ -279,7 +280,7 @@ export function CreateBookingForm({
           <Button type="submit" disabled={isLoading}>
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <AppSpinner className="mr-2" />
                 Creating...
               </>
             ) : (

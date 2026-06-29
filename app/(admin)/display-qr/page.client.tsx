@@ -1,9 +1,10 @@
 "use client";
-import { LucideLoader, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useState } from "react";
 import { useEvent } from "react-use-event-hook";
 import { generateQRToken } from "@/app/actions/encrypt";
+import { AppSpinner } from "@/components/loader";
 import { APP_URL } from "@/config/constants";
 import { useAuthId } from "@/hooks/auth";
 
@@ -49,10 +50,7 @@ export default function DisplayQRCSR() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
-        <LucideLoader
-          size="2rem"
-          className="animate-spin text-muted-foreground"
-        />
+        <AppSpinner size="xl" />
       </div>
     );
   }
@@ -81,10 +79,7 @@ export default function DisplayQRCSR() {
             />
           ) : (
             <div className="w-[320px] h-[320px] flex items-center justify-center">
-              <LucideLoader
-                size="3rem"
-                className="animate-spin text-muted-foreground"
-              />
+              <AppSpinner size="xl" />
             </div>
           )}
         </div>

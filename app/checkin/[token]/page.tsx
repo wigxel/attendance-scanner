@@ -1,13 +1,14 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
 import { Effect, pipe } from "effect";
-import { CheckCircle2, LucideLoader, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { verifyQRToken } from "@/app/actions/encrypt";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { AppSpinner } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import {
   formatTime,
@@ -110,11 +111,7 @@ function TokenCheckInFlow() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
         <div className="bg-white rounded-full p-6 shadow-lg">
-          <LucideLoader
-            size="3rem"
-            strokeWidth={1}
-            className="animate-spin text-muted-foreground"
-          />
+          <AppSpinner size="xl" />
         </div>
         <div className="text-center">
           <p className="text-lg font-semibold">

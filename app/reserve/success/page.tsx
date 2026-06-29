@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "convex/react";
-import { LucideLoader } from "lucide-react";
+import { AppSpinner } from "@/components/loader";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
@@ -37,7 +37,7 @@ function SuccessPageContent() {
   if (bookingDetails === undefined && user === undefined) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <LucideLoader className="animate-spin" />
+        <AppSpinner />
       </div>
     );
   }
@@ -135,7 +135,7 @@ export default function SuccessPage() {
     <Suspense
       fallback={
         <div className="flex justify-center items-center h-screen">
-          <LucideLoader className="animate-spin" />
+          <AppSpinner />
         </div>
       }
     >

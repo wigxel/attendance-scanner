@@ -3,10 +3,11 @@
 import { Portal } from "@radix-ui/react-dialog";
 import consola from "consola";
 import { Html5Qrcode } from "html5-qrcode";
-import { LucideLoader, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { AppSpinner } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Dialog } from "./ui/dialog";
@@ -226,11 +227,7 @@ export default function QRCodeScanner({
                 </div>
 
                 <div className="z-[-1] absolute">
-                  <LucideLoader
-                    size={"2rem"}
-                    strokeWidth={1}
-                    className="animate animate-spin text-white"
-                  />
+                  <AppSpinner size="xl" className="text-foreground" />
                 </div>
 
                 <button

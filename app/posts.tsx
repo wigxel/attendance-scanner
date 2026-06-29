@@ -13,7 +13,9 @@ export async function Posts() {
     <section className={"flex flex-col pb-64 px-8 container mx-auto"}>
       <div className="container mx-auto">
         <hgroup className="flex-col flex gap-8 md:gap-12">
-          <h2 className={`${heading.className} tracking-tighter md:grid grid-cols-12 leading-[2ex] text-5xl md:text-[7vw] font-bold`}>
+          <h2
+            className={`${heading.className} tracking-tighter md:grid grid-cols-12 leading-[2ex] text-5xl md:text-[7vw] font-bold`}
+          >
             <span className="col-span-5" />
             <span className="col-span-7">Inspiration For&nbsp;</span>
             <span className="col-span-7">The Makers.</span>
@@ -32,16 +34,11 @@ export async function Posts() {
             <ul className="flex flex-col gap-12">
               {items.map((e, index) => {
                 return (
-                  <Link
-                    key={e.title}
-                    href={e.url}>
-
-                    <section
-                      className="group relative pt-4"
-                    >
+                  <Link key={e.title} href={e.url}>
+                    <section className="group relative pt-4">
                       <div className="grid grid-cols-12">
                         <span className="font-bold flex pointer-events-none group-hover:opacity-25 leading-[1ex] pt-2 font-mono -tracking-[0.8svw] select-none text-[12svw] top opacity-5 col-span-3">
-                          {String(index + 1).padStart(2, '0')}
+                          {String(index + 1).padStart(2, "0")}
                         </span>
 
                         <div className="col-span-9">
@@ -70,7 +67,6 @@ export async function Posts() {
                           <span className="font-mono">{e.category}</span>
                         </p>
                       </div>
-
                     </section>
                   </Link>
                 );

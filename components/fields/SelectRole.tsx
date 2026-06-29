@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { Loader2 } from "lucide-react";
+import { AppSpinner } from "@/components/loader";
 import {
   Select,
   SelectContent,
@@ -38,7 +38,7 @@ export function SelectRole({
         {roles === undefined ? (
           <SelectItem value="...loading" disabled>
             <span className="flex items-center gap-2">
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <AppSpinner size="sm" />
               Loading...
             </span>
           </SelectItem>

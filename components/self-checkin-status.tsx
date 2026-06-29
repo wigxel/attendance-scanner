@@ -3,13 +3,8 @@
 import { useFlags } from "@flagsmith/flagsmith/react";
 import { useMutation } from "convex/react";
 import { isNullable } from "effect/Predicate";
-import {
-  CheckCircle2,
-  InfoIcon,
-  LogOut,
-  LucideLoader,
-  Star,
-} from "lucide-react";
+import { CheckCircle2, InfoIcon, LogOut, Star } from "lucide-react";
+import { AppSpinner } from "@/components/loader";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
@@ -84,7 +79,7 @@ function CheckInPrompt() {
         >
           {checkingIn ? (
             <>
-              <LucideLoader className="mr-2 h-4 w-4 animate-spin" />
+              <AppSpinner className="mr-2" />
               Checking in...
             </>
           ) : (
@@ -121,7 +116,7 @@ function CheckOutEntry({
       <Button variant="default" className="w-full" disabled={checkingOut}>
         {checkingOut ? (
           <>
-            <LucideLoader className="h-4 w-4 animate-spin" />
+            <AppSpinner />
             Checking out...
           </>
         ) : (

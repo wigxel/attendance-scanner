@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { Check, ChevronsUpDown, Loader2, UserCheck } from "lucide-react";
+import { Check, ChevronsUpDown, UserCheck } from "lucide-react";
+import { AppSpinner } from "@/components/loader";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,7 +101,7 @@ export function CustomerCombobox({
               <CommandEmpty>
                 {customers === undefined ? (
                   <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <AppSpinner />
                     Loading...
                   </span>
                 ) : (

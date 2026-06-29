@@ -1,12 +1,13 @@
 "use client";
 import { useMutation, useQuery } from "convex/react";
-import { Calendar, Check, Clock, LucideLoader, UserMinus2 } from "lucide-react";
+import { Calendar, Check, Clock, UserMinus2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { CustomerAvatar } from "@/components/customers";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { If } from "@/components/if";
+import { AppLoader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
@@ -32,13 +33,7 @@ export default function SharePage() {
           <Header />
           <main className="min-h-screen">
             <div className="h-96 rounded-lg flex justify-center items-center">
-              <div className="bg-white rounded-full p-4">
-                <LucideLoader
-                  size={"2rem"}
-                  strokeWidth={1}
-                  className="animate animate-spin"
-                />
-              </div>
+              <AppLoader />
             </div>
           </main>
           <Footer />
