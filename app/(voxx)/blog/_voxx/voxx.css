@@ -6,6 +6,9 @@
   --voxx-border: #e4e4e7;
   --voxx-link: #2563eb;
   --voxx-radius: 0.5rem;
+  --voxx-font-mono: var(--font-geist-mono);
+  --voxx-font-heading: var(--font-geist);
+  --voxx-font: var(--font-geist);
 
   color: var(--foreground, var(--voxx-fg));
   font-family: var(
@@ -394,6 +397,7 @@
 }
 
 .voxx-article__header h1 {
+  font-family: var(--voxx-font-heading);
   font-size: clamp(1.875rem, 1.2rem + 2.5vw, 2.75rem);
   font-weight: 700;
   line-height: 1.15;

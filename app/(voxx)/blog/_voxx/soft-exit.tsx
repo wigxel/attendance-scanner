@@ -1,5 +1,5 @@
 "use client";
-import { throttle } from "lodash-es";
+import { debounce, throttle } from "lodash-es";
 import React from "react";
 
 export function SoftExit({ children, ...props }: React.ComponentProps<"div">) {
@@ -17,24 +17,28 @@ export function SoftExit({ children, ...props }: React.ComponentProps<"div">) {
     const originalOffset = soft.offsetTop;
     const height = 150;
 
-    const reset = throttle(() => {
+    const reset = debounce(() => {
       cont.style.setProperty("--blur-size", `${window.scrollY}px`);
-    }, 200);
+    }, 100);
+
+    let last_offset = 0;
 
     window.addEventListener(
       "scroll",
       () => {
         const offsetTop = originalOffset + height;
+        const dir = window.scrollY > last_offset ? "down" : "up";
+        last_offset = window.scrollY;
 
         const show_popup = window.scrollY > offsetTop;
-        // console.log({ scrollTop: window.scrollY, offsetTop, show_popup })
+        // console.log({ dir, scrollTop: window.scrollY, offsetTop, show_popup });
 
-        if (show_popup) {
+        if (dir === "down" && show_popup) {
           cont.style.setProperty("--blur-size", `${height}px`);
           return;
+        } else if (window.scrollY <= offsetTop) {
+          reset();
         }
-
-        reset();
       },
       { signal: ab.signal },
     );
@@ -48,7 +52,7 @@ export function SoftExit({ children, ...props }: React.ComponentProps<"div">) {
     <div ref={ref}>
       <div
         id="soft"
-        className="w-full sticky h-(--blur-size) top-0 transition-all pointer-events-none bg-gradient-to-b from-(--voxx-bg) via-(--voxx-bg) to-transparent"
+        className="w-full fixed h-(--blur-size) top-0 transition-all pointer-events-none bg-gradient-to-b from-(--voxx-bg) via-(--voxx-bg) to-transparent"
       />
       <div {...props}>{children}</div>
     </div>

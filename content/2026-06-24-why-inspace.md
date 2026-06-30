@@ -77,4 +77,4 @@ A community of people of Makers await you. And don't worry, we have all the reso
 
 Join the online community on [Whatsapp](https://chat.whatsapp.com/KDQZCN58c92Fi1AGRXMrOu?mode=gi_t)
 
-__This blog is to keep our past, current and future community members inspirated by our hacks, approach and solutions to the challenges we encounter along the way. Let us know if anything resonates with you. Stay tuned, we are bringing the world to your community.__
+__This blog is to keep our past, current and future community members inspirated by our hacks, approach and solutions to the challenges we encounter along the way. Let us know if anything resonates with you. Stay tuned, we are bringing the ideas that feel far fetched to your community.__
