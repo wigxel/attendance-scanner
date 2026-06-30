@@ -1,3 +1,4 @@
+import type { GenericQueryCtx } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import {
   differenceInHours,
@@ -8,12 +9,12 @@ import {
   startOfMonth,
   subWeeks,
 } from "date-fns";
-import { bookingDeletedAudit } from "./audits/entities";
 import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
 import { api, internal } from "./_generated/api";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
+import { bookingDeletedAudit } from "./audits/entities";
 import { readId } from "./myFunctions";
 import { updateTodaysRegisterForSubscriber } from "./register_common";
 import {
@@ -29,47 +30,63 @@ export const getBooking = query({
   handler: async (ctx, { bookingId }) => {
     await requirePrivilege(ctx, "booking:read");
 
-    const booking = await ctx.db.get(bookingId);
-
-    if (!booking) {
-      throw new ConvexError("Booking not found");
-    }
-
-    // fetch all seats for this booking
-    const seats = await Promise.all(
-      booking.seatIds.map((seatId) => ctx.db.get(seatId)),
-    );
-
-    const [user, creator] = await Promise.all([
-      ctx.db
-        .query("profile")
-        .filter((q) => q.eq(q.field("id"), booking.userId))
-        .first(),
-      booking.created_by === "system" || booking.created_by === undefined
-        ? Promise.resolve("Booking system")
-        : ctx.db
-            .get(booking.created_by as Id<"users">)
-            .then((e) => e?.name ?? "Anonymous")
-            .catch(() => "--"),
-    ]);
-
-    return {
-      ...booking,
-      creator,
-      seats: seats.filter((seat) => seat !== null), // filter out any null values
-      user: user
-        ? {
-            id: user.id,
-            name: `${user.firstName} ${user.lastName}`,
-            email: user.email,
-          }
-        : {
-            name: "Anonymous User",
-            email: "--",
-          },
-    };
+    return await getBookingInfo(ctx, { bookingId });
   },
 });
+
+export const systemGetBooking = query({
+  args: {
+    bookingId: v.id("bookings"),
+  },
+  handler: async (ctx, { bookingId }) => {
+    return await getBookingInfo(ctx, { bookingId });
+  },
+});
+
+async function getBookingInfo(
+  ctx: GenericQueryCtx<DataModel>,
+  { bookingId }: { bookingId: Id<"bookings"> },
+) {
+  const booking = await ctx.db.get(bookingId);
+
+  if (!booking) {
+    throw new ConvexError("Booking not found");
+  }
+
+  // fetch all seats for this booking
+  const seats = await Promise.all(
+    booking.seatIds.map((seatId) => ctx.db.get(seatId)),
+  );
+
+  const [user, creator] = await Promise.all([
+    ctx.db
+      .query("profile")
+      .filter((q) => q.eq(q.field("id"), booking.userId))
+      .first(),
+    booking.created_by === "system" || booking.created_by === undefined
+      ? Promise.resolve("Booking system")
+      : ctx.db
+          .get(booking.created_by as Id<"users">)
+          .then((e) => e?.name ?? "Anonymous")
+          .catch(() => "--"),
+  ]);
+
+  return {
+    ...booking,
+    creator,
+    seats: seats.filter((seat) => seat !== null), // filter out any null values
+    user: user
+      ? {
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+        }
+      : {
+          name: "Anonymous User",
+          email: "--",
+        },
+  };
+}
 
 const DURATION_TYPE_TO_PLAN_KEY: Record<string, string> = {
   day: "daily",

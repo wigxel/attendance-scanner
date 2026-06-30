@@ -6,37 +6,37 @@ import {
   type Post,
   type VoxxConfig,
 } from "@prudentbird/voxx-core";
-import { cacheLife } from "next/cache";
+import { cache } from "react";
 import { CONTENT_VERSION } from "./content-version";
 
-async function getPostsCached(version: number): Promise<Post[]> {
-  "use cache";
-  cacheLife("max");
+const getPostsCached = cache(async function getPostsCached(
+  version: number,
+): Promise<Post[]> {
   void version;
   return coreGetPosts({ collection: "blog" });
-}
+});
 
 export async function getPosts(): Promise<Post[]> {
   return getPostsCached(CONTENT_VERSION);
 }
 
-async function getReachablePostsCached(version: number): Promise<Post[]> {
-  "use cache";
-  cacheLife("max");
+const getReachablePostsCached = cache(async function getReachablePostsCached(
+  version: number,
+): Promise<Post[]> {
   void version;
   return coreGetPosts({ ...{ collection: "blog" }, reachable: true });
-}
+});
 
 export async function getReachablePosts(): Promise<Post[]> {
   return getReachablePostsCached(CONTENT_VERSION);
 }
 
-async function getConfigCached(version: number): Promise<VoxxConfig> {
-  "use cache";
-  cacheLife("max");
+const getConfigCached = cache(async function getConfigCached(
+  version: number,
+): Promise<VoxxConfig> {
   void version;
   return coreLoadConfig();
-}
+});
 
 export async function getConfig(): Promise<VoxxConfig> {
   return getConfigCached(CONTENT_VERSION);

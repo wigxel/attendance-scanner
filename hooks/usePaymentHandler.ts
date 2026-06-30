@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CONFIG } from "@/app/reserve/constants";
 import { setBookingId, useBookingStore } from "@/app/reserve/store";
-import { api } from "@/convex/_generated/api";
+import { api, internal } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { formatDateToLocalISO, loadPaystackScript } from "@/lib/utils";
@@ -166,7 +166,7 @@ export const usePaymentHandler = () => {
       // Check if booking exists and its status
       if (bookingId) {
         const existingBooking = await httpClient.query(
-          api.bookings.getBooking,
+          api.bookings.systemGetBooking,
           { bookingId },
         );
 
