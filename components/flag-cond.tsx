@@ -21,8 +21,6 @@ export function FlagCond({
 }: FlagCondProps) {
   const resolved = useFlags(flags);
 
-  console.log(resolved);
-
   if (cond) {
     if (!cond(resolved)) return fallback ?? null;
     return <>{children}</>;

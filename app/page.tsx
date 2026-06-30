@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { AppLoader } from "@/components/loader";
+import { isDevelopment } from "@/config/constants";
 import { api } from "@/convex/_generated/api";
 import { safeStr } from "@/lib/data.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
@@ -58,7 +59,7 @@ function ValidateConvexProfile() {
 
   React.useEffect(() => {
     if (profile_info) {
-      console.log({ profile_info });
+      if (isDevelopment) console.log({ profile_info });
       if (profile_info.user && profile_info.profile) {
         return redirect();
       }
