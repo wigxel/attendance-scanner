@@ -1,7 +1,8 @@
 import { SignIn } from "@clerk/nextjs";
-import { Posts } from "@/app/posts";
-import { Button } from "@/components/ui/button";
 import { cookies } from "next/headers";
+import { Posts } from "@/app/posts";
+import { Footer } from "@/components/footer";
+import { Button } from "@/components/ui/button";
 
 export default async function SignInPage() {
   await cookies();
@@ -51,6 +52,8 @@ export default async function SignInPage() {
       <div className="mt-[-5svh]">
         <Posts />
       </div>
+
+      <Footer />
     </div>
   );
 }
