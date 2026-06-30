@@ -1,8 +1,9 @@
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { ConvexError } from "convex/values";
-import { endOfDay, startOfDay } from "date-fns";
-import { api } from "./_generated/api";
-import type { DataModel, Id } from "./_generated/dataModel";
+import { endOfDay, isWithinInterval, parseISO, startOfDay } from "date-fns";
+import { api, internal } from "./_generated/api";
+import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import { subscriberUpdateAudit } from "./booking_audit";
 import { visitsAggregate } from "./customers";
 import { type AccessStruct, PlanImpl } from "./shared";
 
@@ -119,4 +120,62 @@ export async function processReservationCheckIn(
     ticketId: ticket._id,
     method: "qr",
   });
+}
+
+export async function updateTodaysRegisterForSubscriber(
+  ctx: GenericMutationCtx<DataModel>,
+  params: {
+    actorId: Id<"users"> | "system";
+    userId: string;
+    ticketId: Id<"tickets">;
+    booking: Doc<"bookings">;
+  },
+): Promise<{ success: boolean; message: string }> {
+  const today = new Date();
+
+  if (
+    !isWithinInterval(today, {
+      start: parseISO(params.booking.startDate),
+      end: parseISO(params.booking.endDate),
+    })
+  ) {
+    return { success: false, message: "Subscription does not cover today" };
+  }
+
+  const dayStart = startOfDay(today).toISOString();
+  const dayEnd = endOfDay(today).toISOString();
+
+  const existing = await ctx.db
+    .query("daily_register")
+    .withIndex("user", (q) => q.eq("userId", params.userId))
+    .filter((q) =>
+      q.and(
+        q.gte(q.field("timestamp"), dayStart),
+        q.lte(q.field("timestamp"), dayEnd),
+      ),
+    )
+    .first();
+
+  if (!existing) {
+    return { success: false, message: "No register found for today" };
+  }
+
+  await ctx.db.patch(existing._id, {
+    ticketId: params.ticketId,
+    access: PlanImpl.fromBooking(params.booking),
+  });
+
+  await ctx.scheduler.runAfter(
+    0,
+    internal.audit.log,
+    subscriberUpdateAudit({
+      actorId: params.actorId,
+      targetId: existing._id,
+      userId: params.userId,
+      bookingId: params.booking._id,
+      ticketId: params.ticketId,
+    }),
+  );
+
+  return { success: true, message: "Register updated to subscriber" };
 }

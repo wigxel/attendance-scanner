@@ -274,10 +274,11 @@ async function computeMetricsForDate(
     },
   );
 
-  // Collect all check-ins within the month window for this date.
   const allRegisters = await ctx.db
     .query("daily_register")
-    .filter((q) => q.gte(q.field("timestamp"), monthStart.toISOString()))
+    .withIndex("by_timestamp", (q) =>
+      q.gte("timestamp", monthStart.toISOString()),
+    )
     .collect();
 
   const userVisitCounts = new Map<string, number>();

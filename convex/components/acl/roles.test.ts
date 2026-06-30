@@ -232,7 +232,7 @@ describe("roles", () => {
 
     expect(result).toEqual({
       success: false,
-      error: "Cannot delete a role that is assigned to one or more identities.",
+      error: 'Cannot delete role "protected": 1 user(s) are assigned to it.',
     });
   });
 

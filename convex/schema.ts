@@ -31,7 +31,8 @@ const daily_register = defineTable({
   .index("unique_visitor", ["device.visitorId"])
   .index("access_plan", ["access.kind"])
   .index("user", ["userId"])
-  .index("by_ticket", ["ticketId"]);
+  .index("by_ticket", ["ticketId"])
+  .index("by_timestamp", ["timestamp"]);
 
 const featureRequest = defineTable({
   userId: v.string(), // v.id("profile"),

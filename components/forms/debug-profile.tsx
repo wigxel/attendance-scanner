@@ -1,10 +1,14 @@
+import { Slot } from "@radix-ui/react-slot";
 import { useQuery as useTansackQuery } from "@tanstack/react-query";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import React from "react";
+import { toast } from "sonner";
 import { decodeQRCodeData } from "@/app/actions/encrypt";
 import { api } from "@/convex/_generated/api";
 import { safeArray, safeObj } from "@/lib/data.helpers";
+import { getErrorMessage } from "@/lib/error.helpers";
 import { ResizeableQRCode, useGetProfileHash } from "../CheckInCard";
+import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
@@ -31,12 +35,40 @@ export function DebugProfile(props: { children: React.ReactNode }) {
           <div className="max-h-[60vh] flex flex-col gap-4">
             <CustomerCombobox value={userId} onChange={setValue} />
 
+            <div className="flex w-full">
+              <RegisterForToday userId={userId}>
+                <Button variant={"secondary"}>Register for today</Button>
+              </RegisterForToday>
+            </div>
+
             {userId ? <MockGenerateQRCode uid={userId} /> : null}
           </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>
   );
+}
+
+function RegisterForToday(props: {
+  userId: string;
+  children: React.ReactNode;
+}) {
+  const register = useMutation(api.register.debugRegisterForToday);
+
+  const handleClick = async () => {
+    if (!props.userId) {
+      toast.error("Please select a customer first");
+      return;
+    }
+    try {
+      const result = await register({ userId: props.userId });
+      toast.info(result.message);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  return <Slot onClick={handleClick}>{props.children}</Slot>;
 }
 
 function MockGenerateQRCode({ uid }: { uid: string }) {

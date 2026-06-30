@@ -815,7 +815,7 @@ function PlanTypeToggle({
 }
 
 const map = {
-  paid: "text-[oklch(0.44_0.3_264.05)]",
+  paid: "text-(--theme-color-blue)",
   free: "text-foreground",
   none: "",
   "--": "destructive",
@@ -831,7 +831,7 @@ function PaymentBadge(props: {
   return (
     <span
       className={cn("capitalize", map[_kind], {
-        "text-purple-800": hasReservation,
+        "text-(--theme-color-purple)": hasReservation,
       })}
     >
       {hasReservation ? "Subscriber" : (_kind ?? "--")}

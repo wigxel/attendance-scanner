@@ -60,7 +60,7 @@ export const usePaymentHandler = () => {
       }
 
       httpClient.setAuth(token);
-      await httpClient.mutation(api.bookings.confirmBooking, {
+      await httpClient.mutation(api.bookings.systemActionConfirmBooking, {
         bookingId: bookingIdToConfirm,
       });
 

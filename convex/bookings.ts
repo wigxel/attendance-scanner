@@ -14,6 +14,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { readId } from "./myFunctions";
+import { updateTodaysRegisterForSubscriber } from "./register_common";
 import {
   assignSeats,
   getAvailableSeatsForDay,
@@ -523,7 +524,7 @@ export const getUserPendingBookings = query({
   },
 });
 
-export const confirmBooking = mutation({
+export const systemActionConfirmBooking = mutation({
   /**
    * Confirms a booking and updates bookedSeats status.
    *
@@ -539,8 +540,6 @@ export const confirmBooking = mutation({
     bookingId: v.id("bookings"),
   },
   handler: async (ctx, args) => {
-    await requirePrivilege(ctx, "booking:update");
-
     const booking = await ctx.db.get(args.bookingId);
     if (!booking) throw new ConvexError("Booking not found");
 
@@ -569,6 +568,20 @@ export const confirmBooking = mutation({
         status: "confirmed",
       });
     }
+
+    const { ownerTicketId } = await ctx.runMutation(
+      api.bookings.generateTickets,
+      {
+        bookingId: args.bookingId,
+      },
+    );
+
+    await updateTodaysRegisterForSubscriber(ctx, {
+      actorId: "system",
+      userId: booking.userId,
+      ticketId: ownerTicketId,
+      booking,
+    });
 
     return {
       bookingId: args.bookingId,
@@ -939,6 +952,7 @@ export const generateTickets = mutation({
   args: { bookingId: v.id("bookings") },
   handler: async (ctx, args) => {
     const booking = await ctx.db.get(args.bookingId);
+
     if (booking?.status !== "confirmed") {
       throw new ConvexError("Booking not found or not confirmed");
     }
@@ -949,11 +963,23 @@ export const generateTickets = mutation({
       .withIndex("by_booking", (q) => q.eq("bookingId", args.bookingId))
       .collect();
 
-    if (existingTickets.length > 0) return "ticket already exists";
+    if (existingTickets.length > 0) {
+      const owner =
+        existingTickets.find((t) => t.holderUserId === booking.userId) ??
+        existingTickets[0];
+      return {
+        ownerTicketId: owner._id,
+        guestTicketIds: existingTickets
+          .filter((t) => t._id !== owner._id)
+          .map((t) => t._id),
+      };
+    }
 
-    // create a ticket and seat the seat as unassigned
+    const ticketIds: Id<"tickets">[] = [];
+
+    // create a ticket and set the seat as unassigned
     if (booking.seatIds.length === 0) {
-      await ctx.db.insert("tickets", {
+      const id = await ctx.db.insert("tickets", {
         bookingId: booking._id,
         seatId: "unassigned",
         holderUserId: booking.userId,
@@ -961,7 +987,7 @@ export const generateTickets = mutation({
         claimedAt: Date.now(),
       });
 
-      return "create a ticket and seat as unassigned";
+      return { ownerTicketId: id, guestTicketIds: [] };
     }
 
     // create a ticket for each seat
@@ -971,14 +997,18 @@ export const generateTickets = mutation({
       // automatically assign the FIRST seat to the purchaser
       const isFirstSeat = i === 0;
 
-      await ctx.db.insert("tickets", {
+      const id = await ctx.db.insert("tickets", {
         bookingId: booking._id,
         seatId: seat,
         holderUserId: isFirstSeat ? booking.userId : undefined,
         status: isFirstSeat ? "claimed" : "reserved",
         claimedAt: isFirstSeat ? Date.now() : undefined,
       });
+
+      ticketIds.push(id);
     }
+
+    return { ownerTicketId: ticketIds[0], guestTicketIds: ticketIds.slice(1) };
   },
 });
 
@@ -1021,7 +1051,9 @@ export const claimTicket = mutation({
   handler: async (ctx, args) => {
     const profileId = await readId(ctx);
 
-    if (!profileId) throw new ConvexError("Unauthorized");
+    if (!profileId) {
+      throw new ConvexError("Unauthorized");
+    }
 
     const ticket = await ctx.db.get(args.ticketId);
     if (!ticket) throw new ConvexError("Ticket not found");
@@ -1043,6 +1075,16 @@ export const claimTicket = mutation({
       status: "claimed",
       claimedAt: Date.now(),
     });
+
+    const booking = await ctx.db.get(ticket.bookingId);
+    if (booking) {
+      await updateTodaysRegisterForSubscriber(ctx, {
+        actorId: profileId,
+        userId: profileId,
+        ticketId: args.ticketId,
+        booking,
+      });
+    }
   },
 });
 
@@ -1240,7 +1282,22 @@ export const createManualBooking = mutation({
       status: "confirmed",
     });
 
-    await ctx.runMutation(api.bookings.generateTickets, { bookingId });
+    const { ownerTicketId } = await ctx.runMutation(
+      api.bookings.generateTickets,
+      {
+        bookingId,
+      },
+    );
+
+    const createdBooking = await ctx.db.get(bookingId);
+    if (createdBooking) {
+      await updateTodaysRegisterForSubscriber(ctx, {
+        actorId: profileId,
+        userId,
+        ticketId: ownerTicketId,
+        booking: createdBooking,
+      });
+    }
 
     return bookingId;
   },

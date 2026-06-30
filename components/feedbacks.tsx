@@ -71,7 +71,7 @@ type Suggestion = Doc<"featureRequest"> & { voteCount: number };
 const STATUS_COLORS = {
   open: "text-foreground",
   approved: "text-green-500",
-  completed: "text-violet-500",
+  completed: "text-(--theme-color-purple)",
   rejected: "text-red-500",
 } as const;
 

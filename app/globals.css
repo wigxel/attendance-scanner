@@ -83,6 +83,9 @@
   --chart-5: oklch(0.769 0.188 70.08);
 
   --scanline-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAGUlEQVR4AbXIIQEAAACDMPqX/gOgmRzYijj+agT8kW3HnQAAAABJRU5ErkJggg==);
+
+  --theme-color-purple: var(--color-purple-800);
+  --theme-color-blue: var(--color-primary);
 }
 
 .dark {
@@ -121,6 +124,9 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 
   --scanline-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAGklEQVR4Aa3IIQEAAADCsPcvDddoJgcjuocKFosT7bLfmPAAAAAASUVORK5CYII=);
+
+  --theme-color-purple: var(--color-purple-300);
+  --theme-color-blue: var(--color-blue-500);
 }
 
 @layer base {

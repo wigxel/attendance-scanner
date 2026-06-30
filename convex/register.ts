@@ -3,9 +3,13 @@ import { endOfDay, format, startOfDay, subDays } from "date-fns";
 import { Effect, pipe } from "effect";
 import { isNullable } from "effect/Predicate";
 import { O } from "../lib/fp.helpers";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, mutation } from "./_generated/server";
+import { requirePrivilege } from "./acl";
+import { visitsAggregate } from "./customers";
+import { readId } from "./myFunctions";
+import { isRegisteredToday } from "./register_common";
 import { PlanImpl } from "./shared";
 
 export const saveCount = internalMutation(async ({ db }) => {
@@ -20,11 +24,10 @@ export const saveCount = internalMutation(async ({ db }) => {
 
   const count = await db
     .query("daily_register")
-    .filter((q) =>
-      q.and(
-        q.gte(q.field("timestamp"), startOfYesterday.toISOString()),
-        q.lte(q.field("timestamp"), endOfYesterday.toISOString()),
-      ),
+    .withIndex("by_timestamp", (q) =>
+      q
+        .gte("timestamp", startOfYesterday.toISOString())
+        .lte("timestamp", endOfYesterday.toISOString()),
     )
     .collect();
 
@@ -182,5 +185,56 @@ export const updateTodaysRegisterAccess = mutation({
     }
 
     return "success" as const;
+  },
+});
+
+export const deleteRegisterRecord = internalMutation({
+  args: { registerId: v.id("daily_register") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.registerId);
+  },
+});
+
+export const debugRegisterForToday = mutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const scannerId = await readId(ctx);
+    if (!scannerId) throw new ConvexError("User not authenticated");
+
+    await requirePrivilege(ctx, "attendance:checkin");
+
+    const customer = await ctx.runQuery(api.myFunctions.getUserById, {
+      userId: args.userId,
+    });
+    if (!customer) throw new ConvexError("Customer profile not found.");
+
+    if (await isRegisteredToday(ctx, args.userId)) {
+      throw new ConvexError("Customer already registered for today.");
+    }
+
+    const id = await ctx.db.insert("daily_register", {
+      userId: args.userId,
+      device: { name: "Debug", visitorId: "debug", browser: "debug" },
+      source: "web" as const,
+      admitted_by: scannerId,
+      timestamp: new Date().toISOString(),
+      access: { kind: "free" },
+      method: "qr" as const,
+    });
+
+    const entry = await ctx.db.get(id);
+    if (entry) await visitsAggregate.insert(ctx, entry);
+
+    await ctx.scheduler.runAfter(
+      10 * 60 * 1000,
+      internal.register.deleteRegisterRecord,
+      { registerId: id },
+    );
+
+    return {
+      success: true,
+      message:
+        "Registered for today. This record will auto-delete in 10 minutes.",
+    };
   },
 });

@@ -55,11 +55,12 @@ export const PaymentService = {
   ) {
     return await httpClient.mutation(api.bookings.createBooking, bookingArgs);
   },
+
   async confirmBooking(
     httpClient: ConvexHttpClient,
     bookingId: Id<"bookings">,
   ) {
-    return await httpClient.mutation(api.bookings.confirmBooking, {
+    return await httpClient.mutation(api.bookings.systemActionConfirmBooking, {
       bookingId,
     });
   },

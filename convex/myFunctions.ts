@@ -156,14 +156,10 @@ export const countAttendance = query({
     end: v.string(), // iso timestamp
   },
   handler: async (ctx, args) => {
-    // Query attendance records in the date range
     const count = await ctx.db
       .query("daily_register")
-      .filter((q) =>
-        q.and(
-          q.gte(q.field("timestamp"), args.start),
-          q.lte(q.field("timestamp"), args.end),
-        ),
+      .withIndex("by_timestamp", (q) =>
+        q.gte("timestamp", args.start).lte("timestamp", args.end),
       )
       .collect();
 
@@ -178,14 +174,14 @@ export const getAttendanceByMonth = query({
     end: v.string(), // iso timestamp
   },
   handler: async (ctx, args) => {
-    if (!args.userId) return [];
+    const userId = args.userId;
+    if (!userId) return [];
 
-    // Query attendance records in the date range
     return await ctx.db
       .query("daily_register")
+      .withIndex("user", (q) => q.eq("userId", userId))
       .filter((q) =>
         q.and(
-          q.eq(q.field("userId"), args.userId),
           q.gte(q.field("timestamp"), args.start),
           q.lte(q.field("timestamp"), args.end),
         ),
@@ -325,11 +321,8 @@ export const getDailyRegister = query({
 
     const registers = await ctx.db
       .query("daily_register")
-      .filter((q) =>
-        q.and(
-          q.gte(q.field("timestamp"), args.start),
-          q.lte(q.field("timestamp"), args.end),
-        ),
+      .withIndex("by_timestamp", (q) =>
+        q.gte("timestamp", args.start).lte("timestamp", args.end),
       )
       .order("desc")
       .collect();
@@ -345,14 +338,14 @@ export const getDailyRegister = query({
  */
 export async function readId(
   ctx: GenericQueryCtx<DataModel>,
-): Promise<string | null> {
+): Promise<Id<"users"> | null> {
   const identity = await ctx.auth.getUserIdentity();
 
   const userId = identity?.profile_id ?? null;
 
   if (userId == null) return null;
 
-  return String(userId);
+  return String(userId) as Id<"users">;
 }
 
 export const updateUser = action({
@@ -431,7 +424,7 @@ export const updateProfile = internalMutation({
   },
 });
 
-//function to submit a new feature request
+// function to submit a new feature request
 export const submitFeatureRequest = mutation({
   args: {
     title: v.string(),
@@ -446,7 +439,7 @@ export const submitFeatureRequest = mutation({
     }
 
     await ctx.db.insert("featureRequest", {
-      userId: userId as Id<"profile">,
+      userId: userId as Id<"users">,
       title: args.title,
       description: args.description,
       status: "open",
@@ -454,7 +447,7 @@ export const submitFeatureRequest = mutation({
   },
 });
 
-//function to get user stats
+// function to get user stats
 export const getUserStats = query({
   args: {
     userId: v.string(),

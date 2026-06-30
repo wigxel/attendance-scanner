@@ -15,6 +15,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { useFlags } from "@/services/flagsmith";
 import { convex } from "./ConvexClientProvider";
+import { FlagCond } from "./flag-cond";
 import { DebugProfile } from "./forms/debug-profile";
 import { If } from "./if";
 import { Card } from "./ui/card";
@@ -204,11 +205,13 @@ export function TakeAttendance() {
         <CustomerScanFeature />
       ) : (
         <div className="flex justify-end px-4">
-          <DebugProfile>
-            <Button variant={"outline"} size="lg">
-              <Bug />
-            </Button>
-          </DebugProfile>
+          <FlagCond flags={["admin_debug_profiles"]}>
+            <DebugProfile>
+              <Button variant={"outline"} size="lg">
+                <Bug />
+              </Button>
+            </DebugProfile>
+          </FlagCond>
         </div>
       )}
     </Card>
@@ -226,11 +229,13 @@ function CustomerScanFeature() {
         </Button>
       </Link>
 
-      <DebugProfile>
-        <Button variant={"outline"} size="icon">
-          <Bug />
-        </Button>
-      </DebugProfile>
+      <FlagCond flags={["admin_debug_profiles"]}>
+        <DebugProfile>
+          <Button variant={"outline"} size="icon">
+            <Bug />
+          </Button>
+        </DebugProfile>
+      </FlagCond>
     </div>
   );
 }
