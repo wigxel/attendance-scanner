@@ -193,7 +193,7 @@
 }
 
 .voxx-prose .shiki {
-  background-color: var(--shiki-light-bg) !important;
+  background-color: var(--shiki-light-bg);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -203,7 +203,7 @@
   }
 
   .voxx-prose .shiki {
-    background-color: var(--shiki-dark-bg) !important;
+    background-color: var(--shiki-dark-bg);
   }
 }
 
@@ -213,7 +213,7 @@
 }
 
 .dark .voxx-prose .shiki {
-  background-color: var(--shiki-dark-bg) !important;
+  background-color: var(--shiki-dark-bg);
 }
 
 .voxx-toc {

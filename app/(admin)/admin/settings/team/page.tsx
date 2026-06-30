@@ -1,5 +1,5 @@
-import { RoleHas } from "@/components/RoleHas";
 import { AdminUsersTable } from "@/components/admin/dialogs/AdminUsersTable";
+import { RoleHas } from "@/components/RoleHas";
 
 export default function TeamSettingsPage() {
   return (

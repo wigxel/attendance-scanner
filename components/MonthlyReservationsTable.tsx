@@ -10,9 +10,9 @@ import {
   DownloadIcon,
   Filter,
 } from "lucide-react";
-import { AppSpinner } from "@/components/loader";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AppSpinner } from "@/components/loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,8 +36,8 @@ import { cn } from "@/lib/utils";
 import { AttendanceDrawer } from "./AttendanceDrawer";
 import { AppDataTable, AppTableActions } from "./DataTable";
 import { DeleteBookingDialog } from "./DeleteBookingDialog";
-import { RoleHasCSR } from "./RoleHasCSR";
 import { EmptyStateContent, EmptyStateTitle } from "./empty-state";
+import { RoleHasCSR } from "./RoleHasCSR";
 import { Card } from "./ui/card";
 
 const formatAmount = (amount: number) => currencyFormatter.format(amount / 100);

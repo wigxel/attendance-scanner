@@ -6,13 +6,12 @@ import { motion as m } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
 import React from "react";
 import { AppLoader } from "@/components/loader";
-import { APP_URL, isDevelopment } from "@/config/constants";
+import { APP_URL } from "@/config/constants";
 import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
-import { safeObj, safeStr } from "@/lib/data.helpers";
+import { safeStr } from "@/lib/data.helpers";
 import { cn } from "@/lib/utils";
-import { If } from "./if";
 import { ScanTimeCodec } from "./TakeAttendance";
 
 export function useGetProfileHash(profile?: { id: string } | null) {

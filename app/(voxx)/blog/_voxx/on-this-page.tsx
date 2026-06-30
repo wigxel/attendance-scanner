@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import type { TocItem } from "@prudentbird/voxx-core";
+import { useEffect, useRef, useState } from "react";
 
 type TrackSvg = { path: string; width: number; height: number };
 

@@ -1,4 +1,4 @@
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import { internalMutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 
@@ -47,7 +47,7 @@ export const list = query({
       ),
     );
     const actorMap = Object.fromEntries(
-      actors.filter(Boolean).map((a) => [a!.id, a]),
+      actors.filter(Boolean).map((a) => [a?.id, a]),
     );
 
     const ownerIds = [
@@ -75,7 +75,7 @@ export const list = query({
       ),
     );
     const ownerMap = Object.fromEntries(
-      owners.filter(Boolean).map((a) => [a!.id, a]),
+      owners.filter(Boolean).map((a) => [a?.id, a]),
     );
 
     return logs.map((log) => {

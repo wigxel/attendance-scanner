@@ -4,8 +4,8 @@ import { format, isSameYear } from "date-fns";
 import { Globe, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Area, AreaChart } from "recharts";
-import type { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { useCustomer } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
 import {

@@ -3,7 +3,6 @@ import { components, internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import type { Doc } from "./components/acl/_generated/dataModel";
 import { readId } from "./myFunctions";
-import { permissionDeletedAudit } from "./audits/entities";
 
 export const listPermissions = query({
   args: {},

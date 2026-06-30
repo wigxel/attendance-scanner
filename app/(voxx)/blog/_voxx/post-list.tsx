@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { Post, VoxxConfig } from "@prudentbird/voxx-core";
 import { formatDate } from "@prudentbird/voxx-core";
+import Link from "next/link";
 
 export function PostList({
   posts,

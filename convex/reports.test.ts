@@ -288,7 +288,7 @@ describe("reports getDaily", () => {
     const future = new Date(now.getTime() + 86400000).toISOString();
 
     await t.run(async (ctx) => {
-      const bookingId = await ctx.db.insert("bookings", {
+      const _bookingId = await ctx.db.insert("bookings", {
         userId: "user-paid",
         seatIds: [],
         duration: 7,

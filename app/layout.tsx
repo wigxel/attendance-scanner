@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Suspense } from "react";
 
 import { ClerkProvider } from "@clerk/nextjs";
+import { Suspense } from "react";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { FlagsmithProvider } from "@/components/FlagsmithProvider";
 import { QueryProvider } from "@/components/react-query";

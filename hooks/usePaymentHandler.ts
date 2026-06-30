@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CONFIG } from "@/app/reserve/constants";
 import { setBookingId, useBookingStore } from "@/app/reserve/store";
-import { api, internal } from "@/convex/_generated/api";
+import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { formatDateToLocalISO, loadPaystackScript } from "@/lib/utils";

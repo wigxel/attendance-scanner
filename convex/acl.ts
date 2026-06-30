@@ -4,12 +4,12 @@ import { api, components, internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { action, mutation, query } from "./_generated/server";
+import { identityDeletedAudit, roleDeletedAudit } from "./audits/entities";
 import { findUserByEmail, updateMetadata } from "./clerk";
 import type { IdentityWithRole } from "./components/acl/identities";
 import type { ACLIdentity, ACLRole } from "./components/acl/interfaces";
 import type { Result } from "./components/acl/utils";
 import { readId } from "./myFunctions";
-import { roleDeletedAudit, identityDeletedAudit } from "./audits/entities";
 
 export async function requirePrivilege(
   ctx: QueryCtx | MutationCtx,

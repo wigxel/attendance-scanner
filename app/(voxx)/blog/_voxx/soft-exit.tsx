@@ -1,5 +1,5 @@
 "use client";
-import { debounce, throttle } from "lodash-es";
+import { debounce } from "lodash-es";
 import React from "react";
 
 export function SoftExit({ children, ...props }: React.ComponentProps<"div">) {

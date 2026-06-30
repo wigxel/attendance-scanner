@@ -4,9 +4,9 @@ import { useFlags } from "@flagsmith/flagsmith/react";
 import { useMutation } from "convex/react";
 import { isNullable } from "effect/Predicate";
 import { CheckCircle2, InfoIcon, LogOut, Star } from "lucide-react";
-import { AppSpinner } from "@/components/loader";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AppSpinner } from "@/components/loader";
 import { api } from "@/convex/_generated/api";
 import {
   formatDuration,

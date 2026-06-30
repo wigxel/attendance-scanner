@@ -7,15 +7,15 @@ import { isNullable } from "effect/Predicate";
 import { z } from "zod";
 import { logger } from "../config/logger";
 import { safeStr } from "../lib/data.helpers";
+import { api, components, internal } from "./_generated/api";
+import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import { action, internalMutation, mutation, query } from "./_generated/server";
+import { requirePrivilege } from "./acl";
 import {
   occupationDeletedAudit,
   planDeletedAudit,
   suggestionDeletedAudit,
 } from "./audits/entities";
-import { api, components, internal } from "./_generated/api";
-import type { DataModel, Doc, Id } from "./_generated/dataModel";
-import { action, internalMutation, mutation, query } from "./_generated/server";
-import { requirePrivilege } from "./acl";
 import { setExternalId, updateClerkUser } from "./clerk";
 
 import {

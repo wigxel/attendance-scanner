@@ -1,9 +1,9 @@
 "use client";
 import { useQuery } from "convex/react";
-import { AppSpinner } from "@/components/loader";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
+import { AppSpinner } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
