@@ -12,6 +12,7 @@ export const metricsDailyAttendance = query({
       .withIndex("by_date", (q) =>
         q.gte("date", args.start).lte("date", args.end),
       )
+      .order("asc")
       .collect();
 
     return metrics.map((metric) => ({
@@ -29,11 +30,8 @@ export const sumPaidAccess = query({
   handler: async (ctx, args) => {
     const registers = await ctx.db
       .query("daily_register")
-      .filter((q) =>
-        q.and(
-          q.gte(q.field("timestamp"), args.start),
-          q.lte(q.field("timestamp"), args.end),
-        ),
+      .withIndex("by_timestamp", (q) =>
+        q.gte("timestamp", args.start).lte("timestamp", args.end),
       )
       .collect();
 

@@ -51,11 +51,10 @@ export const getDaily = query({
 
     const registers = await ctx.db
       .query("daily_register")
-      .filter((q) =>
-        q.and(
-          q.gte(q.field("timestamp"), dayStart.toISOString()),
-          q.lte(q.field("timestamp"), dayEnd.toISOString()),
-        ),
+      .withIndex("by_timestamp", (q) =>
+        q
+          .gte("timestamp", dayStart.toISOString())
+          .lte("timestamp", dayEnd.toISOString()),
       )
       .collect();
 
