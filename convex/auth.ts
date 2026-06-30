@@ -1,3 +1,4 @@
+import { profileDeletedAudit, userDeletedAudit } from "./audits/entities";
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
@@ -214,7 +215,16 @@ export const deleteProfile = internalMutation({
     profileId: v.id("profile"),
   },
   handler: async (ctx, args) => {
-    return ctx.db.delete(args.profileId);
+    await ctx.db.delete(args.profileId);
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.audit.log,
+      profileDeletedAudit({
+        actorId: "system",
+        targetId: args.profileId,
+      }),
+    );
   },
 });
 
@@ -223,6 +233,15 @@ export const deleteUser = internalMutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    return ctx.db.delete(args.userId);
+    await ctx.db.delete(args.userId);
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.audit.log,
+      userDeletedAudit({
+        actorId: "system",
+        targetId: args.userId,
+      }),
+    );
   },
 });

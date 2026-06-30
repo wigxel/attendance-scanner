@@ -32,7 +32,7 @@ export default function SettingsPage() {
 
       <Tabs defaultValue="onboarding">
         <section className="flex min-h-[400px]">
-          <div className="flex w-full mx-auto bg-white p-1 items-start dark:bg-black rounded-lg gap-4">
+          <div className="flex w-full mx-auto bg-(--background) p-1 items-start rounded-lg gap-4">
             {/* Tabs List (Sidebar) */}
             <div className="w-96 p-4 sticky top-0">
               <TabsList className="flex flex-col gap-2 w-full bg-transparent p-0">

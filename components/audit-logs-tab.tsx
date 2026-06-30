@@ -1,12 +1,13 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import type { FunctionReference } from "convex/server";
 import { format } from "date-fns";
-import { Either } from "effect";
 import { isNullable } from "effect/Predicate";
 import { isEmpty } from "effect/String";
 import { ChevronDown, ScrollText, Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import useEvent from "react-use-event-hook";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -17,12 +18,8 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
-import {
-  bookingDeletedSchema,
-  formatMetadataParts,
-} from "@/lib/audit-metadata";
+import { AuditEntry, type AuditEntryField } from "@/lib/audit-entries";
 import { currencyFormatter } from "@/lib/currency.helpers";
-import { anomaly } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
 import {
   EmptyState,
@@ -38,45 +35,63 @@ type AuditLogEntry = Doc<"auditLog"> & {
   owner: Doc<"profile"> | null;
 };
 
-function parseMetadata(event_key: string, metadata?: string) {
-  const safe_parsed = Either.try(() => {
-    return bookingDeletedSchema.parse(JSON.parse(metadata || ""));
-  });
-
-  if (Either.isLeft(safe_parsed)) {
-    anomaly(new Error("[Audit] Error parsing metadata"), { metadata });
-    return [];
+function formatFieldPreview(field: AuditEntryField): string {
+  switch (field.kind) {
+    case "currency":
+      return currencyFormatter.format(field.value / 100);
+    case "duration":
+      return `${field.value} ${field.unit}`;
+    case "id":
+    case "string":
+      return String(field.value);
+    case "count":
+    case "number":
+      return String(field.value);
   }
-
-  return formatMetadataParts(safe_parsed.right).map((e, i) => ({
-    index: i,
-    value: e,
-  }));
 }
 
-function DetailsPreview({
-  eventKey: event_key,
-  metadata,
-}: {
-  eventKey: string;
-  metadata: string | undefined;
-}) {
-  const parts = parseMetadata(event_key, metadata);
+function DetailsPreview({ metadata }: { metadata: string | undefined }) {
+  let parsed: Record<string, unknown> | null = null;
+  try {
+    parsed = metadata ? JSON.parse(metadata) : null;
+  } catch {
+    parsed = null;
+  }
 
-  if (parts.length === 0) return null;
+  if (!parsed) return null;
+
+  const { fields } = AuditEntry.parse(parsed);
+
+  if (fields.length === 0) return null;
+
+  const preview = fields.filter((f) => f.preview).slice(0, 3);
 
   return (
     <span className="inline-flex items-center gap-1 text-sm text-muted-foreground truncate">
-      {parts.map((part) => (
-        <span key={part.index}>
-          {part.index > 0 && (
-            <span className="mx-0.5 text-muted-foreground/40">•</span>
-          )}
-          {part.value}
+      {preview.map((f, i) => (
+        <span key={f.label}>
+          {i > 0 && <span className="mx-0.5 text-muted-foreground/40">•</span>}
+          {formatFieldPreview(f)}
         </span>
       ))}
     </span>
   );
+}
+
+function formatFieldValue(field: AuditEntryField): string {
+  switch (field.kind) {
+    case "currency":
+      return currencyFormatter.format(field.value / 100);
+    case "duration":
+      return `${field.value} ${field.unit}`;
+    case "id":
+    case "string":
+      return String(field.value);
+    case "count":
+      return `${field.value}`;
+    case "number":
+      return String(field.value);
+  }
 }
 
 function MetadataCard({
@@ -95,60 +110,17 @@ function MetadataCard({
 
   if (!parsed) return null;
 
-  const fields: { label: string; value: string }[] = [];
+  const { fields } = AuditEntry.parse(parsed, { owner: owner ?? undefined });
 
-  if (parsed.amount !== undefined) {
-    const amount =
-      typeof parsed.amount === "number"
-        ? currencyFormatter.format(parsed.amount / 100)
-        : String(parsed.amount);
-    fields.push({ label: "Amount", value: amount });
-  }
-
-  if (parsed.duration !== undefined) {
-    fields.push({
-      label: "Duration",
-      value: `${parsed.duration} ${parsed.durationType ?? "days"}`,
-    });
-  }
-
-  if (parsed.durationType !== undefined && parsed.duration === undefined) {
-    fields.push({ label: "Duration Type", value: String(parsed.durationType) });
-  }
-
-  if (parsed.seatIds !== undefined) {
-    const seatCount = Array.isArray(parsed.seatIds) ? parsed.seatIds.length : 1;
-    fields.push({ label: "Seats", value: String(seatCount) });
-  }
-
-  if (parsed.ticketCount !== undefined) {
-    fields.push({ label: "Ticket Count", value: String(parsed.ticketCount) });
-  }
-
-  if (parsed.ownerUserId !== undefined) {
-    const ownerName = owner
-      ? `${owner.firstName} ${owner.lastName}`
-      : String(parsed.ownerUserId);
-    fields.push({ label: "Owner", value: ownerName });
-  }
-
-  if (parsed.status !== undefined) {
-    fields.push({
-      label: "Previous Status",
-      value: String(parsed.status),
-    });
-  }
+  if (fields.length === 0) return null;
 
   return (
     <div className="py-2">
-      <p className="text-xs font-semibold text-muted-foreground mb-2">
-        Booking Details
-      </p>
       <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
         {fields.map((f) => (
           <div key={f.label} className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">{f.label}:</span>
-            <span className="font-medium">{f.value}</span>
+            <span className="font-medium">{formatFieldValue(f)}</span>
           </div>
         ))}
       </div>
@@ -156,8 +128,15 @@ function MetadataCard({
   );
 }
 
+type QueryData<T> =
+  // biome-ignore lint/suspicious/noExplicitAny: Needed for inference
+  T extends FunctionReference<any, any, any, infer Response, unknown>
+    ? Response
+    : never;
+
+type AuditLogs = QueryData<typeof api.audit.list>[0];
+
 export function AuditLogsTab() {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
 
@@ -173,10 +152,6 @@ export function AuditLogsTab() {
       label: action.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
     }));
   }, [data]);
-
-  const handleToggle = (id: string) => {
-    setExpandedId((prev) => (prev === id ? null : id));
-  };
 
   const filtered = useMemo(() => {
     if (!data) return [];
@@ -262,8 +237,8 @@ export function AuditLogsTab() {
         </EmptyStateContent>
 
         <EmptyStateConceal>
-          <div className="rounded-md border">
-            <div
+          <ul className="rounded-md border">
+            <li
               className="grid gap-0"
               style={{
                 gridTemplateColumns: "1fr minmax(150px, 1fr) 1fr 1.5fr",
@@ -281,91 +256,85 @@ export function AuditLogsTab() {
               <div className="px-4 py-2 text-xs font-medium text-muted-foreground border-b">
                 Details
               </div>
-            </div>
+            </li>
 
             {filtered.map((entry) => {
-              const isExpanded = expandedId === entry._id;
-              return (
-                <div
-                  key={entry._id}
-                  className="grid gap-0"
-                  style={{
-                    gridTemplateColumns: "1fr minmax(150px, 1fr) 1fr 1.5fr",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(entry._id)}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-3 text-sm text-left border-b hover:bg-muted/50 transition-colors",
-                      isExpanded && "bg-muted/30",
-                    )}
-                  >
-                    <ChevronDown
-                      className={cn(
-                        "h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform",
-                        !isExpanded && "-rotate-90",
-                      )}
-                    />
-                    <span className="font-mono text-sm text-foreground">
-                      {format(entry.timestamp, "MMM dd HH:mm")}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(entry._id)}
-                    className={cn(
-                      "flex items-center px-4 py-3 text-sm border-b hover:bg-muted/50 transition-colors",
-                      isExpanded && "bg-muted/30",
-                    )}
-                  >
-                    <span className="font-mono text-sm text-foreground">
-                      {entry.action}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(entry._id)}
-                    className={cn(
-                      "flex items-center px-4 py-3 text-sm border-b hover:bg-muted/50 transition-colors",
-                      isExpanded && "bg-muted/30",
-                    )}
-                  >
-                    {entry.actor
-                      ? `${entry.actor.firstName} ${entry.actor.lastName}`
-                      : "—"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(entry._id)}
-                    className={cn(
-                      "flex items-center px-4 py-3 text-sm border-b hover:bg-muted/50 transition-colors",
-                      isExpanded && "bg-muted/30",
-                    )}
-                  >
-                    <DetailsPreview
-                      eventKey={entry.action}
-                      metadata={entry.metadata}
-                    />
-                  </button>
-
-                  {isExpanded && (
-                    <div className="col-span-4 px-4 pb-4 border-b bg-muted/20">
-                      <MetadataCard
-                        metadata={entry.metadata}
-                        owner={entry.owner}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
+              return <AuditLogEntry key={entry._id} entry={entry} />;
             })}
-          </div>
+          </ul>
         </EmptyStateConceal>
       </EmptyState>
     </div>
+  );
+}
+
+function AuditLogEntry({ entry }: { entry: AuditLogs }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggle = useEvent(() => setIsExpanded((e) => !e));
+
+  return (
+    <li
+      className="grid gap-0 text-start text-sm border-b"
+      style={{
+        gridTemplateColumns: "1fr minmax(200px, 1.4fr) 1fr 1.5fr",
+      }}
+      onClick={() => toggle()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") toggle();
+      }}
+    >
+      <div
+        className={cn(
+          "flex items-center gap-2 px-4 py-3",
+          isExpanded && "bg-muted/30",
+        )}
+      >
+        <ChevronDown
+          className={cn(
+            "h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform",
+            !isExpanded && "-rotate-90",
+          )}
+        />
+        <span className="font-mono text-foreground">
+          {format(entry.timestamp, "MMM dd HH:mm")}
+        </span>
+      </div>
+
+      <div
+        className={cn(
+          "flex items-center px-4 py-3",
+          isExpanded && "bg-muted/30",
+        )}
+      >
+        <span className="font-mono text-foreground text-xs">
+          {entry.action}
+        </span>
+      </div>
+
+      <div
+        className={cn(
+          "flex items-center px-4 py-3",
+          isExpanded && "bg-muted/30",
+        )}
+      >
+        {entry.actor ? `${entry.actor.firstName}` : "—"}
+      </div>
+
+      <div
+        className={cn(
+          "flex items-center px-4 py-3",
+          isExpanded && "bg-muted/30",
+        )}
+      >
+        <DetailsPreview metadata={entry.metadata} />
+      </div>
+
+      {isExpanded && (
+        <div className="col-span-4 px-4 pb-4 border-b bg-muted/20">
+          <MetadataCard metadata={entry.metadata} owner={entry.owner} />
+        </div>
+      )}
+    </li>
   );
 }

@@ -8,6 +8,7 @@ import {
   startOfMonth,
   subWeeks,
 } from "date-fns";
+import { bookingDeletedAudit } from "./audits/entities";
 import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -742,12 +743,12 @@ export const deleteBooking = mutation({
 
     await ctx.db.delete(bookingId);
 
-    await ctx.scheduler.runAfter(0, internal.audit.log, {
-      action: "booking.deleted",
-      actorId: String(identity.profile_id),
-      targetId: bookingId,
-      targetType: "booking",
-      metadata: JSON.stringify({
+    await ctx.scheduler.runAfter(
+      0,
+      internal.audit.log,
+      bookingDeletedAudit({
+        actorId: String(identity.profile_id),
+        targetId: bookingId,
         ownerUserId: booking.userId,
         seatIds: booking.seatIds,
         amount: booking.amount,
@@ -756,7 +757,7 @@ export const deleteBooking = mutation({
         status: booking.status,
         ticketCount: ticketIds.length,
       }),
-    });
+    );
 
     return { success: true };
   },

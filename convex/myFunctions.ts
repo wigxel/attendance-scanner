@@ -7,7 +7,12 @@ import { isNullable } from "effect/Predicate";
 import { z } from "zod";
 import { logger } from "../config/logger";
 import { safeStr } from "../lib/data.helpers";
-import { api, components } from "./_generated/api";
+import {
+  occupationDeletedAudit,
+  planDeletedAudit,
+  suggestionDeletedAudit,
+} from "./audits/entities";
+import { api, components, internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
@@ -741,7 +746,21 @@ export const deleteOccupation = mutation({
       throw new Error("Occupation not found");
     }
 
+    const actorId = await readId(ctx);
+    if (!actorId) throw new Error("Authentication required.");
+
     await ctx.db.delete(args.id);
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.audit.log,
+      occupationDeletedAudit({
+        actorId,
+        targetId: args.id,
+        name: occupation.name,
+      }),
+    );
+
     return args.id;
   },
 });
@@ -840,6 +859,9 @@ export const deleteSuggestion = mutation({
     const suggestion = await ctx.db.get(args.suggestionId);
     if (!suggestion) throw new ConvexError("Suggestion not found");
 
+    const actorId = await readId(ctx);
+    if (!actorId) throw new Error("Authentication required.");
+
     const votes = await ctx.db
       .query("featureVotes")
       .withIndex("request", (q) => q.eq("entityId", args.suggestionId))
@@ -851,6 +873,17 @@ export const deleteSuggestion = mutation({
     }
 
     await ctx.db.delete(args.suggestionId);
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.audit.log,
+      suggestionDeletedAudit({
+        actorId,
+        targetId: args.suggestionId,
+        title: suggestion.title,
+        voteCount: votes.length,
+      }),
+    );
   },
 });
 
@@ -1027,13 +1060,29 @@ export const deleteAccessPlan = mutation({
     id: v.id("accessPlans"),
   },
   handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "plans:manage");
+
     const existing = await ctx.db.get(args.id);
 
     if (!existing) {
       throw new Error("Plan not found");
     }
 
+    const actorId = await readId(ctx);
+    if (!actorId) throw new Error("Authentication required.");
+
     await ctx.db.delete(args.id);
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.audit.log,
+      planDeletedAudit({
+        actorId,
+        targetId: args.id,
+        key: existing.key,
+        name: existing.name,
+      }),
+    );
 
     return args.id;
   },

@@ -1,8 +1,9 @@
 import { v } from "convex/values";
-import { components } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import type { Doc } from "./components/acl/_generated/dataModel";
 import { readId } from "./myFunctions";
+import { permissionDeletedAudit } from "./audits/entities";
 
 export const listPermissions = query({
   args: {},
@@ -79,12 +80,21 @@ export const deletePermission = mutation({
   handler: async (ctx, args) => {
     const callerId = await readId(ctx);
     if (!callerId) return { success: false, error: "Authentication required." };
-    return await ctx.runMutation(
+    const result = await ctx.runMutation(
       components.wigxel_acl.permissions.deletePermission,
       {
         callerId,
         permissionId: args.permissionId,
       },
     );
+    if (result.success) {
+      await ctx.scheduler.runAfter(0, internal.audit.log, {
+        action: "permission.deleted",
+        actorId: callerId,
+        targetId: args.permissionId,
+        targetType: "permission",
+      });
+    }
+    return result;
   },
 });

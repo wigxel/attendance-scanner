@@ -3,7 +3,7 @@ import { ConvexError } from "convex/values";
 import { endOfDay, isWithinInterval, parseISO, startOfDay } from "date-fns";
 import { api, internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
-import { subscriberUpdateAudit } from "./booking_audit";
+import { subscriberUpdateAudit } from "./audits/entities";
 import { visitsAggregate } from "./customers";
 import { type AccessStruct, PlanImpl } from "./shared";
 

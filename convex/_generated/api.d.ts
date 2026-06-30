@@ -10,8 +10,8 @@
 
 import type * as acl from "../acl.js";
 import type * as audit from "../audit.js";
+import type * as audits_entities from "../audits/entities.js";
 import type * as auth from "../auth.js";
-import type * as booking_audit from "../booking_audit.js";
 import type * as bookings from "../bookings.js";
 import type * as clerk from "../clerk.js";
 import type * as config from "../config.js";
@@ -43,8 +43,8 @@ import type {
 declare const fullApi: ApiFromModules<{
   acl: typeof acl;
   audit: typeof audit;
+  "audits/entities": typeof audits_entities;
   auth: typeof auth;
-  booking_audit: typeof booking_audit;
   bookings: typeof bookings;
   clerk: typeof clerk;
   config: typeof config;

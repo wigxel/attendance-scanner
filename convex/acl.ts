@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { Prettify } from "../types";
-import { api, components } from "./_generated/api";
+import { api, components, internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { action, mutation, query } from "./_generated/server";
@@ -9,6 +9,7 @@ import type { IdentityWithRole } from "./components/acl/identities";
 import type { ACLIdentity, ACLRole } from "./components/acl/interfaces";
 import type { Result } from "./components/acl/utils";
 import { readId } from "./myFunctions";
+import { roleDeletedAudit, identityDeletedAudit } from "./audits/entities";
 
 export async function requirePrivilege(
   ctx: QueryCtx | MutationCtx,
@@ -176,10 +177,24 @@ export const deleteRole = mutation({
   handler: async (ctx, args) => {
     const callerId = await readId(ctx);
     if (!callerId) return { success: false, error: "Authentication required." };
-    return await ctx.runMutation(components.wigxel_acl.roles.deleteRole, {
-      callerId,
-      roleId: args.roleId,
-    });
+    const result = await ctx.runMutation(
+      components.wigxel_acl.roles.deleteRole,
+      {
+        callerId,
+        roleId: args.roleId,
+      },
+    );
+    if (result.success) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.audit.log,
+        roleDeletedAudit({
+          actorId: callerId,
+          targetId: args.roleId,
+        }),
+      );
+    }
+    return result;
   },
 });
 
@@ -307,13 +322,24 @@ export const deleteIdentity = mutation({
     const callerId = await readId(ctx);
     if (!callerId) return { success: false, error: "Authentication required." };
 
-    return await ctx.runMutation(
+    const result = await ctx.runMutation(
       components.wigxel_acl.identities.deleteIdentity,
       {
         callerId,
         identityId: args.identityId,
       },
     );
+    if (result.success) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.audit.log,
+        identityDeletedAudit({
+          actorId: callerId,
+          targetId: args.identityId,
+        }),
+      );
+    }
+    return result;
   },
 });
 
