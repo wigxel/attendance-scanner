@@ -15,6 +15,7 @@ export function useCustomer({ userId }: { userId: string }) {
 export function useProfile() {
   const { user, isSignedIn, isLoaded } = useUser();
   const profile = useQuery(api.myFunctions.getProfile);
+  const accountMeta = useQuery(api.myFunctions.getAccountMeta);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -40,8 +41,21 @@ export function useProfile() {
       profile.occupation === "None"
     ) {
       router.push("/onboarding");
+      return;
     }
-  }, [isSignedIn, user, profile, router, pathname]);
+
+    // New user whose webhook may or may not have fired: no profile exists yet.
+    // Once accountMeta has loaded and confirmed no profile, send to onboarding.
+    if (
+      isSignedIn &&
+      user &&
+      profile === null &&
+      accountMeta !== undefined &&
+      accountMeta?.profile === null
+    ) {
+      router.push("/onboarding");
+    }
+  }, [isSignedIn, user, profile, accountMeta, router, pathname]);
 
   return {
     isLoading: !isLoaded || (isSignedIn && profile === undefined),
@@ -53,11 +67,17 @@ export function useProfile() {
 
 export function useAuthId() {
   const { isSignedIn, isLoaded, user } = useUser();
+  const accountMeta = useQuery(api.myFunctions.getAccountMeta);
+
+  // Prefer Clerk's externalId (set by webhook), but fall back to the
+  // Convex user ID from getAccountMeta (email-based lookup) when
+  // externalId hasn't been set yet.
+  const id = user?.externalId ?? accountMeta?.user?._id ?? undefined;
 
   return {
     isAuthenticated: isSignedIn,
-    isLoading: !isLoaded,
-    id: user?.externalId,
+    isLoading: !isLoaded || (isSignedIn && id === undefined),
+    id,
   };
 }
 

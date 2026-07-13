@@ -63,9 +63,32 @@ export const createOrUpdateProfile = mutation({
         .unique();
 
     // Never use the clerk user for `profile`.`id` column
-    const new_id = String(identity?.profile_id).startsWith("user_")
-      ? await find_convex_user_id().then((e) => e?._id)
-      : (identity?.profile_id as string);
+    const profileId = identity?.profile_id
+      ? String(identity.profile_id)
+      : null;
+    const isClerkId = profileId?.startsWith("user_") ?? false;
+
+    let new_id: string | undefined;
+
+    if (isClerkId || !profileId) {
+      // profile_id is a Clerk user ID or not set yet — look up by email
+      const existingUser = await find_convex_user_id();
+      if (existingUser) {
+        new_id = existingUser._id;
+      } else {
+        // Webhook never created the user record — create it now
+        const user_id = await ctx.db.insert("users", {
+          email: args.email,
+          emailVerificationTime: Date.now(),
+          phone: args.phoneNumber,
+          isAnonymous: false,
+          name: `${args.firstName} ${args.lastName}`,
+        });
+        new_id = user_id;
+      }
+    } else {
+      new_id = profileId;
+    }
 
     if (!new_id) {
       throw new ConvexError("Error finding User unique id");
@@ -82,8 +105,16 @@ export const createOrUpdateProfile = mutation({
       .filter((q) => q.eq(q.field("id"), new_id))
       .first();
 
+    // Also check by email in case profile was created but id is stale
+    const existingEmailProfile = await ctx.db
+      .query("profile")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+
     const existing_record_id =
-      existingClerkProfile?._id || existingProfile?._id;
+      existingClerkProfile?._id ||
+      existingProfile?._id ||
+      existingEmailProfile?._id;
 
     if (existing_record_id) {
       // Update existing profile
@@ -100,7 +131,7 @@ export const createOrUpdateProfile = mutation({
     }
 
     // Create new profile
-    const profileId = await ctx.db.insert("profile", {
+    const newProfileId = await ctx.db.insert("profile", {
       id: String(new_id),
       firstName: args.firstName,
       lastName: args.lastName,
@@ -110,9 +141,10 @@ export const createOrUpdateProfile = mutation({
       role: "user",
     });
 
-    return profileId;
+    return newProfileId;
   },
 });
+
 
 // Helper to ensure user is authenticated and return user ID
 export const requireAuth = async (ctx: QueryCtx | MutationCtx) => {
