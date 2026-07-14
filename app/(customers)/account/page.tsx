@@ -1,5 +1,6 @@
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
+import { AuthChecker } from "@/components/auth-checker";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { RoleIs } from "@/components/RoleIs";
@@ -11,6 +12,8 @@ export default function Home() {
       <title>Customer Account | InSpace</title>
       <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />
       <div className="z-[2] relative">
+        <AuthChecker />
+
         <Header />
 
         <main className="px-4">

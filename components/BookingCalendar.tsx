@@ -22,7 +22,7 @@ import {
   ChevronRight,
   SlidersHorizontal,
 } from "lucide-react";
-import { BookingCalendarBox } from "@/app/account/active-bookings";
+import { BookingCalendarBox } from "@/app/(customers)/account/active-bookings";
 import {
   Select,
   SelectContent,

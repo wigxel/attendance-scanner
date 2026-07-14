@@ -1,9 +1,10 @@
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { api } from "@/convex/_generated/api";
+import { type AuthState, resolveAuthState } from "./auth.utils";
 
+/** @deprecated use useProfile hook */
 export function useCustomer({ userId }: { userId: string }) {
   const profile = useQuery(api.myFunctions.getUserById, {
     userId: userId ?? "--",
@@ -15,47 +16,6 @@ export function useCustomer({ userId }: { userId: string }) {
 export function useProfile() {
   const { user, isSignedIn, isLoaded } = useUser();
   const profile = useQuery(api.myFunctions.getProfile);
-  const accountMeta = useQuery(api.myFunctions.getAccountMeta);
-  const router = useRouter();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    console.assert(
-      pathname !== "/onboarding",
-      "Never use this hook useProfile in the onboarding screen",
-    );
-
-    if (pathname === "/onboarding") {
-      return;
-    }
-
-    if (isSignedIn && user && profile?.id?.startsWith("user_")) {
-      router.replace("/onboarding");
-      return;
-    }
-
-    if (
-      isSignedIn &&
-      user &&
-      profile?.occupation &&
-      profile.occupation === "None"
-    ) {
-      router.push("/onboarding");
-      return;
-    }
-
-    // New user whose webhook may or may not have fired: no profile exists yet.
-    // Once accountMeta has loaded and confirmed no profile, send to onboarding.
-    if (
-      isSignedIn &&
-      user &&
-      profile === null &&
-      accountMeta !== undefined &&
-      accountMeta?.profile === null
-    ) {
-      router.push("/onboarding");
-    }
-  }, [isSignedIn, user, profile, accountMeta, router, pathname]);
 
   return {
     isLoading: !isLoaded || (isSignedIn && profile === undefined),
@@ -67,17 +27,11 @@ export function useProfile() {
 
 export function useAuthId() {
   const { isSignedIn, isLoaded, user } = useUser();
-  const accountMeta = useQuery(api.myFunctions.getAccountMeta);
-
-  // Prefer Clerk's externalId (set by webhook), but fall back to the
-  // Convex user ID from getAccountMeta (email-based lookup) when
-  // externalId hasn't been set yet.
-  const id = user?.externalId ?? accountMeta?.user?._id ?? undefined;
 
   return {
     isAuthenticated: isSignedIn,
-    isLoading: !isLoaded || (isSignedIn && id === undefined),
-    id,
+    isLoading: !isLoaded,
+    id: user?.externalId,
   };
 }
 
@@ -90,4 +44,27 @@ export function useRequireAuth() {
   }
 
   return { isLoading: false, isAuthenticated: isSignedIn };
+}
+
+export function useAuthEvents(
+  params: { onChange: (event: AuthState) => void }
+) {
+  const clerkAuthState = useUser();
+  const accountMeta = useQuery(api.myFunctions.getAccountMeta);
+
+  const status = React.useMemo(() => {
+    if (!clerkAuthState.isLoaded) return null;
+
+    return resolveAuthState({
+      auth: clerkAuthState,
+      accountMeta,
+    });
+  }, [accountMeta, clerkAuthState]);
+
+  useEffect(() => {
+    if (!status) return;
+    params.onChange(status);
+  }, [status, params]);
+
+  return status;
 }
