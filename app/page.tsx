@@ -82,6 +82,7 @@ function ValidateConvexProfile() {
 
     // link convex and clerk accounts
     createAccountMutation.mutate({ clerkUser: user, profile: profile_info });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile_info, user, redirect]);
 
   if (createAccountMutation.isError) {

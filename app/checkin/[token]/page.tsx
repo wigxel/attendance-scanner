@@ -103,7 +103,7 @@ function TokenCheckInFlow() {
   // transition to checking-in
   useEffect(() => {
     if (status === "requires-auth" && isSignedIn && adminId) {
-      setStatus("checking-in");
+      setTimeout(() => setStatus("checking-in"), 0);
     }
   }, [status, isSignedIn, adminId]);
 

@@ -1,7 +1,7 @@
 import type { LogType } from "consola";
 import { safeNum } from "../lib/data.helpers";
 
-export const APP_URL = process.env.NEXT_PUBLIC_APP_URL as string;
+export const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3007") as string;
 export const isDevelopment = process.env.NODE_ENV === "development";
 export const isProduction = process.env.NODE_ENV === "production";
 export const APP_LOG_LEVEL: LogType = process.env.NEXT_PUBLIC_LOG_LEVEL
