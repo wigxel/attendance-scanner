@@ -1,2 +1,12 @@
 @import "../../globals.css";
 @plugin "@tailwindcss/typography";
+
+.prose.prose {
+    --tw-prose-headings: var(--color-foreground);
+    --tw-prose-body: var(--color-foreground);
+    --tw-prose-links: var(--color-primary);
+}
+
+.prose.lg\:prose-lg {
+    line-height: 2.6ex;
+}

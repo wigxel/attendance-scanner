@@ -15,7 +15,7 @@ export default function TermsPage() {
         </p>
       </hgroup>
 
-      <article className="prose lg:prose-lg">
+      <article className="prose lg:prose-lg text-pretty">
         <Terms />
       </article>
     </section>
