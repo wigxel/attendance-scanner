@@ -1,7 +1,7 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
 import { useMutation as useTansackMutation } from "@tanstack/react-query";
-import { useAction, useMutation, useQuery } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
@@ -11,25 +11,20 @@ import { AppLoader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { isDevelopment } from "@/config/constants";
 import { api } from "@/convex/_generated/api";
+import { useAuthEvents } from "@/hooks/auth";
 import { safeStr } from "@/lib/data.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
 
 function ValidateConvexProfile() {
   const router = useRouter();
   const user = useUser();
-  const profile_info = useQuery(api.myFunctions.getAccountMeta);
   const createAccount = useMutation(api.myFunctions.createUser);
   const updateConvexExternalId = useAction(
     api.myFunctions.setAccountExternalId,
   );
 
   const createAccountMutation = useTansackMutation({
-    mutationFn: async ({
-      clerkUser,
-    }: {
-      clerkUser: typeof user;
-      profile: typeof profile_info;
-    }) => {
+    mutationFn: async ({ clerkUser }: { clerkUser: typeof user }) => {
       const _user = clerkUser.user;
 
       if (!_user) {
@@ -56,34 +51,29 @@ function ValidateConvexProfile() {
     },
   });
 
-  const redirect = React.useCallback(
-    (authUser: typeof profile_info) => {
-      const is_profile_complete = authUser?.user && authUser?.profile;
-      if (!is_profile_complete) return;
+  const triggered = React.useRef(false);
 
-      router.push("/account");
+  useAuthEvents({
+    onChange: (state) => {
+      if (isDevelopment) {
+        console.log("auth state:", state);
+      }
+
+      if (state.authState === "logged_out") return;
+
+      // Fully synced with Convex — navigate to account
+      if (state.syncState === "synced") {
+        router.push("/account");
+        return;
+      }
+
+      // Not synced yet — link Clerk and Convex accounts (once)
+      if (state.syncState === "syncing" && !triggered.current) {
+        triggered.current = true;
+        createAccountMutation.mutate({ clerkUser: user });
+      }
     },
-    [router],
-  );
-
-  React.useEffect(() => {
-    if (!user) return;
-    if (!profile_info) return;
-
-    if (isDevelopment) {
-      console.log({ profile_info, user });
-    }
-
-    // is fully synced with convex
-    if (profile_info.user && profile_info.profile) {
-      redirect(profile_info);
-      return;
-    }
-
-    // link convex and clerk accounts
-    createAccountMutation.mutate({ clerkUser: user, profile: profile_info });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile_info, user, redirect]);
+  });
 
   if (createAccountMutation.isError) {
     return (
@@ -94,12 +84,10 @@ function ValidateConvexProfile() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() =>
-            createAccountMutation.mutate({
-              clerkUser: user,
-              profile: profile_info,
-            })
-          }
+          onClick={() => {
+            triggered.current = false;
+            createAccountMutation.mutate({ clerkUser: user });
+          }}
         >
           Retry
         </Button>

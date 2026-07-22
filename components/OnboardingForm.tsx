@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAction, useMutation, useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -8,10 +8,7 @@ import { toast } from "sonner";
 import * as z from "zod";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import {
-  clearPendingCheckIn,
-  getPendingCheckIn,
-} from "@/hooks/pending-checkin";
+import { getPendingCheckIn } from "@/hooks/pending-checkin";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
 import {
@@ -60,7 +57,7 @@ function OnboardingForm({
 }) {
   const router = useRouter();
   const updateUser = useAction(api.myFunctions.updateUser);
-  const selfCheckIn = useMutation(api.selfService.selfCheckIn);
+
 
   //Fetch occupations from the database
   const occupations = useQuery(api.myFunctions.listOccupations) ?? [];
@@ -91,22 +88,10 @@ function OnboardingForm({
       });
       toast.success("Profile created successfully");
 
-      // Process any pending QR check-in that was saved before sign-up.
-      // This runs after profile is complete, so the check-in will succeed.
+      // If user had a pending QR check-in, redirect to account page
+      // where usePendingCheckIn hook will process it automatically.
       const pending = getPendingCheckIn();
-      if (pending) {
-        clearPendingCheckIn();
-        selfCheckIn({ method: "qr", adminId: pending.adminId })
-          .then(() => toast.success("Checked in successfully!"))
-          .catch((err) => {
-            const msg = getErrorMessage(err).toLowerCase();
-            if (!msg.includes("already registered")) {
-              toast.error(`Check-in failed: ${getErrorMessage(err)}`);
-            }
-          });
-      }
-
-      router.push("/");
+      router.push(pending ? "/account" : "/");
     } catch (error) {
       const errorMessage = (error as Error).message;
       toast.error(`Profile creation failed: ${getErrorMessage(errorMessage)}`);

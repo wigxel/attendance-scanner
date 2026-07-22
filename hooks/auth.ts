@@ -1,8 +1,9 @@
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { api } from "@/convex/_generated/api";
+import { type AuthState, resolveAuthState } from "./auth.utils";
 
 export function useCustomer({ userId }: { userId: string }) {
   const profile = useQuery(api.myFunctions.getUserById, {
@@ -66,17 +67,13 @@ export function useProfile() {
 }
 
 export function useAuthId() {
-  const { isSignedIn, isLoaded, user } = useUser();
   const accountMeta = useQuery(api.myFunctions.getAccountMeta);
-
-  // Prefer Clerk's externalId (set by webhook), but fall back to the
-  // Convex user ID from getAccountMeta (email-based lookup) when
-  // externalId hasn't been set yet.
-  const id = user?.externalId ?? accountMeta?.user?._id ?? undefined;
+  const isLoading = accountMeta === undefined;
+  const id = accountMeta?.user?._id ?? undefined;
 
   return {
-    isAuthenticated: isSignedIn,
-    isLoading: !isLoaded || (isSignedIn && id === undefined),
+    isAuthenticated: !!id,
+    isLoading,
     id,
   };
 }
@@ -90,4 +87,27 @@ export function useRequireAuth() {
   }
 
   return { isLoading: false, isAuthenticated: isSignedIn };
+}
+
+export function useAuthEvents(
+  params: { onChange: (event: AuthState) => void }
+) {
+  const clerkAuthState = useUser();
+  const accountMeta = useQuery(api.myFunctions.getAccountMeta);
+
+  const status = React.useMemo(() => {
+    if (!clerkAuthState.isLoaded) return null;
+
+    return resolveAuthState({
+      auth: clerkAuthState,
+      accountMeta,
+    });
+  }, [accountMeta, clerkAuthState]);
+
+  useEffect(() => {
+    if (!status) return;
+    params.onChange(status);
+  }, [status, params]);
+
+  return status;
 }
