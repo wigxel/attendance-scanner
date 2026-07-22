@@ -23,7 +23,7 @@ export async function Posts() {
           </h2>
 
           <p className="text-lg md:text-2xl text-muted-foreground text-balance">
-            To be a Maker, one must think like different. <br />
+            To be a Maker, one must think differently. <br />
             <span>Enlighten your mindset.</span>
           </p>
         </hgroup>
@@ -38,7 +38,7 @@ export async function Posts() {
                     <section className="group relative pt-4">
                       <div className="grid grid-cols-12">
                         <span className="font-bold flex pointer-events-none group-hover:opacity-25 leading-[1ex] pt-2 font-mono -tracking-[0.8svw] select-none text-[12svw] top opacity-5 col-span-3">
-                          {String(index + 1).padStart(2, "0")}
+                          {String(items.length - index).padStart(2, "0")}
                         </span>
 
                         <div className="col-span-9">

@@ -1,2 +1,15 @@
 @import "../../globals.css";
 @plugin "@tailwindcss/typography";
+
+.prose {
+    --tw-prose-quotes: var(--accent-foreground);
+    --tw-prose-bold: var(--color-foreground);
+    --tw-prose-headings: var(--color-foreground);
+    --tw-prose-body: hsl(from var(--color-foreground) h s l / 0.8);
+    --tw-prose-counters: hsl(from var(--color-foreground) h s l / 0.8);
+    --tw-prose-links: var(--color-primary);
+}
+
+.prose {
+    line-height: 2.6ex;
+}
