@@ -121,13 +121,26 @@ export const getAccountMeta = query({
 export const getProfile = query({
   args: {},
   handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
     const userId = await readId(ctx);
 
-    if (userId === null) return null;
+    if (userId !== null) {
+      const profile = await ctx.db
+        .query("profile")
+        .filter((q) => q.eq(q.field("id"), userId))
+        .first();
+      if (profile) return profile;
+    }
+
+    // Fallback: look up by email (covers the period between signup and
+    // webhook setting external_id)
+    if (!identity.email) return null;
 
     return await ctx.db
       .query("profile")
-      .filter((q) => q.eq(q.field("id"), userId))
+      .withIndex("by_email", (q) => q.eq("email", identity.email!))
       .first();
   },
 });
@@ -346,11 +359,22 @@ export async function readId(
 ): Promise<Id<"users"> | null> {
   const identity = await ctx.auth.getUserIdentity();
 
-  const userId = identity?.profile_id ?? null;
+  if (!identity) return null;
 
-  if (userId == null) return null;
+  const userId = identity.profile_id ?? null;
 
-  return String(userId) as Id<"users">;
+  if (userId != null) return String(userId) as Id<"users">;
+
+  // Fallback: webhook may not have set external_id yet.
+  // Look up user by email from the JWT.
+  if (!identity.email) return null;
+
+  const user = await ctx.db
+    .query("users")
+    .filter((q) => q.eq(q.field("email"), identity.email))
+    .unique();
+
+  return user?._id ?? null;
 }
 
 export const updateUser = action({
