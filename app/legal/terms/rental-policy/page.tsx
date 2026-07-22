@@ -12,12 +12,12 @@ export default function TermsPage() {
         </h1>
 
         <p className="text-muted-foreground text-sm">
-          Last Updated: {formatDate(new Date(2026, 1, 2), "do MMM, yy")} <br />
-          Policy version: 1.0
+          Last Updated: {formatDate(new Date(2026, 8, 22), "do MMM, yyyy")} <br />
+          Policy version: 2.0
         </p>
       </hgroup>
 
-      <article className="prose lg:prose-lg">
+      <article className="prose prose-sm md:prose-base text-pretty">
         <Rental />
       </article>
     </section>
