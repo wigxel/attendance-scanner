@@ -27,7 +27,7 @@ export function PostList({
         <li key={post.slug} className="voxx-postcard">
           <Link href={post.url} className="voxx-postcard__link">
             <h2 className="voxx-postcard__title">{post.title}</h2>
-            <p className="voxx-postcard__meta">
+            <p className="voxx-postcard__meta text-xs md:text-sm">
               <time dateTime={post.date}>
                 {formatDate(post.date, config.site.locale)}
               </time>
@@ -36,7 +36,7 @@ export function PostList({
               ) : null}
             </p>
             {post.excerpt ? (
-              <p className="voxx-postcard__excerpt">{post.excerpt}</p>
+              <p className="voxx-postcard__excerpt text-xs md:text-sm max-w-[45ch]">{post.excerpt}</p>
             ) : null}
             {config.features.tags && post.tags.length > 0 ? (
               <ul className="voxx-tags">

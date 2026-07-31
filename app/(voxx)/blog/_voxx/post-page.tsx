@@ -8,7 +8,7 @@ export function PostPage({ post, config }: { post: Post; config: VoxxConfig }) {
   const showToc = config.features.toc && post.toc.length > 0;
 
   return (
-    <SoftExit className="voxx voxx-layout items-start">
+    <SoftExit className="voxx voxx-layout z-10 relative items-start">
       <article className="voxx-article">
         <Link
           href={config.content.basePath || "/"}
@@ -60,7 +60,9 @@ export function PostPage({ post, config }: { post: Post; config: VoxxConfig }) {
       </article>
 
       {showToc ? (
-        <aside className="voxx-aside">
+        <aside className="voxx-aside sticky top-(--offset-top)" style={{
+          '--offset-top': "calc(2rem + var(--header-height))"
+        }}>
           <div className="voxx-aside__inner">
             <OnThisPage toc={post.toc} />
           </div>

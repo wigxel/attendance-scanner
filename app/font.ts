@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 export const body = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  weight: ['300', '500', '600', '700']
 });
 
 export const mono = Geist_Mono({

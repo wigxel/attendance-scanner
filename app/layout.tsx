@@ -8,7 +8,7 @@ import { FlagsmithProvider } from "@/components/FlagsmithProvider";
 import { QueryProvider } from "@/components/react-query";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { body, mono } from "./font";
+import { body, heading, mono } from "./font";
 
 export const metadata: Metadata = {
   title: "InSpace",
@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scanline-root" suppressHydrationWarning>
       <body
-        className={`${body.variable} ${mono.variable} antialiased font-sans`}
+        className={`${body.variable} ${heading.variable} ${mono.variable} antialiased font-sans`}
       >
         <Suspense>
           <ThemeProvider

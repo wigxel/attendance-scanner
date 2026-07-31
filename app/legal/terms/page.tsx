@@ -11,7 +11,7 @@ export default function TermsPage() {
           Terms of Service
         </h1>
         <p className="text-muted-foreground text-sm">
-          Last Updated: {formatDate(new Date(2025, 7, 3), "do MMM, yy")}
+          Last Updated: {formatDate(new Date(2025, 8, 22), "do MMM, yy")}
         </p>
       </hgroup>
 

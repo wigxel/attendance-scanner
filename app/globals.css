@@ -44,6 +44,7 @@
 }
 
 :root {
+    --brand-base: oklch(0.58 0.25 259.83);
     --primary: oklch(0.47 0.3 270.67);
     --background-lv1: oklch(0.96 0 0);
     --radius: 0.625rem;
@@ -89,6 +90,7 @@
 }
 
 .dark {
+    --brand-base: oklch(0.58 0.25 259.83);
     --background: oklch(0.1883 0.0234 268.71);
     --background-lv1: hsl(from var(--background) h s 10%);
     --color-background-lv1: oklch(0.96 0 0);

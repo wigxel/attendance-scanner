@@ -2,6 +2,7 @@ import "./_voxx/voxx.css";
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Footer } from "@/components/footer";
 import { getConfig } from "./_voxx/data";
 import { ThemeToggle } from "./_voxx/theme-toggle";
 
@@ -47,6 +48,8 @@ export default async function BlogLayout({
       </header>
 
       {children}
+
+      <Footer />
     </div>
   );
 }

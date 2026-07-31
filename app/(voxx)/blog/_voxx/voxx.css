@@ -7,8 +7,8 @@
     --voxx-link: #2563eb;
     --voxx-radius: 0.5rem;
     --voxx-font-mono: var(--font-geist-mono);
-    --voxx-font-heading: var(--font-geist);
-    --voxx-font: var(--font-geist);
+    --voxx-font-heading: var(--font-heading);
+    --voxx-font: var(--font-geist-sans);
 
     color: var(--foreground, var(--voxx-fg));
     font-family: var(--voxx-font,
@@ -42,7 +42,7 @@
 
 .voxx-prose {
     font-size: 1rem;
-    line-height: 1.75;
+    line-height: 2.8ex;
     color: var(--foreground, var(--voxx-fg));
 }
 
@@ -91,6 +91,8 @@
 
 .voxx-prose p {
     margin: 0 0 1.25rem;
+    font-weight: 300;
+    color: var(--muted-foreground);
 }
 
 .voxx-prose a {
@@ -119,11 +121,21 @@
 
 .voxx-prose blockquote {
     margin: 1.5rem 0;
-    padding: 0.25rem 0 0.25rem 1.25rem;
-    border-left: 3px solid var(--border, var(--voxx-border));
-    color: var(--muted-foreground, var(--voxx-muted-fg));
-    font-style: italic;
+    padding: 1rem 0 1rem 1.25rem;
+    background-color: var(--background-lv1);
+    color: var(--foreground, var(--voxx-muted-fg));
+    border-left: 3px solid var(--brand-base, var(--voxx-border));
+
+    & p {
+        font-weight: 5;
+        color: var(--foreground);
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
 }
+
 
 .voxx-prose hr {
     margin: 2.5rem 0;
@@ -468,6 +480,7 @@
 }
 
 .voxx-index__header {
+    font-family: var(--voxx-font-heading);
     margin-bottom: 2.5rem;
 }
 
@@ -519,7 +532,6 @@
 
 .voxx-postcard__meta {
     margin: 0 0 0.5rem;
-    font-size: 0.8125rem;
     color: var(--muted-foreground, var(--voxx-muted-fg));
 }
 
