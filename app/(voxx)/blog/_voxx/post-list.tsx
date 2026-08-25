@@ -36,7 +36,9 @@ export function PostList({
               ) : null}
             </p>
             {post.excerpt ? (
-              <p className="voxx-postcard__excerpt text-xs md:text-sm max-w-[45ch]">{post.excerpt}</p>
+              <p className="voxx-postcard__excerpt text-xs md:text-sm max-w-[45ch]">
+                {post.excerpt}
+              </p>
             ) : null}
             {config.features.tags && post.tags.length > 0 ? (
               <ul className="voxx-tags">

@@ -326,7 +326,10 @@ http.route({
       if (!authHeader?.startsWith("Bearer ")) {
         return new Response(
           JSON.stringify({ error: "Missing or invalid Authorization header" }),
-          { status: 401, headers: { "Content-Type": "application/json" } },
+          {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          },
         );
       }
 
@@ -343,7 +346,10 @@ http.route({
       if (!encrypted) {
         return new Response(
           JSON.stringify({ error: "Missing encrypted data in request body" }),
-          { status: 400, headers: { "Content-Type": "application/json" } },
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
         );
       }
 

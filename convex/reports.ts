@@ -85,7 +85,9 @@ export const getDaily = query({
         if (!reservationCache.has(reg.userId)) {
           const res = await ctx.runQuery(
             api.myFunctions.getUserActiveReservation,
-            { userId: reg.userId },
+            {
+              userId: reg.userId,
+            },
           );
           reservationCache.set(reg.userId, res);
         }

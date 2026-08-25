@@ -262,7 +262,9 @@ export const registerUser = mutation({
     if (args.mode === "walk_in") {
       const reservation = await ctx.runQuery(
         api.myFunctions.getUserActiveReservation,
-        { userId: customer.id },
+        {
+          userId: customer.id,
+        },
       );
 
       if (reservation) {

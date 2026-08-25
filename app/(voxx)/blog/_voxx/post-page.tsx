@@ -60,9 +60,12 @@ export function PostPage({ post, config }: { post: Post; config: VoxxConfig }) {
       </article>
 
       {showToc ? (
-        <aside className="voxx-aside sticky top-(--offset-top)" style={{
-          '--offset-top': "calc(2rem + var(--header-height))"
-        }}>
+        <aside
+          className="voxx-aside sticky top-(--offset-top)"
+          style={{
+            "--offset-top": "calc(2rem + var(--header-height))",
+          }}
+        >
           <div className="voxx-aside__inner">
             <OnThisPage toc={post.toc} />
           </div>

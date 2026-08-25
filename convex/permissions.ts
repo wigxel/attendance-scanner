@@ -23,7 +23,9 @@ export const listPermissionsByCategory = query({
     if (!callerId) return {};
     return await ctx.runQuery(
       components.wigxel_acl.permissions.listPermissionsByCategory,
-      { callerId },
+      {
+        callerId,
+      },
     );
   },
 });

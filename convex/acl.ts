@@ -22,7 +22,10 @@ export async function requirePrivilege(
 
   const { valid } = await ctx.runQuery(
     components.wigxel_acl.identities.hasPrivilege,
-    { identity: caller, privilege },
+    {
+      identity: caller,
+      privilege,
+    },
   );
 
   if (!valid) {
@@ -41,7 +44,10 @@ export async function requireAll(
 
   const { valid } = await ctx.runQuery(
     components.wigxel_acl.identities.hasAll,
-    { identity: caller, privileges },
+    {
+      identity: caller,
+      privileges,
+    },
   );
 
   if (!valid) {
@@ -62,7 +68,10 @@ export async function requireAny(
 
   const { valid } = await ctx.runQuery(
     components.wigxel_acl.identities.hasAny,
-    { identity: caller, privileges },
+    {
+      identity: caller,
+      privileges,
+    },
   );
 
   if (!valid) {
@@ -211,7 +220,10 @@ export const assignRole = mutation({
 
     const { valid } = await ctx.runQuery(
       components.wigxel_acl.identities.hasPrivilege,
-      { identity: caller, privilege: "user:assign:role" },
+      {
+        identity: caller,
+        privilege: "user:assign:role",
+      },
     );
 
     if (!valid) {
@@ -229,7 +241,11 @@ export const assignRole = mutation({
 
     const result = (await ctx.runMutation(
       components.wigxel_acl.identities.registerIdentity,
-      { identity: profile.id, roleId: args.roleId, callerId: caller },
+      {
+        identity: profile.id,
+        roleId: args.roleId,
+        callerId: caller,
+      },
     )) as
       | {
           success: true;
@@ -357,7 +373,10 @@ export const upgradeToAdmin = action({
 
     const { valid } = await ctx.runQuery(
       components.wigxel_acl.identities.hasPrivilege,
-      { identity: caller, privilege: "user:assign:role" },
+      {
+        identity: caller,
+        privilege: "user:assign:role",
+      },
     );
 
     if (!valid) {
@@ -431,7 +450,10 @@ export const downgradeFromAdmin = action({
 
     const { valid } = await ctx.runQuery(
       components.wigxel_acl.identities.hasPrivilege,
-      { identity: caller, privilege: "user:assign:role" },
+      {
+        identity: caller,
+        privilege: "user:assign:role",
+      },
     );
 
     if (!valid) {
@@ -473,7 +495,10 @@ export const syncRolePrivileges = action({
   handler: async (ctx, args) => {
     const { valid } = await ctx.runQuery(
       components.wigxel_acl.identities.hasPrivilege,
-      { identity: args.callerId, privilege: "user:assign:role" },
+      {
+        identity: args.callerId,
+        privilege: "user:assign:role",
+      },
     );
 
     if (!valid) {
@@ -482,7 +507,9 @@ export const syncRolePrivileges = action({
 
     const identities = (await ctx.runQuery(
       components.wigxel_acl.identities.listIdentities,
-      { callerId: args.callerId },
+      {
+        callerId: args.callerId,
+      },
     )) as IdentityWithRole[];
 
     const affected = identities.filter(

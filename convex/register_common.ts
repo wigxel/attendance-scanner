@@ -74,7 +74,9 @@ export async function processReservationCheckIn(
 ): Promise<void> {
   const reservation = await ctx.runQuery(
     api.myFunctions.getUserActiveReservation,
-    { userId: params.userId },
+    {
+      userId: params.userId,
+    },
   );
 
   if (!reservation) {

@@ -12,7 +12,8 @@ export default function TermsPage() {
         </h1>
 
         <p className="text-muted-foreground text-sm">
-          Last Updated: {formatDate(new Date(2026, 8, 22), "do MMM, yyyy")} <br />
+          Last Updated: {formatDate(new Date(2026, 8, 22), "do MMM, yyyy")}{" "}
+          <br />
           Policy version: 2.0
         </p>
       </hgroup>

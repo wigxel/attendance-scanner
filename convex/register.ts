@@ -228,7 +228,9 @@ export const debugRegisterForToday = mutation({
     await ctx.scheduler.runAfter(
       10 * 60 * 1000,
       internal.register.deleteRegisterRecord,
-      { registerId: id },
+      {
+        registerId: id,
+      },
     );
 
     return {

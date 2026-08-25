@@ -43,7 +43,9 @@ function CustomerSheet({
   } = usePaginatedQuery(
     api.customers.getVisitHistory,
     userId ? { userId } : "skip",
-    { initialNumItems: 20 },
+    {
+      initialNumItems: 20,
+    },
   );
 
   const handleSave = async (data: {

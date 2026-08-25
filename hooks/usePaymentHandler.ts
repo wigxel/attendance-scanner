@@ -167,7 +167,9 @@ export const usePaymentHandler = () => {
       if (bookingId) {
         const existingBooking = await httpClient.query(
           api.bookings.systemGetBooking,
-          { bookingId },
+          {
+            bookingId,
+          },
         );
 
         // If booking is expired or doesn't exist, create a new one
