@@ -136,7 +136,7 @@ export async function updateTodaysRegisterForSubscriber(
   if (
     !isWithinInterval(today, {
       start: parseISO(params.booking.startDate),
-      end: parseISO(params.booking.endDate),
+      end: endOfDay(parseISO(params.booking.endDate)),
     })
   ) {
     return { success: false, message: "Subscription does not cover today" };

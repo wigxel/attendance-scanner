@@ -2,7 +2,7 @@ import type { Profile, User } from "@auth/core/types";
 import { TableAggregate } from "@convex-dev/aggregate";
 import { type GenericQueryCtx, paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
-import { isWithinInterval, parseISO } from "date-fns";
+import { endOfDay, isWithinInterval, parseISO } from "date-fns";
 import { isNullable } from "effect/Predicate";
 import { z } from "zod";
 import { logger } from "../config/logger";
@@ -311,7 +311,7 @@ export const getUserActiveReservation = query({
       if (
         isWithinInterval(new Date(), {
           start: parseISO(booking.startDate),
-          end: parseISO(booking.endDate),
+          end: endOfDay(parseISO(booking.endDate)),
         })
       ) {
         return {
