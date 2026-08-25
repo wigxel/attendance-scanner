@@ -52,6 +52,7 @@ const durationLabels: Record<string, string> = {
   day: "Day",
   week: "Week",
   month: "Month",
+  calendar_month: "Calendar Month",
 };
 
 const statusLabels: Record<string, string> = {
@@ -79,7 +80,7 @@ type BookingWithCustomer = {
   duration: number;
   startDate: string;
   endDate: string;
-  durationType: "day" | "week" | "month";
+  durationType: "day" | "week" | "month" | "calendar_month";
   pricePerSeat: number;
   amount: number;
   status: "pending" | "confirmed" | "cancelled" | "expired" | "used-up";
@@ -97,7 +98,7 @@ type MonthlyReservationsResponse = {
   bookings: BookingWithCustomer[];
 };
 
-type DurationType = "day" | "week" | "month" | "all";
+type DurationType = "day" | "week" | "month" | "calendar_month" | "all";
 
 const columns: ColumnDef<BookingWithCustomer>[] = [
   {
@@ -126,7 +127,9 @@ const columns: ColumnDef<BookingWithCustomer>[] = [
               ? "bg-blue-100 text-blue-800"
               : dt === "week"
                 ? "bg-green-100 text-green-800"
-                : "bg-purple-100 text-purple-800",
+                : dt === "calendar_month"
+                  ? "bg-amber-100 text-amber-800"
+                  : "bg-purple-100 text-purple-800",
           )}
         >
           {durationLabels[dt]}
@@ -345,6 +348,9 @@ export function MonthlyReservationsTable() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setDurationType("month")}>
                     Month
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setDurationType("calendar_month")}>
+                    Calendar Month
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

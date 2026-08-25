@@ -12,19 +12,22 @@ import { api } from "@/convex/_generated/api";
 import { safeArray, safeInt } from "@/lib/data.helpers";
 import { anomaly } from "@/lib/error.helpers";
 import { calculateEndDate } from "@/lib/utils";
+import { addMonths } from "date-fns";
 
-type AccessPlanKey = "daily" | "weekly" | "monthly";
+type AccessPlanKey = "daily" | "weekly" | "monthly" | "calendar-month";
 
 const DURATION_TYPE_TO_PLAN_KEY: Record<string, AccessPlanKey> = {
   day: "daily",
   week: "weekly",
   month: "monthly",
+  calendar_month: "calendar-month",
 };
 
 const _PLAN_KEY_TO_DURATION_TYPE: Record<AccessPlanKey, string> = {
   daily: "day",
   weekly: "week",
   monthly: "month",
+  "calendar-month": "calendar_month",
 };
 
 export const useBookingCalendarLogic = () => {
@@ -70,7 +73,7 @@ export const useBookingCalendarLogic = () => {
     });
   };
 
-  const handleTimePeriodChange = (value: "day" | "week" | "month") => {
+  const handleTimePeriodChange = (value: "day" | "week" | "month" | "calendar_month") => {
     setTimePeriodString(value);
   };
 
@@ -107,7 +110,10 @@ export const useBookingCalendarLogic = () => {
     console.log({ currentPlan });
     const price = currentPlan.price * 100;
 
-    const calculatedEndDate = calculateEndDate(selectedDate, timePeriod);
+    const calculatedEndDate =
+      timePeriodString === "calendar_month"
+        ? addMonths(selectedDate, 1)
+        : calculateEndDate(selectedDate, timePeriod);
 
     setEndDate(calculatedEndDate);
     setPrice(price);

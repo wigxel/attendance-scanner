@@ -25,6 +25,7 @@ const formatDate = (dateString: string): string => {
 };
 
 const getDurationText = (durationType: string): string => {
+  if (durationType === "calendar_month") return "Calendar Month";
   return durationType.charAt(0).toUpperCase() + durationType.slice(1);
 };
 
@@ -148,12 +149,12 @@ function BookingDateTimeInfo({
   return (
     <div className="flex flex-col">
       {durationType === "day" ? (
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Clock className="w-3.5 h-3.5 text-gray-400" />
           <p>09:00 AM - 05:00 PM</p>
         </div>
       ) : (
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Calendar strokeWidth={2} className="w-3.5 h-3.5 text-gray-400" />
           <span>
             {formatDate(startDate)} - {formatDate(endDate)}
@@ -174,7 +175,7 @@ function BookingActionStatus({ role }: Pick<Booking, "role">) {
   if (role === "guest") {
     return (
       <div className="flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
-        <span className="w-1.5 h-1.5 rounded-full bg-background0" />
+        <span className="w-1.5 h-1.5 rounded-full bg-background" />
         Guest
       </div>
     );
@@ -182,8 +183,8 @@ function BookingActionStatus({ role }: Pick<Booking, "role">) {
 
   // Purchaser with single seat
   return (
-    <div className="flex items-center gap-1 text-xs font-medium text-(--primary) bg-blue-50 px-2 py-1 rounded-full">
-      <span className="w-1.5 h-1.5 rounded-full bg-(--primary" />
+    <div className="flex items-center gap-1 text-xs font-medium text-gray-900 bg-blue-50 px-2 py-1 rounded-full">
+      <span className="w-1.5 h-1.5 rounded-full bg-gray-900" />
       Confirmed
     </div>
   );

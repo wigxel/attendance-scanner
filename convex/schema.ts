@@ -96,6 +96,7 @@ const bookings = defineTable({
     v.literal("day"),
     v.literal("week"),
     v.literal("month"),
+    v.literal("calendar_month"),
   ),
   pricePerSeat: v.number(),
   amount: v.number(),

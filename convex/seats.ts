@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { addMonths } from "date-fns";
 import { formatDateToLocalISO } from "../lib/utils";
 import { mutation, query } from "./_generated/server";
 
@@ -168,6 +169,9 @@ export const checkSeatAvailability = query({
     } else if (args.durationType === "month") {
       duration = 24;
       endDate = calculateEndDate(args.startDate, duration);
+    } else if (args.durationType === "calendar_month") {
+      duration = 30; // approximate, actual end date is calendar based
+      endDate = formatDateToLocalISO(addMonths(new Date(args.startDate), 1));
     } else {
       throw new Error("Invalid duration type");
     }

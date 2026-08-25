@@ -21,7 +21,7 @@ interface PendingBooking {
   seatIds: Id<"seats">[];
   pricePerSeat: number;
   amount: number;
-  durationType: "day" | "week" | "month" | undefined;
+  durationType: "day" | "week" | "month" | "calendar_month" | undefined;
 }
 
 function PendingBookingItem({

@@ -1,5 +1,6 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
 import { Effect, pipe } from "effect";
 import { CheckCircle2, LogIn, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -16,6 +17,7 @@ import {
   useTodaysRegistration,
 } from "@/hooks/self-service";
 import { savePendingCheckIn } from "@/hooks/pending-checkin";
+import { api } from "@/convex/_generated/api";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
 
@@ -45,9 +47,11 @@ function TokenCheckInFlow() {
 
   const registration = useTodaysRegistration();
   const selfCheckIn = useSelfCheckIn();
+  const profile = useQuery(api.myFunctions.getProfile);
   const triggered = useRef(false);
 
   const isFetchingRegisterData = registration === undefined;
+  const isProfileReady = !!profile && profile.occupation !== "None";
 
   // Step 1: Verify the QR token
   useEffect(() => {
@@ -111,11 +115,20 @@ function TokenCheckInFlow() {
   useEffect(() => {
     if (status !== "checking-in") return;
     if (isFetchingRegisterData) return;
+    if (profile === undefined) return; // still loading profile
 
     if (registration) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setCheckedInAt(registration.timestamp);
       setStatus("already-registered");
+      return;
+    }
+
+    // If onboarding isn't complete, defer check-in and let the
+    // normal flow handle it (/ → /account → /onboarding → /account).
+    if (!isProfileReady) {
+      if (adminId) savePendingCheckIn(adminId);
+      router.push("/");
       return;
     }
 
@@ -136,7 +149,7 @@ function TokenCheckInFlow() {
           toast.error(getErrorMessage(err));
         }
       });
-  }, [status, registration, adminId, selfCheckIn, isFetchingRegisterData]);
+  }, [status, registration, adminId, selfCheckIn, isFetchingRegisterData, profile, isProfileReady, router]);
 
 
   if (status === "verifying-token" || status === "checking-in") {

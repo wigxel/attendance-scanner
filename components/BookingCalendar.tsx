@@ -116,6 +116,7 @@ const BookingCalendar = () => {
               <SelectItem value="day">Day</SelectItem>
               <SelectItem value="week">Week</SelectItem>
               <SelectItem value="month">Month</SelectItem>
+              <SelectItem value="calendar_month">Calendar Month</SelectItem>
             </SelectContent>
           </Select>
         )}
@@ -240,7 +241,9 @@ export function BookingPeriod({
       ? [selectedDate, selectedDate]
       : timePeriodString === "week"
         ? [selectedDate, subDays(addWeeks(selectedDate, 1), 1)]
-        : [selectedDate, addMonths(selectedDate, 1)];
+        : timePeriodString === "calendar_month"
+          ? [selectedDate, addMonths(selectedDate, 1)]
+          : [selectedDate, addMonths(selectedDate, 1)];
 
   return (
     <div className="flex gap-3 items-start">

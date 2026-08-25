@@ -78,6 +78,7 @@ function SuccessPageContent() {
                 <p>{timePeriodString === "day" && "1 day"}</p>
                 <p>{timePeriodString === "week" && "6 days"}</p>
                 <p>{timePeriodString === "month" && "24 days"}</p>
+                <p>{timePeriodString === "calendar_month" && "1 calendar month"}</p>
               </span>
             </span>
             <span className="flex items-center justify-between">

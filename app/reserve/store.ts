@@ -10,7 +10,7 @@ export interface BookingState {
   price: number | null;
   selectedSeatNumbers: string[];
   selectedSeatIds: Id<"seats">[];
-  timePeriodString: "day" | "week" | "month";
+  timePeriodString: "day" | "week" | "month" | "calendar_month";
   bookingId: Id<"bookings"> | null;
 }
 

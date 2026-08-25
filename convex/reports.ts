@@ -12,6 +12,7 @@ const DURATION_TYPE_TO_PLAN_KEY: Record<string, string> = {
   day: "daily",
   week: "weekly",
   month: "monthly",
+  calendar_month: "calendar-month",
 };
 
 function calcFee(

@@ -1,6 +1,7 @@
 import type { GenericQueryCtx } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import {
+  addMonths,
   differenceInHours,
   endOfMonth,
   format,
@@ -92,6 +93,7 @@ const DURATION_TYPE_TO_PLAN_KEY: Record<string, string> = {
   day: "daily",
   week: "weekly",
   month: "monthly",
+  calendar_month: "calendar-month",
 };
 
 export const createBooking = mutation({
@@ -145,6 +147,7 @@ export const createBooking = mutation({
       v.literal("day"),
       v.literal("week"),
       v.literal("month"),
+      v.literal("calendar_month"),
     ),
   },
   handler: async (ctx, args) => {
@@ -216,6 +219,8 @@ export const createBooking = mutation({
     let endDate: string;
     if (args.durationType === "day") {
       endDate = formatDateToLocalISO(new Date(startMs));
+    } else if (args.durationType === "calendar_month") {
+      endDate = formatDateToLocalISO(addMonths(new Date(args.startDate), 1));
     } else {
       endDate = calculateEndDate(args.startDate, duration);
     }
@@ -305,6 +310,7 @@ export const updateBooking = mutation({
       v.literal("day"),
       v.literal("week"),
       v.literal("month"),
+      v.literal("calendar_month"),
     ),
   },
   handler: async (ctx, args) => {
@@ -354,25 +360,29 @@ export const updateBooking = mutation({
     };
 
     if (!args.durationType) throw new ConvexError("Duration type is required");
-    let duration: number;
-    let pricePerSeat: number; // in kobo
+
+    const planKey = DURATION_TYPE_TO_PLAN_KEY[args.durationType];
+    const accessPlan = await ctx.db
+      .query("accessPlans")
+      .withIndex("plan_key", (q) => q.eq("key", planKey))
+      .first();
+
+    if (!accessPlan) {
+      throw new ConvexError(
+        `Access plan not found for type: ${args.durationType}`,
+      );
+    }
+
+    const duration = accessPlan.no_of_days;
+    const pricePerSeat = accessPlan.price * 100;
     let endDate: string;
     if (args.durationType === "day") {
-      duration = 1;
-      pricePerSeat = 150000; // 1,500 per day
       const startMs = new Date(args.startDate).getTime();
-      const endMs = startMs + duration * 24 * 60 * 60 * 1000;
-      endDate = formatDateToLocalISO(new Date(endMs));
-    } else if (args.durationType === "week") {
-      duration = 6;
-      pricePerSeat = 600000; // 6,000 per week
-      endDate = calculateEndDate(args.startDate, duration);
-    } else if (args.durationType === "month") {
-      duration = 24;
-      pricePerSeat = 2400000; // 24,000 per month
-      endDate = calculateEndDate(args.startDate, duration);
+      endDate = formatDateToLocalISO(new Date(startMs));
+    } else if (args.durationType === "calendar_month") {
+      endDate = formatDateToLocalISO(addMonths(new Date(args.startDate), 1));
     } else {
-      throw new ConvexError("Invalid duration type");
+      endDate = calculateEndDate(args.startDate, duration);
     }
 
     const amount = pricePerSeat * args.seatIds.length; // price per seat multiplied by number of seats
@@ -1203,7 +1213,10 @@ export const createManualBooking = mutation({
 
     const now = new Date();
     const bookingStartDate = parseISO(startDate);
-    const bookingEndDate = calculateEndDate(bookingStartDate, plan.no_of_days);
+    const isCalendarMonthly = planKey === "calendar-month";
+    const bookingEndDate = isCalendarMonthly
+      ? addMonths(bookingStartDate, 1)
+      : calculateEndDate(bookingStartDate, plan.no_of_days);
     const last2Weeks = subWeeks(now, 2);
 
     if (bookingStartDate < last2Weeks) {
@@ -1232,6 +1245,7 @@ export const createManualBooking = mutation({
     }
 
     const durationType = (() => {
+      if (isCalendarMonthly) return "calendar_month" as const;
       if (plan.no_of_days === 1) return "day" as const;
       if (plan.no_of_days > 7) return "month" as const;
       return "week" as const;
@@ -1353,6 +1367,7 @@ export const getMonthlyReservations = query({
         v.literal("day"),
         v.literal("week"),
         v.literal("month"),
+        v.literal("calendar_month"),
         v.literal("all"),
       ),
     ),
@@ -1433,6 +1448,7 @@ export const exportMonthlyReservations = action({
         v.literal("day"),
         v.literal("week"),
         v.literal("month"),
+        v.literal("calendar_month"),
         v.literal("all"),
       ),
     ),
