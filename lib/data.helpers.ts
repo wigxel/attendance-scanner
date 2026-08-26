@@ -38,10 +38,11 @@ export function safeInt(num: unknown, fallback = 0): number {
 
 type Values<T> = T[keyof T];
 
-export function safeDict<T>(opt: { map: T; default?: Values<T> }) {
-  const { map, default: fallback = null } = opt;
-
-  type TFallback = typeof opt.default;
+export function safeDict<const T extends object, TValue>(
+  map: T,
+  fallback?: TValue,
+) {
+  type TFallback = typeof fallback;
   type Maybe<T> = T | undefined | null;
   type InferSafeDict<
     TKey,
@@ -60,7 +61,8 @@ export function safeDict<T>(opt: { map: T; default?: Values<T> }) {
 
   return {
     get: <TKey extends keyof T>(
-      key: TKey,
+      // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+      key: TKey | {},
     ): InferSafeDict<TKey, T, TFallback> | null => {
       if (key === null || key === undefined) {
         // @ts-expect-error Handled typing manually

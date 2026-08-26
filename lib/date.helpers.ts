@@ -15,7 +15,7 @@ export const DateParse = {
     return O.some(date);
   },
 
-  parse(iso_string: string) {
+  parse(iso_string?: string) {
     return pipe(
       O.fromNullable(iso_string),
       O.map((e: string) => parseISO(e)),

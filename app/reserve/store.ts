@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Id } from "@/convex/_generated/dataModel";
 import { safeArray, safeObj } from "@/lib/data.helpers";
+import type { DurationType } from "@/types";
 
 export interface BookingState {
   activeTab: string;
@@ -10,7 +11,7 @@ export interface BookingState {
   price: number | null;
   selectedSeatNumbers: string[];
   selectedSeatIds: Id<"seats">[];
-  timePeriodString: "day" | "week" | "month" | "calendar_month";
+  timePeriodString: DurationType;
   bookingId: Id<"bookings"> | null;
 }
 

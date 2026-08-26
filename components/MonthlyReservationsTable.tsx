@@ -32,7 +32,9 @@ import {
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { currencyFormatter } from "@/lib/currency.helpers";
+import { safeDict } from "@/lib/data.helpers";
 import { cn } from "@/lib/utils";
+import type { DurationType } from "@/types";
 import { AttendanceDrawer } from "./AttendanceDrawer";
 import { AppDataTable, AppTableActions } from "./DataTable";
 import { DeleteBookingDialog } from "./DeleteBookingDialog";
@@ -80,7 +82,7 @@ type BookingWithCustomer = {
   duration: number;
   startDate: string;
   endDate: string;
-  durationType: "day" | "week" | "month" | "calendar_month";
+  durationType: DurationType;
   pricePerSeat: number;
   amount: number;
   status: "pending" | "confirmed" | "cancelled" | "expired" | "used-up";
@@ -98,7 +100,15 @@ type MonthlyReservationsResponse = {
   bookings: BookingWithCustomer[];
 };
 
-type DurationType = "day" | "week" | "month" | "calendar_month" | "all";
+const labelClass = safeDict(
+  {
+    day: "bg-blue-100 text-blue-800",
+    week: "bg-green-100 text-green-800",
+    month: "bg-purple-100 text-purple-800",
+    full_month: "bg-amber-100 text-amber-800",
+  },
+  "bg-purple-100 text-purple-800",
+);
 
 const columns: ColumnDef<BookingWithCustomer>[] = [
   {
@@ -119,17 +129,12 @@ const columns: ColumnDef<BookingWithCustomer>[] = [
     accessorKey: "durationType",
     cell: ({ row }) => {
       const dt = row.original.durationType;
+
       return (
         <span
           className={cn(
             "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-            dt === "day"
-              ? "bg-blue-100 text-blue-800"
-              : dt === "week"
-                ? "bg-green-100 text-green-800"
-                : dt === "calendar_month"
-                  ? "bg-amber-100 text-amber-800"
-                  : "bg-purple-100 text-purple-800",
+            labelClass.strict(dt),
           )}
         >
           {durationLabels[dt]}
@@ -182,12 +187,14 @@ const columns: ColumnDef<BookingWithCustomer>[] = [
   },
 ];
 
+type FormDurationType = DurationType | "all";
+
 export function MonthlyReservationsTable() {
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
-  const [durationType, setDurationType] = useState<DurationType>("all");
+  const [durationType, setDurationType] = useState<FormDurationType>("all");
   const [overflow, setOverflow] = useState(false);
   const [selectedBookingId, setSelectedBookingId] =
     useState<Id<"bookings"> | null>(null);
@@ -350,7 +357,7 @@ export function MonthlyReservationsTable() {
                     Month
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => setDurationType("calendar_month")}
+                    onClick={() => setDurationType("full_month")}
                   >
                     Calendar Month
                   </DropdownMenuItem>

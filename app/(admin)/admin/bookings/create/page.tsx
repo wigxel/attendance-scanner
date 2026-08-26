@@ -11,6 +11,13 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getErrorMessage } from "@/lib/error.helpers";
 
+type FormData = {
+  userId: string;
+  planKey: string;
+  startDate: string;
+  seatId: Id<"seats">;
+};
+
 export default function CreateBookingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -18,12 +25,7 @@ export default function CreateBookingPage() {
 
   const createManualBooking = useMutation(api.bookings.createManualBooking);
 
-  const handleSubmit = async (values: {
-    userId: string;
-    planKey: string;
-    startDate: string;
-    seatId: Id<"seats">;
-  }) => {
+  const handleSubmit = async (values: FormData) => {
     try {
       await createManualBooking({
         userId: values.userId,

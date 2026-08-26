@@ -1007,6 +1007,52 @@ describe("createBooking", () => {
       ).rejects.toThrow("No seats selected");
     });
   });
+
+  it("creates a booking with full_month durationType using calendar_month plan", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const authed = t.withIdentity({ profile_id: "user-1" });
+
+      await ctx.db.insert("profile", {
+        id: "user-1",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        occupation: "None",
+      });
+
+      await ctx.db.insert("accessPlans", {
+        key: "calendar_month",
+        name: "Calendar Month",
+        price: 20000,
+        no_of_days: 31,
+        description: "Full calendar month",
+        features: ["priority-check-in", "booking"],
+      });
+
+      const seat = await ctx.db.insert("seats", {
+        seatNumber: 10,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+
+      const result = await authed.runMutation(api.bookings.createBooking, {
+        userId: "user-1",
+        seatIds: [seat] as any,
+        startDate: futureStr(1),
+        durationType: "full_month",
+      });
+
+      expect(result.bookingIds).toHaveLength(1);
+      expect(result.duration).toBe(31);
+      expect(result.amount).toBe(2000000);
+
+      const booking = await ctx.db.get(result.bookingIds[0]);
+      expect(booking?.durationType).toBe("full_month");
+      expect(booking?.duration).toBe(31);
+    });
+  });
 });
 
 // ─── updateBooking ──────────────────────────────────────────────────

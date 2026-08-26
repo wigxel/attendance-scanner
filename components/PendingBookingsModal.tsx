@@ -5,6 +5,7 @@ import { setActiveTab, useBookingStore } from "@/app/reserve/store";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { formatTime } from "@/lib/utils";
+import type { DurationType } from "@/types";
 
 interface PendingBooking {
   _id: Id<"bookings">;
@@ -21,7 +22,7 @@ interface PendingBooking {
   seatIds: Id<"seats">[];
   pricePerSeat: number;
   amount: number;
-  durationType: "day" | "week" | "month" | "calendar_month" | undefined;
+  durationType: DurationType | undefined;
 }
 
 function PendingBookingItem({

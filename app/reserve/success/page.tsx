@@ -1,5 +1,6 @@
 "use client";
 import { useQuery } from "convex/react";
+import { formatDistance } from "date-fns";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
@@ -9,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { usePaymentHandler } from "@/hooks/usePaymentHandler";
+import { DateParse } from "@/lib/date.helpers";
+import { O, pipe } from "@/lib/fp.helpers";
 import CheckMark from "@/public/checkmark.svg";
 import { resetBookingState } from "../store";
 
@@ -75,14 +78,17 @@ function SuccessPageContent() {
             <span className="flex items-center justify-between">
               <p className="text-muted-foreground">Duration</p>
               <span>
-                <p>{timePeriodString === "day" && "1 day"}</p>
-                <p>{timePeriodString === "week" && "6 days"}</p>
-                <p>{timePeriodString === "month" && "24 days"}</p>
-                <p>
-                  {timePeriodString === "calendar_month" && "1 calendar month"}
-                </p>
+                {pipe(
+                  O.zipWith(
+                    DateParse.parse(bookingDetails?.startDate),
+                    DateParse.parse(bookingDetails?.endDate),
+                    (end, start) => formatDistance(end, start),
+                  ),
+                  O.getOrElse(() => "--"),
+                )}
               </span>
             </span>
+
             <span className="flex items-center justify-between">
               <p className="text-muted-foreground">Seat No.</p>
 
@@ -90,6 +96,7 @@ function SuccessPageContent() {
                 <p>
                   Seat{" "}
                   {seats.map((seat, index) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: Order is important
                     <span key={index}>
                       {seat?.seatNumber}
                       {index < seats.length - 1 && ", "}

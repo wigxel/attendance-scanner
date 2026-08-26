@@ -12,7 +12,7 @@ import { api } from "@/convex/_generated/api";
 import { safeArray, safeInt } from "@/lib/data.helpers";
 import { anomaly } from "@/lib/error.helpers";
 import { calculateEndDate } from "@/lib/utils";
-import type { KnownPlanKey } from "@/types";
+import type { DurationType, KnownPlanKey } from "@/types";
 
 export const useBookingCalendarLogic = () => {
   const router = useRouter();
@@ -57,9 +57,7 @@ export const useBookingCalendarLogic = () => {
     });
   };
 
-  const handleTimePeriodChange = (
-    value: "day" | "week" | "month" | "calendar_month",
-  ) => {
+  const handleTimePeriodChange = (value: DurationType) => {
     setTimePeriodString(value);
   };
 
