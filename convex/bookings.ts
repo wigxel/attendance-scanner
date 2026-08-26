@@ -17,6 +17,7 @@ import { api, internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
+import { durationTypeConvexSchema } from "./shared";
 import { bookingDeletedAudit } from "./audits/entities";
 import { readId } from "./myFunctions";
 import { updateTodaysRegisterForSubscriber } from "./register_common";
@@ -140,12 +141,7 @@ export const createBooking = mutation({
     userId: v.string(),
     seatIds: v.array(v.id("seats")),
     startDate: v.string(),
-    durationType: v.union(
-      v.literal("day"),
-      v.literal("week"),
-      v.literal("month"),
-      v.literal("full_month"),
-    ),
+    durationType: durationTypeConvexSchema,
   },
   handler: async (ctx, args) => {
     // Get current user from Clerk
@@ -284,12 +280,7 @@ export const updateBooking = mutation({
     bookingId: v.id("bookings"),
     startDate: v.string(),
     seatIds: v.array(v.id("seats")),
-    durationType: v.union(
-      v.literal("day"),
-      v.literal("week"),
-      v.literal("month"),
-      v.literal("full_month"),
-    ),
+    durationType: durationTypeConvexSchema,
   },
   handler: async (ctx, args) => {
     const identity = await readId(ctx);

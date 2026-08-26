@@ -12,4 +12,4 @@ export type KnownPlanKey = "daily" | "weekly" | "monthly" | "calendar_month";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _PLAN_KEY = Schema.String.pipe(brand("PlanKey"));
 
-export type PlanKey = Schema.Schema.Type<typeof _PLAN_KEY>;
+export type PlanKey = KnownPlanKey | Schema.Schema.Type<typeof _PLAN_KEY>;

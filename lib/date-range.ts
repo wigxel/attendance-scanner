@@ -75,13 +75,12 @@ export const DateRangeImpl = {
   },
 };
 
-const DURATION_TYPE_TO_PLAN_KEY: Record<DurationType, KnownPlanKey> =
-  Object.freeze({
-    day: "daily",
-    week: "weekly",
-    month: "monthly",
-    full_month: "calendar_month",
-  });
+const DURATION_TYPE_TO_PLAN_KEY = Object.freeze({
+  day: "daily",
+  week: "weekly",
+  month: "monthly",
+  full_month: "calendar_month",
+} as Record<DurationType, PlanKey>);
 
 export const PlanKeyManager = {
   mapPlanKey(duration_key: string): PlanKey {
@@ -92,6 +91,6 @@ export const PlanKeyManager = {
       `>>> Important! Invalid duration key ${safe_key}<<<`,
     );
 
-    return DURATION_TYPE_TO_PLAN_KEY[safe_key];
+    return DURATION_TYPE_TO_PLAN_KEY[safe_key] as PlanKey;
   },
 };
