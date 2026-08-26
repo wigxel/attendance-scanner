@@ -17,10 +17,10 @@
       "**",
       "!.next",
       "!**/convex/_generated",
-      "!.agents/**/*",
-      "!.claude/**/*",
-      "!.opencode/**/*",
-      "!.ai/**/*"
+      "!.agents",
+      "!.claude",
+      "!.opencode",
+      "!.ai"
     ]
   },
   "linter": {

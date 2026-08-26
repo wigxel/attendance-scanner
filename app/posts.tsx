@@ -22,7 +22,7 @@ export async function Posts() {
             <span />
           </h2>
 
-          <p className="text-lg md:text-2xl text-muted-foreground text-balance">
+          <p className="text-lg text-muted-foreground text-balance">
             To be a Maker, one must think differently. <br />
             <span>Enlighten your mindset.</span>
           </p>

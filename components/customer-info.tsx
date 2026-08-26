@@ -88,6 +88,7 @@ function CustomerSheet({
             </Button>
           )}
         </SheetHeader>
+
         <ScrollArea className="flex-1">
           {customer && isEditing ? (
             <div className="p-6">

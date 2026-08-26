@@ -1,7 +1,7 @@
 ---
 title: The Story Behind Chronos
 description: If you’ve ever visited InSpace, you’ve probably wondered why ...
-date: 2026-06-24
+date: 2026-07-19
 tags: [community, inspace, creativity]
 category: General
 draft: false

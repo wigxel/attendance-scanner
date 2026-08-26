@@ -115,9 +115,8 @@
 
 .voxx-prose li {
   margin: 0.375rem 0;
-}
-
-.voxx-prose li::marker {
+  font-weight: 300;
+  display: list-item;
   color: var(--muted-foreground, var(--voxx-muted-fg));
 }
 
@@ -552,11 +551,12 @@
 
 .voxx-tag {
   font-size: 0.75rem;
-  padding: 0.15rem 0.55rem;
   border-radius: 9999px;
-  border: 1px solid var(--border, var(--voxx-border));
-  color: var(--muted-foreground, var(--voxx-muted-fg));
-  background: var(--muted, var(--voxx-muted));
+}
+
+.voxx-tag:before {
+  content: "#";
+  opacity: 0.75;
 }
 
 .voxx-empty {
@@ -572,7 +572,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.625rem 1.5rem;
-  border-bottom: 1px solid var(--border, var(--voxx-border));
+  /*border-bottom: 1px solid var(--border, var(--voxx-border));*/
   background: var(--background, var(--voxx-bg));
 }
 
@@ -580,7 +580,6 @@
   font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--foreground, var(--voxx-fg));
   text-decoration: none;
 }
 
@@ -965,6 +964,6 @@
   color: var(--primary, var(--voxx-link));
 }
 
-.voxx-prose p a {
-  color: var(--color-orange-400);
+.voxx-prose a {
+  color: var(--foreground);
 }
