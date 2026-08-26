@@ -416,7 +416,9 @@ export function RegisteredUserEntry({
 
   const isMobile = useMediaQuery(
     "(max-width: 768px) and (orientation: portrait)",
-    { defaultValue: true },
+    {
+      defaultValue: true,
+    },
   );
 
   if (!user) return <p>No user found</p>;

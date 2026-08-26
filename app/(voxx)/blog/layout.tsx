@@ -2,8 +2,11 @@ import "./_voxx/voxx.css";
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Footer } from "@/components/footer";
 import { getConfig } from "./_voxx/data";
 import { ThemeToggle } from "./_voxx/theme-toggle";
+import { RssIcon } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 export default async function BlogLayout({
   children,
@@ -18,12 +21,16 @@ export default async function BlogLayout({
       </div>
 
       <header className="voxx-header sticky z-10">
-        <Link
-          href={config.site.titleHref ?? "/"}
-          className="voxx-header__title"
-        >
-          {config.site.title}
-        </Link>
+        <div className="flex gap-4 items-center justify-start">
+          <Logo className="h-4" />
+          <Link
+            href={config.site.titleHref ?? "/"}
+            className="voxx-header__title text-blue-500 tracking-tightest"
+          >
+            {config.site.title}
+          </Link>
+        </div>
+
         <div className="voxx-header__actions">
           {config.features.rss ? (
             <a
@@ -31,15 +38,7 @@ export default async function BlogLayout({
               href="/blog/rss.xml"
               aria-label="RSS feed"
             >
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <circle cx="5" cy="19" r="1" fill="currentColor" />
-              </svg>
+              <RssIcon />
             </a>
           ) : null}
           <ThemeToggle />
@@ -47,6 +46,8 @@ export default async function BlogLayout({
       </header>
 
       {children}
+
+      <Footer />
     </div>
   );
 }

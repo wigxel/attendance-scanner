@@ -1,7 +1,10 @@
+import type { GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
-import { addMonths } from "date-fns";
-import { formatDateToLocalISO } from "../lib/utils";
+import { Option, pipe } from "effect";
+import { DateParse } from "../lib/date.helpers";
+import type { DataModel } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
+import { DateRangeImpl } from "./shared";
 
 export const getAllSeats = query({
   args: {},
@@ -11,6 +14,33 @@ export const getAllSeats = query({
     return seats;
   },
 });
+
+/**
+ * Get all confirmed bookings that overlap with the requested date range
+ */
+async function findOverlappingBookings(
+  ctx: GenericQueryCtx<DataModel>,
+  args: {
+    startDate: string;
+    endDate: string;
+  },
+) {
+  const conflictingBookings = await ctx.db
+    .query("bookings")
+    .filter((q) => q.eq(q.field("status"), "confirmed"))
+    .collect();
+
+  const overlappingBookings = conflictingBookings.filter((booking) => {
+    const cmp = DateRangeImpl.compare({
+      bookingRange: booking,
+      requestedRange: args,
+    });
+
+    return !cmp.isContained();
+  });
+
+  return overlappingBookings;
+}
 
 // Get available seats for a date range
 export const getAvailableSeats = query({
@@ -24,18 +54,7 @@ export const getAvailableSeats = query({
       .filter((q) => q.eq(q.field("isBooked"), false))
       .collect();
 
-    // Get all confirmed bookings that overlap with the requested date range
-    const conflictingBookings = await ctx.db
-      .query("bookings")
-      .filter((q) => q.eq(q.field("status"), "confirmed"))
-      .collect();
-
-    const overlappingBookings = conflictingBookings.filter((booking) => {
-      // Check if booking dates overlap with requested dates
-      return !(
-        booking.endDate < args.startDate || booking.startDate > args.endDate
-      );
-    });
+    const overlappingBookings = await findOverlappingBookings(ctx, args);
 
     // Get all bookedSeats records for overlapping bookings
     const bookedSeatIds = new Set<string>();
@@ -76,18 +95,7 @@ export const getAllSeatsForDateRange = query({
   handler: async (ctx, args) => {
     const allSeats = await ctx.db.query("seats").collect();
 
-    // Get all confirmed bookings that overlap with the requested date range
-    const conflictingBookings = await ctx.db
-      .query("bookings")
-      .filter((q) => q.eq(q.field("status"), "confirmed"))
-      .collect();
-
-    const overlappingBookings = conflictingBookings.filter((booking) => {
-      // Check if booking dates overlap with requested dates
-      return !(
-        booking.endDate < args.startDate || booking.startDate > args.endDate
-      );
-    });
+    const overlappingBookings = await findOverlappingBookings(ctx, args);
 
     // Get all bookedSeats records for overlapping bookings
     const bookedSeatIds = new Set<string>();
@@ -130,51 +138,19 @@ export const checkSeatAvailability = query({
       throw new Error(`Seat with ID ${args.seatId} not found`);
     }
 
-    const calculateEndDate = (
-      startDate: string,
-      workingDays: number,
-    ): string => {
-      const start = new Date(startDate);
-      const currentDate = new Date(start);
-      let daysAdded = 0;
-
-      // Count the start date if it's not a Sunday
-      if (currentDate.getDay() !== 0) {
-        daysAdded++;
-      }
-
-      while (daysAdded < workingDays) {
-        currentDate.setDate(currentDate.getDate() + 1);
-        // skip Sundays (0 = Sunday)
-        if (currentDate.getDay() !== 0) {
-          daysAdded++;
-        }
-      }
-
-      return formatDateToLocalISO(currentDate);
-    };
-
-    if (!args.durationType) throw new Error("Duration type is required");
-
-    let duration: number;
-    let endDate: string;
-    if (args.durationType === "day") {
-      duration = 1;
-      const startMs = new Date(args.startDate).getTime();
-      const endMs = startMs; // end date should be the same as start date for day booking
-      endDate = formatDateToLocalISO(new Date(endMs));
-    } else if (args.durationType === "week") {
-      duration = 6;
-      endDate = calculateEndDate(args.startDate, duration);
-    } else if (args.durationType === "month") {
-      duration = 24;
-      endDate = calculateEndDate(args.startDate, duration);
-    } else if (args.durationType === "calendar_month") {
-      duration = 30; // approximate, actual end date is calendar based
-      endDate = formatDateToLocalISO(addMonths(new Date(args.startDate), 1));
-    } else {
-      throw new Error("Invalid duration type");
+    if (!args.durationType) {
+      throw new Error("Duration type is required");
     }
+
+    const endDate = pipe(
+      DateParse.parse(args.startDate),
+      Option.map((parsed_date) =>
+        DateRangeImpl.match(args.durationType, parsed_date),
+      ),
+      Option.getOrThrowWith(
+        () => new Error("Invalid startDate. Provide a valid date"),
+      ),
+    );
 
     // Get all confirmed bookedSeats for this seat
     const confirmedBookedSeats = await ctx.db
@@ -184,14 +160,18 @@ export const checkSeatAvailability = query({
       )
       .collect();
 
-    // Check if any of the confirmed bookings overlap with the requested date range
     const hasConflict = await Promise.all(
       confirmedBookedSeats.map(async (bookedSeat) => {
         const booking = await ctx.db.get(bookedSeat.bookingId);
+
         if (!booking) return false;
-        return !(
-          booking.endDate < args.startDate || booking.startDate > endDate
-        );
+
+        const cmp = DateRangeImpl.compare({
+          bookingRange: booking,
+          requestedRange: { startDate: args.startDate, endDate },
+        });
+
+        return !cmp.isContained();
       }),
     ).then((conflicts) => conflicts.some((c) => c));
 

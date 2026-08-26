@@ -64,7 +64,7 @@ export function CreateBookingForm({
 }: CreateBookingFormProps) {
   const [selectedSeat, setSelectedSeat] = React.useState<Seat | null>(null);
 
-  const accessPlans = useQuery(api.myFunctions.listAccessPlans);
+  const accessPlans = useQuery(api.accessPlans.list);
 
   const form = useForm<CreateBookingFormValues>({
     resolver: zodResolver(createBookingSchema),

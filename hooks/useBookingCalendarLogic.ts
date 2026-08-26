@@ -23,13 +23,6 @@ const DURATION_TYPE_TO_PLAN_KEY: Record<string, AccessPlanKey> = {
   calendar_month: "calendar-month",
 };
 
-const _PLAN_KEY_TO_DURATION_TYPE: Record<AccessPlanKey, string> = {
-  daily: "day",
-  weekly: "week",
-  monthly: "month",
-  "calendar-month": "calendar_month",
-};
-
 export const useBookingCalendarLogic = () => {
   const router = useRouter();
   const { timePeriodString } = useBookingStore();
@@ -37,18 +30,18 @@ export const useBookingCalendarLogic = () => {
   const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
 
   const fullyBookedDates = useQuery(api.bookings.getFullyBookedDates);
-  const accessPlans = useQuery(api.myFunctions.listAccessPlans);
+  const accessPlans = useQuery(api.accessPlans.list);
 
   if (!accessPlans) {
     return {
       reserved: [],
       selectedDate,
-      setSelectedDate: () => {},
-      handleDateChange: () => {},
+      setSelectedDate: () => { },
+      handleDateChange: () => { },
       formatDate: () => "",
       timePeriodString,
-      handleTimePeriodChange: () => {},
-      handleProceed: () => {},
+      handleTimePeriodChange: () => { },
+      handleProceed: () => { },
     };
   }
 
@@ -110,10 +103,7 @@ export const useBookingCalendarLogic = () => {
     console.log({ currentPlan });
     const price = currentPlan.price * 100;
 
-    const calculatedEndDate =
-      timePeriodString === "calendar_month"
-        ? addMonths(selectedDate, 1)
-        : calculateEndDate(selectedDate, timePeriod);
+    const calculatedEndDate = calculateEndDate(selectedDate, timePeriod);
 
     setEndDate(calculatedEndDate);
     setPrice(price);

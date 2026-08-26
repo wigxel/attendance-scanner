@@ -1,13 +1,27 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.16/schema.json",
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "css": {
     "parser": {
       "tailwindDirectives": true
     }
   },
   "files": {
-    "includes": ["**", "!.next", "!**/convex/_generated"]
+    "includes": [
+      "**",
+      "!.next",
+      "!**/convex/_generated",
+      "!.agents",
+      "!.claude",
+      "!.opencode",
+      "!.ai"
+    ]
   },
   "linter": {
     "enabled": true,
@@ -40,5 +54,11 @@
         }
       }
     }
+  ],
+  "plugins": [
+    // "./node_modules/@wigxel/react-tf-biome/plugins/arrow-component.grit",
+    "./node_modules/@wigxel/react-tf-biome/plugins/destructured-props-complex.grit",
+    "./node_modules/@wigxel/react-tf-biome/plugins/inline-type-literal.grit",
+    "./node_modules/@wigxel/react-tf-biome/plugins/rest-props-rename.grit"
   ]
 }

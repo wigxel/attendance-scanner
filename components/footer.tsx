@@ -14,7 +14,8 @@ export function Footer() {
             rel="noopener"
           >
             Wigxel
-          </a>
+          </a>{" "}
+          &copy; {new Date().getFullYear()}
         </p>
 
         <ThemeSelect />

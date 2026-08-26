@@ -28,7 +28,9 @@ export function usePrivilege(
           : privilegeArray;
       const res = await convex.query(
         mode === "all" ? api.acl.hasAll : api.acl.hasAny,
-        { privileges: toCheck },
+        {
+          privileges: toCheck,
+        },
       );
       return res?.valid ?? false;
     },

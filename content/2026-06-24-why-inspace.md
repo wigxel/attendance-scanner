@@ -9,10 +9,11 @@ author: { name: "Joseph Julius Owonvwon", url: "https://linkedin.com/in/owonwo" 
 ---
 
 ### Childhood Curiosity
+
 As a kid, I had a habit of taking things apart.
 One of the things that fascinated me the most was the cassette player. I could not wait to get my hands on one, and it had nothing to do with listening to music. There was one tiny component inside that completely captured my attention. If I took it out and connected it to a battery, it would spin. I still cannot remember who showed me that trick, but the moment I saw it happen, I was hooked. From then on, I was always looking for broken cassette players. Whispering… sometimes they did not even have to be broken. 😉
 
-The part I was obsessed with was the capstan motor, the little motor that spins the cassette tape. 
+The part I was obsessed with was the capstan motor, the little motor that spins the cassette tape.
 
 One of my uncles was an electronics engineer, so there was never a shortage of damaged cassette players lying around his workshop. At the time, I knew nothing about mathematics, physics, electronics, or computer science. I was just a kid. And somehow, playing with that tiny motor made me ridiculously happy.
 
@@ -24,6 +25,7 @@ That lesson did not stop me. If anything, it made me even more curious. I knew I
 I wanted to understand all of it.
 
 ### Early Tech Adventures
+
 Looking back, I had a really fun childhood.
 Before I was old enough to play, I spent hours watching my “brodas” play Ultimate Mortal Kombat on the SEGA console. Then came the Nintendo Game Boy, the Game Boy Advance, PlayStation 1, and PlayStation 2. My favourite game was Devil May Cry. You’re probably wondering what all of this has to do with InSpace. Just hang on. I am also getting there.
 Somewhere along the line, I became convinced that if a device had a screen, someone had probably figured out how to run a game on it. I made it my personal mission to find games for every digital device I could get my hands on. It just had to be possible.
@@ -65,13 +67,14 @@ That is what the InSpace community is about. A space for nerds who get it.
 You can be a nerd about anything. Technology. Engineering. Design. Business. Writing. Music. Art. It does not matter. What matters is being obsessed with the details that normies overlook. If you are not one of those people, I am sorry, you are not invited.
 
 ### Who Is the InSpace Community For?
+
 I have been part of the Port Harcourt technology ecosystem for well over a decade. I have attended events, taught at events, spoken at events, and volunteered at events. Communities and Companies like TechCreek, Olotu Square, Google Developer Groups Port Harcourt, and many others have contributed to my journey. I appreciate what they do. I genuinely do. But I have always felt something was missing. We spend too much time talking.
 
 > Introduction to LLMs.  
-Introduction to Firebase.  
-Introduction to…  
-Introduction to…  
-Introduction to…  
+> Introduction to Firebase.  
+> Introduction to…  
+> Introduction to…  
+> Introduction to…
 
 At some point, we have to stop collecting introductions and start building.
 

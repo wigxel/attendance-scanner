@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MonitorIcon, Moon, Sun } from "lucide-react";
 
 export function ThemeSelect() {
   const { theme, setTheme } = useTheme();
@@ -17,10 +18,20 @@ export function ThemeSelect() {
       <SelectTrigger className="h-7 w-fit gap-1 border-none px-2 text-[1em] shadow-none">
         <SelectValue />
       </SelectTrigger>
+
       <SelectContent>
-        <SelectItem value="light">Light</SelectItem>
-        <SelectItem value="dark">Dark</SelectItem>
-        <SelectItem value="system">System</SelectItem>
+        <SelectItem value="light">
+          <Sun className="mr-2 h-4 w-4" />
+          Light
+        </SelectItem>
+        <SelectItem value="dark">
+          <Moon className="mr-2 h-4 w-4" />
+          Dark
+        </SelectItem>
+        <SelectItem value="system">
+          <MonitorIcon className="mr-2 h-4 w-4" />
+          System
+        </SelectItem>
       </SelectContent>
     </Select>
   );

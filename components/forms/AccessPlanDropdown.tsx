@@ -6,7 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { safeArray } from "@/lib/data.helpers";
 
 export function AccessPlanDropdown() {
-  const accessPlans = useQuery(api.myFunctions.listAccessPlans);
+  const accessPlans = useQuery(api.accessPlans.list);
 
   return (
     <SelectContent>

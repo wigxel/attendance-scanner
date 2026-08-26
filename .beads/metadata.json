@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "attendance_scanner",
+  "project_id": "09523cae-36ef-43e3-b6c1-3d4843f4e7d6"
+}

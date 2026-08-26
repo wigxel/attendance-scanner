@@ -43,7 +43,9 @@ function CustomerSheet({
   } = usePaginatedQuery(
     api.customers.getVisitHistory,
     userId ? { userId } : "skip",
-    { initialNumItems: 20 },
+    {
+      initialNumItems: 20,
+    },
   );
 
   const handleSave = async (data: {
@@ -86,6 +88,7 @@ function CustomerSheet({
             </Button>
           )}
         </SheetHeader>
+
         <ScrollArea className="flex-1">
           {customer && isEditing ? (
             <div className="p-6">

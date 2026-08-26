@@ -1,4 +1,5 @@
 # Coming Features
+
 - ![HIGH PRIORITY] Booking Feature (WIP — Total Refactor)
 - Customer Information
   - Attendance ✅
