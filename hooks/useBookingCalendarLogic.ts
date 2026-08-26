@@ -21,12 +21,6 @@ const DURATION_TYPE_TO_PLAN_KEY: Record<string, AccessPlanKey> = {
   month: "monthly",
 };
 
-const _PLAN_KEY_TO_DURATION_TYPE: Record<AccessPlanKey, string> = {
-  daily: "day",
-  weekly: "week",
-  monthly: "month",
-};
-
 export const useBookingCalendarLogic = () => {
   const router = useRouter();
   const { timePeriodString } = useBookingStore();
@@ -34,18 +28,18 @@ export const useBookingCalendarLogic = () => {
   const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
 
   const fullyBookedDates = useQuery(api.bookings.getFullyBookedDates);
-  const accessPlans = useQuery(api.myFunctions.listAccessPlans);
+  const accessPlans = useQuery(api.accessPlans.list);
 
   if (!accessPlans) {
     return {
       reserved: [],
       selectedDate,
-      setSelectedDate: () => {},
-      handleDateChange: () => {},
+      setSelectedDate: () => { },
+      handleDateChange: () => { },
       formatDate: () => "",
       timePeriodString,
-      handleTimePeriodChange: () => {},
-      handleProceed: () => {},
+      handleTimePeriodChange: () => { },
+      handleProceed: () => { },
     };
   }
 

@@ -6,13 +6,13 @@ import { O, pipe } from "../lib/fp.helpers";
 import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import { type AccessDuration, type AccessStruct, PlanImpl } from "./shared";
-
-const DURATION_TYPE_TO_PLAN_KEY: Record<string, string> = {
-  day: "daily",
-  week: "weekly",
-  month: "monthly",
-};
+import {
+  type AccessDuration,
+  type AccessStruct,
+  DURATION_TYPE_TO_PLAN_KEY,
+  type DurationType,
+  PlanImpl,
+} from "./shared";
 
 function calcFee(
   access: AccessStruct,
@@ -73,7 +73,7 @@ export const getDaily = query({
     let weeklySubscribers = 0;
     const reservationCache = new Map<
       string,
-      { bookingId: string; durationType: string } | null
+      { bookingId: string; durationType: DurationType } | null
     >();
 
     for (const reg of registers) {

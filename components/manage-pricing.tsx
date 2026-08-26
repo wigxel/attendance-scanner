@@ -95,10 +95,10 @@ export default function PricingManagement() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const accessPlans = useQuery(api.myFunctions.listAccessPlans);
-  const addAccessPlan = useMutation(api.myFunctions.addAccessPlan);
-  const updateAccessPlan = useMutation(api.myFunctions.updateAccessPlan);
-  const deleteAccessPlan = useMutation(api.myFunctions.deleteAccessPlan);
+  const accessPlans = useQuery(api.accessPlans.list);
+  const addAccessPlan = useMutation(api.accessPlans.add);
+  const updateAccessPlan = useMutation(api.accessPlans.update);
+  const deleteAccessPlan = useMutation(api.accessPlans.remove);
 
   const isLoading = accessPlans === undefined;
 

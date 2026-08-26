@@ -1,10 +1,12 @@
 import type { GenericMutationCtx } from "convex/server";
 import { v } from "convex/values";
-import { Effect, Match, pipe } from "effect";
+import { Effect, Match, Option, pipe } from "effect";
 import { TaggedError } from "effect/Data";
 import { z } from "zod";
 import { safeObj } from "../lib/data.helpers";
+import { DateParse } from "../lib/date.helpers";
 import { O } from "../lib/fp.helpers";
+import { calculateEndDate } from "../lib/utils";
 import type { DataModel, Doc } from "./_generated/dataModel";
 
 export const featureRequestStatus = v.union(
@@ -223,7 +225,7 @@ export const PlanImpl = {
 type AccessPaidV2 = {
   _v: "2";
   kind: "paid";
-  planId: string;
+  planId: DurationType;
   amountInKobo: number;
   paymentMethod: "cash" | "bank_transfer";
   duration?: AccessDuration;
@@ -231,7 +233,7 @@ type AccessPaidV2 = {
 
 type AccessPaidV1 = {
   kind: "paid";
-  planId: string;
+  planId: DurationType;
   amount: number;
   paymentMethod: "cash" | "bank_transfer";
 };
@@ -247,3 +249,81 @@ export class PlanError extends TaggedError("PlanError") {
     super();
   }
 }
+
+type DateOrString = Date | string;
+
+type DateRange = {
+  startDate: DateOrString;
+  endDate: DateOrString;
+};
+
+export type DurationType = "day" | "week" | "month";
+
+export const DateRangeImpl = {
+  deriveEndDate(durationType: DurationType | number, startDate: Date) {
+    return pipe(
+      DateRangeImpl.match(durationType, startDate),
+      O.map((endDate) => endDate.toISOString()),
+    );
+  },
+
+  match(durationType: DurationType | number, startDate: Date): O.Option<Date> {
+    if (typeof durationType === "number") {
+      return O.some(calculateEndDate(startDate, durationType));
+    }
+
+    if (durationType === "day") {
+      return O.some(startDate);
+    }
+
+    if (durationType === "week") {
+      return O.some(calculateEndDate(startDate, 6));
+    }
+
+    if (durationType === "month") {
+      return O.some(calculateEndDate(startDate, 24));
+    }
+
+    // @todo: add month next
+    return O.none();
+  },
+
+  parseRangeDate: (range: DateRange) => {
+    return pipe(
+      Option.all({
+        startDate: DateParse.try(range?.startDate),
+        endDate: DateParse.try(range?.endDate),
+      }),
+      O.getOrThrowWith(
+        () => new Error(`Invalid date range. ${JSON.stringify(range)}`),
+      ),
+    );
+  },
+
+  /**
+   * normalize and compare based on presets
+   * @param params
+   * @returns
+   */
+  compare(params: { bookingRange: DateRange; requestedRange: DateRange }) {
+    const { bookingRange: bookingDate, requestedRange: requestedDate } = params;
+    const parseDate = DateRangeImpl.parseRangeDate(requestedDate);
+    const parsedBooking = DateRangeImpl.parseRangeDate(bookingDate);
+
+    return {
+      /** requested range is between available booking range. There's no intersection */
+      isContained() {
+        return (
+          parsedBooking.endDate < parseDate.startDate ||
+          parsedBooking.startDate > parseDate.endDate
+        );
+      },
+    };
+  },
+};
+
+export const DURATION_TYPE_TO_PLAN_KEY: Record<DurationType, string> = {
+  day: "daily",
+  week: "weekly",
+  month: "monthly",
+};
