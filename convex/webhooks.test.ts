@@ -61,10 +61,9 @@ describe("verifyPayment", () => {
 describe("onPaystackChargeSuccess", () => {
   it("returns error when reference is missing", async () => {
     const t = convexTest(schema, modules);
-    const result = await t.runMutation(
-      api.webhooks.onPaystackChargeSuccess,
-      { data: { amount: 5000, customer: { email: "a@b.com" } } },
-    );
+    const result = await t.runMutation(api.webhooks.onPaystackChargeSuccess, {
+      data: { amount: 5000, customer: { email: "a@b.com" } },
+    });
     expect(result).toMatchInlineSnapshot(`
       {
         "error": "missing_reference",
@@ -75,10 +74,9 @@ describe("onPaystackChargeSuccess", () => {
 
   it("returns error when amount is missing", async () => {
     const t = convexTest(schema, modules);
-    const result = await t.runMutation(
-      api.webhooks.onPaystackChargeSuccess,
-      { data: { reference: "ref-1", customer: { email: "a@b.com" } } },
-    );
+    const result = await t.runMutation(api.webhooks.onPaystackChargeSuccess, {
+      data: { reference: "ref-1", customer: { email: "a@b.com" } },
+    });
     expect(result).toMatchInlineSnapshot(`
       {
         "error": "missing_amount",
@@ -107,16 +105,13 @@ describe("onPaystackChargeSuccess", () => {
       });
     });
 
-    const result = await t.runMutation(
-      api.webhooks.onPaystackChargeSuccess,
-      {
-        data: {
-          reference: "ref-confirmed",
-          amount: 5000,
-          customer: { email: "a@b.com" },
-        },
+    const result = await t.runMutation(api.webhooks.onPaystackChargeSuccess, {
+      data: {
+        reference: "ref-confirmed",
+        amount: 5000,
+        customer: { email: "a@b.com" },
       },
-    );
+    });
 
     expect(result).toMatchInlineSnapshot(`
       {
@@ -129,16 +124,13 @@ describe("onPaystackChargeSuccess", () => {
   it("returns booking_not_found when no matching booking", async () => {
     const t = convexTest(schema, modules);
 
-    const result = await t.runMutation(
-      api.webhooks.onPaystackChargeSuccess,
-      {
-        data: {
-          reference: "ref-nomatch",
-          amount: 99999,
-          customer: { email: "a@b.com" },
-        },
+    const result = await t.runMutation(api.webhooks.onPaystackChargeSuccess, {
+      data: {
+        reference: "ref-nomatch",
+        amount: 99999,
+        customer: { email: "a@b.com" },
       },
-    );
+    });
 
     expect(result).toMatchInlineSnapshot(`
       {
@@ -167,17 +159,14 @@ describe("onPaystackChargeSuccess", () => {
       });
     });
 
-    const result = await t.runMutation(
-      api.webhooks.onPaystackChargeSuccess,
-      {
-        data: {
-          reference: "ref-meta",
-          amount: 5000,
-          customer: { email: "a@b.com" },
-          metadata: { bookingId },
-        },
+    const result = await t.runMutation(api.webhooks.onPaystackChargeSuccess, {
+      data: {
+        reference: "ref-meta",
+        amount: 5000,
+        customer: { email: "a@b.com" },
+        metadata: { bookingId },
       },
-    );
+    });
 
     expect(result).toMatchInlineSnapshot(`
       {
@@ -212,16 +201,13 @@ describe("onPaystackChargeSuccess", () => {
       });
     });
 
-    const result = await t.runMutation(
-      api.webhooks.onPaystackChargeSuccess,
-      {
-        data: {
-          reference: "ref-amount-match",
-          amount: 7500,
-          customer: { email: "b@c.com" },
-        },
+    const result = await t.runMutation(api.webhooks.onPaystackChargeSuccess, {
+      data: {
+        reference: "ref-amount-match",
+        amount: 7500,
+        customer: { email: "b@c.com" },
       },
-    );
+    });
 
     expect(result).toMatchInlineSnapshot(`
       {
@@ -255,17 +241,14 @@ describe("onPaystackChargeSuccess", () => {
       });
     });
 
-    const result = await t.runMutation(
-      api.webhooks.onPaystackChargeSuccess,
-      {
-        data: {
-          reference: "ref-mismatch",
-          amount: 9999,
-          customer: { email: "c@d.com" },
-          metadata: { bookingId },
-        },
+    const result = await t.runMutation(api.webhooks.onPaystackChargeSuccess, {
+      data: {
+        reference: "ref-mismatch",
+        amount: 9999,
+        customer: { email: "c@d.com" },
+        metadata: { bookingId },
       },
-    );
+    });
 
     expect(result).toMatchInlineSnapshot(`
       {

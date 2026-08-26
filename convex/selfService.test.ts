@@ -6,7 +6,6 @@ import { describe, expect, it } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 
-
 const modules = import.meta.glob("./**/*.ts");
 
 describe("submitRating", () => {
@@ -160,7 +159,9 @@ describe("getTodaysRegistration", () => {
 describe("selfCheckOut", () => {
   it("throws when unauthenticated", async () => {
     const t = convexTest(schema, modules);
-    await expect(t.mutation(api.selfService.selfCheckOut, {})).rejects.toThrow();
+    await expect(
+      t.mutation(api.selfService.selfCheckOut, {}),
+    ).rejects.toThrow();
   });
 
   it("throws when no check-in record today", async () => {

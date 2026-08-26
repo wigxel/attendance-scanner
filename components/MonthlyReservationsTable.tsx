@@ -349,7 +349,9 @@ export function MonthlyReservationsTable() {
                   <DropdownMenuItem onClick={() => setDurationType("month")}>
                     Month
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDurationType("calendar_month")}>
+                  <DropdownMenuItem
+                    onClick={() => setDurationType("calendar_month")}
+                  >
                     Calendar Month
                   </DropdownMenuItem>
                 </DropdownMenuContent>

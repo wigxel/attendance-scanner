@@ -63,9 +63,7 @@ export const createOrUpdateProfile = mutation({
         .unique();
 
     // Never use the clerk user for `profile`.`id` column
-    const profileId = identity?.profile_id
-      ? String(identity.profile_id)
-      : null;
+    const profileId = identity?.profile_id ? String(identity.profile_id) : null;
     const isClerkId = profileId?.startsWith("user_") ?? false;
 
     let new_id: string | undefined;
@@ -144,7 +142,6 @@ export const createOrUpdateProfile = mutation({
     return newProfileId;
   },
 });
-
 
 // Helper to ensure user is authenticated and return user ID
 export const requireAuth = async (ctx: QueryCtx | MutationCtx) => {

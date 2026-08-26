@@ -89,9 +89,9 @@ export function useRequireAuth() {
   return { isLoading: false, isAuthenticated: isSignedIn };
 }
 
-export function useAuthEvents(
-  params: { onChange: (event: AuthState) => void }
-) {
+export function useAuthEvents(params: {
+  onChange: (event: AuthState) => void;
+}) {
   const clerkAuthState = useUser();
   const accountMeta = useQuery(api.myFunctions.getAccountMeta);
 

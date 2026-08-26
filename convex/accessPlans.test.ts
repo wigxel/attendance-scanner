@@ -219,7 +219,7 @@ describe("seedAccessPlans", () => {
 
     await t.run(async (ctx) => {
       const result = await ctx.runMutation(api.accessPlans.seedAccessPlans);
-      expect(result.seeded).toBe(true);
+      expect(result.seeded).toBe(7);
 
       const plans = await ctx.db.query("accessPlans").collect();
       expect(plans).toHaveLength(7);
@@ -237,7 +237,32 @@ describe("seedAccessPlans", () => {
     });
   });
 
-  it("does nothing when plans already exist", async () => {
+  it("skips plans whose key already exists", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Daily Custom",
+        price: 999,
+        no_of_days: 1,
+        description: "custom",
+        features: [],
+      });
+
+      const result = await ctx.runMutation(api.accessPlans.seedAccessPlans);
+      expect(result.seeded).toBe(6);
+
+      const plans = await ctx.db.query("accessPlans").collect();
+      expect(plans).toHaveLength(7);
+
+      const daily = plans.find((p) => p.key === "daily");
+      expect(daily?.name).toBe("Daily Custom");
+      expect(daily?.price).toBe(999);
+    });
+  });
+
+  it("seeds all 7 when only non-seed-key plans exist", async () => {
     const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
@@ -251,10 +276,10 @@ describe("seedAccessPlans", () => {
       });
 
       const result = await ctx.runMutation(api.accessPlans.seedAccessPlans);
-      expect(result.seeded).toBe(0);
+      expect(result.seeded).toBe(7);
 
       const plans = await ctx.db.query("accessPlans").collect();
-      expect(plans).toHaveLength(1);
+      expect(plans).toHaveLength(8);
     });
   });
 });

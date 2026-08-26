@@ -16,10 +16,10 @@ importers:
         version: 6.39.5(next@16.2.9(@babel/core@7.29.7)(@opentelemetry/api@1.9.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@convex-dev/aggregate':
         specifier: ^0.2.1
-        version: 0.2.1(convex@1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))
+        version: 0.2.1(convex@1.45.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))
       '@convex-dev/auth':
         specifier: ^0.0.94
-        version: 0.0.94(@auth/core@0.41.2)(convex@1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))(react@19.2.7)
+        version: 0.0.94(@auth/core@0.41.2)(convex@1.45.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))(react@19.2.7)
       '@demark-pro/react-booking-calendar':
         specifier: ^4.0.3
         version: 4.0.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -120,8 +120,8 @@ importers:
         specifier: ^3.4.2
         version: 3.4.2
       convex:
-        specifier: ^1.41.0
-        version: 1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+        specifier: ^1.45.0
+        version: 1.45.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -239,7 +239,7 @@ importers:
         version: 19.2.3(@types/react@19.2.17)
       convex-test:
         specifier: ^0.0.53
-        version: 0.0.53(convex@1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))
+        version: 0.0.53(convex@1.45.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))
       dotenv:
         specifier: ^16.4.7
         version: 16.5.0
@@ -3213,9 +3213,9 @@ packages:
     peerDependencies:
       convex: ^1.32.0
 
-  convex@1.41.0:
-    resolution: {integrity: sha512-euxVf6yfpB7/VGKOobkLgjpbJidsUgW+b0ezonEyCUPqlpHFwR4/yIiI1hjjErzraiw91GxrtxpXQClMLNqU+w==}
-    engines: {node: '>=18.0.0', npm: '>=7.0.0'}
+  convex@1.45.0:
+    resolution: {integrity: sha512-AV3B56Ptu/14d76g3urBJ50dwpiZa6uJaLT84OWox5aCwZIJiuAamdjv3lLHDzs8vv5kC31anEZohhUe3qJ2bA==}
+    engines: {node: '>=20.0.0', npm: '>=7.0.0'}
     hasBin: true
     peerDependencies:
       '@auth0/auth0-react': ^2.0.1
@@ -5712,6 +5712,18 @@ packages:
       utf-8-validate:
         optional: true
 
+  ws@8.21.0:
+    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
 
@@ -5954,16 +5966,16 @@ snapshots:
       - react
       - react-dom
 
-  '@convex-dev/aggregate@0.2.1(convex@1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))':
+  '@convex-dev/aggregate@0.2.1(convex@1.45.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))':
     dependencies:
-      convex: 1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+      convex: 1.45.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
 
-  '@convex-dev/auth@0.0.94(@auth/core@0.41.2)(convex@1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))(react@19.2.7)':
+  '@convex-dev/auth@0.0.94(@auth/core@0.41.2)(convex@1.45.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@auth/core': 0.41.2
       '@oslojs/crypto': 1.0.1
       '@oslojs/encoding': 1.1.0
-      convex: 1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+      convex: 1.45.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
       cookie: 1.0.2
       is-network-error: 1.1.0
       jose: 5.10.0
@@ -5989,7 +6001,7 @@ snapshots:
     dependencies:
       '@edge-runtime/primitives': 6.0.0
 
-  '@effect/cli@0.77.0(@effect/platform@0.97.1(effect@3.22.1))(@effect/printer-ansi@0.51.0(@effect/typeclass@0.41.0(effect@3.21.4))(effect@3.21.4))(@effect/printer@0.51.0(@effect/typeclass@0.41.0(effect@3.21.4))(effect@3.21.4))(effect@3.22.1)':
+  '@effect/cli@0.77.0(@effect/platform@0.97.1(effect@3.21.4))(@effect/printer-ansi@0.51.0(@effect/typeclass@0.41.0(effect@3.21.4))(effect@3.21.4))(@effect/printer@0.51.0(@effect/typeclass@0.41.0(effect@3.21.4))(effect@3.21.4))(effect@3.22.1)':
     dependencies:
       '@effect/platform': 0.97.1(effect@3.22.1)
       '@effect/printer': 0.51.0(@effect/typeclass@0.41.0(effect@3.21.4))(effect@3.21.4)
@@ -6010,7 +6022,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@effect/platform-node-shared@0.61.1(@effect/platform@0.97.1(effect@3.22.1))(effect@3.22.1)':
+  '@effect/platform-node-shared@0.61.1(@effect/platform@0.97.1(effect@3.21.4))(effect@3.22.1)':
     dependencies:
       '@effect/platform': 0.97.1(effect@3.22.1)
       '@parcel/watcher': 2.5.6
@@ -6033,10 +6045,10 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@effect/platform-node@0.108.1(@effect/platform@0.97.1(effect@3.22.1))(effect@3.22.1)':
+  '@effect/platform-node@0.108.1(@effect/platform@0.97.1(effect@3.21.4))(effect@3.22.1)':
     dependencies:
       '@effect/platform': 0.97.1(effect@3.22.1)
-      '@effect/platform-node-shared': 0.61.1(@effect/platform@0.97.1(effect@3.22.1))(effect@3.22.1)
+      '@effect/platform-node-shared': 0.61.1(@effect/platform@0.97.1(effect@3.21.4))(effect@3.22.1)
       effect: 3.22.1
       mime: 3.0.0
       undici: 7.28.0
@@ -8321,9 +8333,9 @@ snapshots:
 
   '@wigxel/react-tf@0.1.9(@effect/printer-ansi@0.51.0(@effect/typeclass@0.41.0(effect@3.21.4))(effect@3.21.4))(@effect/printer@0.51.0(@effect/typeclass@0.41.0(effect@3.21.4))(effect@3.21.4))':
     dependencies:
-      '@effect/cli': 0.77.0(@effect/platform@0.97.1(effect@3.22.1))(@effect/printer-ansi@0.51.0(@effect/typeclass@0.41.0(effect@3.21.4))(effect@3.21.4))(@effect/printer@0.51.0(@effect/typeclass@0.41.0(effect@3.21.4))(effect@3.21.4))(effect@3.22.1)
+      '@effect/cli': 0.77.0(@effect/platform@0.97.1(effect@3.21.4))(@effect/printer-ansi@0.51.0(@effect/typeclass@0.41.0(effect@3.21.4))(effect@3.21.4))(@effect/printer@0.51.0(@effect/typeclass@0.41.0(effect@3.21.4))(effect@3.21.4))(effect@3.22.1)
       '@effect/platform': 0.97.1(effect@3.22.1)
-      '@effect/platform-node': 0.108.1(@effect/platform@0.97.1(effect@3.22.1))(effect@3.22.1)
+      '@effect/platform-node': 0.108.1(@effect/platform@0.97.1(effect@3.21.4))(effect@3.22.1)
       '@wigxel/cli-core': 0.1.4(effect@3.22.1)
       effect: 3.22.1
       fast-fs-hash: 0.0.3
@@ -8580,15 +8592,15 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  convex-test@0.0.53(convex@1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)):
+  convex-test@0.0.53(convex@1.45.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)):
     dependencies:
-      convex: 1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+      convex: 1.45.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
 
-  convex@1.41.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7):
+  convex@1.45.0(@clerk/clerk-react@5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7):
     dependencies:
       esbuild: 0.27.0
       prettier: 3.5.3
-      ws: 8.20.1
+      ws: 8.21.0
     optionalDependencies:
       '@clerk/clerk-react': 5.61.8(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react: 19.2.7
@@ -11831,6 +11843,8 @@ snapshots:
   wordwrap@0.0.3: {}
 
   ws@8.20.1: {}
+
+  ws@8.21.0: {}
 
   yallist@3.1.1: {}
 

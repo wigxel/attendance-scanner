@@ -2,9 +2,10 @@ import type { GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
 import { Option, pipe } from "effect";
 import { DateParse } from "../lib/date.helpers";
+import { DateRangeImpl } from "../lib/date-range";
+import type { DurationType } from "../types";
 import type { DataModel } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import { DateRangeImpl } from "./shared";
 
 export const getAllSeats = query({
   args: {},
@@ -144,8 +145,8 @@ export const checkSeatAvailability = query({
 
     const endDate = pipe(
       DateParse.parse(args.startDate),
-      Option.map((parsed_date) =>
-        DateRangeImpl.match(args.durationType, parsed_date),
+      Option.flatMap((parsed_date) =>
+        DateRangeImpl.match(args.durationType as DurationType, parsed_date),
       ),
       Option.getOrThrowWith(
         () => new Error("Invalid startDate. Provide a valid date"),

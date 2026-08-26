@@ -149,8 +149,16 @@ function TokenCheckInFlow() {
           toast.error(getErrorMessage(err));
         }
       });
-  }, [status, registration, adminId, selfCheckIn, isFetchingRegisterData, profile, isProfileReady, router]);
-
+  }, [
+    status,
+    registration,
+    adminId,
+    selfCheckIn,
+    isFetchingRegisterData,
+    profile,
+    isProfileReady,
+    router,
+  ]);
 
   if (status === "verifying-token" || status === "checking-in") {
     return (
@@ -188,9 +196,7 @@ function TokenCheckInFlow() {
             Your check-in will be saved for 5 minutes.
           </p>
         </div>
-        <Button onClick={() => router.push("/auth")}>
-          Sign In
-        </Button>
+        <Button onClick={() => router.push("/auth")}>Sign In</Button>
       </div>
     );
   }

@@ -58,7 +58,6 @@ function OnboardingForm({
   const router = useRouter();
   const updateUser = useAction(api.myFunctions.updateUser);
 
-
   //Fetch occupations from the database
   const occupations = useQuery(api.myFunctions.listOccupations) ?? [];
 

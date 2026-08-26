@@ -1,7 +1,6 @@
 import type { GenericQueryCtx } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import {
-  addMonths,
   differenceInHours,
   endOfMonth,
   format,
@@ -10,8 +9,10 @@ import {
   startOfMonth,
   subWeeks,
 } from "date-fns";
+import { DateRangeImpl, PlanKeyManager } from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
 import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
+import type { DurationType } from "../types";
 import { api, internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
@@ -24,7 +25,8 @@ import {
   getAvailableSeatsForDay,
   getUnassignedTicketsForDay,
 } from "./seatOrchestrator";
-import { DateRangeImpl, DURATION_TYPE_TO_PLAN_KEY } from "./shared";
+
+type AccessPlan = Doc<"accessPlans">;
 
 export const getBooking = query({
   args: {
@@ -69,9 +71,9 @@ async function getBookingInfo(
     booking.created_by === "system" || booking.created_by === undefined
       ? Promise.resolve("Booking system")
       : ctx.db
-        .get(booking.created_by as Id<"users">)
-        .then((e) => e?.name ?? "Anonymous")
-        .catch(() => "--"),
+          .get(booking.created_by as Id<"users">)
+          .then((e) => e?.name ?? "Anonymous")
+          .catch(() => "--"),
   ]);
 
   return {
@@ -80,17 +82,16 @@ async function getBookingInfo(
     seats: seats.filter((seat) => seat !== null), // filter out any null values
     user: user
       ? {
-        id: user.id,
-        name: `${user.firstName} ${user.lastName}`,
-        email: user.email,
-      }
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+        }
       : {
-        name: "Anonymous User",
-        email: "--",
-      },
+          name: "Anonymous User",
+          email: "--",
+        },
   };
 }
-
 
 export const createBooking = mutation({
   /**
@@ -143,7 +144,7 @@ export const createBooking = mutation({
       v.literal("day"),
       v.literal("week"),
       v.literal("month"),
-      v.literal("calendar_month"),
+      v.literal("full_month"),
     ),
   },
   handler: async (ctx, args) => {
@@ -169,10 +170,13 @@ export const createBooking = mutation({
 
     if (!args.durationType) throw new ConvexError("Duration type is required");
 
-    const planKey = DURATION_TYPE_TO_PLAN_KEY[args.durationType];
-    const accessPlan = await ctx.runQuery(api.accessPlans.getByKey, {
-      planKey,
-    });
+    const planKey = PlanKeyManager.mapPlanKey(args.durationType);
+    const accessPlan: AccessPlan | null = await ctx.runQuery(
+      api.accessPlans.getByKey,
+      {
+        planKey,
+      },
+    );
 
     if (!accessPlan) {
       throw new ConvexError(
@@ -180,8 +184,9 @@ export const createBooking = mutation({
       );
     }
 
-    const duration = accessPlan.no_of_days;
-    const pricePerSeat = accessPlan.price * 100;
+    const planDuration: number = accessPlan.no_of_days;
+    const pricePerSeat: number = accessPlan.price * 100;
+
     if (pricePerSeat < 0) {
       throw new ConvexError("pricePerSeat must be non-negative");
     }
@@ -189,13 +194,13 @@ export const createBooking = mutation({
 
     const startMs = startDate.getTime();
     const endDate: string = pipe(
-      DateRangeImpl.deriveEndDate(duration, startDate),
+      DateRangeImpl.deriveEndDate(planDuration, startDate),
       O.getOrThrowWith(
         () => new ConvexError("Error predicting `EndDate` from input"),
       ),
     );
 
-    if (duration < 1) throw new ConvexError("Invalid date range");
+    if (planDuration < 1) throw new ConvexError("Invalid date range");
     if (startMs < Date.now()) throw new ConvexError("Cannot book past dates");
 
     if (startDate.getDay() === 0) {
@@ -243,7 +248,7 @@ export const createBooking = mutation({
     const bookingId = await ctx.db.insert("bookings", {
       userId,
       seatIds: args.seatIds,
-      duration,
+      duration: planDuration,
       startDate: args.startDate,
       endDate: endDate,
       durationType: args.durationType,
@@ -267,7 +272,7 @@ export const createBooking = mutation({
     return {
       bookingIds: [bookingId],
       amount,
-      duration,
+      duration: planDuration,
       userInfo: { userId, userEmail, userName },
       message: "Bookings created. Please complete payment within 10 minutes.",
     };
@@ -283,7 +288,7 @@ export const updateBooking = mutation({
       v.literal("day"),
       v.literal("week"),
       v.literal("month"),
-      v.literal("calendar_month"),
+      v.literal("full_month"),
     ),
   },
   handler: async (ctx, args) => {
@@ -310,7 +315,7 @@ export const updateBooking = mutation({
 
     if (!args.durationType) throw new ConvexError("Duration type is required");
 
-    const planKey = DURATION_TYPE_TO_PLAN_KEY[args.durationType];
+    const planKey = PlanKeyManager.mapPlanKey(args.durationType);
     const accessPlan = await ctx.runQuery(api.accessPlans.getByKey, {
       planKey,
     });
@@ -1082,14 +1087,14 @@ export const getAllBookings = query({
           seats: seats.filter((seat) => seat !== null), // filter out any null values
           user: user
             ? {
-              id: user.id,
-              name: `${user.firstName} ${user.lastName}`,
-              email: user.email,
-            }
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+              }
             : {
-              name: "Anonymous User",
-              email: "--",
-            },
+                name: "Anonymous User",
+                email: "--",
+              },
         };
       }),
     );
@@ -1144,18 +1149,22 @@ export const createManualBooking = mutation({
 
     if (!profile) throw new ConvexError("Customer not found");
 
-    const plan = await ctx.runQuery(api.accessPlans.getByKey, { planKey });
+    const plan: AccessPlan | null = await ctx.runQuery(
+      api.accessPlans.getByKey,
+      {
+        planKey,
+      },
+    );
 
     if (plan == null) {
       throw new ConvexError("Invalid plan");
     }
 
+    const durationType = plan.key as DurationType;
     const now = new Date();
     const bookingStartDate = parseISO(startDate);
-    const isCalendarMonthly = planKey === "calendar-month";
-    const bookingEndDate = isCalendarMonthly
-      ? addMonths(bookingStartDate, 1)
-      : calculateEndDate(bookingStartDate, plan.no_of_days);
+    const bookingEndDate = calculateEndDate(bookingStartDate, plan.no_of_days);
+
     const last2Weeks = subWeeks(now, 2);
 
     if (bookingStartDate < last2Weeks) {
@@ -1182,13 +1191,6 @@ export const createManualBooking = mutation({
         throw new ConvexError("Date range overlaps with an existing booking.");
       }
     }
-
-    const durationType = (() => {
-      if (isCalendarMonthly) return "calendar_month" as const;
-      if (plan.no_of_days === 1) return "day" as const;
-      if (plan.no_of_days > 7) return "month" as const;
-      return "week" as const;
-    })();
 
     const seatIds: Id<"seats">[] = [];
 
@@ -1232,7 +1234,7 @@ export const createManualBooking = mutation({
       throw new ConvexError("pricePerSeat must be non-negative");
     }
 
-    const bookingId = await ctx.db.insert("bookings", {
+    const bookingId = (await ctx.db.insert("bookings", {
       userId,
       seatIds,
       duration: plan.no_of_days,
@@ -1245,7 +1247,7 @@ export const createManualBooking = mutation({
       created_by: profileId,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    });
+    })) as unknown as Id<"bookings">;
 
     await ctx.db.insert("bookedSeats", {
       bookingId,
@@ -1260,7 +1262,10 @@ export const createManualBooking = mutation({
       },
     );
 
-    const createdBooking = await ctx.db.get(bookingId);
+    const createdBooking = (await ctx.db.get(
+      bookingId,
+    )) as Doc<"bookings"> | null;
+
     if (createdBooking) {
       await updateTodaysRegisterForSubscriber(ctx, {
         actorId: profileId,
@@ -1306,7 +1311,7 @@ export const getMonthlyReservations = query({
         v.literal("day"),
         v.literal("week"),
         v.literal("month"),
-        v.literal("calendar_month"),
+        v.literal("full_month"),
         v.literal("all"),
       ),
     ),
@@ -1359,15 +1364,15 @@ export const getMonthlyReservations = query({
           ...booking,
           user: user
             ? {
-              id: user.id,
-              name: `${user.firstName} ${user.lastName}`,
-              email: user.email,
-            }
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+              }
             : {
-              id: booking.userId,
-              name: "Anonymous User",
-              email: null,
-            },
+                id: booking.userId,
+                name: "Anonymous User",
+                email: null,
+              },
         };
       }),
     );
@@ -1387,7 +1392,7 @@ export const exportMonthlyReservations = action({
         v.literal("day"),
         v.literal("week"),
         v.literal("month"),
-        v.literal("calendar_month"),
+        v.literal("full_month"),
         v.literal("all"),
       ),
     ),

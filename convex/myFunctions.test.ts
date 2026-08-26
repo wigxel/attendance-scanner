@@ -44,15 +44,12 @@ describe("auth.createOrUpdateProfile", () => {
       profile_id: "new-user",
     });
 
-    const profileId = await authed.runMutation(
-      api.auth.createOrUpdateProfile,
-      {
-        firstName: "New",
-        lastName: "User",
-        email: "new@test.com",
-        occupation: "None",
-      },
-    );
+    const profileId = await authed.runMutation(api.auth.createOrUpdateProfile, {
+      firstName: "New",
+      lastName: "User",
+      email: "new@test.com",
+      occupation: "None",
+    });
 
     const profile = await t.run(async (ctx) => {
       return await ctx.db.get(profileId);
@@ -81,14 +78,11 @@ describe("auth.createOrUpdateProfile", () => {
       profile_id: "existing-user",
     });
 
-    const profileId = await authed.runMutation(
-      api.auth.createOrUpdateProfile,
-      {
-        firstName: "Updated",
-        lastName: "Name",
-        email: "updated@test.com",
-      },
-    );
+    const profileId = await authed.runMutation(api.auth.createOrUpdateProfile, {
+      firstName: "Updated",
+      lastName: "Name",
+      email: "updated@test.com",
+    });
 
     const profile = await t.run(async (ctx) => {
       return await ctx.db.get(profileId);
@@ -266,7 +260,7 @@ describe("myFunctions.getUserActiveReservation", () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result!.durationType).toBe("week");
+    expect(result?.durationType).toBe("week");
   });
 
   it("returns null for past booking", async () => {

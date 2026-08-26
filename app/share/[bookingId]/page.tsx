@@ -97,7 +97,7 @@ export default function SharePage() {
                 </p>
                 <div className="flex items-center gap-2 text-sm font-medium text-gray-900 capitalize">
                   <Clock className="w-3.5 h-3.5 text-gray-400" />
-                  {data.durationType === "calendar_month"
+                  {data.durationType === "full_month"
                     ? "1 Calendar Month"
                     : `${data.duration} ${data.durationType}(s)`}
                 </div>

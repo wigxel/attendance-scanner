@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { planDeletedAudit } from "./audits/entities";
@@ -7,7 +8,7 @@ import { readId } from "./myFunctions";
 
 export const getByKey = query({
   args: { planKey: v.string() },
-  handler: async (ctx, { planKey }) => {
+  handler: async (ctx, { planKey }): Promise<Doc<"accessPlans"> | null> => {
     return await ctx.db
       .query("accessPlans")
       .withIndex("plan_key", (q) => q.eq("key", planKey))
@@ -16,7 +17,7 @@ export const getByKey = query({
 });
 
 export const list = query({
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<Doc<"accessPlans">[]> => {
     return ctx.db.query("accessPlans").collect();
   },
 });
@@ -116,75 +117,76 @@ export const remove = mutation({
 
 export const seedAccessPlans = internalMutation({
   handler: async (ctx) => {
-    const existing = await ctx.db.query("accessPlans").collect();
+    const defaults = [
+      {
+        key: "daily",
+        name: "Daily",
+        price: 1500,
+        no_of_days: 1,
+        description: "Daily access pass",
+        features: [] as string[],
+      },
+      {
+        key: "weekly",
+        name: "Weekly",
+        price: 6000,
+        no_of_days: 7,
+        description: "7-day access pass",
+        features: ["priority-check-in"],
+      },
+      {
+        key: "monthly",
+        name: "Monthly",
+        price: 24000,
+        no_of_days: 24,
+        description: "24-working-day access pass",
+        features: ["priority-check-in", "booking"],
+      },
+      {
+        key: "daily_night",
+        name: "Daily Night",
+        price: 1000,
+        no_of_days: 1,
+        description: "Night session pass (8pm - 8am)",
+        features: [] as string[],
+      },
+      {
+        key: "weekly_night",
+        name: "Weekly Night",
+        price: 5000,
+        no_of_days: 7,
+        description: "7-night session pass (8pm - 8am)",
+        features: ["priority-check-in"],
+      },
+      {
+        key: "monthly_night",
+        name: "Monthly Night",
+        price: 20000,
+        no_of_days: 24,
+        description: "24-night session pass (8pm - 8am)",
+        features: ["priority-check-in", "booking"],
+      },
+      {
+        key: "calendar_month",
+        name: "Calendar Month",
+        price: 20000,
+        no_of_days: 31,
+        description: "Full calendar month",
+        features: ["priority-check-in", "booking"],
+      },
+    ];
 
-    if (existing.length > 0) {
-      return { seeded: 0 };
+    const existing = await ctx.db.query("accessPlans").collect();
+    const existingKeys = new Set(existing.map((p) => p.key));
+
+    let seeded = 0;
+    for (const plan of defaults) {
+      if (!existingKeys.has(plan.key)) {
+        await ctx.db.insert("accessPlans", plan);
+        seeded++;
+      }
     }
 
-    ctx.db.insert("accessPlans", {
-      key: "daily",
-      name: "Daily",
-      price: 1500,
-      no_of_days: 1,
-      description: "Daily access pass",
-      features: [],
-    });
-
-    ctx.db.insert("accessPlans", {
-      key: "weekly",
-      name: "Weekly",
-      price: 6000,
-      no_of_days: 7,
-      description: "7-day access pass",
-      features: ["priority-check-in"],
-    });
-
-    ctx.db.insert("accessPlans", {
-      key: "monthly",
-      name: "Monthly",
-      price: 24000,
-      no_of_days: 24,
-      description: "24-working-day access pass",
-      features: ["priority-check-in", "booking"],
-    });
-
-    ctx.db.insert("accessPlans", {
-      key: "daily_night",
-      name: "Daily Night",
-      price: 1000,
-      no_of_days: 1,
-      description: "Night session pass (8pm - 8am)",
-      features: [],
-    });
-
-    ctx.db.insert("accessPlans", {
-      key: "weekly_night",
-      name: "Weekly Night",
-      price: 5000,
-      no_of_days: 7,
-      description: "7-night session pass (8pm - 8am)",
-      features: ["priority-check-in"],
-    });
-
-    ctx.db.insert("accessPlans", {
-      key: "monthly_night",
-      name: "Monthly Night",
-      price: 20000,
-      no_of_days: 24,
-      description: "24-night session pass (8pm - 8am)",
-      features: ["priority-check-in", "booking"],
-    });
-
-    ctx.db.insert("accessPlans", {
-      key: "calendar_month",
-      name: "Calendar Month",
-      price: 20000,
-      no_of_days: 31,
-      description: "Full calendar month",
-      features: ["priority-check-in", "booking"],
-    });
-
-    return { seeded: true };
+    return { seeded };
   },
 });

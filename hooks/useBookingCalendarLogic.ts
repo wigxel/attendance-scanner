@@ -12,16 +12,7 @@ import { api } from "@/convex/_generated/api";
 import { safeArray, safeInt } from "@/lib/data.helpers";
 import { anomaly } from "@/lib/error.helpers";
 import { calculateEndDate } from "@/lib/utils";
-import { addMonths } from "date-fns";
-
-type AccessPlanKey = "daily" | "weekly" | "monthly" | "calendar-month";
-
-const DURATION_TYPE_TO_PLAN_KEY: Record<string, AccessPlanKey> = {
-  day: "daily",
-  week: "weekly",
-  month: "monthly",
-  calendar_month: "calendar-month",
-};
+import type { KnownPlanKey } from "@/types";
 
 export const useBookingCalendarLogic = () => {
   const router = useRouter();
@@ -36,12 +27,12 @@ export const useBookingCalendarLogic = () => {
     return {
       reserved: [],
       selectedDate,
-      setSelectedDate: () => { },
-      handleDateChange: () => { },
+      setSelectedDate: () => {},
+      handleDateChange: () => {},
       formatDate: () => "",
       timePeriodString,
-      handleTimePeriodChange: () => { },
-      handleProceed: () => { },
+      handleTimePeriodChange: () => {},
+      handleProceed: () => {},
     };
   }
 
@@ -66,7 +57,9 @@ export const useBookingCalendarLogic = () => {
     });
   };
 
-  const handleTimePeriodChange = (value: "day" | "week" | "month" | "calendar_month") => {
+  const handleTimePeriodChange = (
+    value: "day" | "week" | "month" | "calendar_month",
+  ) => {
     setTimePeriodString(value);
   };
 
@@ -81,10 +74,10 @@ export const useBookingCalendarLogic = () => {
       return toast.info("Please select another date. We're closed on Sundays");
     }
 
-    const getPlanByKey = (key: AccessPlanKey) =>
-      accessPlans?.find((plan) => plan.key === DURATION_TYPE_TO_PLAN_KEY[key]);
+    const getPlanByKey = (key: KnownPlanKey) =>
+      accessPlans?.find((plan) => plan.key === key);
 
-    const currentPlan = getPlanByKey(timePeriodString as AccessPlanKey);
+    const currentPlan = getPlanByKey(timePeriodString as KnownPlanKey);
     const timePeriod = safeInt(currentPlan?.no_of_days, 0);
 
     if (!currentPlan) {
