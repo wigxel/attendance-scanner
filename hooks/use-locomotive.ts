@@ -19,12 +19,14 @@ export function useLocomotive() {
       const LocomotiveScroll = (await import("locomotive-scroll")).default;
 
       scroll = new LocomotiveScroll({});
+      // @ts-expect-error Global variable
       window[GLOBAL_VAR] = scroll;
       setScroll(scroll);
     })();
 
     // Important: clean up on unmount
     return () => {
+      // @ts-expect-error Global variable
       delete window[GLOBAL_VAR];
       scroll?.destroy?.();
       locoInstanceRef.current = null;
