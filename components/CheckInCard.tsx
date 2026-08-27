@@ -47,11 +47,7 @@ function QRCode() {
   const isLoading = profile.isLoading || qr_hash.isLoading;
 
   return (
-    <m.div
-      initial={{ height: 150 }}
-      animate={isLoading ? { height: 150 } : { height: "100%" }}
-      className={"relative overflow-hidden"}
-    >
+    <div className={"relative overflow-hidden"}>
       {isLoading ? (
         <div className="absolute inset-0 bg-white/[0.3] z-20 backdrop-blur-lg flex justify-center items-center">
           <AppLoader />
@@ -59,7 +55,7 @@ function QRCode() {
       ) : null}
 
       <ResizeableQRCode hash={qr_hash.data} />
-    </m.div>
+    </div>
   );
 }
 
@@ -71,8 +67,8 @@ export function CheckInCard() {
   }
 
   return (
-    <div className="border overflow-hidden rounded-2xl bg-background dark:bg-gray-950">
-      <Refresh component={QRCode} interval={10} />
+    <div className="border overflow-hidden rounded-2xl bg-background">
+      <Refresh component={QRCode} intervalInSeconds={10} />
       <p className="p-4 text-center border-t font-mono text-xs">
         Present QR Code to Staff at Check-in Counter
       </p>
@@ -80,32 +76,33 @@ export function CheckInCard() {
   );
 }
 
+type RefreshProps = {
+  component: React.ComponentType<unknown>;
+  intervalInSeconds: number;
+};
+
 function Refresh({
   component: Component,
-  interval,
-}: {
-  component: React.ComponentType<unknown>;
-  interval: number;
-}) {
+  intervalInSeconds = 50,
+}: RefreshProps) {
   const [count, setCount] = React.useState(() => crypto.randomUUID());
 
   React.useEffect(() => {
     const timer = setInterval(() => {
       setCount(crypto.randomUUID());
-    }, interval * 1000);
+    }, intervalInSeconds * 1000);
     return () => clearInterval(timer);
-  }, [interval]);
+  }, [intervalInSeconds]);
 
   return <Component key={count} />;
 }
 
-export function ResizeableQRCode({
-  hash,
-  className,
-}: {
+type ResizableQRCodeProps = {
   hash?: string;
   className?: string;
-}) {
+};
+
+export function ResizeableQRCode({ hash, className }: ResizableQRCodeProps) {
   const [size, setSize] = React.useState<number | null>(null);
   const ref = React.useRef<HTMLDivElement>(null);
 

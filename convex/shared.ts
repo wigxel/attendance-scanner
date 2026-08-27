@@ -15,6 +15,7 @@ export const featureRequestStatus = v.union(
   v.literal("rejected"),
 );
 
+/** @deprecated Use accessPlans.list and planKey for filtering instead. */
 export const durationTypeConvexSchema = v.union(
   v.literal("day"),
   v.literal("week"),

@@ -4,10 +4,12 @@
 import { convexTest } from "convex-test";
 import { addDays, format, subDays } from "date-fns";
 import { describe, expect, it } from "vitest";
-import { api } from "./_generated/api";
+import { api, components } from "./_generated/api";
 import schema from "./schema";
+import aclSchema from "./components/acl/schema";
 
 const modules = import.meta.glob("./**/*.ts");
+const aclModules = import.meta.glob("./components/acl/**/*.ts");
 
 function todayStr() {
   return format(new Date(), "yyyy-MM-dd");
@@ -19,6 +21,23 @@ function futureStr(days = 30) {
 
 function pastStr(days = 5) {
   return format(subDays(new Date(), days), "yyyy-MM-dd");
+}
+
+async function seedAdmin(
+  t: ReturnType<typeof convexTest>,
+  privileges: string[] = ["reports:read", "booking:read"],
+) {
+  t.registerComponent("wigxel_acl", aclSchema, aclModules);
+
+  // Seed the admin role into the component's DB via its own mutation
+  await t.run(async (ctx) => {
+    await ctx.runMutation(components.wigxel_acl.seed.seedRoles, {});
+
+    // Create an identity with the admin role
+    await ctx.runMutation(components.wigxel_acl.seed.makeSuperAdmin, {
+      identity: "admin-user",
+    });
+  });
 }
 
 // ─── generateTickets ────────────────────────────────────────────────
@@ -333,6 +352,67 @@ describe("systemGetBooking", () => {
 
       expect(result.user.name).toBe("Anonymous User");
       expect(result.user.email).toBe("--");
+    });
+  });
+
+  it("returns planName from matching accessPlan", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("accessPlans", {
+        key: "weekly",
+        name: "Weekly Pass",
+        price: 700000,
+        no_of_days: 7,
+        description: "7 days",
+        features: [],
+      });
+
+      const bookingId = await ctx.db.insert("bookings", {
+        userId: "u",
+        seatIds: [],
+        duration: 7,
+        startDate: todayStr(),
+        endDate: futureStr(),
+        durationType: "week",
+        pricePerSeat: 700000,
+        amount: 700000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      const result = await ctx.runQuery(api.bookings.systemGetBooking, {
+        bookingId,
+      });
+
+      expect(result.planName).toBe("Weekly Pass");
+    });
+  });
+
+  it("falls back to duration string when no matching plan", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const bookingId = await ctx.db.insert("bookings", {
+        userId: "u",
+        seatIds: [],
+        duration: 13,
+        startDate: todayStr(),
+        endDate: futureStr(),
+        durationType: "month",
+        pricePerSeat: 0,
+        amount: 0,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      const result = await ctx.runQuery(api.bookings.systemGetBooking, {
+        bookingId,
+      });
+
+      expect(result.planName).toBe("13 days");
     });
   });
 });
@@ -2040,6 +2120,87 @@ describe("markBookingAsExpired error paths", () => {
     await expect(
       authed.runMutation(api.bookings.markBookingAsExpired, {
         bookingId: "fake" as any,
+      }),
+    ).rejects.toThrow();
+  });
+});
+
+// ─── list ───────────────────────────────────────────────────────────
+
+describe("list", () => {
+  it("returns planName from matching accessPlan", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const authed = t.withIdentity({ profile_id: "admin-user" });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("accessPlans", {
+        key: "weekly",
+        name: "Weekly Pass",
+        price: 700000,
+        no_of_days: 7,
+        description: "7 days",
+        features: [],
+      });
+
+      await ctx.db.insert("bookings", {
+        userId: "u",
+        seatIds: [],
+        duration: 7,
+        startDate: todayStr(),
+        endDate: futureStr(),
+        durationType: "week",
+        pricePerSeat: 700000,
+        amount: 700000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    const result = await authed.runQuery(api.bookings.list, {
+      month: format(new Date(), "yyyy-MM"),
+    });
+
+    expect(result.bookings).toHaveLength(1);
+    expect(result.bookings[0].planName).toBe("Weekly Pass");
+  });
+
+  it("falls back to duration string when no matching plan", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const authed = t.withIdentity({ profile_id: "admin-user" });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("bookings", {
+        userId: "u",
+        seatIds: [],
+        duration: 13,
+        startDate: todayStr(),
+        endDate: futureStr(),
+        durationType: "month",
+        pricePerSeat: 0,
+        amount: 0,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    const result = await authed.runQuery(api.bookings.list, {
+      month: format(new Date(), "yyyy-MM"),
+    });
+
+    expect(result.bookings).toHaveLength(1);
+    expect(result.bookings[0].planName).toBe("13 days");
+  });
+
+  it("throws when unauthenticated", async () => {
+    const t = convexTest(schema, modules);
+
+    await expect(
+      t.runQuery(api.bookings.list, {
+        month: format(new Date(), "yyyy-MM"),
       }),
     ).rejects.toThrow();
   });

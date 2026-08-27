@@ -54,7 +54,7 @@ function CheckInPrompt() {
   };
 
   return (
-    <div className="border overflow-hidden rounded-lg bg-background dark:bg-gray-950">
+    <div className="border overflow-hidden rounded-lg bg-background">
       <div className="p-4 flex flex-col gap-4">
         <div className="flex items-start gap-4">
           <div className="h-8 aspect-square shrink-0 flex justify-center items-center text-muted-foreground">
@@ -131,7 +131,7 @@ function CheckOutEntry({
 
   return (
     <AlertDialog>
-      <div className="border overflow-hidden rounded-lg bg-background dark:bg-gray-950">
+      <div className="border overflow-hidden rounded-lg bg-background">
         <div className="p-4 flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0" />
@@ -187,7 +187,7 @@ function SessionSummary({
   const todaysRating = useTodaysRating();
 
   return (
-    <div className="border overflow-hidden rounded-lg bg-background dark:bg-gray-950">
+    <div className="border overflow-hidden rounded-lg bg-background">
       <div className="p-4">
         <div className="flex items-center gap-3">
           <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0" />
@@ -361,7 +361,7 @@ export function CustomerWillScanQR() {
   const button = <Button className="w-full">Check In</Button>;
 
   return (
-    <div className="border border-[red]/50 select-none overflow-hidden rounded-lg shadow-lg bg-background dark:bg-gray-950">
+    <div className="border border-[red]/50 select-none overflow-hidden rounded-lg shadow-lg bg-background">
       <div className="p-4 flex flex-col gap-4">
         <div className="flex justify-between w-full gap-4 items-center">
           <div className="h-8 items-center aspect-square shrink-0 flex justify-center text-muted-foreground">

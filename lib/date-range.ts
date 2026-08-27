@@ -98,6 +98,5 @@ export const PlanKeyManager = {
 export function resolveDurationGroup(noOfDays: number): DurationGroup {
   if (noOfDays <= 1) return "day";
   if (noOfDays <= 7) return "week";
-  if (noOfDays <= 24) return "month";
-  return "full_month";
+  return "month";
 }

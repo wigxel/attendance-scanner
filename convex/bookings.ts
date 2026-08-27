@@ -9,7 +9,11 @@ import {
   startOfMonth,
   subWeeks,
 } from "date-fns";
-import { DateRangeImpl, PlanKeyManager } from "../lib/date-range";
+import {
+  DateRangeImpl,
+  PlanKeyManager,
+  resolveDurationGroup,
+} from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
 import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
 import type { DurationGroup } from "../types";
@@ -17,7 +21,6 @@ import { api, internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
-import { durationTypeConvexSchema } from "./shared";
 import { bookingDeletedAudit } from "./audits/entities";
 import { readId } from "./myFunctions";
 import { updateTodaysRegisterForSubscriber } from "./register_common";
@@ -26,6 +29,7 @@ import {
   getAvailableSeatsForDay,
   getUnassignedTicketsForDay,
 } from "./seatOrchestrator";
+import { durationTypeConvexSchema } from "./shared";
 
 type AccessPlan = Doc<"accessPlans">;
 
@@ -36,7 +40,7 @@ export const getBooking = query({
   handler: async (ctx, { bookingId }) => {
     await requirePrivilege(ctx, "booking:read");
 
-    return await getBookingInfo(ctx, { bookingId });
+    return await ctx.runQuery(api.bookings.getDetails, { bookingId });
   },
 });
 
@@ -45,54 +49,60 @@ export const systemGetBooking = query({
     bookingId: v.id("bookings"),
   },
   handler: async (ctx, { bookingId }) => {
-    return await getBookingInfo(ctx, { bookingId });
+    return await ctx.runQuery(api.bookings.getDetails, { bookingId });
   },
 });
 
-async function getBookingInfo(
-  ctx: GenericQueryCtx<DataModel>,
-  { bookingId }: { bookingId: Id<"bookings"> },
-) {
-  const booking = await ctx.db.get(bookingId);
+export const getDetails = query({
+  args: {
+    bookingId: v.id("bookings"),
+  },
+  handler: async (ctx, { bookingId }) => {
+    const booking = await ctx.db.get(bookingId);
 
-  if (!booking) {
-    throw new ConvexError("Booking not found");
-  }
+    if (!booking) {
+      throw new ConvexError("Booking not found");
+    }
 
-  // fetch all seats for this booking
-  const seats = await Promise.all(
-    booking.seatIds.map((seatId) => ctx.db.get(seatId)),
-  );
+    const seats = await Promise.all(
+      booking.seatIds.map((seatId) => ctx.db.get(seatId)),
+    );
 
-  const [user, creator] = await Promise.all([
-    ctx.db
-      .query("profile")
-      .filter((q) => q.eq(q.field("id"), booking.userId))
-      .first(),
-    booking.created_by === "system" || booking.created_by === undefined
-      ? Promise.resolve("Booking system")
-      : ctx.db
-          .get(booking.created_by as Id<"users">)
-          .then((e) => e?.name ?? "Anonymous")
-          .catch(() => "--"),
-  ]);
+    const [user, creator, plan] = await Promise.all([
+      ctx.db
+        .query("profile")
+        .filter((q) => q.eq(q.field("id"), booking.userId))
+        .first(),
+      booking.created_by === "system" || booking.created_by === undefined
+        ? Promise.resolve("Booking system")
+        : ctx.db
+            .get(booking.created_by as Id<"users">)
+            .then((e) => e?.name ?? "Anonymous")
+            .catch(() => "--"),
+      ctx.db
+        .query("accessPlans")
+        .filter((q) => q.eq(q.field("no_of_days"), booking.duration))
+        .first(),
+    ]);
 
-  return {
-    ...booking,
-    creator,
-    seats: seats.filter((seat) => seat !== null), // filter out any null values
-    user: user
-      ? {
-          id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          email: user.email,
-        }
-      : {
-          name: "Anonymous User",
-          email: "--",
-        },
-  };
-}
+    return {
+      ...booking,
+      creator,
+      planName: plan?.name ?? `${booking.duration} days`,
+      seats: seats.filter((seat) => seat !== null),
+      user: user
+        ? {
+            id: user.id,
+            name: `${user.firstName} ${user.lastName}`,
+            email: user.email,
+          }
+        : {
+            name: "Anonymous User",
+            email: "--",
+          },
+    };
+  },
+});
 
 export const createBooking = mutation({
   /**
@@ -1151,7 +1161,7 @@ export const createManualBooking = mutation({
       throw new ConvexError("Invalid plan");
     }
 
-    const durationType = plan.key as DurationGroup;
+    const durationType = resolveDurationGroup(plan.no_of_days);
     const now = new Date();
     const bookingStartDate = parseISO(startDate);
     const bookingEndDate = calculateEndDate(bookingStartDate, plan.no_of_days);
@@ -1294,23 +1304,15 @@ function parseMonthArg(value: string, argName = "month"): string {
   return value;
 }
 
-export const getMonthlyReservations = query({
+export const list = query({
   args: {
     month: v.string(),
-    durationType: v.optional(
-      v.union(
-        v.literal("day"),
-        v.literal("week"),
-        v.literal("month"),
-        v.literal("full_month"),
-        v.literal("all"),
-      ),
-    ),
+    planKey: v.optional(v.string()),
     overflow: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const { planKey } = args;
     await requirePrivilege(ctx, "reports:read");
-
     const validatedMonth = parseMonthArg(args.month, "month");
     const targetDate = parseISO(`${validatedMonth}-01`);
     const monthStart = startOfMonth(targetDate);
@@ -1318,6 +1320,15 @@ export const getMonthlyReservations = query({
 
     const monthStartStr = format(monthStart, "yyyy-MM-dd");
     const monthEndStr = format(monthEnd, "yyyy-MM-dd");
+
+    let filterDuration: number | null = null;
+    if (planKey && planKey !== "all") {
+      const plan = await ctx.db
+        .query("accessPlans")
+        .withIndex("plan_key", (q) => q.eq("key", planKey))
+        .first();
+      if (plan) filterDuration = plan.no_of_days;
+    }
 
     const bookings = await ctx.db
       .query("bookings")
@@ -1330,9 +1341,8 @@ export const getMonthlyReservations = query({
       if (booking.status !== "confirmed" && booking.status !== "used-up")
         return false;
 
-      if (args.durationType && args.durationType !== "all") {
-        if (booking.durationType !== args.durationType) return false;
-      }
+      if (filterDuration !== null && booking.duration !== filterDuration)
+        return false;
 
       const startInMonth = isSameMonth(parseISO(booking.startDate), targetDate);
       const endInMonth = isSameMonth(parseISO(booking.endDate), targetDate);
@@ -1346,13 +1356,20 @@ export const getMonthlyReservations = query({
 
     const bookingsWithCustomer = await Promise.all(
       filtered.map(async (booking) => {
-        const user = await ctx.db
-          .query("profile")
-          .filter((q) => q.eq(q.field("id"), booking.userId))
-          .first();
+        const [user, plan] = await Promise.all([
+          ctx.db
+            .query("profile")
+            .filter((q) => q.eq(q.field("id"), booking.userId))
+            .first(),
+          ctx.db
+            .query("accessPlans")
+            .filter((q) => q.eq(q.field("no_of_days"), booking.duration))
+            .first(),
+        ]);
 
         return {
           ...booking,
+          planName: plan?.name ?? `${booking.duration} days`,
           user: user
             ? {
                 id: user.id,
@@ -1375,33 +1392,26 @@ export const getMonthlyReservations = query({
   },
 });
 
-export const exportMonthlyReservations = action({
+export const exportList = action({
   args: {
     month: v.string(),
-    durationType: v.optional(
-      v.union(
-        v.literal("day"),
-        v.literal("week"),
-        v.literal("month"),
-        v.literal("full_month"),
-        v.literal("all"),
-      ),
-    ),
+    planKey: v.optional(v.string()),
     overflow: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { valid } = await ctx.runQuery(api.acl.hasPrivilege, {
       privilege: "reports:read",
     });
+
     if (!valid) {
       throw new ConvexError(
         'Access denied. Required privilege: "reports:read".',
       );
     }
 
-    const bookings = await ctx.runQuery(api.bookings.getMonthlyReservations, {
+    const bookings = await ctx.runQuery(api.bookings.list, {
       month: args.month,
-      durationType: args.durationType,
+      planKey: args.planKey,
       overflow: args.overflow,
     });
 
