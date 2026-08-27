@@ -1,8 +1,7 @@
 "use client"
 import {
   BookOpenIcon,
-  Calendar1,
-  FlaskConical
+  Calendar1
 } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/app/(voxx)/blog/_voxx/theme-toggle";
@@ -15,7 +14,7 @@ import { NavItem } from "./nav-item";
 import { SubpageLogo } from "./subpage-logo";
 
 const NAV_LINKS = [
-  { href: "/blog", icon: FlaskConical, label: "Hacks" },
+  // { href: "/blog", icon: FlaskConical, label: "Hacks" },
   { href: "/blog", icon: BookOpenIcon, label: "Articles" },
   { href: "/reserve", icon: Calendar1, label: "Booking" },
 ];
