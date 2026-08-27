@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { Option, pipe } from "effect";
 import { DateParse } from "../lib/date.helpers";
 import { DateRangeImpl } from "../lib/date-range";
-import type { DurationType } from "../types";
+import type { DurationGroup } from "../types";
 import type { DataModel } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 
@@ -146,7 +146,7 @@ export const checkSeatAvailability = query({
     const endDate = pipe(
       DateParse.parse(args.startDate),
       Option.flatMap((parsed_date) =>
-        DateRangeImpl.match(args.durationType as DurationType, parsed_date),
+        DateRangeImpl.match(args.durationType as DurationGroup, parsed_date),
       ),
       Option.getOrThrowWith(
         () => new Error("Invalid startDate. Provide a valid date"),

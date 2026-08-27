@@ -5,7 +5,7 @@ export type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {};
 
-export type DurationType = "day" | "week" | "month" | "full_month";
+export type DurationGroup = "day" | "week" | "month" | "full_month";
 
 export type KnownPlanKey = "daily" | "weekly" | "monthly" | "calendar_month";
 

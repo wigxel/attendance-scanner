@@ -4,7 +4,7 @@ import { Match } from "effect";
 import { HOURLY_RATE } from "../config/constants";
 import { PlanKeyManager } from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
-import type { DurationType, PlanKey } from "../types";
+import type { DurationGroup, PlanKey } from "../types";
 import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
@@ -69,7 +69,7 @@ export const getDaily = query({
     let weeklySubscribers = 0;
     const reservationCache = new Map<
       string,
-      { bookingId: string; durationType: DurationType } | null
+      { bookingId: string; durationType: DurationGroup } | null
     >();
 
     for (const reg of registers) {

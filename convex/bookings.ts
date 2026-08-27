@@ -12,7 +12,7 @@ import {
 import { DateRangeImpl, PlanKeyManager } from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
 import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
-import type { DurationType } from "../types";
+import type { DurationGroup } from "../types";
 import { api, internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
@@ -1151,7 +1151,7 @@ export const createManualBooking = mutation({
       throw new ConvexError("Invalid plan");
     }
 
-    const durationType = plan.key as DurationType;
+    const durationType = plan.key as DurationGroup;
     const now = new Date();
     const bookingStartDate = parseISO(startDate);
     const bookingEndDate = calculateEndDate(bookingStartDate, plan.no_of_days);

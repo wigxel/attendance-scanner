@@ -2,13 +2,13 @@ import type { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { loadPaystackScript } from "@/lib/utils";
-import type { DurationType } from "@/types";
+import type { DurationGroup } from "@/types";
 
 interface BookingArgs {
   userId: string;
   startDate: string;
   seatIds: Id<"seats">[];
-  durationType: DurationType;
+  durationType: DurationGroup;
 }
 
 interface PaystackResponse {

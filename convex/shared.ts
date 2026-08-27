@@ -5,7 +5,7 @@ import { TaggedError } from "effect/Data";
 import { z } from "zod";
 import { safeObj } from "../lib/data.helpers";
 import { O } from "../lib/fp.helpers";
-import type { DurationType } from "../types";
+import type { DurationGroup } from "../types";
 import type { DataModel, Doc } from "./_generated/dataModel";
 
 export const featureRequestStatus = v.union(
@@ -106,7 +106,7 @@ export const PlanImpl = {
     return {
       _v: "2",
       kind: "paid" as const,
-      planId: plan.key as DurationType,
+      planId: plan.key as DurationGroup,
       amountInKobo: Math.max(0, plan.price / plan.no_of_days),
       paymentMethod: "bank_transfer",
       duration: { type: "fullday" },
@@ -144,7 +144,7 @@ export const PlanImpl = {
         return {
           _v: "2",
           kind: "paid",
-          planId: record.planId as DurationType,
+          planId: record.planId as DurationGroup,
           amountInKobo: record.amount * 100,
           paymentMethod: "bank_transfer",
           duration: { type: "fullday" },
@@ -233,7 +233,7 @@ export const PlanImpl = {
 type AccessPaidV2 = {
   _v: "2";
   kind: "paid";
-  planId: DurationType;
+  planId: DurationGroup;
   amountInKobo: number;
   paymentMethod: "cash" | "bank_transfer";
   duration?: AccessDuration;
@@ -241,7 +241,7 @@ type AccessPaidV2 = {
 
 type AccessPaidV1 = {
   kind: "paid";
-  planId: DurationType;
+  planId: DurationGroup;
   amount: number;
   paymentMethod: "cash" | "bank_transfer";
 };

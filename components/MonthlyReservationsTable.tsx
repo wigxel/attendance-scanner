@@ -34,8 +34,15 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { currencyFormatter } from "@/lib/currency.helpers";
 import { safeDict } from "@/lib/data.helpers";
 import { cn } from "@/lib/utils";
-import type { DurationType } from "@/types";
+import type { DurationGroup } from "@/types";
 import { AttendanceDrawer } from "./AttendanceDrawer";
+
+const PLAN_KEY_TO_DURATION: Record<string, string> = {
+  daily: "day",
+  weekly: "week",
+  monthly: "month",
+  calendar_month: "full_month",
+};
 import { AppDataTable, AppTableActions } from "./DataTable";
 import { DeleteBookingDialog } from "./DeleteBookingDialog";
 import { EmptyStateContent, EmptyStateTitle } from "./empty-state";
@@ -50,12 +57,16 @@ const formatDate = (timestamp: number) =>
 const formatISODate = (dateStr: string) =>
   format(parseISO(dateStr), "MMM d, yyyy");
 
-const durationLabels: Record<string, string> = {
-  day: "Day",
-  week: "Week",
-  month: "Month",
-  calendar_month: "Calendar Month",
-};
+function useDurationLabels(): Record<string, string> {
+  const plans = useQuery(api.accessPlans.list);
+  if (!plans) return {};
+  const labels: Record<string, string> = {};
+  for (const plan of plans) {
+    const dt = PLAN_KEY_TO_DURATION[plan.key];
+    if (dt) labels[dt] = plan.name;
+  }
+  return labels;
+}
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",
@@ -82,7 +93,7 @@ type BookingWithCustomer = {
   duration: number;
   startDate: string;
   endDate: string;
-  durationType: DurationType;
+  durationType: DurationGroup;
   pricePerSeat: number;
   amount: number;
   status: "pending" | "confirmed" | "cancelled" | "expired" | "used-up";
@@ -110,38 +121,41 @@ const labelClass = safeDict(
   "bg-purple-100 text-purple-800",
 );
 
-const columns: ColumnDef<BookingWithCustomer>[] = [
-  {
-    header: "S/N",
-    id: "sn",
-    cell: ({ row }) => <span className="font-medium">{row.index + 1}</span>,
-  },
-  {
-    header: "Customer",
-    accessorKey: "user.name",
-    cell: ({ row }) => (
-      <span className="font-medium">{row.original.user.name}</span>
-    ),
-  },
-  {
-    header: "Duration",
-    id: "durationType",
-    accessorKey: "durationType",
-    cell: ({ row }) => {
-      const dt = row.original.durationType;
-
-      return (
-        <span
-          className={cn(
-            "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-            labelClass.strict(dt),
-          )}
-        >
-          {durationLabels[dt]}
-        </span>
-      );
+function getColumns(durationLabels: Record<string, string>) {
+  return [
+    {
+      header: "S/N",
+      id: "sn",
+      cell: ({ row }: { row: { index: number } }) => (
+        <span className="font-medium">{row.index + 1}</span>
+      ),
     },
-  },
+    {
+      header: "Customer",
+      accessorKey: "user.name",
+      cell: ({ row }: { row: { original: BookingWithCustomer } }) => (
+        <span className="font-medium">{row.original.user.name}</span>
+      ),
+    },
+    {
+      header: "Duration",
+      id: "durationType",
+      accessorKey: "durationType",
+      cell: ({ row }: { row: { original: BookingWithCustomer } }) => {
+        const dt = row.original.durationType;
+
+        return (
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+              labelClass.strict(dt),
+            )}
+          >
+            {durationLabels[dt]}
+          </span>
+        );
+      },
+    },
   {
     header: "Start Date",
     accessorKey: "startDate",
@@ -187,7 +201,7 @@ const columns: ColumnDef<BookingWithCustomer>[] = [
   },
 ];
 
-type FormDurationType = DurationType | "all";
+type FormDurationType = DurationGroup | "all";
 
 export function MonthlyReservationsTable() {
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -199,6 +213,9 @@ export function MonthlyReservationsTable() {
   const [selectedBookingId, setSelectedBookingId] =
     useState<Id<"bookings"> | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const durationLabels = useDurationLabels();
+  const plans = useQuery(api.accessPlans.list);
 
   const data = useQuery(api.bookings.getMonthlyReservations, {
     month: currentMonth,
@@ -347,20 +364,18 @@ export function MonthlyReservationsTable() {
                   <DropdownMenuItem onClick={() => setDurationType("all")}>
                     All Types
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDurationType("day")}>
-                    Day
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDurationType("week")}>
-                    Week
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDurationType("month")}>
-                    Month
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setDurationType("full_month")}
-                  >
-                    Calendar Month
-                  </DropdownMenuItem>
+                  {plans?.map((plan) => {
+                    const dt = PLAN_KEY_TO_DURATION[plan.key];
+                    if (!dt) return null;
+                    return (
+                      <DropdownMenuItem
+                        key={plan._id}
+                        onClick={() => setDurationType(dt)}
+                      >
+                        {plan.name}
+                      </DropdownMenuItem>
+                    );
+                  })}
                 </DropdownMenuContent>
               </DropdownMenu>
 

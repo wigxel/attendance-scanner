@@ -1,5 +1,5 @@
 import { Option, pipe } from "effect";
-import type { DurationType, KnownPlanKey, PlanKey } from "../types";
+import type { DurationGroup, KnownPlanKey, PlanKey } from "../types";
 import { safeStr } from "./data.helpers";
 import { DateParse } from "./date.helpers";
 import { O } from "./fp.helpers";
@@ -13,14 +13,14 @@ type DateRange = {
 };
 
 export const DateRangeImpl = {
-  deriveEndDate(durationType: DurationType | number, startDate: Date) {
+  deriveEndDate(durationType: DurationGroup | number, startDate: Date) {
     return pipe(
       DateRangeImpl.match(durationType, startDate),
       O.map((endDate) => endDate.toISOString()),
     );
   },
 
-  match(durationType: DurationType | number, startDate: Date): O.Option<Date> {
+  match(durationType: DurationGroup | number, startDate: Date): O.Option<Date> {
     if (typeof durationType === "number") {
       return O.some(calculateEndDate(startDate, durationType));
     }
@@ -80,11 +80,11 @@ const DURATION_TYPE_TO_PLAN_KEY = Object.freeze({
   week: "weekly",
   month: "monthly",
   full_month: "calendar_month",
-} as Record<DurationType, PlanKey>);
+} as Record<DurationGroup, PlanKey>);
 
 export const PlanKeyManager = {
   mapPlanKey(duration_key: string): PlanKey {
-    const safe_key = safeStr(duration_key) as DurationType;
+    const safe_key = safeStr(duration_key) as DurationGroup;
 
     console.assert(
       safe_key in DURATION_TYPE_TO_PLAN_KEY,
@@ -94,3 +94,10 @@ export const PlanKeyManager = {
     return DURATION_TYPE_TO_PLAN_KEY[safe_key] as PlanKey;
   },
 };
+
+export function resolveDurationGroup(noOfDays: number): DurationGroup {
+  if (noOfDays <= 1) return "day";
+  if (noOfDays <= 7) return "week";
+  if (noOfDays <= 24) return "month";
+  return "full_month";
+}
