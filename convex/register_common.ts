@@ -124,21 +124,23 @@ export async function processReservationCheckIn(
   });
 }
 
+type RegisterFormSubscriberParam = {
+  actorId: Id<"users"> | "system";
+  ticketId: Id<"tickets">;
+  userId: string;
+  booking: Doc<"bookings">;
+};
+
 export async function updateTodaysRegisterForSubscriber(
   ctx: GenericMutationCtx<DataModel>,
-  params: {
-    actorId: Id<"users"> | "system";
-    userId: string;
-    ticketId: Id<"tickets">;
-    booking: Doc<"bookings">;
-  },
+  params: RegisterFormSubscriberParam,
 ): Promise<{ success: boolean; message: string }> {
   const today = new Date();
 
   if (
     !isWithinInterval(today, {
       start: parseISO(params.booking.startDate),
-      end: parseISO(params.booking.endDate),
+      end: endOfDay(parseISO(params.booking.endDate)),
     })
   ) {
     return { success: false, message: "Subscription does not cover today" };

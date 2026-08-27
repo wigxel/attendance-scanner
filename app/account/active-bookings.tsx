@@ -1,4 +1,5 @@
 import { useQuery } from "convex/react";
+import { DurationBadge } from "@/components/DurationBadge";
 import { Calendar, ChevronRight, Clock } from "lucide-react";
 import Link from "next/link";
 import type React from "react"; // Added React import for React.ReactNode type
@@ -24,15 +25,12 @@ const formatDate = (dateString: string): string => {
   });
 };
 
-const getDurationText = (durationType: string): string => {
-  return durationType.charAt(0).toUpperCase() + durationType.slice(1);
-};
-
 // Interface for booking data
 interface Booking {
   _id: string;
   startDate: string;
   endDate: string;
+  duration: number;
   durationType: string;
   role: string;
   seats: Array<{ _id: string | number; seatNumber: string }>;
@@ -143,17 +141,18 @@ export function BookingCalendarBox({
 function BookingDateTimeInfo({
   startDate,
   endDate,
+  duration,
   durationType,
 }: Omit<Booking, "_id" | "role" | "seats">) {
   return (
     <div className="flex flex-col">
       {durationType === "day" ? (
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Clock className="w-3.5 h-3.5 text-gray-400" />
           <p>09:00 AM - 05:00 PM</p>
         </div>
       ) : (
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Calendar strokeWidth={2} className="w-3.5 h-3.5 text-gray-400" />
           <span>
             {formatDate(startDate)} - {formatDate(endDate)}
@@ -161,7 +160,7 @@ function BookingDateTimeInfo({
         </div>
       )}
       <span className="text-xs text-gray-500">
-        {getDurationText(durationType)}
+        <DurationBadge duration={duration} />
       </span>
     </div>
   );
@@ -174,7 +173,7 @@ function BookingActionStatus({ role }: Pick<Booking, "role">) {
   if (role === "guest") {
     return (
       <div className="flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
-        <span className="w-1.5 h-1.5 rounded-full bg-background0" />
+        <span className="w-1.5 h-1.5 rounded-full bg-background" />
         Guest
       </div>
     );
@@ -182,8 +181,8 @@ function BookingActionStatus({ role }: Pick<Booking, "role">) {
 
   // Purchaser with single seat
   return (
-    <div className="flex items-center gap-1 text-xs font-medium text-(--primary) bg-blue-50 px-2 py-1 rounded-full">
-      <span className="w-1.5 h-1.5 rounded-full bg-(--primary" />
+    <div className="flex items-center gap-1 text-xs font-medium text-gray-900 bg-blue-50 px-2 py-1 rounded-full">
+      <span className="w-1.5 h-1.5 rounded-full bg-gray-900" />
       Confirmed
     </div>
   );
@@ -225,6 +224,7 @@ function BookingItem({ booking }: { booking: Booking }) {
           <BookingDateTimeInfo
             startDate={booking.startDate}
             endDate={booking.endDate}
+            duration={booking.duration}
             durationType={booking.durationType}
           />
         </div>

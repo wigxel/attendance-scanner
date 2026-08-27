@@ -1,7 +1,11 @@
 import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { accessPlanStruct, featureRequestStatus } from "./shared";
+import {
+  accessPlanStruct,
+  durationTypeConvexSchema,
+  featureRequestStatus,
+} from "./shared";
 
 const accessPlans = defineTable({
   key: v.string(),
@@ -92,11 +96,8 @@ const bookings = defineTable({
   duration: v.number(),
   startDate: v.string(),
   endDate: v.string(),
-  durationType: v.union(
-    v.literal("day"),
-    v.literal("week"),
-    v.literal("month"),
-  ),
+  /** @deprecated Use planKey for filtering. Kept for backward compatibility with existing data. */
+  durationType: durationTypeConvexSchema,
   pricePerSeat: v.number(),
   amount: v.number(),
   status: v.union(

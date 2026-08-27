@@ -8,20 +8,9 @@ import { safeArray } from "@/lib/data.helpers";
 import { DateParse } from "@/lib/date.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
+import type { BookingWithDetails } from "@/types";
 import { RangePreviewSimple } from "./BookingCalendar";
 import { CustomerAvatar } from "./customers";
-
-type BookingWithDetails = Omit<Doc<"bookings">, "startDate" | "endDate"> & {
-  _id: string | undefined;
-  startDate: string;
-  endDate: string;
-  seats: Doc<"seats">[];
-  user: {
-    id?: string;
-    name: string;
-    email: string | undefined;
-  } | null;
-};
 
 export function BookingCard({
   booking,

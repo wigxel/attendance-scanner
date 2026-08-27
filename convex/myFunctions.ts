@@ -2,7 +2,7 @@ import type { Profile, User } from "@auth/core/types";
 import { TableAggregate } from "@convex-dev/aggregate";
 import { type GenericQueryCtx, paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
-import { isWithinInterval, parseISO } from "date-fns";
+import { endOfDay, isWithinInterval, parseISO } from "date-fns";
 import { isNullable } from "effect/Predicate";
 import { z } from "zod";
 import { logger } from "../config/logger";
@@ -13,7 +13,6 @@ import { action, internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import {
   occupationDeletedAudit,
-  planDeletedAudit,
   suggestionDeletedAudit,
 } from "./audits/entities";
 import { setExternalId, updateClerkUser } from "./clerk";
@@ -121,13 +120,26 @@ export const getAccountMeta = query({
 export const getProfile = query({
   args: {},
   handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
     const userId = await readId(ctx);
 
-    if (userId === null) return null;
+    if (userId !== null) {
+      const profile = await ctx.db
+        .query("profile")
+        .filter((q) => q.eq(q.field("id"), userId))
+        .first();
+      if (profile) return profile;
+    }
+
+    // Fallback: look up by email (covers the period between signup and
+    // webhook setting external_id)
+    if (!identity.email) return null;
 
     return await ctx.db
       .query("profile")
-      .filter((q) => q.eq(q.field("id"), userId))
+      .withIndex("by_email", (q) => q.eq("email", identity.email!))
       .first();
   },
 });
@@ -300,7 +312,7 @@ export const getUserActiveReservation = query({
       if (
         isWithinInterval(new Date(), {
           start: parseISO(booking.startDate),
-          end: parseISO(booking.endDate),
+          end: endOfDay(parseISO(booking.endDate)),
         })
       ) {
         return {
@@ -348,11 +360,22 @@ export async function readId(
 ): Promise<Id<"users"> | null> {
   const identity = await ctx.auth.getUserIdentity();
 
-  const userId = identity?.profile_id ?? null;
+  if (!identity) return null;
 
-  if (userId == null) return null;
+  const userId = identity.profile_id ?? null;
 
-  return String(userId) as Id<"users">;
+  if (userId != null) return String(userId) as Id<"users">;
+
+  // Fallback: webhook may not have set external_id yet.
+  // Look up user by email from the JWT.
+  if (!identity.email) return null;
+
+  const user = await ctx.db
+    .query("users")
+    .filter((q) => q.eq(q.field("email"), identity.email))
+    .unique();
+
+  return user?._id ?? null;
 }
 
 export const updateUser = action({
@@ -976,186 +999,6 @@ export const getAttendanceForBooking = query({
     );
 
     return enrichedAttendance;
-  },
-});
-
-/**
- * List all access pricing plans
- */
-export const listAccessPlans = query({
-  handler: async (ctx) => {
-    return ctx.db.query("accessPlans").collect();
-  },
-});
-
-/**
- * Add a new access pricing plan
- */
-export const addAccessPlan = mutation({
-  args: {
-    key: v.string(),
-    name: v.string(),
-    price: v.number(),
-    no_of_days: v.number(),
-    description: v.optional(v.string()),
-    features: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("accessPlans")
-      .withIndex("plan_key", (q) => q.eq("key", args.key))
-      .first();
-
-    if (existing) {
-      throw new Error(`Plan with key "${args.key}" already exists`);
-    }
-
-    const planId = ctx.db.insert("accessPlans", {
-      key: args.key,
-      name: args.name,
-      price: args.price,
-      no_of_days: args.no_of_days,
-      description: args.description ?? "",
-      features: args.features ?? [],
-    });
-
-    return planId;
-  },
-});
-
-/**
- * Update an existing access pricing plan (key is not updatable)
- */
-export const updateAccessPlan = mutation({
-  args: {
-    id: v.id("accessPlans"),
-    name: v.string(),
-    price: v.number(),
-    no_of_days: v.number(),
-    description: v.optional(v.string()),
-    features: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db.get(args.id);
-
-    if (!existing) {
-      throw new Error("Plan not found");
-    }
-
-    await ctx.db.patch(args.id, {
-      name: args.name,
-      price: args.price,
-      no_of_days: args.no_of_days,
-      description: args.description ?? "",
-      features: args.features ?? [],
-    });
-
-    return args.id;
-  },
-});
-
-/**
- * Delete an access pricing plan
- */
-export const deleteAccessPlan = mutation({
-  args: {
-    id: v.id("accessPlans"),
-  },
-  handler: async (ctx, args) => {
-    await requirePrivilege(ctx, "plans:manage");
-
-    const existing = await ctx.db.get(args.id);
-
-    if (!existing) {
-      throw new Error("Plan not found");
-    }
-
-    const actorId = await readId(ctx);
-    if (!actorId) throw new Error("Authentication required.");
-
-    await ctx.db.delete(args.id);
-
-    await ctx.scheduler.runAfter(
-      0,
-      internal.audit.log,
-      planDeletedAudit({
-        actorId,
-        targetId: args.id,
-        key: existing.key,
-        name: existing.name,
-      }),
-    );
-
-    return args.id;
-  },
-});
-
-/**
- * Seed default access plans if none exist
- */
-export const seedAccessPlans = internalMutation({
-  handler: async (ctx) => {
-    const existing = await ctx.db.query("accessPlans").collect();
-
-    if (existing.length > 0) {
-      return { seeded: 0 };
-    }
-
-    ctx.db.insert("accessPlans", {
-      key: "daily",
-      name: "Daily",
-      price: 1500,
-      no_of_days: 1,
-      description: "Daily access pass",
-      features: [],
-    });
-
-    ctx.db.insert("accessPlans", {
-      key: "weekly",
-      name: "Weekly",
-      price: 6000,
-      no_of_days: 7,
-      description: "7-day access pass",
-      features: ["priority-check-in"],
-    });
-
-    ctx.db.insert("accessPlans", {
-      key: "monthly",
-      name: "Monthly",
-      price: 24000,
-      no_of_days: 24,
-      description: "24-working-day access pass",
-      features: ["priority-check-in", "booking"],
-    });
-
-    ctx.db.insert("accessPlans", {
-      key: "daily_night",
-      name: "Daily Night",
-      price: 1000,
-      no_of_days: 1,
-      description: "Night session pass (8pm - 8am)",
-      features: [],
-    });
-
-    ctx.db.insert("accessPlans", {
-      key: "weekly_night",
-      name: "Weekly Night",
-      price: 5000,
-      no_of_days: 7,
-      description: "7-night session pass (8pm - 8am)",
-      features: ["priority-check-in"],
-    });
-
-    ctx.db.insert("accessPlans", {
-      key: "monthly_night",
-      name: "Monthly Night",
-      price: 20000,
-      no_of_days: 24,
-      description: "24-night session pass (8pm - 8am)",
-      features: ["priority-check-in", "booking"],
-    });
-
-    return { seeded: 6 };
   },
 });
 

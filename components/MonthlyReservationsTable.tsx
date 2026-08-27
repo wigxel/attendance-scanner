@@ -32,7 +32,9 @@ import {
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { currencyFormatter } from "@/lib/currency.helpers";
+import { safeDict } from "@/lib/data.helpers";
 import { cn } from "@/lib/utils";
+import type { DurationGroup } from "@/types";
 import { AttendanceDrawer } from "./AttendanceDrawer";
 import { AppDataTable, AppTableActions } from "./DataTable";
 import { DeleteBookingDialog } from "./DeleteBookingDialog";
@@ -47,12 +49,6 @@ const formatDate = (timestamp: number) =>
 
 const formatISODate = (dateStr: string) =>
   format(parseISO(dateStr), "MMM d, yyyy");
-
-const durationLabels: Record<string, string> = {
-  day: "Day",
-  week: "Week",
-  month: "Month",
-};
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",
@@ -79,7 +75,8 @@ type BookingWithCustomer = {
   duration: number;
   startDate: string;
   endDate: string;
-  durationType: "day" | "week" | "month";
+  durationType: DurationGroup;
+  planName: string;
   pricePerSeat: number;
   amount: number;
   status: "pending" | "confirmed" | "cancelled" | "expired" | "used-up";
@@ -97,106 +94,115 @@ type MonthlyReservationsResponse = {
   bookings: BookingWithCustomer[];
 };
 
-type DurationType = "day" | "week" | "month" | "all";
+const labelClass = safeDict(
+  {
+    day: "bg-blue-100 text-blue-800",
+    week: "bg-green-100 text-green-800",
+    month: "bg-purple-100 text-purple-800",
+    full_month: "bg-amber-100 text-amber-800",
+  },
+  "bg-purple-100 text-purple-800",
+);
 
-const columns: ColumnDef<BookingWithCustomer>[] = [
-  {
-    header: "S/N",
-    id: "sn",
-    cell: ({ row }) => <span className="font-medium">{row.index + 1}</span>,
-  },
-  {
-    header: "Customer",
-    accessorKey: "user.name",
-    cell: ({ row }) => (
-      <span className="font-medium">{row.original.user.name}</span>
-    ),
-  },
-  {
-    header: "Duration",
-    id: "durationType",
-    accessorKey: "durationType",
-    cell: ({ row }) => {
-      const dt = row.original.durationType;
-      return (
+function getColumns(): ColumnDef<BookingWithCustomer>[] {
+  return [
+    {
+      header: "S/N",
+      id: "sn",
+      cell: ({ row }) => <span className="font-medium">{row.index + 1}</span>,
+    },
+    {
+      header: "Customer",
+      accessorKey: "user.name",
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.user.name}</span>
+      ),
+    },
+    {
+      header: "Duration",
+      id: "durationType",
+      accessorKey: "durationType",
+      cell: ({ row }) => (
         <span
           className={cn(
             "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-            dt === "day"
-              ? "bg-blue-100 text-blue-800"
-              : dt === "week"
-                ? "bg-green-100 text-green-800"
-                : "bg-purple-100 text-purple-800",
+            labelClass.strict(row.original.durationType),
           )}
         >
-          {durationLabels[dt]}
+          {row.original.planName}
         </span>
-      );
+      ),
     },
-  },
-  {
-    header: "Start Date",
-    accessorKey: "startDate",
-    cell: ({ row }) => formatISODate(row.original.startDate),
-  },
-  {
-    header: "End Date",
-    accessorKey: "endDate",
-    cell: ({ row }) => formatISODate(row.original.endDate),
-  },
-  {
-    header: "Amount",
-    accessorKey: "amount",
-    cell: ({ row }) => formatAmount(row.original.amount),
-  },
-  {
-    header: "Status",
-    accessorKey: "status",
-    id: "status",
-    cell: ({ row }) => (
-      <Badge variant={statusVariant[row.original.status]}>
-        {statusLabels[row.original.status]}
-      </Badge>
-    ),
-  },
-  {
-    header: "Created",
-    accessorKey: "createdAt",
-    cell: ({ row }) => formatDate(row.original.createdAt),
-  },
-  {
-    header: "",
-    id: "actions",
-    cell: ({ row }) => {
-      return (
-        <AppTableActions>
-          <RoleHasCSR privileges={["booking:delete"]}>
-            <DeleteBookingDialog bookingId={row.original._id} />
-          </RoleHasCSR>
-        </AppTableActions>
-      );
+    {
+      header: "Start Date",
+      accessorKey: "startDate",
+      cell: ({ row }) => formatISODate(row.original.startDate),
     },
-  },
-];
+    {
+      header: "End Date",
+      accessorKey: "endDate",
+      cell: ({ row }) => formatISODate(row.original.endDate),
+    },
+    {
+      header: "Amount",
+      accessorKey: "amount",
+      cell: ({ row }) => formatAmount(row.original.amount),
+    },
+    {
+      header: "Status",
+      accessorKey: "status",
+      id: "status",
+      cell: ({ row }) => (
+        <Badge variant={statusVariant[row.original.status]}>
+          {statusLabels[row.original.status]}
+        </Badge>
+      ),
+    },
+    {
+      header: "Created",
+      accessorKey: "createdAt",
+      cell: ({ row }) => formatDate(row.original.createdAt),
+    },
+    {
+      header: "",
+      id: "actions",
+      cell: ({ row }) => {
+        return (
+          <AppTableActions>
+            <RoleHasCSR privileges={["booking:delete"]}>
+              <DeleteBookingDialog bookingId={row.original._id} />
+            </RoleHasCSR>
+          </AppTableActions>
+        );
+      },
+    },
+  ];
+}
 
 export function MonthlyReservationsTable() {
+  const [overflow, setOverflow] = useState(false);
+  const [filterPlanKey, setFilterPlanKey] = useState<string>("all");
+  const [selectedBookingId, setSelectedBookingId] =
+    useState<Id<"bookings"> | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
-  const [durationType, setDurationType] = useState<DurationType>("all");
-  const [overflow, setOverflow] = useState(false);
-  const [selectedBookingId, setSelectedBookingId] =
-    useState<Id<"bookings"> | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const data = useQuery(api.bookings.getMonthlyReservations, {
+  const plans = useQuery(api.accessPlans.list);
+
+  const planNameByKey = plans
+    ? Object.fromEntries(plans.map((p) => [p.key, p.name]))
+    : {};
+
+  const data = useQuery(api.bookings.list, {
     month: currentMonth,
-    durationType: durationType,
+    planKey: filterPlanKey === "all" ? undefined : filterPlanKey,
     overflow: overflow,
   }) as MonthlyReservationsResponse | null;
 
-  const exportAction = useAction(api.bookings.exportMonthlyReservations);
+  const exportAction = useAction(api.bookings.exportList);
   const [isExporting, setIsExporting] = useState(false);
 
   const isLoading = data === null;
@@ -207,7 +213,7 @@ export function MonthlyReservationsTable() {
     try {
       const result = await exportAction({
         month: currentMonth,
-        durationType,
+        planKey: filterPlanKey === "all" ? undefined : filterPlanKey,
         overflow,
       });
 
@@ -328,24 +334,23 @@ export function MonthlyReservationsTable() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
                     <Filter className="mr-2 h-4 w-4" />
-                    {durationType === "all"
+                    {filterPlanKey === "all"
                       ? "All Types"
-                      : durationLabels[durationType]}
+                      : (planNameByKey[filterPlanKey] ?? filterPlanKey)}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setDurationType("all")}>
+                  <DropdownMenuItem onClick={() => setFilterPlanKey("all")}>
                     All Types
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDurationType("day")}>
-                    Day
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDurationType("week")}>
-                    Week
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDurationType("month")}>
-                    Month
-                  </DropdownMenuItem>
+                  {plans?.map((plan) => (
+                    <DropdownMenuItem
+                      key={plan._id}
+                      onClick={() => setFilterPlanKey(plan.key)}
+                    >
+                      {plan.name}
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -371,7 +376,7 @@ export function MonthlyReservationsTable() {
           </div>
 
           <AppDataTable
-            columns={columns}
+            columns={getColumns()}
             data={bookings}
             onRowClick={handleRowClick}
             emptyState={

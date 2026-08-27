@@ -1,4 +1,4 @@
-import Header from "./_components/header";
+import PublicHeader from "./_components/public-header";
 
 export default function AuthLayout({
   children,
@@ -7,7 +7,7 @@ export default function AuthLayout({
 }) {
   return (
     <div>
-      <Header />
+      <PublicHeader />
       {children}
     </div>
   );

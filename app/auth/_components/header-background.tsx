@@ -42,7 +42,7 @@ function useObserveOffset() {
       const offset =
         window.pageYOffset ?? document.documentElement.scrollTop ?? 0;
       const headerHeight = getHeaderHeight();
-      debugger;
+
       // If the page offset is greater than the header height, use 'outline', otherwise 'default'
       throttleUpdate({ sticky: offset > headerHeight });
     };

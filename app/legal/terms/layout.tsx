@@ -1,6 +1,6 @@
+import PublicHeader from "@/app/auth/_components/public-header";
 import { body, mono } from "@/app/font";
 import { Footer } from "@/components/footer";
-import { PublicHeader } from "@/components/header";
 import { cn } from "@/lib/utils";
 
 const LayoutPage = ({ children }: { children: React.ReactNode }) => {

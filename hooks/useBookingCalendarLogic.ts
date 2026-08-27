@@ -12,20 +12,7 @@ import { api } from "@/convex/_generated/api";
 import { safeArray, safeInt } from "@/lib/data.helpers";
 import { anomaly } from "@/lib/error.helpers";
 import { calculateEndDate } from "@/lib/utils";
-
-type AccessPlanKey = "daily" | "weekly" | "monthly";
-
-const DURATION_TYPE_TO_PLAN_KEY: Record<string, AccessPlanKey> = {
-  day: "daily",
-  week: "weekly",
-  month: "monthly",
-};
-
-const _PLAN_KEY_TO_DURATION_TYPE: Record<AccessPlanKey, string> = {
-  daily: "day",
-  weekly: "week",
-  monthly: "month",
-};
+import type { DurationGroup, KnownPlanKey } from "@/types";
 
 export const useBookingCalendarLogic = () => {
   const router = useRouter();
@@ -34,7 +21,7 @@ export const useBookingCalendarLogic = () => {
   const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
 
   const fullyBookedDates = useQuery(api.bookings.getFullyBookedDates);
-  const accessPlans = useQuery(api.myFunctions.listAccessPlans);
+  const accessPlans = useQuery(api.accessPlans.list);
 
   if (!accessPlans) {
     return {
@@ -70,7 +57,7 @@ export const useBookingCalendarLogic = () => {
     });
   };
 
-  const handleTimePeriodChange = (value: "day" | "week" | "month") => {
+  const handleTimePeriodChange = (value: DurationGroup) => {
     setTimePeriodString(value);
   };
 
@@ -85,10 +72,10 @@ export const useBookingCalendarLogic = () => {
       return toast.info("Please select another date. We're closed on Sundays");
     }
 
-    const getPlanByKey = (key: AccessPlanKey) =>
-      accessPlans?.find((plan) => plan.key === DURATION_TYPE_TO_PLAN_KEY[key]);
+    const getPlanByKey = (key: KnownPlanKey) =>
+      accessPlans?.find((plan) => plan.key === key);
 
-    const currentPlan = getPlanByKey(timePeriodString as AccessPlanKey);
+    const currentPlan = getPlanByKey(timePeriodString as KnownPlanKey);
     const timePeriod = safeInt(currentPlan?.no_of_days, 0);
 
     if (!currentPlan) {

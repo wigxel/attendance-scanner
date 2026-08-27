@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
+import { addMonths, intervalToDuration } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -13,6 +14,12 @@ export const calculateEndDate = (
   startDate: Date,
   workingDays: number,
 ): Date => {
+  const in_monthly_range = workingDays >= 25 && workingDays <= 31;
+
+  if (in_monthly_range) {
+    return addMonths(startDate, 1);
+  }
+
   const start = new Date(startDate);
   const currentDate = new Date(start);
   let daysAdded = 0;
@@ -62,3 +69,15 @@ export const formatTime = (seconds: number) => {
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
+
+export function formatCompact(start: Date, end: Date): string {
+  const d = intervalToDuration({ start, end });
+  const parts: string[] = [];
+  if (d.years) parts.push(d.years + "y");
+  if (d.months) parts.push(d.months + "mo");
+  if (d.days) parts.push(d.days + "d");
+  if (d.hours) parts.push(d.hours + "h");
+  if (d.minutes) parts.push(d.minutes + "m");
+  if (d.seconds || parts.length === 0) parts.push((d.seconds || 0) + "s");
+  return parts.join(" ");
+}

@@ -106,7 +106,7 @@ export function DynamicSeatLayout({
             <SLSeatItem
               key={layoutSeat.index}
               count={String(layoutSeat.seatNumber)}
-              isBooked={false}
+              isBooked={seatData.isBooked}
               isSelected={selectedSeatNumbers.includes(
                 String(layoutSeat.seatNumber),
               )}

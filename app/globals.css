@@ -194,3 +194,7 @@
 }
 
 /* End Charts */
+
+.transition-default {
+  @apply transition-all duration-200 ease-in-out;
+}

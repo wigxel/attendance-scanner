@@ -76,10 +76,8 @@ export const selfCheckIn = mutation({
     }
 
     const admittedByMap = safeDict({
-      map: {
-        qr: args.adminId,
-        "one-tap": userId,
-      },
+      qr: args.adminId,
+      "one-tap": userId,
     });
 
     const admittedBy = admittedByMap.get(args.method);

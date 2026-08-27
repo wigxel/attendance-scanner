@@ -1,10 +1,14 @@
 "use client";
 import type { ReactNode } from "react";
+import { toast } from "sonner";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 import { CheckInCard, NotRegistered } from "@/components/CheckInCard";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
 import { SelfCheckInStatus } from "@/components/self-checkin-status";
 import { useProfile } from "@/hooks/auth";
+import { usePendingCheckIn } from "@/hooks/pending-checkin";
+import { useSelfCheckIn } from "@/hooks/self-service";
+import { getErrorMessage } from "@/lib/error.helpers";
 import { ActiveBookings } from "./active-bookings";
 
 function greet_time(): string {
@@ -18,7 +22,25 @@ function greet_time(): string {
 }
 
 export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
-  const { data: profile } = useProfile();
+  const { data: profile, isSignedIn } = useProfile();
+  const selfCheckIn = useSelfCheckIn();
+
+  // Only process a pending QR check-in once the profile is fully set up
+  // (onboarding complete). This prevents the check-in from firing and
+  // failing before the user has finished onboarding.
+  const isProfileReady = !!profile && profile.occupation !== "None";
+
+  usePendingCheckIn({
+    isSignedIn: !!isSignedIn && isProfileReady,
+    selfCheckIn,
+    onSuccess: () => toast.success("Checked in"),
+    onError: (err) => {
+      const msg = getErrorMessage(err).toLowerCase();
+      if (!msg.includes("already registered")) {
+        toast.error(`Auto check-in failed: ${getErrorMessage(err)}`);
+      }
+    },
+  });
 
   return (
     <div className="flex flex-col scanline-root max-w-lg mx-auto pt-6 pb-14">

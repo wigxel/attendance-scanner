@@ -5,6 +5,7 @@ import { TaggedError } from "effect/Data";
 import { z } from "zod";
 import { safeObj } from "../lib/data.helpers";
 import { O } from "../lib/fp.helpers";
+import type { DurationGroup } from "../types";
 import type { DataModel, Doc } from "./_generated/dataModel";
 
 export const featureRequestStatus = v.union(
@@ -12,6 +13,14 @@ export const featureRequestStatus = v.union(
   v.literal("approved"),
   v.literal("completed"),
   v.literal("rejected"),
+);
+
+/** @deprecated Use accessPlans.list and planKey for filtering instead. */
+export const durationTypeConvexSchema = v.union(
+  v.literal("day"),
+  v.literal("week"),
+  v.literal("month"),
+  v.literal("full_month"),
 );
 
 export const accessPlanStruct = v.union(
@@ -65,6 +74,10 @@ export const accessPlanSchemaValidator = z.union([
   }),
 ]);
 
+type OvewriteV1 = Pick<AccessStruct, "kind"> & Partial<AccessFreeStruct>;
+type OverwriteV2 = Partial<AccessPaidV2>;
+type OverwriteStruct = OvewriteV1 | OverwriteV2;
+
 export const PlanImpl = {
   async validatePlan<TDB extends GenericMutationCtx<DataModel>["db"]>(
     db: TDB,
@@ -94,7 +107,7 @@ export const PlanImpl = {
     return {
       _v: "2",
       kind: "paid" as const,
-      planId: plan.key,
+      planId: plan.key as DurationGroup,
       amountInKobo: Math.max(0, plan.price / plan.no_of_days),
       paymentMethod: "bank_transfer",
       duration: { type: "fullday" },
@@ -132,14 +145,14 @@ export const PlanImpl = {
         return {
           _v: "2",
           kind: "paid",
-          planId: record.planId,
+          planId: record.planId as DurationGroup,
           amountInKobo: record.amount * 100,
           paymentMethod: "bank_transfer",
           duration: { type: "fullday" },
         } satisfies AccessPaidV2;
       }
 
-      return record satisfies AccessPaidV2;
+      return record as AccessPaidV2;
     });
   },
 
@@ -179,9 +192,7 @@ export const PlanImpl = {
 
   toOverwrite(
     prev: AccessFreeStruct | AccessPaidV2,
-    overwrite:
-      | (Pick<AccessStruct, "kind"> & Partial<AccessFreeStruct>)
-      | Partial<AccessPaidV2>,
+    overwrite: OverwriteStruct,
   ): O.Option<AccessStruct> {
     const tags = [prev, overwrite] as const;
 
@@ -223,7 +234,7 @@ export const PlanImpl = {
 type AccessPaidV2 = {
   _v: "2";
   kind: "paid";
-  planId: string;
+  planId: DurationGroup;
   amountInKobo: number;
   paymentMethod: "cash" | "bank_transfer";
   duration?: AccessDuration;
@@ -231,7 +242,7 @@ type AccessPaidV2 = {
 
 type AccessPaidV1 = {
   kind: "paid";
-  planId: string;
+  planId: DurationGroup;
   amount: number;
   paymentMethod: "cash" | "bank_transfer";
 };

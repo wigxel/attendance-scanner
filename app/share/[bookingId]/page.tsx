@@ -14,6 +14,7 @@ import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { useProfile } from "@/hooks/auth";
 import { currencyFormatter } from "@/lib/currency.helpers";
 import { DateParse } from "@/lib/date.helpers";
+import { DurationBadge } from "@/components/DurationBadge";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
@@ -24,7 +25,6 @@ export default function SharePage() {
   const data = useQuery(api.bookings.getBookingWithTickets, {
     bookingId: bookingId as Id<"bookings">,
   });
-
   if (!data)
     return (
       <>
@@ -97,7 +97,7 @@ export default function SharePage() {
                 </p>
                 <div className="flex items-center gap-2 text-sm font-medium text-gray-900 capitalize">
                   <Clock className="w-3.5 h-3.5 text-gray-400" />
-                  {data.duration} {data.durationType}(s)
+                  <DurationBadge duration={data.duration} />
                 </div>
               </div>
 

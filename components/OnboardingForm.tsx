@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import * as z from "zod";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { getPendingCheckIn } from "@/hooks/pending-checkin";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
 import {
@@ -85,7 +86,11 @@ function OnboardingForm({
         occupation: values.occupation as Id<"occupations"> | "None",
       });
       toast.success("Profile created successfully");
-      router.push("/");
+
+      // If user had a pending QR check-in, redirect to account page
+      // where usePendingCheckIn hook will process it automatically.
+      const pending = getPendingCheckIn();
+      router.push(pending ? "/account" : "/");
     } catch (error) {
       const errorMessage = (error as Error).message;
       toast.error(`Profile creation failed: ${getErrorMessage(errorMessage)}`);

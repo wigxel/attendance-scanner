@@ -1,7 +1,8 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
 import { Effect, pipe } from "effect";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, LogIn, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -15,6 +16,8 @@ import {
   useSelfCheckIn,
   useTodaysRegistration,
 } from "@/hooks/self-service";
+import { savePendingCheckIn } from "@/hooks/pending-checkin";
+import { api } from "@/convex/_generated/api";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
 
@@ -23,6 +26,7 @@ type CheckInStatus =
   | "token-expired"
   | "token-invalid"
   | "timeout"
+  | "requires-auth"
   | "checking-in"
   | "success"
   | "already-registered"
@@ -31,7 +35,7 @@ type CheckInStatus =
 function TokenCheckInFlow() {
   const router = useRouter();
   const params = useParams();
-  const { user } = useUser();
+  const { user, isLoaded, isSignedIn } = useUser();
 
   const token = params?.token as string;
 
@@ -43,10 +47,13 @@ function TokenCheckInFlow() {
 
   const registration = useTodaysRegistration();
   const selfCheckIn = useSelfCheckIn();
+  const profile = useQuery(api.myFunctions.getProfile);
   const triggered = useRef(false);
 
   const isFetchingRegisterData = registration === undefined;
+  const isProfileReady = !!profile && profile.occupation !== "None";
 
+  // Step 1: Verify the QR token
   useEffect(() => {
     if (!token) {
       return;
@@ -66,6 +73,14 @@ function TokenCheckInFlow() {
         if (O.isNone(option)) return setStatus("timeout");
 
         setAdminId(option.value.adminId);
+
+        // If auth state is loaded and user is not signed in, require auth
+        if (isLoaded && !isSignedIn) {
+          savePendingCheckIn(option.value.adminId);
+          setStatus("requires-auth");
+          return;
+        }
+
         setStatus("checking-in");
       })
       .catch((err) => {
@@ -75,16 +90,45 @@ function TokenCheckInFlow() {
         }
         return setStatus("token-invalid");
       });
-  }, [token]);
+  }, [token, isLoaded, isSignedIn]);
 
+  // Step 2: Handle auth-required → redirect to sign in after brief message
+  useEffect(() => {
+    if (status !== "requires-auth") return;
+
+    const timeout = setTimeout(() => {
+      router.push("/auth");
+    }, 2000);
+
+    return () => clearTimeout(timeout);
+  }, [status, router]);
+
+  // Step 2b: If user becomes signed in while on this page (e.g. tab switch),
+  // transition to checking-in
+  useEffect(() => {
+    if (status === "requires-auth" && isSignedIn && adminId) {
+      setTimeout(() => setStatus("checking-in"), 0);
+    }
+  }, [status, isSignedIn, adminId]);
+
+  // Step 3: Perform the check-in
   useEffect(() => {
     if (status !== "checking-in") return;
     if (isFetchingRegisterData) return;
+    if (profile === undefined) return; // still loading profile
 
     if (registration) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setCheckedInAt(registration.timestamp);
       setStatus("already-registered");
+      return;
+    }
+
+    // If onboarding isn't complete, defer check-in and let the
+    // normal flow handle it (/ → /account → /onboarding → /account).
+    if (!isProfileReady) {
+      if (adminId) savePendingCheckIn(adminId);
+      router.push("/");
       return;
     }
 
@@ -105,7 +149,16 @@ function TokenCheckInFlow() {
           toast.error(getErrorMessage(err));
         }
       });
-  }, [status, registration, adminId, selfCheckIn, isFetchingRegisterData]);
+  }, [
+    status,
+    registration,
+    adminId,
+    selfCheckIn,
+    isFetchingRegisterData,
+    profile,
+    isProfileReady,
+    router,
+  ]);
 
   if (status === "verifying-token" || status === "checking-in") {
     return (
@@ -123,6 +176,27 @@ function TokenCheckInFlow() {
             Please wait a moment
           </p>
         </div>
+      </div>
+    );
+  }
+
+  if (status === "requires-auth") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+        <div className="bg-blue-50 rounded-full p-6">
+          <LogIn size="3rem" className="text-blue-500" />
+        </div>
+        <div className="text-center">
+          <p className="text-xl font-semibold">Sign in required</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Please sign in or create an account to check in. Redirecting
+            you&hellip;
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Your check-in will be saved for 5 minutes.
+          </p>
+        </div>
+        <Button onClick={() => router.push("/auth")}>Sign In</Button>
       </div>
     );
   }

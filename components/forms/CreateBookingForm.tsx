@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "convex/react";
-import { format, subWeeks } from "date-fns";
+import { addMonths, format, subWeeks } from "date-fns";
 import { ArrowRight } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -64,7 +64,7 @@ export function CreateBookingForm({
 }: CreateBookingFormProps) {
   const [selectedSeat, setSelectedSeat] = React.useState<Seat | null>(null);
 
-  const accessPlans = useQuery(api.myFunctions.listAccessPlans);
+  const accessPlans = useQuery(api.accessPlans.list);
 
   const form = useForm<CreateBookingFormValues>({
     resolver: zodResolver(createBookingSchema),
@@ -86,7 +86,10 @@ export function CreateBookingForm({
   const endDate = React.useMemo(() => {
     if (!selectedPlan || !watchedStartDate) return null;
     const start = new Date(watchedStartDate);
-    const end = calculateEndDate(start, selectedPlan.no_of_days);
+    const end =
+      selectedPlan.key === "calendar-month"
+        ? addMonths(start, 1)
+        : calculateEndDate(start, selectedPlan.no_of_days);
     return formatDateToLocalISO(end);
   }, [selectedPlan, watchedStartDate]);
 

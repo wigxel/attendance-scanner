@@ -15,7 +15,7 @@ export default async function BlogIndex() {
 
   return (
     <main className="voxx voxx-index">
-      <header className="voxx-index__header">
+      <header className="voxx-index__header mt-12">
         <h1 className="text-3xl! md:text-5xl!">{config.site.title}</h1>
         {config.site.description ? (
           <p className="voxx-index__desc">{config.site.description}</p>

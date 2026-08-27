@@ -11,7 +11,7 @@ author:
   - { name: "Joseph Owonvwon", url: "https://linkedin.com/in/owonwo" }
 image: /blog/images/node-io/image6.png
 ---
-
+![A photo of the Node.IO E1](/blog/images/node-io/image6.png)
 Meet the **Node.IO E1** — our first hardware in make. We will crafted an in-door temperature/humidity/pressure device with realtime tracking. You can learn how we built this from scratch.
 
 ## Node.IO E1 — Technical Overview

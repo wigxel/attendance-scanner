@@ -4,7 +4,8 @@
     "title": "The Makers",
     "description": "Stories for the creatives",
     "url": "https://inspace.wigxel.io",
-    "locale": "en-US"
+    "locale": "en-US",
+    "titleHref": "/blog"
   },
   "content": {
     "type": "blog",

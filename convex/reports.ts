@@ -2,21 +2,17 @@ import { v } from "convex/values";
 import { endOfDay, format, parse, startOfDay } from "date-fns";
 import { Match } from "effect";
 import { HOURLY_RATE } from "../config/constants";
+import { PlanKeyManager } from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
+import type { DurationGroup, PlanKey } from "../types";
 import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { type AccessDuration, type AccessStruct, PlanImpl } from "./shared";
 
-const DURATION_TYPE_TO_PLAN_KEY: Record<string, string> = {
-  day: "daily",
-  week: "weekly",
-  month: "monthly",
-};
-
 function calcFee(
   access: AccessStruct,
-  planKey: string,
+  planKey: PlanKey,
   planMap: Map<string, Doc<"accessPlans">>,
 ): number {
   if (!PlanImpl.type("paid")(access)) return 0;
@@ -73,7 +69,7 @@ export const getDaily = query({
     let weeklySubscribers = 0;
     const reservationCache = new Map<
       string,
-      { bookingId: string; durationType: string } | null
+      { bookingId: string; durationType: DurationGroup } | null
     >();
 
     for (const reg of registers) {
@@ -94,8 +90,8 @@ export const getDaily = query({
         const reservation = reservationCache.get(reg.userId);
 
         const planKey = reservation
-          ? DURATION_TYPE_TO_PLAN_KEY[reservation.durationType]
-          : (DURATION_TYPE_TO_PLAN_KEY[reg.access.planId] ?? reg.access.planId);
+          ? PlanKeyManager.mapPlanKey(reservation.durationType)
+          : (PlanKeyManager.mapPlanKey(reg.access.planId) ?? reg.access.planId);
 
         const fee = calcFee(reg.access, planKey, planMap);
         console.log(

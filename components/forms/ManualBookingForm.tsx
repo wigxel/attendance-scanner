@@ -46,7 +46,7 @@ export function ManualBookingForm({
   onSubmit,
   onCancel,
 }: ManualBookingFormProps) {
-  const accessPlans = useQuery(api.myFunctions.listAccessPlans);
+  const accessPlans = useQuery(api.accessPlans.list);
   const MIN_DATE = React.useMemo(
     () => format(subWeeks(new Date(), 2), "yyyy-MM-dd"),
     [],
