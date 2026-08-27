@@ -37,18 +37,19 @@ export const getBooking = query({
   args: {
     bookingId: v.id("bookings"),
   },
-  handler: async (ctx, { bookingId }) => {
+  handler: async (ctx, { bookingId }): Promise<Doc<"bookings">> => {
     await requirePrivilege(ctx, "booking:read");
 
     return await ctx.runQuery(api.bookings.getDetails, { bookingId });
   },
 });
 
+/** @todo Vulnerability: should have some protection  */
 export const systemGetBooking = query({
   args: {
     bookingId: v.id("bookings"),
   },
-  handler: async (ctx, { bookingId }) => {
+  handler: async (ctx, { bookingId }): Promise<Doc<"bookings">> => {
     return await ctx.runQuery(api.bookings.getDetails, { bookingId });
   },
 });
@@ -76,9 +77,9 @@ export const getDetails = query({
       booking.created_by === "system" || booking.created_by === undefined
         ? Promise.resolve("Booking system")
         : ctx.db
-            .get(booking.created_by as Id<"users">)
-            .then((e) => e?.name ?? "Anonymous")
-            .catch(() => "--"),
+          .get(booking.created_by as Id<"users">)
+          .then((e) => e?.name ?? "Anonymous")
+          .catch(() => "--"),
       ctx.db
         .query("accessPlans")
         .filter((q) => q.eq(q.field("no_of_days"), booking.duration))
@@ -92,14 +93,14 @@ export const getDetails = query({
       seats: seats.filter((seat) => seat !== null),
       user: user
         ? {
-            id: user.id,
-            name: `${user.firstName} ${user.lastName}`,
-            email: user.email,
-          }
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+        }
         : {
-            name: "Anonymous User",
-            email: "--",
-          },
+          name: "Anonymous User",
+          email: "--",
+        },
     };
   },
 });
@@ -1088,14 +1089,14 @@ export const getAllBookings = query({
           seats: seats.filter((seat) => seat !== null), // filter out any null values
           user: user
             ? {
-                id: user.id,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-              }
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+            }
             : {
-                name: "Anonymous User",
-                email: "--",
-              },
+              name: "Anonymous User",
+              email: "--",
+            },
         };
       }),
     );
@@ -1372,15 +1373,15 @@ export const list = query({
           planName: plan?.name ?? `${booking.duration} days`,
           user: user
             ? {
-                id: user.id,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-              }
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+            }
             : {
-                id: booking.userId,
-                name: "Anonymous User",
-                email: null,
-              },
+              id: booking.userId,
+              name: "Anonymous User",
+              email: null,
+            },
         };
       }),
     );

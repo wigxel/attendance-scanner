@@ -5,8 +5,8 @@ import { convexTest } from "convex-test";
 import { addDays, format, subDays } from "date-fns";
 import { describe, expect, it } from "vitest";
 import { api, components } from "./_generated/api";
-import schema from "./schema";
 import aclSchema from "./components/acl/schema";
+import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
 const aclModules = import.meta.glob("./components/acl/**/*.ts");
