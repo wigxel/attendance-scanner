@@ -27,6 +27,8 @@
     "@convex-dev/aggregate": "^0.2.1",
     "@convex-dev/auth": "^0.0.94",
     "@demark-pro/react-booking-calendar": "^4.0.3",
+    "@effect/cluster": "^0.60.2",
+    "@effect/sql": "^0.52.1",
     "@fingerprintjs/fingerprintjs": "^4.6.2",
     "@flagsmith/flagsmith": "^12.0.1",
     "@hookform/resolvers": "^5.0.1",
@@ -90,6 +92,7 @@
     "usehooks-ts": "^3.1.1",
     "vaul": "^1.1.2",
     "vitest": "^4.1.5",
+    "voxx-core: ^1.3.0": "link:@prudentbird/voxx-core: ^1.3.0",
     "zod": "^3.24.3",
     "zustand": "^5.0.3"
   },
