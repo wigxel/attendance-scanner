@@ -10,6 +10,7 @@ import {
 } from "./_generated/server";
 import { profileDeletedAudit, userDeletedAudit } from "./audits/entities";
 import { deleteClerkUser } from "./clerk";
+import { profileAggregate } from "./customers";
 
 // Helper to get the current authenticated user from Clerk
 export const getCurrentUser = query({
@@ -138,6 +139,11 @@ export const createOrUpdateProfile = mutation({
       occupation: args.occupation || "None",
       role: "user",
     });
+
+    const newProfile = await ctx.db.get(newProfileId)
+    if (newProfile) {
+      await profileAggregate.insert(ctx, newProfile);
+    }
 
     return newProfileId;
   },

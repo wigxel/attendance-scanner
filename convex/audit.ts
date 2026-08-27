@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
+import { AUDIT_LIMIT } from "./constants";
 
 export const log = internalMutation({
   args: {
@@ -21,21 +22,23 @@ export const log = internalMutation({
 export const list = query({
   args: {
     actionFilter: v.optional(v.string()),
+    limit: v.optional(v.number()),
   },
-  handler: async (ctx, { actionFilter }) => {
+  handler: async (ctx, { actionFilter, limit }) => {
     await requirePrivilege(ctx, "audit:read");
 
+    const takeLimit = limit ?? AUDIT_LIMIT;
     const logs = actionFilter
       ? await ctx.db
           .query("auditLog")
           .withIndex("by_action", (q) => q.eq("action", actionFilter))
           .order("desc")
-          .take(100)
+          .take(takeLimit)
       : await ctx.db
           .query("auditLog")
           .withIndex("by_timestamp")
           .order("desc")
-          .take(100);
+          .take(takeLimit);
 
     const actorIds = [...new Set(logs.map((l) => l.actorId))];
     const actors = await Promise.all(

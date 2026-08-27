@@ -16,6 +16,8 @@ import {
   suggestionDeletedAudit,
 } from "./audits/entities";
 import { setExternalId, updateClerkUser } from "./clerk";
+import { DEFAULT_LIMIT } from "./constants";
+import { profileAggregate } from "./customers";
 
 import {
   insertRegisterAndAggregate,
@@ -82,7 +84,7 @@ export const createUser = mutation({
         id: user_id,
       });
     } else {
-      await ctx.db.insert("profile", {
+      const newId = await ctx.db.insert("profile", {
         id: user_id,
         email: args.email,
         firstName: args.firstName,
@@ -91,6 +93,10 @@ export const createUser = mutation({
         phoneNumber: args.phone,
         role: "user",
       });
+      const newProfile = await ctx.db.get(newId)
+      if (newProfile) {
+        await profileAggregate.insert(ctx, newProfile);
+      }
     }
 
     return user_id;
@@ -189,11 +195,13 @@ export const getAttendanceByMonth = query({
     userId: v.optional(v.string()), // user id
     start: v.string(), // iso timestamp
     end: v.string(), // iso timestamp
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = args.userId;
     if (!userId) return [];
 
+    const limit = args.limit ?? DEFAULT_LIMIT;
     return await ctx.db
       .query("daily_register")
       .withIndex("user", (q) => q.eq("userId", userId))
@@ -203,7 +211,7 @@ export const getAttendanceByMonth = query({
           q.lte(q.field("timestamp"), args.end),
         ),
       )
-      .collect();
+      .take(limit);
   },
 });
 
@@ -329,6 +337,7 @@ export const getDailyRegister = query({
   args: {
     start: v.string(),
     end: v.string(),
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const userId = await readId(ctx);
@@ -338,13 +347,14 @@ export const getDailyRegister = query({
       return [];
     }
 
+    const limit = args.limit ?? DEFAULT_LIMIT;
     const registers = await ctx.db
       .query("daily_register")
       .withIndex("by_timestamp", (q) =>
         q.gte("timestamp", args.start).lte("timestamp", args.end),
       )
       .order("desc")
-      .collect();
+      .take(limit);
 
     return registers;
   },
@@ -474,42 +484,6 @@ export const submitFeatureRequest = mutation({
       description: args.description,
       status: "open",
     });
-  },
-});
-
-// function to get user stats
-export const getUserStats = query({
-  args: {
-    userId: v.string(),
-  },
-  handler: async (ctx, { userId }) => {
-    const customer = await ctx.runQuery(api.myFunctions.getUserById, {
-      userId: userId,
-    });
-
-    if (!customer) {
-      logger.warn("User not authenticated");
-      return null;
-    }
-
-    const { firstName, lastName } = customer as {
-      firstName: string;
-      lastName: string;
-    };
-
-    const stats = await ctx.db
-      .query("stats")
-      .filter((q) => q.eq(q.field("userId"), userId))
-      .collect();
-
-    const attendanceCount = stats.length;
-    const freeDayEligible = attendanceCount >= 20;
-
-    return {
-      name: `${firstName} ${lastName}` as string,
-      attendanceCount,
-      freeDayEligible,
-    };
   },
 });
 
@@ -793,9 +767,11 @@ export const deleteOccupation = mutation({
 export const listSuggestions = query({
   args: {
     status: v.optional(featureRequestStatus),
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const status = args.status;
+    const limit = args.limit ?? DEFAULT_LIMIT;
     const features =
       status !== undefined
         ? ctx.db
@@ -805,7 +781,7 @@ export const listSuggestions = query({
             .query("featureRequest")
             .filter((q) => q.neq(q.field("status"), "rejected"));
 
-    const feedbacks = await features.order("desc").take(50);
+    const feedbacks = await features.order("desc").take(limit);
 
     return {
       data: (

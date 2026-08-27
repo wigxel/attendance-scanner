@@ -62,12 +62,6 @@ const profile = defineTable({
   .index("by_user_id", ["id"])
   .index("by_email", ["email"]);
 
-//Schema for stats
-const stats = defineTable({
-  userId: v.string(), // v.id("profile"),
-  timestamp: v.string(),
-}).index("user_id", ["userId"]);
-
 //schema for occupations
 const occupations = defineTable({
   name: v.string(),
@@ -219,7 +213,6 @@ export default defineSchema({
   daily_register,
   profile,
   featureRequest,
-  stats,
   accessPlans,
   occupations,
   featureVotes,

@@ -22,6 +22,9 @@ import {
   query,
 } from "./_generated/server";
 import { deleteConfig, getConfig, setConfig } from "./config";
+import {
+  DEFAULT_LIMIT,
+} from "./constants";
 
 export const updateProfile = mutation({
   args: {
@@ -86,13 +89,17 @@ export const getVisitHistory = query({
 });
 
 export const getCustomerVisitTrend = query({
-  args: { userId: v.string() },
+  args: {
+    userId: v.string(),
+    limit: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
+    const limit = args.limit ?? DEFAULT_LIMIT;
     const visits = await ctx.db
       .query("daily_register")
       .withIndex("user", (q) => q.eq("userId", args.userId))
       .order("asc")
-      .collect();
+      .take(limit);
 
     if (visits.length === 0) return [];
 
@@ -121,7 +128,7 @@ export const getCustomerVisitTrend = query({
   },
 });
 
-const profileAggregate = new TableAggregate<{
+export const profileAggregate = new TableAggregate<{
   Key: number;
   DataModel: DataModel;
   TableName: "profile";
@@ -192,13 +199,15 @@ export const countNewCustomers = query({
 export const listNewCustomers = query({
   args: {
     startTime: v.number(),
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const limit = args.limit ?? DEFAULT_LIMIT;
     const profiles = await ctx.db
       .query("profile")
       .filter((q) => q.gte(q.field("_creationTime"), args.startTime))
       .order("desc")
-      .collect();
+      .take(limit);
 
     return profiles;
   },
@@ -222,23 +231,6 @@ export const countActiveCustomers = query({
   },
 });
 
-/**
- * Alias for `countTotalCustomers`. Returns the total count of all profiles.
- * @deprecated Prefer `countTotalCustomers` for clarity.
- */
-export const countCustomers = query({
-  handler: async (ctx) => {
-    return await profileAggregate.count(ctx);
-  },
-});
-
-type MetricsKeys =
-  | "totalCustomers"
-  | "newCustomers"
-  | "activeCustomers"
-  | "repeatCustomerRate"
-  | "avgVisitsPerCustomer"
-  | "lapsedCustomers";
 // ---------------------------------------------------------------------------
 // Core per-day computation helper
 // ---------------------------------------------------------------------------
@@ -768,7 +760,7 @@ export const getTopCustomers = query({
       filtered = filtered.filter((uv) => uv.accessPlan === filter);
     }
 
-    const limit = args.limit ?? 50;
+    const limit = args.limit ?? DEFAULT_LIMIT;
     const sorted = filtered.sort((a, b) => b.visits - a.visits).slice(0, limit);
 
     return sorted;

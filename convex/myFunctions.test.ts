@@ -1,6 +1,7 @@
  
 /** biome-ignore-all lint/suspicious/noExplicitAny: This is a test file */
 /// <reference types="vite/client" />
+import aggregateTest from "@convex-dev/aggregate/test";
 import { convexTest } from "convex-test";
 import { format, subDays } from "date-fns";
 import { describe, expect, it } from "vitest";
@@ -39,6 +40,8 @@ describe("auth.getCurrentUser", () => {
 describe("auth.createOrUpdateProfile", () => {
   it("creates a new profile", async () => {
     const t = convexTest(schema, modules);
+    aggregateTest.register(t, "customerStats");
+
     const authed = t.withIdentity({
       subject: "new-user",
       profile_id: "new-user",
@@ -96,6 +99,7 @@ describe("auth.createOrUpdateProfile", () => {
 describe("myFunctions.createUser", () => {
   it("creates new user and profile", async () => {
     const t = convexTest(schema, modules);
+    aggregateTest.register(t, "customerStats");
 
     const userId = await t.mutation(api.myFunctions.createUser, {
       email: "brand-new@test.com",
@@ -121,6 +125,7 @@ describe("myFunctions.createUser", () => {
 
   it("returns existing user id if email already exists", async () => {
     const t = convexTest(schema, modules);
+    aggregateTest.register(t, "customerStats");
 
     const firstId = await t.mutation(api.myFunctions.createUser, {
       email: "dup@test.com",
@@ -327,6 +332,268 @@ describe("myFunctions.countAttendance", () => {
     });
 
     expect(result).toBe(3);
+  });
+
+  it("counts registers across a one-week range", async () => {
+    const t = convexTest(schema, modules);
+    const now = new Date();
+
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 5; i++) {
+        const d = new Date(now.getTime() - i * 86400000);
+        await ctx.db.insert("daily_register", {
+          userId: `user-${i}`,
+          timestamp: d.toISOString(),
+          admitted_by: "admin-1",
+          device: { name: "Chrome", visitorId: `wv${i}`, browser: "Chrome" },
+          access: { kind: "free" },
+          method: "one-tap",
+          source: "web",
+        });
+      }
+    });
+
+    const start = new Date(now.getTime() - 7 * 86400000).toISOString();
+    const result = await t.query(api.myFunctions.countAttendance, {
+      start,
+      end: now.toISOString(),
+    });
+
+    expect(result).toBe(5);
+  });
+
+  it("counts registers across a one-month range", async () => {
+    const t = convexTest(schema, modules);
+    const now = new Date();
+
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 10; i++) {
+        const d = new Date(now.getTime() - i * 3 * 86400000);
+        await ctx.db.insert("daily_register", {
+          userId: `user-${i}`,
+          timestamp: d.toISOString(),
+          admitted_by: "admin-1",
+          device: { name: "Chrome", visitorId: `mv${i}`, browser: "Chrome" },
+          access: { kind: "free" },
+          method: "one-tap",
+          source: "web",
+        });
+      }
+    });
+
+    const start = new Date(now.getTime() - 30 * 86400000).toISOString();
+    const result = await t.query(api.myFunctions.countAttendance, {
+      start,
+      end: now.toISOString(),
+    });
+
+    expect(result).toBe(10);
+  });
+
+  it("counts registers across a six-month range", async () => {
+    const t = convexTest(schema, modules);
+    const now = new Date();
+
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getTime() - i * 30 * 86400000);
+        await ctx.db.insert("daily_register", {
+          userId: `user-${i}`,
+          timestamp: d.toISOString(),
+          admitted_by: "admin-1",
+          device: { name: "Chrome", visitorId: `sv${i}`, browser: "Chrome" },
+          access: { kind: "free" },
+          method: "one-tap",
+          source: "web",
+        });
+      }
+    });
+
+    const start = new Date(now.getTime() - 180 * 86400000).toISOString();
+    const result = await t.query(api.myFunctions.countAttendance, {
+      start,
+      end: now.toISOString(),
+    });
+
+    expect(result).toBe(6);
+  });
+
+  it("excludes registers outside a six-month range", async () => {
+    const t = convexTest(schema, modules);
+    const now = new Date();
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("daily_register", {
+        userId: "user-old",
+        timestamp: new Date(now.getTime() - 200 * 86400000).toISOString(),
+        admitted_by: "admin-1",
+        device: { name: "Chrome", visitorId: "old", browser: "Chrome" },
+        access: { kind: "free" },
+        method: "one-tap",
+        source: "web",
+      });
+      await ctx.db.insert("daily_register", {
+        userId: "user-in",
+        timestamp: new Date(now.getTime() - 30 * 86400000).toISOString(),
+        admitted_by: "admin-1",
+        device: { name: "Chrome", visitorId: "in", browser: "Chrome" },
+        access: { kind: "free" },
+        method: "one-tap",
+        source: "web",
+      });
+    });
+
+    const start = new Date(now.getTime() - 180 * 86400000).toISOString();
+    const result = await t.query(api.myFunctions.countAttendance, {
+      start,
+      end: now.toISOString(),
+    });
+
+    expect(result).toBe(1);
+  });
+});
+
+describe("myFunctions.getAttendanceByMonth", () => {
+  it("returns empty array when userId is not provided", async () => {
+    const t = convexTest(schema, modules);
+    const result = await t.query(api.myFunctions.getAttendanceByMonth, {
+      start: new Date(2024, 0, 1).toISOString(),
+      end: new Date(2024, 0, 31).toISOString(),
+    });
+    expect(result).toEqual([]);
+  });
+
+  it("returns registers for a specific user within a week range", async () => {
+    const t = convexTest(schema, modules);
+    const now = new Date();
+
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 3; i++) {
+        const d = new Date(now.getTime() - i * 86400000);
+        await ctx.db.insert("daily_register", {
+          userId: "target-user",
+          timestamp: d.toISOString(),
+          admitted_by: "admin-1",
+          device: { name: "Chrome", visitorId: `tv${i}`, browser: "Chrome" },
+          access: { kind: "free" },
+          method: "one-tap",
+          source: "web",
+        });
+      }
+      // different user
+      await ctx.db.insert("daily_register", {
+        userId: "other-user",
+        timestamp: now.toISOString(),
+        admitted_by: "admin-1",
+        device: { name: "Chrome", visitorId: "other", browser: "Chrome" },
+        access: { kind: "free" },
+        method: "one-tap",
+        source: "web",
+      });
+    });
+
+    const start = new Date(now.getTime() - 7 * 86400000).toISOString();
+    const result = await t.query(api.myFunctions.getAttendanceByMonth, {
+      userId: "target-user",
+      start,
+      end: now.toISOString(),
+    });
+
+    expect(result).toHaveLength(3);
+    expect(result.every((r) => r.userId === "target-user")).toBe(true);
+  });
+
+  it("returns registers for a specific user within a month range", async () => {
+    const t = convexTest(schema, modules);
+    const now = new Date();
+
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 8; i++) {
+        const d = new Date(now.getTime() - i * 3 * 86400000);
+        await ctx.db.insert("daily_register", {
+          userId: "monthly-user",
+          timestamp: d.toISOString(),
+          admitted_by: "admin-1",
+          device: { name: "Chrome", visitorId: `mmv${i}`, browser: "Chrome" },
+          access: { kind: "free" },
+          method: "one-tap",
+          source: "web",
+        });
+      }
+    });
+
+    const start = new Date(now.getTime() - 30 * 86400000).toISOString();
+    const result = await t.query(api.myFunctions.getAttendanceByMonth, {
+      userId: "monthly-user",
+      start,
+      end: now.toISOString(),
+    });
+
+    expect(result).toHaveLength(8);
+  });
+
+  it("returns registers for a specific user within a six-month range", async () => {
+    const t = convexTest(schema, modules);
+    const now = new Date();
+
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getTime() - i * 30 * 86400000);
+        await ctx.db.insert("daily_register", {
+          userId: "half-year-user",
+          timestamp: d.toISOString(),
+          admitted_by: "admin-1",
+          device: { name: "Chrome", visitorId: `smv${i}`, browser: "Chrome" },
+          access: { kind: "free" },
+          method: "one-tap",
+          source: "web",
+        });
+      }
+    });
+
+    const start = new Date(now.getTime() - 180 * 86400000).toISOString();
+    const result = await t.query(api.myFunctions.getAttendanceByMonth, {
+      userId: "half-year-user",
+      start,
+      end: now.toISOString(),
+    });
+
+    expect(result).toHaveLength(6);
+  });
+
+  it("excludes registers outside the range for a specific user", async () => {
+    const t = convexTest(schema, modules);
+    const now = new Date();
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("daily_register", {
+        userId: "range-user",
+        timestamp: new Date(now.getTime() - 200 * 86400000).toISOString(),
+        admitted_by: "admin-1",
+        device: { name: "Chrome", visitorId: "old", browser: "Chrome" },
+        access: { kind: "free" },
+        method: "one-tap",
+        source: "web",
+      });
+      await ctx.db.insert("daily_register", {
+        userId: "range-user",
+        timestamp: new Date(now.getTime() - 10 * 86400000).toISOString(),
+        admitted_by: "admin-1",
+        device: { name: "Chrome", visitorId: "recent", browser: "Chrome" },
+        access: { kind: "free" },
+        method: "one-tap",
+        source: "web",
+      });
+    });
+
+    const start = new Date(now.getTime() - 180 * 86400000).toISOString();
+    const result = await t.query(api.myFunctions.getAttendanceByMonth, {
+      userId: "range-user",
+      start,
+      end: now.toISOString(),
+    });
+
+    expect(result).toHaveLength(1);
   });
 });
 

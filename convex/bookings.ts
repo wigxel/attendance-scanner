@@ -21,6 +21,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { bookingDeletedAudit } from "./audits/entities";
+import { DEFAULT_LIMIT } from "./constants";
 import { readId } from "./myFunctions";
 import { updateTodaysRegisterForSubscriber } from "./register_common";
 import {
@@ -351,14 +352,18 @@ export const updateBooking = mutation({
 
 // Get current user's bookings
 export const getUserBookings = query({
-  handler: async (ctx) => {
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
     const identity = await readId(ctx);
     if (!identity) throw new ConvexError("Must be logged in");
 
+    const limit = args.limit ?? DEFAULT_LIMIT;
     const bookings = await ctx.db
       .query("bookings")
       .filter((q) => q.eq(q.field("userId"), identity))
-      .collect();
+      .take(limit);
 
     // Get seat details for each booking
     const bookingsWithSeats = await Promise.all(
@@ -385,7 +390,10 @@ export const getUserConfirmedBookings = query({
    *
    * @returns Array of confirmed bookings for the current user.
    */
-  handler: async (ctx) => {
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
     const identity = await readId(ctx);
 
     if (!identity) {
@@ -393,13 +401,14 @@ export const getUserConfirmedBookings = query({
     }
 
     const userId = identity;
+    const limit = args.limit ?? DEFAULT_LIMIT;
 
     const purchasedBookings = await ctx.db
       .query("bookings")
       .withIndex("by_startDate")
       .filter((q) => q.eq(q.field("userId"), userId))
       .filter((q) => q.eq(q.field("status"), "confirmed"))
-      .collect();
+      .take(limit);
 
     const purchasedBookingsWithSeats = await Promise.all(
       purchasedBookings.map(async (booking) => {
@@ -467,20 +476,24 @@ export const getUserPendingBookings = query({
    *
    * @returns Array of pending bookings for the current user.
    */
-  handler: async (ctx) => {
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
     const identity = await readId(ctx);
 
     if (!identity) {
       return [];
     }
 
+    const limit = args.limit ?? DEFAULT_LIMIT;
     const bookings = await ctx.db
       .query("bookings")
       .withIndex("by_startDate")
       .order("asc")
       .filter((q) => q.eq(q.field("userId"), identity))
       .filter((q) => q.eq(q.field("status"), "pending"))
-      .collect();
+      .take(limit);
 
     // Get seat details for each booking
     const bookingsWithSeats = await Promise.all(
@@ -1065,11 +1078,15 @@ export const claimTicket = mutation({
 });
 
 export const getAllBookings = query({
-  handler: async (ctx) => {
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
     // Add admin check here
     await requirePrivilege(ctx, "attendance:read");
 
-    const bookings = await ctx.db.query("bookings").collect();
+    const limit = args.limit ?? DEFAULT_LIMIT;
+    const bookings = await ctx.db.query("bookings").take(limit);
 
     // Get seat and user details for each booking
     const bookingsWithDetails = await Promise.all(
