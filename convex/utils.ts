@@ -282,7 +282,7 @@ export const updateProfileReferences = internalMutation({
 
     async function update<T extends TableNames>(
       table: T,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       column_meta: { c: keyof Doc<T>; index: any },
     ) {
       // @ts-expect-error Not a problem

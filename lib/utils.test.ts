@@ -1,4 +1,4 @@
-import { addDays, addHours, addMinutes, addMonths, addSeconds } from "date-fns";
+import { addDays, addMinutes, addSeconds, formatDistance } from "date-fns";
 import { describe, expect, it } from "vitest";
 import { calculateEndDate, formatCompact } from "./utils";
 
@@ -91,8 +91,6 @@ describe("calculateEndDate", () => {
 // ─── formatDistance (date-fns) ───────────────────────────────────────
 
 describe("formatDistance between two dates", () => {
-  const { formatDistance } = require("date-fns");
-
   it("returns '6 days' for a 6-day gap", () => {
     const start = new Date(2026, 7, 24);
     const end = addDays(start, 6);

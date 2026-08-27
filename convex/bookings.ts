@@ -1,4 +1,3 @@
-import type { GenericQueryCtx } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import {
   differenceInHours,
@@ -16,9 +15,9 @@ import {
 } from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
 import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
-import type { DurationGroup } from "../types";
+import type { BookingWithDetails } from "../types";
 import { api, internal } from "./_generated/api";
-import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { bookingDeletedAudit } from "./audits/entities";
@@ -37,7 +36,7 @@ export const getBooking = query({
   args: {
     bookingId: v.id("bookings"),
   },
-  handler: async (ctx, { bookingId }): Promise<Doc<"bookings">> => {
+  handler: async (ctx, { bookingId }): Promise<BookingWithDetails> => {
     await requirePrivilege(ctx, "booking:read");
 
     return await ctx.runQuery(api.bookings.getDetails, { bookingId });

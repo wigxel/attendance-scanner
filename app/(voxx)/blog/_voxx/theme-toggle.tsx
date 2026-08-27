@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffectEvent } from "@radix-ui/react-use-effect-event";
 import { Moon, Sun } from "lucide-react";
 import { useLayoutEffect, useState } from "react";
 
@@ -8,16 +9,20 @@ const STORAGE_KEY = "voxx-theme";
 export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
+  const setTheme_ = useEffectEvent((value) => {
+    setTheme(value)
+  })
+
   useLayoutEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === "dark" || stored === "light") {
       document.documentElement.classList.add(stored);
-      setTheme(stored);
+      setTheme_(stored);
     } else {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       const initial = prefersDark ? "dark" : "light";
       document.documentElement.classList.add(initial);
-      setTheme(initial);
+      setTheme_(initial);
     }
   }, []);
 
