@@ -2,7 +2,6 @@
 import { useFlags } from "@flagsmith/flagsmith/react";
 import { useQuery } from "convex/react";
 import { XIcon } from "lucide-react";
-import { motion as m } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
 import React from "react";
 import { AppLoader } from "@/components/loader";

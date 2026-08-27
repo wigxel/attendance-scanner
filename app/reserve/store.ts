@@ -17,7 +17,7 @@ export interface BookingState {
 
 export const useBookingStore = create<BookingState>()(
   persist(
-    (_set) => ({
+    () => ({
       activeTab: "booking",
       selectedDate: null,
       endDate: null,

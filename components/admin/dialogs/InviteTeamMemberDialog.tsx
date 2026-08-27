@@ -47,6 +47,7 @@ export function InviteTeamMemberDialog() {
     defaultValues: { userId: "", role: "admin" },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const watchRole = watch("role");
   const watchUserId = watch("userId");
 

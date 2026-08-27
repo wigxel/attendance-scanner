@@ -7,7 +7,6 @@ import {
 import { useBookingCalendarLogic } from "@/hooks/useBookingCalendarLogic";
 import "@/app/booking.css";
 import {
-  addDays,
   addMonths,
   addWeeks,
   differenceInDays,
@@ -66,7 +65,6 @@ const BookingCalendar = () => {
     reserved,
     selectedDate,
     handleDateChange,
-    formatDate,
     timePeriodString,
     handleTimePeriodChange,
     handleProceed,
@@ -299,25 +297,6 @@ export function RangePreviewSimple({
       </p>
     </div>
   );
-}
-
-function _addWeekOpeningDays(date: Date): Date {
-  let resultDate = new Date(date); // Create a copy of the original date
-  let nonSundayDaysAdded = 0;
-  let safetyCounter = 0;
-  const MAX_CALENDAR_DAYS_TO_CHECK = 14; // A safety limit to prevent infinite loops
-
-  while (nonSundayDaysAdded < 7 && safetyCounter < MAX_CALENDAR_DAYS_TO_CHECK) {
-    resultDate = addDays(resultDate, 1); // Add one calendar day
-    safetyCounter++;
-
-    // getDay() returns 0 for Sunday, 1 for Monday, ..., 6 for Saturday
-    if (resultDate.getDay() !== 0) {
-      // If the current day is not a Sunday
-      nonSundayDaysAdded++;
-    }
-  }
-  return resultDate;
 }
 
 export default BookingCalendar;

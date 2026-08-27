@@ -62,7 +62,7 @@ export function AttendanceDrawer({
               <p className="py-2 select-none text-xs text-center">
                 Reservation by:&nbsp;
                 <span className="font-medium">
-                  {capitalize(booking.created_by ?? "--")}
+                  {capitalize(booking.creator ?? "{{creator}}")}
                 </span>
               </p>
             </div>

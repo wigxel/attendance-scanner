@@ -26,6 +26,7 @@ import type * as permissions from "../permissions.js";
 import type * as register from "../register.js";
 import type * as register_common from "../register_common.js";
 import type * as reports from "../reports.js";
+import type * as roomMetrics from "../roomMetrics.js";
 import type * as seatOrchestrator from "../seatOrchestrator.js";
 import type * as seats from "../seats.js";
 import type * as seedScanRecords from "../seedScanRecords.js";
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   register: typeof register;
   register_common: typeof register_common;
   reports: typeof reports;
+  roomMetrics: typeof roomMetrics;
   seatOrchestrator: typeof seatOrchestrator;
   seats: typeof seats;
   seedScanRecords: typeof seedScanRecords;

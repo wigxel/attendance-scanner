@@ -15,6 +15,8 @@ const _PLAN_KEY = Schema.String.pipe(brand("PlanKey"));
 
 export type PlanKey = KnownPlanKey | Schema.Schema.Type<typeof _PLAN_KEY>;
 
+export type Position = { rowIndex: number; colIndex: number };
+
 export type BookingWithDetails = Omit<
   Doc<"bookings">,
   "startDate" | "endDate"
@@ -23,7 +25,7 @@ export type BookingWithDetails = Omit<
   startDate: string;
   endDate: string;
   seats: Doc<"seats">[];
-  creator?: string
+  creator?: string;
   user: {
     id?: string;
     name: string;

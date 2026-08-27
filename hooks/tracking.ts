@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { encodeQRCodeData } from "@/app/actions/encrypt";
 
-type Result<A, _E> =
+type Result<A> =
   | { status: "loading"; data: undefined }
   | { status: "success"; data: A }
   | { status: "error"; error: Error };
@@ -15,7 +15,7 @@ type DeviceMeta = {
 };
 
 export function useDeviceMeta() {
-  const [result, setStatus] = React.useState<Result<DeviceMeta, unknown>>({
+  const [result, setStatus] = React.useState<Result<DeviceMeta>>({
     status: "loading",
     data: undefined,
   });

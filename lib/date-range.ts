@@ -1,5 +1,5 @@
 import { Option, pipe } from "effect";
-import type { DurationGroup, KnownPlanKey, PlanKey } from "../types";
+import type { DurationGroup, PlanKey } from "../types";
 import { safeStr } from "./data.helpers";
 import { DateParse } from "./date.helpers";
 import { O } from "./fp.helpers";

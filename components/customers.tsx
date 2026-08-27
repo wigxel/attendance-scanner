@@ -918,7 +918,7 @@ export function TopCustomersAvatarGroup() {
               className="h-auto p-2 pl-4 rounded-full flex items-center gap-3"
             >
               <div className="flex -space-x-3">
-                {top6.map((customer, _i) => (
+                {top6.map((customer) => (
                   <CustomerAvatar
                     key={customer.userId}
                     userId={customer.userId}

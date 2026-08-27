@@ -261,7 +261,7 @@ describe("onPaystackChargeSuccess", () => {
   it("confirms bookedSeats when booking is confirmed", async () => {
     const t = convexTest(schema, modules);
 
-    const { bookingId, seatId } = await t.run(async (ctx) => {
+    const { bookingId } = await t.run(async (ctx) => {
       const seatId = await ctx.db.insert("seats", {
         seatNumber: 50,
         isBooked: false,

@@ -100,7 +100,7 @@ const Control = {
     }
   },
 
-  mouseUp(e: Position, _event: React.MouseEvent<HTMLElement>) {
+  mouseUp(e: Position) {
     if (Control._data.dragging) {
       // Only process if a drag was initiated
       Control._data.dragging = false;
@@ -110,13 +110,13 @@ const Control = {
     }
   },
 
-  mouseOver(e: Position, _event: React.MouseEvent<HTMLElement>) {
+  mouseOver(e: Position) {
     if (Control._data.dragging) {
       Control.highlightBounds(Control._data.startPos, e);
     }
   },
 
-  mouseDown(e: Position, _event: React.MouseEvent<HTMLElement>) {
+  mouseDown(e: Position) {
     Control._data.dragging = true;
     Control._data.startPos = e;
     Control.clearSelection(); // Clear any existing selections when starting a new drag
@@ -299,7 +299,7 @@ export function SeatStructureGrid() {
         columnCount,
       });
       toast.success("Seat layout saved successfully!");
-    } catch (_error) {
+    } catch {
       toast.error("Failed to save seat layout");
     }
   };
@@ -487,14 +487,14 @@ export function SeatStructureGrid() {
                 onDoubleClick={() => {
                   remove(e);
                 }}
-                onMouseUp={(event) => {
-                  Control.mouseUp(e, event);
+                onMouseUp={() => {
+                  Control.mouseUp(e);
                 }}
-                onMouseOver={(event) => {
-                  Control.mouseOver(e, event);
+                onMouseOver={() => {
+                  Control.mouseOver(e);
                 }}
-                onMouseDown={(event) => {
-                  Control.mouseDown(e, event);
+                onMouseDown={() => {
+                  Control.mouseDown(e);
                 }}
                 onClick={(event) => {
                   Control.select(e, event);

@@ -23,10 +23,7 @@ function pastStr(days = 5) {
   return format(subDays(new Date(), days), "yyyy-MM-dd");
 }
 
-async function seedAdmin(
-  t: ReturnType<typeof convexTest>,
-  privileges: string[] = ["reports:read", "booking:read"],
-) {
+async function seedAdmin(t: ReturnType<typeof convexTest>) {
   t.registerComponent("wigxel_acl", aclSchema, aclModules);
 
   // Seed the admin role into the component's DB via its own mutation
@@ -2051,7 +2048,7 @@ describe("assignUnassignedSeats", () => {
     const t = convexTest(schema, modules);
     const today = todayStr();
 
-    const bookingId = await t.run(async (ctx) => {
+    await t.run(async (ctx) => {
       await ctx.db.insert("seats", {
         seatNumber: 20,
         isBooked: false,

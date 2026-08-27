@@ -74,6 +74,36 @@ http.route({
   handler: syncConvexUsers,
 });
 
+const bodySchema = z.object({
+  temperature: z.number(),
+  humidity: z.number(),
+  pressure: z.number(),
+});
+
+http.route({
+  method: "POST",
+  path: "/reports/iot",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const parsedBody = await bodySchema.safeParseAsync(body);
+
+    console.log("Request Body", body, parsedBody);
+
+    if (!parsedBody.success) {
+      return Response.json({ message: "Invalid body", error: parsedBody.error }, { status: 500 });
+    }
+
+    await ctx.runMutation(api.roomMetrics.store, {
+      temperature: parsedBody.data.temperature,
+      humidity: parsedBody.data.humidity,
+      pressure: parsedBody.data.pressure,
+    });
+
+    return Response.json({ message: "Success" }, { status: 200 });
+  })
+});
+
+
 // ---------------------------------------------------------------------------
 // Paystack Webhook Handler
 // ---------------------------------------------------------------------------

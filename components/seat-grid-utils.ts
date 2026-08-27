@@ -1,7 +1,7 @@
 import { isNullable } from "effect/Predicate";
-import type { Prettify } from "@/types";
+import type { Position, Prettify } from "@/types";
 
-export type Position = { rowIndex: number; colIndex: number };
+export type { Position } from "@/types";
 
 type ObjectEntryShared<T> = Prettify<
   T & {

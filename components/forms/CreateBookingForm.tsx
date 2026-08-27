@@ -74,6 +74,7 @@ export function CreateBookingForm({
     },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const watchedPlanKey = form.watch("planKey");
   const watchedStartDate = form.watch("startDate");
   const watchedCustomerId = form.watch("customerId");

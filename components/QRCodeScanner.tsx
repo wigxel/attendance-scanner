@@ -5,7 +5,7 @@ import consola from "consola";
 import { Html5Qrcode } from "html5-qrcode";
 import { XIcon } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AppSpinner } from "@/components/loader";
 import { Button } from "@/components/ui/button";
@@ -45,21 +45,7 @@ export default function QRCodeScanner({
   // const rootRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const _ref = getScanner();
-    if (!_ref) return;
-
-    // Cleanup on unmount
-    return () => {
-      if (_ref.isScanning) {
-        _ref.stop().catch((error) => {
-          console.error("Error stopping scanner:", error);
-        });
-      }
-    };
-  }, [getScanner]);
-
-  function getScanner(): Html5Qrcode | undefined {
+  const getScanner = useCallback((): Html5Qrcode | undefined => {
     if (!containerRef.current) return;
 
     if (scannerRef.current) return scannerRef.current;
@@ -78,7 +64,21 @@ export default function QRCodeScanner({
     scannerRef.current = _ref;
 
     return _ref;
-  }
+  }, []);
+
+  useEffect(() => {
+    const _ref = getScanner();
+    if (!_ref) return;
+
+    // Cleanup on unmount
+    return () => {
+      if (_ref.isScanning) {
+        _ref.stop().catch((error) => {
+          console.error("Error stopping scanner:", error);
+        });
+      }
+    };
+  }, [getScanner]);
 
   const getCameras = async () => {
     try {

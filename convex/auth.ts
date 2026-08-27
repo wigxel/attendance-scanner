@@ -191,9 +191,11 @@ export const destroyUser = internalAction({
       email: user.email,
     });
 
-    profile
-      ? console.info("Profile record found")
-      : console.info("No profile record found");
+    if (profile) {
+      console.info("Profile record found");
+    } else {
+      console.info("No profile record found");
+    }
 
     if (profile) {
       if (profile.id.startsWith("user_")) {

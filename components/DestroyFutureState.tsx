@@ -9,7 +9,7 @@ export function DestroyFutureStateOnReserve() {
 
     window.history.pushState(null, "", window.location.href);
 
-    const handlePopState = (_e: PopStateEvent) => {
+    const handlePopState = () => {
       window.history.pushState(null, "", window.location.href);
     };
 

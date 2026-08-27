@@ -74,6 +74,7 @@ export function RoleFormDialog({
 
   const { register, handleSubmit, reset, setValue, watch, formState } = form;
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedPrivileges = watch("privileges");
 
   useEffect(() => {

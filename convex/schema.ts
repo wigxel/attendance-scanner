@@ -207,6 +207,12 @@ const ratings = defineTable({
   createdAt: v.string(),
 }).index("user_id", ["userId"]);
 
+const roomMetrics = defineTable({
+  temperature: v.number(),
+  humidity: v.number(),
+  pressure: v.number(),
+})
+
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
   users: authTables.users,
@@ -227,4 +233,5 @@ export default defineSchema({
   config,
   auditLog,
   ratings,
+  roomMetrics
 });
