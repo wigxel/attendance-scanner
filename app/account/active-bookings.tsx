@@ -1,4 +1,5 @@
 import { useQuery } from "convex/react";
+import { DurationBadge } from "@/components/DurationBadge";
 import { Calendar, ChevronRight, Clock } from "lucide-react";
 import Link from "next/link";
 import type React from "react"; // Added React import for React.ReactNode type
@@ -24,16 +25,12 @@ const formatDate = (dateString: string): string => {
   });
 };
 
-const getDurationText = (durationType: string): string => {
-  if (durationType === "calendar_month") return "Calendar Month";
-  return durationType.charAt(0).toUpperCase() + durationType.slice(1);
-};
-
 // Interface for booking data
 interface Booking {
   _id: string;
   startDate: string;
   endDate: string;
+  duration: number;
   durationType: string;
   role: string;
   seats: Array<{ _id: string | number; seatNumber: string }>;
@@ -144,6 +141,7 @@ export function BookingCalendarBox({
 function BookingDateTimeInfo({
   startDate,
   endDate,
+  duration,
   durationType,
 }: Omit<Booking, "_id" | "role" | "seats">) {
   return (
@@ -162,7 +160,7 @@ function BookingDateTimeInfo({
         </div>
       )}
       <span className="text-xs text-gray-500">
-        {getDurationText(durationType)}
+        <DurationBadge duration={duration} />
       </span>
     </div>
   );
@@ -226,6 +224,7 @@ function BookingItem({ booking }: { booking: Booking }) {
           <BookingDateTimeInfo
             startDate={booking.startDate}
             endDate={booking.endDate}
+            duration={booking.duration}
             durationType={booking.durationType}
           />
         </div>

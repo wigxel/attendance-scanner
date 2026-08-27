@@ -16,6 +16,26 @@ export const getByKey = query({
   },
 });
 
+export const getPlan = query({
+  args: { planKey: v.string() },
+  handler: async (ctx, { planKey }): Promise<Doc<"accessPlans"> | null> => {
+    return ctx.db
+      .query("accessPlans")
+      .withIndex("plan_key", (q) => q.eq("key", planKey))
+      .first();
+  },
+});
+
+export const getByDuration = query({
+  args: { noOfDays: v.number() },
+  handler: async (ctx, { noOfDays }): Promise<Doc<"accessPlans"> | null> => {
+    return ctx.db
+      .query("accessPlans")
+      .filter((q) => q.eq(q.field("no_of_days"), noOfDays))
+      .first();
+  },
+});
+
 export const list = query({
   handler: async (ctx): Promise<Doc<"accessPlans">[]> => {
     return ctx.db.query("accessPlans").collect();
