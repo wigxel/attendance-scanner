@@ -92,7 +92,6 @@
     "usehooks-ts": "^3.1.1",
     "vaul": "^1.1.2",
     "vitest": "^4.1.5",
-    "voxx-core: ^1.3.0": "link:@prudentbird/voxx-core: ^1.3.0",
     "zod": "^3.24.3",
     "zustand": "^5.0.3"
   },
