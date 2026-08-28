@@ -145,6 +145,12 @@ const dailyAttendanceMetrics = defineTable({
   totalUsers: v.number(),
 }).index("by_date", ["date"]);
 
+const dailyCashPayments = defineTable({
+  date: v.string(),
+  count: v.number(),
+  total: v.number(),
+}).index("by_date", ["date"]);
+
 const metricKinds = v.union(
   v.literal("totalCustomers"),
   v.literal("newCustomers"),
@@ -205,7 +211,7 @@ const roomMetrics = defineTable({
   temperature: v.number(),
   humidity: v.number(),
   pressure: v.number(),
-})
+});
 
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
@@ -217,6 +223,7 @@ export default defineSchema({
   occupations,
   featureVotes,
   dailyAttendanceMetrics,
+  dailyCashPayments,
   seats,
   bookings,
   bookedSeats,
@@ -226,5 +233,5 @@ export default defineSchema({
   config,
   auditLog,
   ratings,
-  roomMetrics
+  roomMetrics,
 });

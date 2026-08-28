@@ -3,10 +3,16 @@ import { useQuery } from "convex/react";
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { isNullable } from "effect/Predicate";
 import React from "react";
+import { Area, AreaChart, XAxis } from "recharts";
 import { RegisteredUserEntry } from "@/components/customers";
 import { DateRange } from "@/components/DateRange";
 import { If } from "@/components/if";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
@@ -15,8 +21,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { api } from "@/convex/_generated/api";
+import { useCachedQuery } from "@/hooks/use-cached-query";
 import { currencyFormatter } from "@/lib/currency.helpers";
-import { safeNum, serialNo } from "@/lib/data.helpers";
+import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
 import { O, pipe } from "@/lib/fp.helpers";
 
 type MetricKind =
@@ -168,7 +175,7 @@ function TotalVisitsCard() {
 
   return (
     <div className="@container">
-      <Card className="aspect-[3/1.5] w-full">
+      <Card className="aspect-[3/2] w-full">
         <CardContent className="flex pt-4 flex-1 flex-col">
           <div className="flex justify-between">
             <CardDescription className="text-muted-foreground">
@@ -178,7 +185,7 @@ function TotalVisitsCard() {
           </div>
 
           <span className="text-3xl font-semibold">
-            <If cond={!is_nullable}>{serialNo(safeNum(count))}</If>
+            <If cond={!is_nullable}>{MetricsValue.count(count)}</If>
             <If cond={is_nullable}>{"--"}</If>
           </span>
 
@@ -192,6 +199,124 @@ function TotalVisitsCard() {
     </div>
   );
 }
+
+export function CashPayments() {
+  return (
+    <DateRange.Provider>
+      <CashPaymentsCard />
+    </DateRange.Provider>
+  );
+}
+
+function CashPaymentsCard() {
+  const { filter } = DateRange.useState();
+
+  const [start, end] = React.useMemo(() => {
+    return filter.get_range(today);
+  }, [filter]);
+
+  const result = useCachedQuery(api.metrics.sumCashPayments, {
+    start: start.toISOString(),
+    end: end.toISOString(),
+  });
+
+  const trend = useCachedQuery(api.metrics.metricsDailyCashPayments, {
+    start: format(start, "yyyy-MM-dd"),
+    end: format(end, "yyyy-MM-dd"),
+  });
+
+  const is_empty = safeArray(trend).length === 0;
+
+  return (
+    <div className="@container">
+      <Card className="aspect-[3/2] w-full">
+        <CardContent className="flex pt-4 flex-1 flex-col justify-between gap-4">
+          <div className="flex justify-between">
+            <div className="flex gap-2 items-end">
+              <CardDescription className="text-muted-foreground">
+                Cash Payments
+              </CardDescription>
+              <span className="text-xs opacity-50 text-muted-foreground">
+                {format(start, "d MMM, yy")} — Now
+              </span>
+            </div>
+
+            <DateRange.Dropdown />
+          </div>
+
+          <div>
+            <span className="text-3xl font-semibold">
+              {MetricsValue.currency(result?.total)}
+            </span>
+
+            <div className="text-xs opacity-50">
+              {MetricsValue.count(result?.count)} payments
+            </div>
+          </div>
+
+          <div className="h-16 -mx-6 flex *:flex-1">
+            {is_empty ? (
+              <div className="text-xs text-muted-foreground px-6">
+                No cash payments
+              </div>
+            ) : (
+              <ChartContainer
+                config={{ cash: { label: "Cash", color: "#22c55e" } }}
+              >
+                <AreaChart
+                  data={trend}
+                  margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorCash" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" hide />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        labelFormatter={(value) =>
+                          format(
+                            new Date(`${value as string}T00:00:00`),
+                            "d MMM, yy",
+                          )
+                        }
+                        formatter={(value) =>
+                          MetricsValue.currency(value as number)
+                        }
+                      />
+                    }
+                    cursor={false}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="total"
+                    stroke="#22c55e"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorCash)"
+                  />
+                </AreaChart>
+              </ChartContainer>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+const MetricsValue = {
+  currency(value: number | undefined) {
+    return currencyFormatter.format(safeNum(value)).replace("NGN", "₦");
+  },
+  count(value: number | undefined) {
+    const count = safeNum(value);
+    return count;
+  },
+};
 
 export function TotalRevenue() {
   const range = {
@@ -214,7 +339,7 @@ export function TotalRevenue() {
             <If cond={!is_nullable}>
               {pipe(
                 O.fromNullable(total),
-                O.map((value) => currencyFormatter.format(value)),
+                O.map((value) => MetricsValue.currency(value)),
                 O.getOrElse(() => "--"),
               )}
             </If>
@@ -231,7 +356,7 @@ export function TotalRevenue() {
           <CardDescription>Estimated Revenue</CardDescription>
           <span className="text-3xl font-semibold">
             <If cond={!is_nullable}>
-              {currencyFormatter.format(safeNum(count) * base_fee)}
+              {MetricsValue.currency(safeNum(count) * base_fee)}
             </If>
             <If cond={is_nullable}>{"--"}</If>
           </span>

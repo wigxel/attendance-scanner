@@ -140,7 +140,7 @@ export const createOrUpdateProfile = mutation({
       role: "user",
     });
 
-    const newProfile = await ctx.db.get(newProfileId)
+    const newProfile = await ctx.db.get(newProfileId);
     if (newProfile) {
       await profileAggregate.insert(ctx, newProfile);
     }

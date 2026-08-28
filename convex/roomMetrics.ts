@@ -1,5 +1,5 @@
-import { v } from "convex/values"
-import { mutation } from "./_generated/server"
+import { v } from "convex/values";
+import { mutation } from "./_generated/server";
 
 export const store = mutation({
   args: {
@@ -12,6 +12,6 @@ export const store = mutation({
       temperature: args.temperature,
       humidity: args.humidity,
       pressure: args.pressure,
-    })
+    });
   },
-})
+});

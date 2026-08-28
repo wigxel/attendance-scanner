@@ -1,6 +1,7 @@
 import type { GenericMutationCtx } from "convex/server";
 import { v } from "convex/values";
 import { Effect, Match, pipe } from "effect";
+import { filter } from "effect/Array";
 import { TaggedError } from "effect/Data";
 import { z } from "zod";
 import { safeObj } from "../lib/data.helpers";
@@ -154,6 +155,7 @@ export const PlanImpl = {
 
       return record as AccessPaidV2;
     });
+
   },
 
   async validate(_type: "duration", duration: unknown) {
@@ -186,8 +188,40 @@ export const PlanImpl = {
     };
   },
 
+  match<TFree, TPaid, TNone>(
+    access: { kind: string } & object,
+    cases: {
+      none: () => TNone;
+      free: () => TFree;
+      paid: (access: AccessPaidV2 | AccessPaidV1) => TPaid;
+    },
+  ) {
+    return pipe(
+      Match.value(access),
+      Match.when({ kind: "free" }, () => cases.free()),
+      Match.when({ kind: "paid" }, (a) =>
+        cases.paid(a as AccessPaidV2 | AccessPaidV1),
+      ),
+      Match.orElse(() => cases.none()),
+    ) as TFree | TPaid | TNone;
+  },
+
   paymentMethod(access: AccessStruct): "bank_transfer" | "cash" {
     return access.kind === "paid" ? access.paymentMethod : "bank_transfer";
+  },
+
+  amount(access: AccessStruct): number {
+    return PlanImpl.match(access, {
+      none: () => 0,
+      free: () => 0,
+      paid: (record) => {
+        if ("amountInKobo" in record) {
+          return record.amountInKobo / 100;
+        }
+
+        return record.amount;
+      },
+    });
   },
 
   toOverwrite(
@@ -256,5 +290,25 @@ export type AccessDuration = z.infer<typeof durationSchemaValidator>;
 export class PlanError extends TaggedError("PlanError") {
   constructor(public message: string) {
     super();
+  }
+}
+
+type DailyRegister = Doc<'daily_register'>;
+
+export const RegisterImpl = {
+  filterPaid: filter<DailyRegister>((r) => r.access.kind === "paid"),
+
+  filterCash: filter<DailyRegister>((r) => {
+    return PlanImpl.type('paid')(r.access) && PlanImpl.paymentMethod(r.access) === "cash";
+  }),
+
+  sumAll: (collection: DailyRegister[]) => {
+    return collection.reduce((acc, r) => {
+      return PlanImpl.match(r.access, {
+        paid: (value) => acc + PlanImpl.amount(value),
+        free: () => acc,
+        none: () => acc,
+      })
+    }, 0)
   }
 }

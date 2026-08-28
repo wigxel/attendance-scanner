@@ -93,7 +93,7 @@ export const createUser = mutation({
         phoneNumber: args.phone,
         role: "user",
       });
-      const newProfile = await ctx.db.get(newId)
+      const newProfile = await ctx.db.get(newId);
       if (newProfile) {
         await profileAggregate.insert(ctx, newProfile);
       }

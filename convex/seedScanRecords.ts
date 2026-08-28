@@ -72,3 +72,52 @@ export const seedScanRecords = internalMutation({
     return { seeded: records.length };
   },
 });
+
+export const seedCashPayments = internalMutation({
+  args: {
+    count: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const count = args.count ?? 8;
+    const records = [];
+
+    for (let i = 0; i < count; i++) {
+      const day = 10 + i;
+      const recordId = await ctx.db.insert("daily_register", {
+        userId: `test-cash-user-${i}`,
+        timestamp: new Date(2026, 7, day, 10 + i, 0, 0).toISOString(),
+        source: "web",
+        device: {
+          browser: "Chrome",
+          name: "Macintosh",
+          visitorId: `test-cash-vis-${i}`,
+        },
+        access: {
+          kind: "paid",
+          planId: i % 3 === 0 ? "weekly" : "daily",
+          amountInKobo: i % 3 === 0 ? 12000 : 5000,
+          paymentMethod: "cash",
+          _v: "2",
+        },
+        admitted_by: "test-cash-staff",
+      });
+      records.push(recordId);
+    }
+
+    return { seeded: records.length };
+  },
+});
+
+export const cleanupTestCashPayments = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("daily_register").collect();
+    const testRecords = all.filter(
+      (r) => typeof r.userId === "string" && r.userId.startsWith("test-cash-"),
+    );
+    for (const r of testRecords) {
+      await ctx.db.delete(r._id);
+    }
+    return { deleted: testRecords.length };
+  },
+});

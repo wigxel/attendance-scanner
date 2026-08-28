@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { endOfDay, format, startOfDay, subDays } from "date-fns";
+import { addDays, endOfDay, format, startOfDay, subDays } from "date-fns";
 import { Effect, pipe } from "effect";
 import { isNullable } from "effect/Predicate";
 import { O } from "../lib/fp.helpers";
@@ -10,13 +10,24 @@ import { requirePrivilege } from "./acl";
 import { visitsAggregate } from "./customers";
 import { readId } from "./myFunctions";
 import { isRegisteredToday } from "./register_common";
-import { PlanImpl } from "./shared";
+import { PlanImpl, RegisterImpl } from "./shared";
+
+const Timezone = {
+  now: () => {
+    const now = new Date();
+
+    return Timezone.get(now);
+  },
+
+  get: (day: Date) => {
+    const iso = day.toLocaleString("en-US", { timeZone: "Africa/Lagos" });
+
+    return new Date(iso);
+  }
+}
 
 export const saveCount = internalMutation(async ({ db }) => {
-  const now = new Date();
-  const nowWAT = new Date(
-    now.toLocaleString("en-US", { timeZone: "Africa/Lagos" }),
-  );
+  const nowWAT = Timezone.now();
 
   const yesterday = subDays(nowWAT, 1);
   const startOfYesterday = startOfDay(yesterday);
@@ -52,6 +63,78 @@ export const saveCount = internalMutation(async ({ db }) => {
       totalUsers,
     });
   }
+
+  const cash = RegisterImpl.filterCash(count)
+  const cashCount = cash.length;
+  const cashTotal = RegisterImpl.sumAll(cash);
+
+  const existingCash = await db
+    .query("dailyCashPayments")
+    .withIndex("by_date", (q) => q.eq("date", date))
+    .unique();
+
+  if (existingCash) {
+    await db.patch(existingCash._id, { count: cashCount, total: cashTotal });
+  } else {
+    await db.insert("dailyCashPayments", {
+      date,
+      count: cashCount,
+      total: cashTotal,
+    });
+  }
+});
+
+export const backfillDailyCashPayments = internalMutation({
+  args: { startDate: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const { db } = ctx;
+    const nowWAT = Timezone.now();
+
+    let day = startOfDay(new Date(args.startDate ?? "2026-05-01"));
+    const end = startOfDay(subDays(nowWAT, 1));
+
+    while (day <= end) {
+      const wd = Timezone.get(day);
+      const dayStart = startOfDay(wd);
+      const dayEnd = endOfDay(wd);
+      const date = format(wd, "yyyy-MM-dd");
+
+      const rows = await db
+        .query("daily_register")
+        .withIndex("by_timestamp", (q) =>
+          q
+            .gte("timestamp", dayStart.toISOString())
+            .lte("timestamp", dayEnd.toISOString()),
+        )
+        .collect();
+
+      const cash_records = pipe(
+        rows,
+        RegisterImpl.filterCash,
+      )
+
+      const total = RegisterImpl.sumAll(cash_records);
+
+      const existing = await db
+        .query("dailyCashPayments")
+        .withIndex("by_date", (q) => q.eq("date", date))
+        .unique();
+
+      if (existing) {
+        await db.patch(existing._id, { count: cash_records.length, total });
+      } else {
+        await db.insert("dailyCashPayments", {
+          date,
+          count: cash_records.length,
+          total,
+        });
+      }
+
+      day = addDays(day, 1);
+    }
+
+    return { done: true };
+  },
 });
 
 export const setFreeAccess = internalMutation({
