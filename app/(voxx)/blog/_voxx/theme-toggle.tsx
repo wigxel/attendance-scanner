@@ -10,8 +10,8 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
   const setTheme_ = useEffectEvent((value) => {
-    setTheme(value)
-  })
+    setTheme(value);
+  });
 
   useLayoutEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -19,7 +19,9 @@ export function ThemeToggle() {
       document.documentElement.classList.add(stored);
       setTheme_(stored);
     } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
       const initial = prefersDark ? "dark" : "light";
       document.documentElement.classList.add(initial);
       setTheme_(initial);

@@ -90,7 +90,10 @@ http.route({
     console.log("Request Body", body, parsedBody);
 
     if (!parsedBody.success) {
-      return Response.json({ message: "Invalid body", error: parsedBody.error }, { status: 500 });
+      return Response.json(
+        { message: "Invalid body", error: parsedBody.error },
+        { status: 500 },
+      );
     }
 
     await ctx.runMutation(api.roomMetrics.store, {
@@ -100,9 +103,8 @@ http.route({
     });
 
     return Response.json({ message: "Success" }, { status: 200 });
-  })
+  }),
 });
-
 
 // ---------------------------------------------------------------------------
 // Paystack Webhook Handler

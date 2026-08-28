@@ -1,8 +1,5 @@
-"use client"
-import {
-  BookOpenIcon,
-  Calendar1
-} from "lucide-react";
+"use client";
+import { BookOpenIcon, Calendar1 } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/app/(voxx)/blog/_voxx/theme-toggle";
 import { Logo } from "@/components/logo";
@@ -78,7 +75,6 @@ export default function PublicHeader() {
       <div id="mobile-menu" className="md:hidden">
         <MobileNav>
           <div className="h-full border-blue-200 flex flex-col  px-4 pb-4 pt-8">
-
             <ul className="flex flex-col flex-1 gap-2  divide-y divide-border">
               {NAV_LINKS.map(({ href, icon, label }) => (
                 <NavItem

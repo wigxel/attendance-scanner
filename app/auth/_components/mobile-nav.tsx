@@ -7,7 +7,7 @@ import {
 } from "@/components/mobile-menu";
 import { cn } from "@/lib/utils";
 
-type Props = { children: React.ReactNode }
+type Props = { children: React.ReactNode };
 
 export function MobileNav({ children }: Props) {
   const { open } = useMobileMenu();

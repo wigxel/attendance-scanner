@@ -155,7 +155,6 @@ export const PlanImpl = {
 
       return record as AccessPaidV2;
     });
-
   },
 
   async validate(_type: "duration", duration: unknown) {
@@ -293,13 +292,16 @@ export class PlanError extends TaggedError("PlanError") {
   }
 }
 
-type DailyRegister = Doc<'daily_register'>;
+type DailyRegister = Doc<"daily_register">;
 
 export const RegisterImpl = {
   filterPaid: filter<DailyRegister>((r) => r.access.kind === "paid"),
 
   filterCash: filter<DailyRegister>((r) => {
-    return PlanImpl.type('paid')(r.access) && PlanImpl.paymentMethod(r.access) === "cash";
+    return (
+      PlanImpl.type("paid")(r.access) &&
+      PlanImpl.paymentMethod(r.access) === "cash"
+    );
   }),
 
   sumAll: (collection: DailyRegister[]) => {
@@ -308,7 +310,7 @@ export const RegisterImpl = {
         paid: (value) => acc + PlanImpl.amount(value),
         free: () => acc,
         none: () => acc,
-      })
-    }, 0)
-  }
-}
+      });
+    }, 0);
+  },
+};

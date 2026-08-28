@@ -23,8 +23,8 @@ const Timezone = {
     const iso = day.toLocaleString("en-US", { timeZone: "Africa/Lagos" });
 
     return new Date(iso);
-  }
-}
+  },
+};
 
 export const saveCount = internalMutation(async ({ db }) => {
   const nowWAT = Timezone.now();
@@ -64,7 +64,7 @@ export const saveCount = internalMutation(async ({ db }) => {
     });
   }
 
-  const cash = RegisterImpl.filterCash(count)
+  const cash = RegisterImpl.filterCash(count);
   const cashCount = cash.length;
   const cashTotal = RegisterImpl.sumAll(cash);
 
@@ -108,10 +108,7 @@ export const backfillDailyCashPayments = internalMutation({
         )
         .collect();
 
-      const cash_records = pipe(
-        rows,
-        RegisterImpl.filterCash,
-      )
+      const cash_records = pipe(rows, RegisterImpl.filterCash);
 
       const total = RegisterImpl.sumAll(cash_records);
 

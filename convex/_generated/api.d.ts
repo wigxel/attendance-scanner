@@ -1,4 +1,4 @@
- 
+/* eslint-disable */
 /**
  * Generated `api` utility.
  *
@@ -16,6 +16,7 @@ import type * as auth from "../auth.js";
 import type * as bookings from "../bookings.js";
 import type * as clerk from "../clerk.js";
 import type * as config from "../config.js";
+import type * as constants from "../constants.js";
 import type * as crons from "../crons.js";
 import type * as customers from "../customers.js";
 import type * as http from "../http.js";
@@ -51,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   bookings: typeof bookings;
   clerk: typeof clerk;
   config: typeof config;
+  constants: typeof constants;
   crons: typeof crons;
   customers: typeof customers;
   http: typeof http;

@@ -18,7 +18,11 @@ export default async function SignInPage() {
             <p className="text-muted-foreground">Sign in to get started</p>
           </div>
 
-          <SignIn fallback={<Skeleton className="max-w-[402px] w-full aspect-[402/479]"></Skeleton>} />
+          <SignIn
+            fallback={
+              <Skeleton className="max-w-[402px] w-full aspect-[402/479]"></Skeleton>
+            }
+          />
         </div>
       </section>
 

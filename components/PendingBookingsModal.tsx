@@ -175,10 +175,11 @@ const PendingBookingsModal = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Pending Booking Found</h2>
           <div
-            className={`text-sm font-semibold px-3 py-1 rounded-full min-w-[57px] text-center ${isExpiringSoon
+            className={`text-sm font-semibold px-3 py-1 rounded-full min-w-[57px] text-center ${
+              isExpiringSoon
                 ? "bg-red-100 text-red-700"
                 : "bg-yellow-100 text-yellow-700"
-              }`}
+            }`}
           >
             {formatTime(timeRemaining)}
           </div>
@@ -190,8 +191,9 @@ const PendingBookingsModal = () => {
 
         <div className="mb-6 h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
-            className={`h-full transition-all duration-1000 ${isExpiringSoon ? "bg-red-500" : "bg-yellow-500"
-              }`}
+            className={`h-full transition-all duration-1000 ${
+              isExpiringSoon ? "bg-red-500" : "bg-yellow-500"
+            }`}
             style={{ width: `${(timeRemaining / 600) * 100}%` }}
           />
         </div>

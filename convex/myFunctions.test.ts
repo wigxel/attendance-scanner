@@ -1,4 +1,3 @@
- 
 /** biome-ignore-all lint/suspicious/noExplicitAny: This is a test file */
 /// <reference types="vite/client" />
 import aggregateTest from "@convex-dev/aggregate/test";

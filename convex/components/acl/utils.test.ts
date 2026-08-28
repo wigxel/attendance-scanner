@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
- 
+
 /** biome-ignore-all lint/suspicious/noExplicitAny: This is a test file */
 import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";

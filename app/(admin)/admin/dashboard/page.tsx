@@ -3,7 +3,11 @@ import { TodaysCustomers } from "@/components/customers";
 import { Feedbacks } from "@/components/feedbacks";
 import { MetricsChart } from "@/components/metrics";
 import { TakeAttendance } from "@/components/TakeAttendance";
-import { TotalRevenue, TotalVisits } from "../customers/analytics";
+import {
+  CashPayments,
+  TotalRevenue,
+  TotalVisits,
+} from "../customers/analytics";
 
 const Page = () => {
   return (
@@ -24,6 +28,7 @@ const Page = () => {
         <div className="flex flex-col gap-4 col-span-2">
           <TotalVisits />
           <TotalRevenue />
+          <CashPayments />
         </div>
 
         <div className="col-span-2">

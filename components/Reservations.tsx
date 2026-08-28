@@ -35,19 +35,19 @@ export function Reservations() {
 
   const { present, past } = bookings
     ? Object.groupBy(bookings, (booking) => {
-      if (booking.status === "confirmed" || booking.status === "pending") {
-        return "present";
-      }
+        if (booking.status === "confirmed" || booking.status === "pending") {
+          return "present";
+        }
 
-      if (
-        booking.status === "used-up" ||
-        booking.status === "expired" ||
-        booking.status === "cancelled"
-      ) {
-        return "past";
-      }
-      return "other"; // Fallback for any unhandled statuses, though not explicitly used below
-    })
+        if (
+          booking.status === "used-up" ||
+          booking.status === "expired" ||
+          booking.status === "cancelled"
+        ) {
+          return "past";
+        }
+        return "other"; // Fallback for any unhandled statuses, though not explicitly used below
+      })
     : {};
 
   const skeleton = (

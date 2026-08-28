@@ -22,9 +22,7 @@ import {
   query,
 } from "./_generated/server";
 import { deleteConfig, getConfig, setConfig } from "./config";
-import {
-  DEFAULT_LIMIT,
-} from "./constants";
+import { DEFAULT_LIMIT } from "./constants";
 
 export const updateProfile = mutation({
   args: {
