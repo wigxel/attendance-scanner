@@ -260,7 +260,7 @@ function BookingItem({ booking }: { booking: Booking }) {
  * Handles loading, empty, and display states.
  */
 export function ActiveBookings() {
-  const bookings = useQuery(api.bookings.getUserConfirmedBookings);
+  const bookings = useQuery(api.bookings.getUserConfirmedBookings, {});
 
   if (bookings === undefined) {
     return <LoadingBookingsCard />;

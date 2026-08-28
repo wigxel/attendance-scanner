@@ -79,7 +79,7 @@ const PendingBookingsModal = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
-  const pendingBookings = useQuery(api.bookings.getUserPendingBookings);
+  const pendingBookings = useQuery(api.bookings.getUserPendingBookings, {});
   const expireBooking = useMutation(api.bookings.markBookingAsExpired);
 
   // Track if this is the initial load

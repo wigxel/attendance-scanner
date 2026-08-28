@@ -18,7 +18,7 @@ import {
 import { Skeleton } from "./ui/skeleton";
 
 export function Reservations() {
-  const bookings = useQuery(api.bookings.getAllBookings);
+  const bookings = useQuery(api.bookings.getAllBookings, {});
   const [selectedBookingId, setSelectedBookingId] =
     useState<Id<"bookings"> | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);

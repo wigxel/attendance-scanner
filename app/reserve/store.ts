@@ -29,7 +29,7 @@ export const useBookingStore = create<BookingState>()(
     }),
     {
       name: "booking-store",
-      merge(persisted, current) {
+      merge(persisted: unknown, current: BookingState): BookingState {
         return {
           ...current,
           ...safeObj(persisted),

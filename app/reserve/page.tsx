@@ -265,7 +265,7 @@ function MakePaymentTab() {
   } = usePaymentHandler();
   const { user } = useUser();
   const [showTimer, setShowTimer] = useState(false);
-  const pendingBookings = useQuery(api.bookings.getUserPendingBookings);
+  const pendingBookings = useQuery(api.bookings.getUserPendingBookings, {});
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
   const generateTicketsMutation = useMutation(api.bookings.generateTickets);
 
