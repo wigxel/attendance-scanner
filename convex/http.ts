@@ -289,10 +289,11 @@ async function encryptAES(message: string): Promise<string> {
   const key = await deriveAESKey();
   const iv = getEncryptionIV();
   const encrypted = await crypto.subtle.encrypt(
-    { name: "AES-CBC", iv },
+    { name: "AES-CBC", iv: iv as BufferSource },
     key,
     encoder.encode(message),
   );
+
   return bytesToHex(encrypted);
 }
 
@@ -300,10 +301,11 @@ async function decryptAES(encryptedHex: string): Promise<string> {
   const key = await deriveAESKey();
   const iv = getEncryptionIV();
   const encrypted = await crypto.subtle.decrypt(
-    { name: "AES-CBC", iv },
+    { name: "AES-CBC", iv: iv as BufferSource },
     key,
-    hexToBytes(encryptedHex),
+    new Uint8Array(hexToBytes(encryptedHex)),
   );
+
   return decoder.decode(encrypted);
 }
 
