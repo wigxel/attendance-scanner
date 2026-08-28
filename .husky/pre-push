@@ -1,4 +1,5 @@
 pnpm typecheck &&
+pnpm convex dev --once &&
 pnpm lint &&
 pnpm build &&
 pnpm test
