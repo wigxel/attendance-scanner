@@ -3,14 +3,16 @@ import type { FunctionReference } from "convex/server";
 import { getFunctionName } from "convex/server";
 import { isEqual, serialize } from "ohash";
 import { useEffect } from "react";
+import { queryClient } from "@/components/react-query";
 
-const queryCache = new Map<string, unknown>();
-const paginatedCache = new Map<string, unknown[]>();
 const paginatedStatusCache = new Map<string, string>();
 
-function makeKey(query: FunctionReference<"query">, args?: unknown): string {
+const makeKey = function makeKey(
+  query: FunctionReference<"query">,
+  args?: unknown,
+): string {
   return `${getFunctionName(query)}::${serialize(args ?? {})}`;
-}
+};
 
 export function useCachedQuery<Q extends FunctionReference<"query", "public">>(
   query: Q,
@@ -21,17 +23,22 @@ export function useCachedQuery<Q extends FunctionReference<"query", "public">>(
 
   useEffect(() => {
     if (result !== undefined) {
-      queryCache.set(key, result);
+      queryClient.setQueryData([key], result, { updatedAt: Date.now() });
     }
   }, [result, key]);
 
-  const cached = queryCache.get(key) as Q["_returnType"] | undefined;
+  const cached = queryClient.getQueryData([key]) as
+    | Q["_returnType"]
+    | undefined;
+
   if (result === undefined && cached !== undefined) {
     return cached;
   }
+
   if (result !== undefined && cached !== undefined && isEqual(result, cached)) {
     return cached;
   }
+
   return result;
 }
 
@@ -50,28 +57,29 @@ export function useCachedPaginatedQuery(
   const key = makeKey(query, args);
   const result = usePaginatedQuery(query, args as any, opts);
 
+  type ResultType = typeof result;
+
   useEffect(() => {
     if (result.results.length > 0) {
-      paginatedCache.set(key, result.results);
-      paginatedStatusCache.set(key, result.status);
+      queryClient.setQueryData([key], result, { updatedAt: Date.now() });
     }
-  }, [result.results, result.status, key]);
+  }, [key, result]);
 
-  const cached = paginatedCache.get(key);
-  if (result.results.length === 0 && cached && cached.length > 0) {
+  const cached = queryClient.getQueryData([key]) as ResultType | undefined;
+
+  if (result.results.length === 0 && cached && cached.results.length > 0) {
     return {
       ...result,
-      results: cached,
+      results: cached.results,
       isLoading: false,
-      status: (paginatedStatusCache.get(key) ?? "LoadingMore") as any,
+      status: (paginatedStatusCache.get(key) ??
+        "LoadingMore") as ResultType["status"],
     };
   }
-  if (
-    result.results.length > 0 &&
-    cached &&
-    isEqual(result.results, cached as any)
-  ) {
-    return { ...result, results: cached };
+
+  if (result.results.length > 0 && cached && isEqual(result.results, cached)) {
+    return { ...result, results: cached.results };
   }
+
   return result;
 }
