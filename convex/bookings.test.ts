@@ -2,10 +2,18 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { addDays, format, subDays } from "date-fns";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { api, components } from "./_generated/api";
 import aclSchema from "./components/acl/schema";
 import schema from "./schema";
+
+// Freeze time so date-relative helpers (todayStr/futureStr/pastStr) are
+// deterministic and never land on a Sunday regardless of the real calendar.
+// Base is a Thursday: every used offset (+1/+2/+5, -1/-3/-5/-10/-20) avoids Sunday.
+vi.useFakeTimers({ toFake: ["Date"] });
+vi.setSystemTime(new Date("2024-01-04T12:00:00.000Z"));
+
+afterAll(() => vi.useRealTimers());
 
 const modules = import.meta.glob("./**/*.ts");
 const aclModules = import.meta.glob("./components/acl/**/*.ts");
