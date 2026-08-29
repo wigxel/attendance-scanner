@@ -1137,6 +1137,215 @@ describe("createBooking", () => {
       expect(booking?.duration).toBe(31);
     });
   });
+
+  it("throws when user profile is not found", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const authed = t.withIdentity({ profile_id: "ghost" });
+
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Day Pass",
+        price: 1500,
+        no_of_days: 1,
+        description: "One day access",
+        features: [],
+      });
+
+      await expect(
+        authed.runMutation(api.bookings.createBooking, {
+          userId: "ghost",
+          seatIds: [],
+          startDate: futureStr(1),
+          durationType: "day",
+        }),
+      ).rejects.toThrow("User profile not found");
+    });
+  });
+
+  it("throws when price per seat is negative", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const authed = t.withIdentity({ profile_id: "user-1" });
+
+      await ctx.db.insert("profile", {
+        id: "user-1",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        occupation: "None",
+      });
+
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Day Pass",
+        price: -1,
+        no_of_days: 1,
+        description: "One day access",
+        features: [],
+      });
+
+      const seat = await ctx.db.insert("seats", {
+        seatNumber: 1,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+
+      await expect(
+        authed.runMutation(api.bookings.createBooking, {
+          userId: "user-1",
+          seatIds: [seat] as any,
+          startDate: futureStr(1),
+          durationType: "day",
+        }),
+      ).rejects.toThrow("non-negative");
+    });
+  });
+
+  it("throws when plan duration is invalid", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const authed = t.withIdentity({ profile_id: "user-1" });
+
+      await ctx.db.insert("profile", {
+        id: "user-1",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        occupation: "None",
+      });
+
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Day Pass",
+        price: 1500,
+        no_of_days: 0,
+        description: "Zero length",
+        features: [],
+      });
+
+      const seat = await ctx.db.insert("seats", {
+        seatNumber: 1,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+
+      await expect(
+        authed.runMutation(api.bookings.createBooking, {
+          userId: "user-1",
+          seatIds: [seat] as any,
+          startDate: futureStr(1),
+          durationType: "day",
+        }),
+      ).rejects.toThrow("Invalid date range");
+    });
+  });
+
+  it("throws when booking on a Sunday", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const authed = t.withIdentity({ profile_id: "user-1" });
+
+      await ctx.db.insert("profile", {
+        id: "user-1",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        occupation: "None",
+      });
+
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Day Pass",
+        price: 1500,
+        no_of_days: 1,
+        description: "One day access",
+        features: [],
+      });
+
+      const seat = await ctx.db.insert("seats", {
+        seatNumber: 1,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+
+      // Base clock is Thursday; +3 days is a Sunday in local tz.
+      const sunday = format(addDays(new Date(), 3), "yyyy-MM-dd");
+
+      await expect(
+        authed.runMutation(api.bookings.createBooking, {
+          userId: "user-1",
+          seatIds: [seat] as any,
+          startDate: sunday,
+          durationType: "day",
+        }),
+      ).rejects.toThrow("Cannot book on Sundays");
+    });
+  });
+
+  it("throws when requested seat is already booked for overlapping dates", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const authed = t.withIdentity({ profile_id: "user-1" });
+
+      await ctx.db.insert("profile", {
+        id: "user-1",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        occupation: "None",
+      });
+
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Day Pass",
+        price: 1500,
+        no_of_days: 1,
+        description: "One day access",
+        features: [],
+      });
+
+      const seat = await ctx.db.insert("seats", {
+        seatNumber: 1,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+
+      const existingBookingId = await ctx.db.insert("bookings", {
+        userId: "other-user",
+        seatIds: [seat] as any,
+        duration: 30,
+        startDate: todayStr(),
+        endDate: futureStr(30),
+        durationType: "month",
+        status: "confirmed",
+        pricePerSeat: 150000,
+        amount: 150000,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      await ctx.db.insert("bookedSeats", {
+        bookingId: existingBookingId,
+        seatId: seat,
+        status: "confirmed",
+      });
+
+      await expect(
+        authed.runMutation(api.bookings.createBooking, {
+          userId: "user-1",
+          seatIds: [seat] as any,
+          startDate: futureStr(1),
+          durationType: "day",
+        }),
+      ).rejects.toThrow("not available");
+    });
+  });
 });
 
 // ─── updateBooking ──────────────────────────────────────────────────
