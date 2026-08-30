@@ -90,8 +90,8 @@ const bookings = defineTable({
   duration: v.number(),
   startDate: v.string(),
   endDate: v.string(),
-  /** @deprecated Use planKey for filtering. Kept for backward compatibility with existing data. */
   durationType: durationTypeConvexSchema,
+  planKey: v.optional(v.string()),
   pricePerSeat: v.number(),
   amount: v.number(),
   status: v.union(

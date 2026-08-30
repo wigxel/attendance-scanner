@@ -66,7 +66,7 @@ export const saveCount = internalMutation(async ({ db }) => {
 
   const cash = RegisterImpl.filterCash(count);
   const cashCount = cash.length;
-  const cashTotal = RegisterImpl.sumAll(cash);
+  const cashTotal = RegisterImpl.sumAll(cash) / 100;
 
   const existingCash = await db
     .query("dailyCashPayments")
@@ -110,7 +110,7 @@ export const backfillDailyCashPayments = internalMutation({
 
       const cash_records = pipe(rows, RegisterImpl.filterCash);
 
-      const total = RegisterImpl.sumAll(cash_records);
+      const total = RegisterImpl.sumAll(cash_records) / 100;
 
       const existing = await db
         .query("dailyCashPayments")

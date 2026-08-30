@@ -83,6 +83,7 @@ const DURATION_TYPE_TO_PLAN_KEY = Object.freeze({
 } as Record<DurationGroup, PlanKey>);
 
 export const PlanKeyManager = {
+  /**@deprecated use resolveDurationGroup with no of days */
   mapPlanKey(duration_key: string): PlanKey {
     const safe_key = safeStr(duration_key) as DurationGroup;
 
@@ -92,11 +93,18 @@ export const PlanKeyManager = {
     );
 
     return DURATION_TYPE_TO_PLAN_KEY[safe_key] as PlanKey;
-  },
+  }
 };
 
-export function resolveDurationGroup(noOfDays: number): DurationGroup {
-  if (noOfDays <= 1) return "day";
-  if (noOfDays <= 7) return "week";
-  return "month";
+
+export const DurationGroupImpl = {
+  valids: new Set(['day', 'week', 'month']),
+
+  resolveFromDays: (noOfDays: number) => {
+    if (noOfDays > 0 && noOfDays <= 5) return "day";
+    if (noOfDays >= 6 && noOfDays <= 23) return "week";
+    if (noOfDays >= 24 && noOfDays < 365) return "month";
+
+    throw new Error("No of Days must be greater than 0");
+  }
 }

@@ -1,12 +1,13 @@
 import type { GenericMutationCtx } from "convex/server";
-import { v } from "convex/values";
-import { Effect, Match, pipe } from "effect";
+import { ConvexError, v } from "convex/values";
+import { Effect, Match, Number as Numer, pipe } from "effect";
 import { filter } from "effect/Array";
 import { TaggedError } from "effect/Data";
 import { z } from "zod";
 import { safeObj } from "../lib/data.helpers";
+import { DurationGroupImpl } from "../lib/date-range";
 import { O } from "../lib/fp.helpers";
-import type { DurationGroup } from "../types";
+import type { AccessPlan, Booking, Kobo, Naira, PlanKey, TaggedBooking } from "../types";
 import type { DataModel, Doc } from "./_generated/dataModel";
 
 export const featureRequestStatus = v.union(
@@ -16,12 +17,10 @@ export const featureRequestStatus = v.union(
   v.literal("rejected"),
 );
 
-/** @deprecated Use accessPlans.list and planKey for filtering instead. */
 export const durationTypeConvexSchema = v.union(
   v.literal("day"),
   v.literal("week"),
   v.literal("month"),
-  v.literal("full_month"),
 );
 
 export const accessPlanStruct = v.union(
@@ -83,11 +82,11 @@ export const PlanImpl = {
   async validatePlan<TDB extends GenericMutationCtx<DataModel>["db"]>(
     db: TDB,
     plan_string: string,
-  ): Promise<Doc<"accessPlans">> {
+  ): Promise<AccessPlan> {
     const plan = await db
       .query("accessPlans")
       .withIndex("plan_key", (gt) => gt.eq("key", plan_string))
-      .first();
+      .first() as AccessPlan | null
 
     if (!plan) {
       throw new Error(
@@ -99,31 +98,61 @@ export const PlanImpl = {
   },
 
   toStruct(
-    plan: Doc<"accessPlans"> & Partial<AccessStruct>,
+    plan: AccessPlan & Partial<AccessStruct>,
   ): AccessFreeStruct | AccessPaidV2 {
     if (plan.key === "free") {
       return { kind: "free" as const };
     }
 
+    if (plan.no_of_days <= 0) {
+      throw new Error("no_of_days must be greater than 0");
+    }
+
     return {
       _v: "2",
       kind: "paid" as const,
-      planId: plan.key as DurationGroup,
+      planId: plan.key,
       amountInKobo: Math.max(0, plan.price / plan.no_of_days),
       paymentMethod: "bank_transfer",
       duration: { type: "fullday" },
     };
   },
 
-  fromBooking(booking: Doc<"bookings">): AccessPaidV2 {
-    return {
-      _v: "2",
-      kind: "paid",
-      planId: booking.durationType,
-      duration: { type: "fullday" },
-      amountInKobo: booking.pricePerSeat / booking.duration,
-      paymentMethod: "bank_transfer",
-    };
+  fromBooking({ booking }: { booking: Booking }): AccessPaidV2 {
+    const matcher = pipe(
+      BookImpl.match,
+      Match.when({ _v: "booking_v2" }, (booking): AccessPaidV2 => {
+        return {
+          _v: "2",
+          kind: "paid",
+          planId: booking.planKey,
+          duration: { type: "fullday" }, // important! the least booking we have is a fullday
+          amountInKobo: booking.pricePerSeat / booking.duration,
+          paymentMethod: "bank_transfer",
+        }
+      }),
+      Match.when({ _v: "booking_v1" }, (booking): AccessPaidV2 => {
+        const durationGroup = DurationGroupImpl.resolveFromDays(booking.duration);
+
+        if (!DurationGroupImpl.valids.has(durationGroup)) {
+          throw new ConvexError(`Invalid booking duration group: ${durationGroup}`);
+        }
+
+        return {
+          _v: "2",
+          kind: "paid",
+          planId: durationGroup as PlanKey,
+          duration: { type: "fullday" }, // important! the least booking we have is a fullday
+          amountInKobo: +BookImpl.costPerSeat(booking).value,
+          paymentMethod: "bank_transfer",
+        }
+      }),
+      Match.orElse(() => {
+        throw new ConvexError(`Invalid booking version`);
+      })
+    )
+
+    return matcher(BookImpl.normalize(booking));
   },
 
   normalize(record_: unknown) {
@@ -136,7 +165,7 @@ export const PlanImpl = {
         return yield* new PlanError("Invalid AccessStruct provided");
       }
 
-      const record = res.data;
+      const record = safeObj(res.data);
 
       if (record.kind === "free") {
         return record satisfies AccessFreeStruct;
@@ -146,7 +175,7 @@ export const PlanImpl = {
         return {
           _v: "2",
           kind: "paid",
-          planId: record.planId as DurationGroup,
+          planId: record.planId as PlanKey,
           amountInKobo: record.amount * 100,
           paymentMethod: "bank_transfer",
           duration: { type: "fullday" },
@@ -209,17 +238,48 @@ export const PlanImpl = {
     return access.kind === "paid" ? access.paymentMethod : "bank_transfer";
   },
 
-  amount(access: AccessStruct): number {
-    return PlanImpl.match(access, {
-      none: () => 0,
-      free: () => 0,
-      paid: (record) => {
-        if ("amountInKobo" in record) {
-          return record.amountInKobo / 100;
-        }
+  amount(access: AccessStruct): Kobo {
+    const invalidAmountError = new Error("Failed to resolve amount. Invalid access struct")
 
-        return record.amount;
-      },
+    const duration = PlanImpl.duration(access);
+
+    const v2Matcher = pipe(
+      Match.type<AccessPaidV2>(),
+      Match.when({ planId: "hourly" }, (record) => {
+        return pipe(
+          duration,
+          O.flatMap((dur) => dur.type === "hourly" ? Numer.parse(dur.value.toString()) : O.none()),
+          O.map((hours) => {
+            return CurrencyImpl.kobo(record.amountInKobo * hours);
+          }),
+          O.getOrThrowWith(() => new PlanError("Duration must be present")),
+        );
+      }),
+      Match.when({ planId: Match.nonEmptyString, amountInKobo: Match.number }, (record) => {
+        return CurrencyImpl.kobo(record.amountInKobo);
+      }),
+      Match.orElse(() => {
+        throw invalidAmountError
+      }),
+    )
+
+    const resolveAmount = (record: AccessPaidV1 | AccessPaidV2) => {
+      return pipe(
+        Match.value(record),
+        Match.when({ _v: "2" }, v2Matcher),
+        Match.when({ amount: Match.any }, (record) =>
+          CurrencyImpl.nairaToKobo(record.amount),
+        ),
+        Match.orElse(() => {
+          throw invalidAmountError
+        })
+      );
+    }
+
+    return PlanImpl.match(access, {
+      none: () => CurrencyImpl.empty,
+      free: () => CurrencyImpl.empty,
+      paid: resolveAmount,
     });
   },
 
@@ -267,7 +327,7 @@ export const PlanImpl = {
 type AccessPaidV2 = {
   _v: "2";
   kind: "paid";
-  planId: DurationGroup;
+  planId: PlanKey;
   amountInKobo: number;
   paymentMethod: "cash" | "bank_transfer";
   duration?: AccessDuration;
@@ -275,7 +335,7 @@ type AccessPaidV2 = {
 
 type AccessPaidV1 = {
   kind: "paid";
-  planId: DurationGroup;
+  planId: PlanKey;
   amount: number;
   paymentMethod: "cash" | "bank_transfer";
 };
@@ -305,12 +365,89 @@ export const RegisterImpl = {
   }),
 
   sumAll: (collection: DailyRegister[]) => {
-    return collection.reduce((acc, r) => {
+    return collection.reduce((accumKoboAmount, r) => {
       return PlanImpl.match(r.access, {
-        paid: (value) => acc + PlanImpl.amount(value),
-        free: () => acc,
-        none: () => acc,
+        free: () => accumKoboAmount,
+        none: () => accumKoboAmount,
+        paid: (value) => accumKoboAmount + +PlanImpl.amount(value).value,
       });
     }, 0);
   },
 };
+
+const CurrencyImpl = {
+  empty: {
+    currency: "naira",
+    denomination: "kobo",
+    value: "0"
+  } satisfies Kobo,
+
+  kobo(amount: number): Kobo {
+    return {
+      currency: "naira",
+      denomination: "kobo",
+      value: String(amount),
+    };
+  },
+
+  /** @deprecated Do not use. Always prefer kobo  */
+  naira(): Naira {
+    throw new Error("Use kobo instead");
+  },
+
+  nairaToKobo(amount: number): Kobo {
+    return {
+      currency: 'naira',
+      denomination: "kobo",
+      value: String(amount * 100)
+    }
+  },
+
+  koboToNaira(amount: number): Naira {
+    return {
+      currency: "naira",
+      denomination: "naira",
+      value: String(amount / 100),
+    };
+  },
+
+  add(a: Kobo, b: Kobo): Kobo {
+    return {
+      currency: "naira",
+      denomination: "kobo",
+      value: pipe(
+        O.all([Numer.parse(a.value), Numer.parse(b.value)]),
+        O.map(Numer.sumAll),
+        O.map(String),
+        O.getOrThrow
+      ),
+    };
+  },
+}
+
+export const BookImpl = {
+  normalize(booking: Booking): TaggedBooking {
+    if (booking == null) throw new Error("Booking is undefined");
+
+    const safeBooking = safeObj(booking);
+
+    if ('planKey' in safeBooking && safeBooking.planKey) {
+      return {
+        _v: "booking_v2",
+        ...safeBooking,
+        planKey: safeBooking.planKey,
+      };
+    }
+
+    return {
+      _v: "booking_v1",
+      ...safeBooking,
+    };
+  },
+
+  match: Match.type<TaggedBooking>(),
+
+  costPerSeat(booking: TaggedBooking): Kobo {
+    return CurrencyImpl.kobo(booking.pricePerSeat / booking.duration);
+  }
+}

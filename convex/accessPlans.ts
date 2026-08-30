@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
+import { AccessPlan } from "../types";
 import { internal } from "./_generated/api";
-import type { Doc } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { planDeletedAudit } from "./audits/entities";
@@ -8,37 +8,37 @@ import { readId } from "./myFunctions";
 
 export const getByKey = query({
   args: { planKey: v.string() },
-  handler: async (ctx, { planKey }): Promise<Doc<"accessPlans"> | null> => {
+  handler: async (ctx, { planKey }): Promise<AccessPlan | null> => {
     return await ctx.db
       .query("accessPlans")
       .withIndex("plan_key", (q) => q.eq("key", planKey))
-      .first();
+      .first() as AccessPlan | null
   },
 });
 
 export const getPlan = query({
   args: { planKey: v.string() },
-  handler: async (ctx, { planKey }): Promise<Doc<"accessPlans"> | null> => {
+  handler: async (ctx, { planKey }): Promise<AccessPlan | null> => {
     return ctx.db
       .query("accessPlans")
       .withIndex("plan_key", (q) => q.eq("key", planKey))
-      .first();
+      .first() as Promise<AccessPlan | null>;
   },
 });
 
 export const getByDuration = query({
   args: { noOfDays: v.number() },
-  handler: async (ctx, { noOfDays }): Promise<Doc<"accessPlans"> | null> => {
+  handler: async (ctx, { noOfDays }): Promise<AccessPlan | null> => {
     return ctx.db
       .query("accessPlans")
       .filter((q) => q.eq(q.field("no_of_days"), noOfDays))
-      .first();
+      .first() as Promise<AccessPlan | null>;
   },
 });
 
 export const list = query({
-  handler: async (ctx): Promise<Doc<"accessPlans">[]> => {
-    return ctx.db.query("accessPlans").collect();
+  handler: async (ctx): Promise<AccessPlan[]> => {
+    return ctx.db.query("accessPlans").collect() as Promise<AccessPlan[]>;
   },
 });
 

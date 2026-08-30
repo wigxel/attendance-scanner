@@ -1,21 +1,24 @@
 import { ConvexError, v } from "convex/values";
 import {
   differenceInHours,
+  endOfDay,
   endOfMonth,
   format,
   isSameMonth,
+  isWithinInterval,
   parseISO,
   startOfMonth,
   subWeeks,
 } from "date-fns";
+import { Match } from "effect";
 import {
   DateRangeImpl,
+  DurationGroupImpl,
   PlanKeyManager,
-  resolveDurationGroup,
 } from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
 import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
-import type { BookingWithDetails } from "../types";
+import type { AccessPlan, Booking, BookingCheck, BookingWithDetails } from "../types";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
@@ -29,9 +32,7 @@ import {
   getAvailableSeatsForDay,
   getUnassignedTicketsForDay,
 } from "./seatOrchestrator";
-import { durationTypeConvexSchema } from "./shared";
-
-type AccessPlan = Doc<"accessPlans">;
+import { BookImpl, durationTypeConvexSchema } from "./shared";
 
 export const getBooking = query({
   args: {
@@ -49,8 +50,8 @@ export const systemGetBooking = query({
   args: {
     bookingId: v.id("bookings"),
   },
-  handler: async (ctx, { bookingId }): Promise<Doc<"bookings">> => {
-    return await ctx.runQuery(api.bookings.getDetails, { bookingId });
+  handler: async (ctx, { bookingId }): Promise<Booking> => {
+    return await ctx.runQuery(api.bookings.getDetails, { bookingId }) as Booking
   },
 });
 
@@ -77,9 +78,9 @@ export const getDetails = query({
       booking.created_by === "system" || booking.created_by === undefined
         ? Promise.resolve("Booking system")
         : ctx.db
-            .get(booking.created_by as Id<"users">)
-            .then((e) => e?.name ?? "Anonymous")
-            .catch(() => "--"),
+          .get(booking.created_by as Id<"users">)
+          .then((e) => e?.name ?? "Anonymous")
+          .catch(() => "--"),
       ctx.db
         .query("accessPlans")
         .filter((q) => q.eq(q.field("no_of_days"), booking.duration))
@@ -93,14 +94,14 @@ export const getDetails = query({
       seats: seats.filter((seat) => seat !== null),
       user: user
         ? {
-            id: user.id,
-            name: `${user.firstName} ${user.lastName}`,
-            email: user.email,
-          }
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+        }
         : {
-            name: "Anonymous User",
-            email: "--",
-          },
+          name: "Anonymous User",
+          email: "--",
+        },
     };
   },
 });
@@ -252,15 +253,16 @@ export const createBooking = mutation({
     const now = Date.now();
     const amount = pricePerSeat * args.seatIds.length; // price per seat multiplied by number of seats
 
-    const bookingId = await ctx.db.insert("bookings", {
+    const bookingId: Id<'bookings'> = await ctx.db.insert("bookings", {
       userId,
       seatIds: args.seatIds,
       duration: planDuration,
       startDate: args.startDate,
       endDate: endDate,
-      durationType: args.durationType,
+      durationType: DurationGroupImpl.resolveFromDays(planDuration),
       status: "pending",
       pricePerSeat,
+      planKey: accessPlan.key,
       amount,
       created_by: "system",
       createdAt: now,
@@ -529,7 +531,7 @@ export const systemActionConfirmBooking = mutation({
     bookingId: v.id("bookings"),
   },
   handler: async (ctx, args) => {
-    const booking = await ctx.db.get(args.bookingId);
+    const booking = await ctx.db.get(args.bookingId) as Booking | null;
     if (!booking) throw new ConvexError("Booking not found");
 
     // Verify all seats exist
@@ -741,7 +743,8 @@ export const deleteBooking = mutation({
         seatIds: booking.seatIds,
         amount: booking.amount,
         duration: booking.duration,
-        durationType: booking.durationType,
+        durationType: DurationGroupImpl.resolveFromDays(booking.duration),
+        planKey: booking.planKey,
         status: booking.status,
         ticketCount: ticketIds.length,
       }),
@@ -1065,7 +1068,8 @@ export const claimTicket = mutation({
       claimedAt: Date.now(),
     });
 
-    const booking = await ctx.db.get(ticket.bookingId);
+    const booking = await ctx.db.get(ticket.bookingId) as Booking | null;
+
     if (booking) {
       await updateTodaysRegisterForSubscriber(ctx, {
         actorId: profileId,
@@ -1105,14 +1109,14 @@ export const getAllBookings = query({
           seats: seats.filter((seat) => seat !== null), // filter out any null values
           user: user
             ? {
-                id: user.id,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-              }
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+            }
             : {
-                name: "Anonymous User",
-                email: "--",
-              },
+              name: "Anonymous User",
+              email: "--",
+            },
         };
       }),
     );
@@ -1167,18 +1171,18 @@ export const createManualBooking = mutation({
 
     if (!profile) throw new ConvexError("Customer not found");
 
-    const plan: AccessPlan | null = await ctx.runQuery(
+    const plan = await ctx.runQuery(
       api.accessPlans.getByKey,
       {
         planKey,
       },
-    );
+    ) as AccessPlan | null
 
     if (plan == null) {
       throw new ConvexError("Invalid plan");
     }
 
-    const durationType = resolveDurationGroup(plan.no_of_days);
+    const durationType = DurationGroupImpl.resolveFromDays(plan.no_of_days);
     const now = new Date();
     const bookingStartDate = parseISO(startDate);
     const bookingEndDate = calculateEndDate(bookingStartDate, plan.no_of_days);
@@ -1282,7 +1286,7 @@ export const createManualBooking = mutation({
 
     const createdBooking = (await ctx.db.get(
       bookingId,
-    )) as Doc<"bookings"> | null;
+    )) as Booking | null;
 
     if (createdBooking) {
       await updateTodaysRegisterForSubscriber(ctx, {
@@ -1389,15 +1393,15 @@ export const list = query({
           planName: plan?.name ?? `${booking.duration} days`,
           user: user
             ? {
-                id: user.id,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-              }
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+            }
             : {
-                id: booking.userId,
-                name: "Anonymous User",
-                email: null,
-              },
+              id: booking.userId,
+              name: "Anonymous User",
+              email: null,
+            },
         };
       }),
     );
@@ -1500,5 +1504,50 @@ export const deleteExport = internalAction({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
     await ctx.storage.delete(args.storageId);
+  },
+});
+
+export const getUserActiveBookings = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args): Promise<BookingCheck | null> => {
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("user_id", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "confirmed"))
+      .collect() as Booking[];
+
+    const matcher = pipe(
+      BookImpl.match,
+      Match.when({ _v: "booking_v2", planKey: Match.defined }, (booking): BookingCheck => {
+        return {
+          _v: "booking_check_v2",
+          bookingId: booking._id,
+          planKey: booking.planKey,
+          duration: booking.duration,
+        }
+      }),
+      Match.when(Match.record, (booking): BookingCheck => {
+        return {
+          _v: "booking_check_v1",
+          bookingId: booking._id,
+          durationType: booking.durationType,
+          duration: booking.duration
+        }
+      }),
+      Match.orElse(() => null),
+    );
+
+    for (const booking of bookings) {
+      if (
+        isWithinInterval(new Date(), {
+          start: parseISO(booking.startDate),
+          end: endOfDay(parseISO(booking.endDate)),
+        })
+      ) {
+        return matcher(BookImpl.normalize(booking));
+      }
+    }
+
+    return null;
   },
 });

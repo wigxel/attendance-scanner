@@ -108,8 +108,9 @@ export const getCustomerVisitTrend = query({
       grouped.set(weekStart, (grouped.get(weekStart) || 0) + 1);
     }
 
-    const start = parseISO(visits[0].timestamp);
-    const end = parseISO(visits[visits.length - 1].timestamp);
+    const timestamps = visits.map((v) => parseISO(v.timestamp));
+    const start = new Date(Math.min(...timestamps.map((d) => d.getTime())));
+    const end = new Date(Math.max(...timestamps.map((d) => d.getTime())));
 
     const result = [];
     let current = startOfWeek(start);

@@ -25,6 +25,7 @@ import {
   processReservationCheckIn,
 } from "./register_common";
 import { featureRequestStatus, PlanImpl } from "./shared";
+import { BookingCheck, PlanKey } from "../types";
 
 export const authUser = query({
   args: {},
@@ -281,7 +282,7 @@ export const registerUser = mutation({
     // WALK_IN MODE: Use existing plan-based logic
     if (args.mode === "walk_in") {
       const reservation = await ctx.runQuery(
-        api.myFunctions.getUserActiveReservation,
+        api.bookings.getUserActiveBookings,
         {
           userId: customer.id,
         },
@@ -304,32 +305,6 @@ export const registerUser = mutation({
         method: "qr",
       });
     }
-  },
-});
-
-export const getUserActiveReservation = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    const bookings = await ctx.db
-      .query("bookings")
-      .withIndex("user_id", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.eq(q.field("status"), "confirmed"))
-      .collect();
-
-    for (const booking of bookings) {
-      if (
-        isWithinInterval(new Date(), {
-          start: parseISO(booking.startDate),
-          end: endOfDay(parseISO(booking.endDate)),
-        })
-      ) {
-        return {
-          bookingId: booking._id,
-          durationType: booking.durationType,
-        };
-      }
-    }
-    return null;
   },
 });
 
@@ -775,11 +750,11 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-            .query("featureRequest")
-            .withIndex("by_status", (q) => q.eq("status", status))
+          .query("featureRequest")
+          .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db
-            .query("featureRequest")
-            .filter((q) => q.neq(q.field("status"), "rejected"));
+          .query("featureRequest")
+          .filter((q) => q.neq(q.field("status"), "rejected"));
 
     const feedbacks = await features.order("desc").take(limit);
 

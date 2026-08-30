@@ -2,10 +2,11 @@ import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { ConvexError } from "convex/values";
 import { endOfDay, isWithinInterval, parseISO, startOfDay } from "date-fns";
 import { api, internal } from "./_generated/api";
-import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import type { DataModel, Id } from "./_generated/dataModel";
 import { subscriberUpdateAudit } from "./audits/entities";
 import { visitsAggregate } from "./customers";
 import { type AccessStruct, PlanImpl } from "./shared";
+import { Booking } from "../types";
 
 export async function isRegisteredToday(
   ctx: GenericQueryCtx<DataModel>,
@@ -73,7 +74,7 @@ export async function processReservationCheckIn(
   },
 ): Promise<void> {
   const reservation = await ctx.runQuery(
-    api.myFunctions.getUserActiveReservation,
+    api.bookings.getUserActiveBookings,
     {
       userId: params.userId,
     },
@@ -83,7 +84,8 @@ export async function processReservationCheckIn(
     throw new ConvexError("No active reservation found.");
   }
 
-  const booking = await ctx.db.get(reservation.bookingId as Id<"bookings">);
+  const booking = await ctx.db.get(reservation.bookingId as Id<"bookings">) as Booking | null;
+
   if (!booking) {
     throw new ConvexError("Booking not found.");
   }
@@ -113,12 +115,16 @@ export async function processReservationCheckIn(
     throw new ConvexError("Ticket not found.");
   }
 
+  if (!booking?.planKey) {
+    throw new ConvexError("Booking does not have a planKey. This is required since Aug. 30th, 2026");
+  }
+
   await insertRegisterAndAggregate(ctx, {
     userId: params.userId,
     device: params.device,
     admittedBy: params.admittedBy,
     timestamp: new Date().toISOString(),
-    access: PlanImpl.fromBooking(booking),
+    access: PlanImpl.fromBooking({ booking }),
     ticketId: ticket._id,
     method: "qr",
   });
@@ -128,7 +134,7 @@ type RegisterFormSubscriberParam = {
   actorId: Id<"users"> | "system";
   ticketId: Id<"tickets">;
   userId: string;
-  booking: Doc<"bookings">;
+  booking: Booking
 };
 
 export async function updateTodaysRegisterForSubscriber(
@@ -166,7 +172,7 @@ export async function updateTodaysRegisterForSubscriber(
 
   await ctx.db.patch(existing._id, {
     ticketId: params.ticketId,
-    access: PlanImpl.fromBooking(params.booking),
+    access: PlanImpl.fromBooking({ booking: params.booking }),
   });
 
   await ctx.scheduler.runAfter(

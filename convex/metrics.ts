@@ -60,7 +60,7 @@ export const sumPaidAccess = query({
       .collect();
 
     const paidRegisters = RegisterImpl.filterPaid(registers);
-    const total = RegisterImpl.sumAll(paidRegisters);
+    const total = RegisterImpl.sumAll(paidRegisters) / 100;
 
     return total;
   },
@@ -97,8 +97,8 @@ export const sumCashPayments = query({
     });
 
     const count = cashRegisters.length;
-    const total = RegisterImpl.sumAll(cashRegisters);
+    const total = RegisterImpl.sumAll(cashRegisters) / 100;
 
-    return { count, total };
+    return { count, total: total };
   },
 });

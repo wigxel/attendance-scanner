@@ -50,7 +50,8 @@ export const bookingDeletedAudit = makeAudit<{
   seatIds: string[];
   amount: number;
   duration: number;
-  durationType: string;
+  planKey?: string;
+  durationType?: string;
   status: string;
   ticketCount: number;
 }>({

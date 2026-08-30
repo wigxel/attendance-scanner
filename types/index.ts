@@ -1,14 +1,15 @@
 import { Schema } from "effect";
 import { brand } from "effect/Schema";
 import type { Doc } from "../convex/_generated/dataModel";
+export * from './convex'
 
 export type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {};
 
-export type DurationGroup = "day" | "week" | "month" | "full_month";
+export type DurationGroup = "day" | "week" | "month";
 
-export type KnownPlanKey = "daily" | "weekly" | "monthly" | "calendar_month";
+export type KnownPlanKey = "hourly" | "daily" | "weekly" | "monthly" | "calendar_month";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _PLAN_KEY = Schema.String.pipe(brand("PlanKey"));
@@ -32,3 +33,18 @@ export type BookingWithDetails = Omit<
     email: string | undefined;
   } | null;
 };
+
+export interface CurrencyAmount extends PaymentCurrencyAmount {
+  denomination: string;
+
+}
+
+export interface Kobo extends CurrencyAmount {
+  currency: "naira",
+  denomination: "kobo"
+}
+
+export interface Naira extends CurrencyAmount {
+  currency: "naira",
+  denomination: "naira"
+}

@@ -2418,3 +2418,69 @@ describe("list", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("bookings.getUserActiveBookings", () => {
+  it("returns null when no confirmed booking", async () => {
+    const t = convexTest(schema, modules);
+    const result = await t.query(api.bookings.getUserActiveBookings, {
+      userId: "user-no-booking",
+    });
+    expect(result).toBeNull();
+  });
+
+  it("returns booking when confirmed and today is within range", async () => {
+    const t = convexTest(schema, modules);
+    const now = new Date();
+    const start = format(subDays(now, 1), "yyyy-MM-dd");
+    const end = format(new Date(now.getTime() + 86400000), "yyyy-MM-dd");
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("bookings", {
+        userId: "user-with-booking",
+        seatIds: [],
+        startDate: start,
+        endDate: end,
+        duration: 2,
+        durationType: "week",
+        pricePerSeat: 5000,
+        amount: 5000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    const result = await t.query(api.bookings.getUserActiveBookings, {
+      userId: "user-with-booking",
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.durationType).toBe("week");
+  });
+
+  it("returns null for past booking", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("bookings", {
+        userId: "user-past-booking",
+        seatIds: [],
+        startDate: "2020-01-01",
+        endDate: "2020-01-01",
+        duration: 1,
+        durationType: "day",
+        pricePerSeat: 5000,
+        amount: 5000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    const result = await t.query(api.bookings.getUserActiveBookings, {
+      userId: "user-past-booking",
+    });
+
+    expect(result).toBeNull();
+  });
+});

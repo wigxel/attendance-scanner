@@ -4,17 +4,21 @@ import { Match } from "effect";
 import { HOURLY_RATE } from "../config/constants";
 import { PlanKeyManager } from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
-import type { DurationGroup, PlanKey } from "../types";
+import type { BookingCheck, BookingCheckV1, PlanKey } from "../types";
 import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { type AccessDuration, type AccessStruct, PlanImpl } from "./shared";
 
-function calcFee(
+type CalcProps = {
   access: AccessStruct,
   planKey: PlanKey,
   planMap: Map<string, Doc<"accessPlans">>,
-): number {
+}
+
+function calcFee(params: CalcProps): number {
+  const { access, planKey, planMap } = params;
+
   if (!PlanImpl.type("paid")(access)) return 0;
 
   return pipe(
@@ -67,10 +71,38 @@ export const getDaily = query({
     let transferSales = 0;
     const staffCounts = new Map<string, number>();
     let weeklySubscribers = 0;
-    const reservationCache = new Map<
-      string,
-      { bookingId: string; durationType: DurationGroup } | null
-    >();
+    const reservationCache = new Map<string, BookingCheck | null>();
+
+    const extractCount = (booking: BookingCheckV1 | undefined, reg: typeof registers[0]) => {
+      const accessRecord = reg.access as AccessStruct;
+
+      let weeklySubscribers = 0,
+        transferSales = 0,
+        cashSales = 0,
+        totalSales = 0;
+
+
+      const planKey = booking
+        ? PlanKeyManager.mapPlanKey(booking.durationType)
+        // @ts-expect-error legacy code. Delete soon
+        : PlanKeyManager.mapPlanKey(accessRecord.planId) ?? accessRecord?.planId;
+
+      const fee = calcFee({ access: accessRecord, planKey, planMap });
+
+      totalSales += fee;
+
+      if (PlanImpl.paymentMethod(accessRecord) === "cash") {
+        cashSales += fee;
+      } else {
+        transferSales += fee;
+      }
+
+      if (booking && booking.durationType === "week") {
+        weeklySubscribers++;
+      }
+
+      return { weeklySubscribers, cashSales, transferSales, totalSales }
+    }
 
     for (const reg of registers) {
       uniqueUsers.add(reg.userId);
@@ -80,33 +112,28 @@ export const getDaily = query({
 
         if (!reservationCache.has(reg.userId)) {
           const res = await ctx.runQuery(
-            api.myFunctions.getUserActiveReservation,
+            api.bookings.getUserActiveBookings,
             {
               userId: reg.userId,
             },
           );
-          reservationCache.set(reg.userId, res);
+
+          if (res) {
+            reservationCache.set(reg.userId, res);
+          }
         }
         const reservation = reservationCache.get(reg.userId);
 
-        const planKey = reservation
-          ? PlanKeyManager.mapPlanKey(reservation.durationType)
-          : (PlanKeyManager.mapPlanKey(reg.access.planId) ?? reg.access.planId);
 
-        const fee = calcFee(reg.access, planKey, planMap);
-        console.log(
-          `[reports] user: "${reg.userId}" plan: "${planKey}" fee: ${fee}`,
-        );
-        totalSales += fee;
+        console.log("Reservation", reservation);
 
-        if (PlanImpl.paymentMethod(reg.access) === "cash") {
-          cashSales += fee;
-        } else {
-          transferSales += fee;
-        }
+        if (reservation?._v === "booking_check_v1") {
+          const values = extractCount(reservation, reg);
 
-        if (reservation && reservation.durationType === "week") {
-          weeklySubscribers++;
+          weeklySubscribers += values.weeklySubscribers;
+          totalSales += values.totalSales;
+          cashSales += values.cashSales;
+          transferSales += values.transferSales;
         }
       }
 

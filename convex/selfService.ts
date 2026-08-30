@@ -93,7 +93,7 @@ export const selfCheckIn = mutation({
     };
 
     const reservation = await ctx.runQuery(
-      api.myFunctions.getUserActiveReservation,
+      api.bookings.getUserActiveBookings,
       { userId },
     );
 
@@ -101,7 +101,7 @@ export const selfCheckIn = mutation({
       await processReservationCheckIn(ctx, {
         userId,
         device,
-        admittedBy,
+        admittedBy
       });
       return;
     }
