@@ -104,6 +104,6 @@ export const DurationGroupImpl = {
     if (noOfDays >= 6 && noOfDays <= 23) return "week";
     if (noOfDays >= 24 && noOfDays < 365) return "month";
 
-    throw new Error("No of Days must be greater than 0");
+    throw new Error(`Failed to resolve Duration for Days(${noOfDays})`);
   },
 };

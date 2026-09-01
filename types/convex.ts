@@ -1,21 +1,5 @@
 import type { Doc } from "../convex/_generated/dataModel";
-import type { DurationGroup, PlanKey } from ".";
-
-export type BookingCheckV2 = {
-  _v: "booking_check_v2";
-  bookingId: string;
-  planKey: PlanKey;
-  duration: number;
-};
-
-export type BookingCheckV1 = {
-  _v: "booking_check_v1";
-  bookingId: string;
-  durationType: DurationGroup;
-  duration: number;
-};
-
-export type BookingCheck = BookingCheckV1 | BookingCheckV2;
+import type { PlanKey } from ".";
 
 export type Booking = Omit<Doc<"bookings">, "planKey"> & {
   planKey?: PlanKey;

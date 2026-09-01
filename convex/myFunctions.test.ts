@@ -2,7 +2,6 @@
 /// <reference types="vite/client" />
 import aggregateTest from "@convex-dev/aggregate/test";
 import { convexTest } from "convex-test";
-import { format, subDays } from "date-fns";
 import { describe, expect, it } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";

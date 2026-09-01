@@ -81,9 +81,7 @@ export async function processReservationCheckIn(
     throw new ConvexError("No active reservation found.");
   }
 
-  const booking = (await ctx.db.get(
-    reservation.bookingId as Id<"bookings">,
-  )) as Booking | null;
+  const booking = (await ctx.db.get(reservation._id)) as Booking | null;
 
   if (!booking) {
     throw new ConvexError("Booking not found.");

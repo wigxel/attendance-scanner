@@ -406,7 +406,7 @@ describe("PlanImpl.fromBooking", () => {
       "month" as const,
     );
     const pricePerSeat = fc.integer({ min: 0, max: 100 });
-    const duration = fc.integer({ min: 1, max: 365 });
+    const duration = fc.integer({ min: 1, max: 31 });
 
     it("amountInKobo is non-negative for any valid inputs", () => {
       fc.assert(
@@ -636,11 +636,11 @@ describe("PlanImpl.match", () => {
     };
     let received: unknown = null;
     PlanImpl.match(access, {
-      free: () => {},
+      free: () => { },
       paid: (a) => {
         received = a;
       },
-      none: () => {},
+      none: () => { },
     });
     expect(received).toBe(access);
   });

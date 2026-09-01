@@ -10,15 +10,14 @@ import {
   startOfMonth,
   subWeeks,
 } from "date-fns";
-import { Match } from "effect";
 import { DateRangeImpl, DurationGroupImpl } from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
 import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
 import type {
   AccessPlan,
   Booking,
-  BookingCheck,
   BookingWithDetails,
+  TaggedBooking,
 } from "../types";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -81,9 +80,9 @@ export const getDetails = query({
       booking.created_by === "system" || booking.created_by === undefined
         ? Promise.resolve("Booking system")
         : ctx.db
-            .get(booking.created_by as Id<"users">)
-            .then((e) => e?.name ?? "Anonymous")
-            .catch(() => "--"),
+          .get(booking.created_by as Id<"users">)
+          .then((e) => e?.name ?? "Anonymous")
+          .catch(() => "--"),
       ctx.db
         .query("accessPlans")
         .filter((q) => q.eq(q.field("no_of_days"), booking.duration))
@@ -97,14 +96,14 @@ export const getDetails = query({
       seats: seats.filter((seat) => seat !== null),
       user: user
         ? {
-            id: user.id,
-            name: `${user.firstName} ${user.lastName}`,
-            email: user.email,
-          }
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+        }
         : {
-            name: "Anonymous User",
-            email: "--",
-          },
+          name: "Anonymous User",
+          email: "--",
+        },
     };
   },
 });
@@ -1104,14 +1103,14 @@ export const getAllBookings = query({
           seats: seats.filter((seat) => seat !== null), // filter out any null values
           user: user
             ? {
-                id: user.id,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-              }
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+            }
             : {
-                name: "Anonymous User",
-                email: "--",
-              },
+              name: "Anonymous User",
+              email: "--",
+            },
         };
       }),
     );
@@ -1383,15 +1382,15 @@ export const list = query({
           planName: plan?.name ?? `${booking.duration} days`,
           user: user
             ? {
-                id: user.id,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-              }
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+            }
             : {
-                id: booking.userId,
-                name: "Anonymous User",
-                email: null,
-              },
+              id: booking.userId,
+              name: "Anonymous User",
+              email: null,
+            },
         };
       }),
     );
@@ -1499,36 +1498,12 @@ export const deleteExport = internalAction({
 
 export const getUserActiveBookings = query({
   args: { userId: v.string() },
-  handler: async (ctx, args): Promise<BookingCheck | null> => {
+  handler: async (ctx, args): Promise<TaggedBooking | null> => {
     const bookings = (await ctx.db
       .query("bookings")
       .withIndex("user_id", (q) => q.eq("userId", args.userId))
       .filter((q) => q.eq(q.field("status"), "confirmed"))
       .collect()) as Booking[];
-
-    const matcher = pipe(
-      BookImpl.match,
-      Match.when(
-        { _v: "booking_v2", planKey: Match.defined },
-        (booking): BookingCheck => {
-          return {
-            _v: "booking_check_v2",
-            bookingId: booking._id,
-            planKey: booking.planKey,
-            duration: booking.duration,
-          };
-        },
-      ),
-      Match.when(Match.record, (booking): BookingCheck => {
-        return {
-          _v: "booking_check_v1",
-          bookingId: booking._id,
-          durationType: booking.durationType,
-          duration: booking.duration,
-        };
-      }),
-      Match.orElse(() => null),
-    );
 
     for (const booking of bookings) {
       if (
@@ -1537,7 +1512,7 @@ export const getUserActiveBookings = query({
           end: endOfDay(parseISO(booking.endDate)),
         })
       ) {
-        return matcher(BookImpl.normalize(booking));
+        return BookImpl.normalize(booking);
       }
     }
 

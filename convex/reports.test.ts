@@ -228,6 +228,102 @@ describe("reports getDaily", () => {
     expect(result.dailyReport.transfer_sales).toBe(1000);
   });
 
+  it("calculates sales using planKey from v2 bookings", async () => {
+    const t = convexTest(schema, modules);
+
+    const today = new Date();
+    const todayStr = format(today, "yyyy/MM/dd");
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Daily Pass",
+        price: 5000,
+        no_of_days: 1,
+        description: "One day access",
+        features: [],
+      });
+      await ctx.db.insert("accessPlans", {
+        key: "monthly",
+        name: "Monthly Pass",
+        price: 30000,
+        no_of_days: 30,
+        description: "30 day access",
+        features: [],
+      });
+
+      // v2 booking with planKey set directly
+      await ctx.db.insert("bookings", {
+        userId: "user-1",
+        seatIds: [],
+        duration: 1,
+        startDate: startOfDay(today).toISOString(),
+        endDate: endOfDay(today).toISOString(),
+        durationType: "day",
+        planKey: "daily",
+        pricePerSeat: 5000,
+        amount: 5000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("daily_register", {
+        userId: "user-1",
+        timestamp: startOfDay(today).toISOString(),
+        source: "web",
+        device: makeDevice(),
+        access: {
+          kind: "paid",
+          planId: "daily",
+          amountInKobo: 5000,
+          paymentMethod: "cash",
+          _v: "2",
+        },
+        admitted_by: "staff-1",
+      });
+
+      // v2 monthly booking with planKey
+      await ctx.db.insert("bookings", {
+        userId: "user-2",
+        seatIds: [],
+        duration: 30,
+        startDate: startOfDay(today).toISOString(),
+        endDate: endOfDay(today).toISOString(),
+        durationType: "month",
+        planKey: "monthly",
+        pricePerSeat: 30000,
+        amount: 30000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("daily_register", {
+        userId: "user-2",
+        timestamp: startOfDay(today).toISOString(),
+        source: "web",
+        device: makeDevice("visitor-2"),
+        access: {
+          kind: "paid",
+          planId: "monthly",
+          amountInKobo: 30000,
+          paymentMethod: "bank_transfer",
+          _v: "2",
+        },
+        admitted_by: "staff-1",
+      });
+    });
+
+    const result = await t.query(api.reports.getDaily, {
+      date: todayStr,
+    });
+
+    // daily: 5000/1 = 5000 (cash), monthly: 30000/30 = 1000 (transfer)
+    expect(result.dailyReport.no_of_customers).toBe(2);
+    expect(result.dailyReport.total_sales).toBe(6000);
+    expect(result.dailyReport.cash_sales).toBe(5000);
+    expect(result.dailyReport.transfer_sales).toBe(1000);
+  });
+
   it("returns 0 sales when no matching accessPlan exists", async () => {
     const t = convexTest(schema, modules);
 

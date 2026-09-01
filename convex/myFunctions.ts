@@ -2,12 +2,10 @@ import type { Profile, User } from "@auth/core/types";
 import { TableAggregate } from "@convex-dev/aggregate";
 import { type GenericQueryCtx, paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
-import { endOfDay, isWithinInterval, parseISO } from "date-fns";
 import { isNullable } from "effect/Predicate";
 import { z } from "zod";
 import { logger } from "../config/logger";
 import { safeStr } from "../lib/data.helpers";
-import { BookingCheck, PlanKey } from "../types";
 import { api, components, internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { action, internalMutation, mutation, query } from "./_generated/server";
@@ -139,13 +137,15 @@ export const getProfile = query({
       if (profile) return profile;
     }
 
+    const email = identity.email;
+
     // Fallback: look up by email (covers the period between signup and
     // webhook setting external_id)
-    if (!identity.email) return null;
+    if (!email) return null;
 
     return await ctx.db
       .query("profile")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
+      .withIndex("by_email", (q) => q.eq("email", email))
       .first();
   },
 });
@@ -749,11 +749,11 @@ export const listSuggestions = query({
     const features =
       status !== undefined
         ? ctx.db
-            .query("featureRequest")
-            .withIndex("by_status", (q) => q.eq("status", status))
+          .query("featureRequest")
+          .withIndex("by_status", (q) => q.eq("status", status))
         : ctx.db
-            .query("featureRequest")
-            .filter((q) => q.neq(q.field("status"), "rejected"));
+          .query("featureRequest")
+          .filter((q) => q.neq(q.field("status"), "rejected"));
 
     const feedbacks = await features.order("desc").take(limit);
 

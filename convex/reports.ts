@@ -4,11 +4,11 @@ import { Match } from "effect";
 import { HOURLY_RATE } from "../config/constants";
 import { PlanKeyManager } from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
-import type { BookingCheck, BookingCheckV1, PlanKey } from "../types";
+import type { PlanKey, TaggedBooking } from "../types";
 import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import { type AccessDuration, type AccessStruct, PlanImpl } from "./shared";
+import { type AccessDuration, type AccessStruct, BookImpl, PlanImpl } from "./shared";
 
 type CalcProps = {
   access: AccessStruct;
@@ -71,10 +71,10 @@ export const getDaily = query({
     let transferSales = 0;
     const staffCounts = new Map<string, number>();
     let weeklySubscribers = 0;
-    const reservationCache = new Map<string, BookingCheck | null>();
+    const reservationCache = new Map<string, TaggedBooking | null>();
 
     const extractCount = (
-      booking: BookingCheckV1 | undefined,
+      booking: TaggedBooking | undefined,
       reg: (typeof registers)[0],
     ) => {
       const accessRecord = reg.access as AccessStruct;
@@ -84,18 +84,22 @@ export const getDaily = query({
         cashSales = 0,
         totalSales = 0;
 
-      const planKey = booking
-        ? PlanKeyManager.mapPlanKey(booking.durationType)
-        : PlanImpl.match(accessRecord, {
-            none: () => "" as const,
-            free: () => "" as const,
+      const resolvePlanKey = BookImpl.match.pipe(
+        Match.when({ _v: "booking_v2" }, (booking): PlanKey => booking.planKey),
+        Match.when({ _v: "booking_v1" }, (booking) => PlanKeyManager.mapPlanKey(booking.durationType)),
+        Match.orElse(() => {
+          return PlanImpl.match(accessRecord, {
+            none: () => null,
+            free: () => null,
             paid: (access) => PlanKeyManager.mapPlanKey(access.planId),
           });
+        })
+      )
 
-      const fee =
-        planKey === ""
-          ? 0
-          : calcFee({ access: accessRecord, planKey, planMap });
+      const planKey = booking ? resolvePlanKey(booking) : null;
+      const fee = planKey != null
+        ? calcFee({ access: accessRecord, planKey, planMap })
+        : 0;
 
       totalSales += fee;
 
@@ -105,8 +109,12 @@ export const getDaily = query({
         transferSales += fee;
       }
 
-      if (booking && booking.durationType === "week") {
-        weeklySubscribers++;
+      if (booking) {
+        if (booking._v === "booking_v1" && booking.durationType === "week") {
+          weeklySubscribers++;
+        } else if (booking._v === "booking_v2" && booking.planKey === "weekly") {
+          weeklySubscribers++;
+        }
       }
 
       return { weeklySubscribers, cashSales, transferSales, totalSales };
@@ -129,9 +137,8 @@ export const getDaily = query({
         }
         const reservation = reservationCache.get(reg.userId);
 
-        console.log("Reservation", reservation);
 
-        if (reservation?._v === "booking_check_v1") {
+        if (reservation?._v === "booking_v1" || reservation?._v === "booking_v2") {
           const values = extractCount(reservation, reg);
 
           weeklySubscribers += values.weeklySubscribers;
