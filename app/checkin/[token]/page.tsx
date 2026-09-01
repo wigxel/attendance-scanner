@@ -11,13 +11,13 @@ import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { AppSpinner } from "@/components/loader";
 import { Button } from "@/components/ui/button";
+import { api } from "@/convex/_generated/api";
+import { savePendingCheckIn } from "@/hooks/pending-checkin";
 import {
   formatTime,
   useSelfCheckIn,
   useTodaysRegistration,
 } from "@/hooks/self-service";
-import { savePendingCheckIn } from "@/hooks/pending-checkin";
-import { api } from "@/convex/_generated/api";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
 

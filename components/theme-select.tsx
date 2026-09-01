@@ -1,5 +1,6 @@
 "use client";
 
+import { MonitorIcon, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import {
   Select,
@@ -8,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MonitorIcon, Moon, Sun } from "lucide-react";
 
 export function ThemeSelect() {
   const { theme, setTheme } = useTheme();

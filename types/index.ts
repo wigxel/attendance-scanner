@@ -1,6 +1,7 @@
 import { Schema } from "effect";
 import { brand } from "effect/Schema";
 import type { Doc } from "../convex/_generated/dataModel";
+
 export * from "./convex";
 
 export type Prettify<T> = {

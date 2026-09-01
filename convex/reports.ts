@@ -87,12 +87,15 @@ export const getDaily = query({
       const planKey = booking
         ? PlanKeyManager.mapPlanKey(booking.durationType)
         : PlanImpl.match(accessRecord, {
-          none: () => "" as const,
-          free: () => "" as const,
-          paid: (access) => PlanKeyManager.mapPlanKey(access.planId),
-        });
+            none: () => "" as const,
+            free: () => "" as const,
+            paid: (access) => PlanKeyManager.mapPlanKey(access.planId),
+          });
 
-      const fee = planKey === "" ? 0 : calcFee({ access: accessRecord, planKey, planMap });
+      const fee =
+        planKey === ""
+          ? 0
+          : calcFee({ access: accessRecord, planKey, planMap });
 
       totalSales += fee;
 

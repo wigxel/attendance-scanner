@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { AccessPlan } from "../types";
+import type { AccessPlan } from "../types";
 import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";

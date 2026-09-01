@@ -1,8 +1,8 @@
 import { useQuery } from "convex/react";
-import { DurationBadge } from "@/components/DurationBadge";
 import { Calendar, ChevronRight, Clock } from "lucide-react";
 import Link from "next/link";
 import type React from "react"; // Added React import for React.ReactNode type
+import { DurationBadge } from "@/components/DurationBadge";
 import { If } from "@/components/if";
 import { Button } from "@/components/ui/button";
 import {

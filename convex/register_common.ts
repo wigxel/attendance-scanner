@@ -1,12 +1,12 @@
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { ConvexError } from "convex/values";
 import { endOfDay, isWithinInterval, parseISO, startOfDay } from "date-fns";
+import type { Booking } from "../types";
 import { api, internal } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { subscriberUpdateAudit } from "./audits/entities";
 import { visitsAggregate } from "./customers";
 import { type AccessStruct, PlanImpl } from "./shared";
-import { Booking } from "../types";
 
 export async function isRegisteredToday(
   ctx: GenericQueryCtx<DataModel>,

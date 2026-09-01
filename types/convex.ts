@@ -1,5 +1,5 @@
-import { Doc } from "../convex/_generated/dataModel";
-import { DurationGroup, PlanKey } from ".";
+import type { Doc } from "../convex/_generated/dataModel";
+import type { DurationGroup, PlanKey } from ".";
 
 export type BookingCheckV2 = {
   _v: "booking_check_v2";

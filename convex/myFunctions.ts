@@ -7,6 +7,7 @@ import { isNullable } from "effect/Predicate";
 import { z } from "zod";
 import { logger } from "../config/logger";
 import { safeStr } from "../lib/data.helpers";
+import { BookingCheck, PlanKey } from "../types";
 import { api, components, internal } from "./_generated/api";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { action, internalMutation, mutation, query } from "./_generated/server";
@@ -18,14 +19,12 @@ import {
 import { setExternalId, updateClerkUser } from "./clerk";
 import { DEFAULT_LIMIT } from "./constants";
 import { profileAggregate } from "./customers";
-
 import {
   insertRegisterAndAggregate,
   isRegisteredToday,
   processReservationCheckIn,
 } from "./register_common";
 import { featureRequestStatus, PlanImpl } from "./shared";
-import { BookingCheck, PlanKey } from "../types";
 
 export const authUser = query({
   args: {},
