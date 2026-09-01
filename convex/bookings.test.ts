@@ -1,5 +1,6 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: This is a test file */
 /// <reference types="vite/client" />
+import aggregateTest from "@convex-dev/aggregate/test";
 import { convexTest } from "convex-test";
 import { addDays, format, subDays } from "date-fns";
 import { afterAll, describe, expect, it, vi } from "vitest";
@@ -2500,5 +2501,95 @@ describe("bookings.getUserActiveBookings", () => {
     });
 
     expect(result).toBeNull();
+  });
+});
+
+describe("bookings.getUserActiveBookings (active)", () => {
+  it("returns normalized booking when user has an active confirmed booking", async () => {
+    const t = convexTest(schema, modules);
+    const date = new Date(2026, 0, 20).getTime();
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("bookings", {
+        userId: "user-active",
+        seatIds: [],
+        duration: 30,
+        startDate: todayStr(),
+        endDate: futureStr(),
+        durationType: "month",
+        pricePerSeat: 10000,
+        amount: 10000,
+        status: "confirmed",
+        createdAt: date,
+        updatedAt: date,
+      });
+    });
+
+    const result = await t.query(api.bookings.getUserActiveBookings, {
+      userId: "user-active",
+    });
+
+    expect(result).not.toBeNull();
+    expect(result).toMatchInlineSnapshot(`
+      {
+        "_creationTime": 1704369600000,
+        "_id": "000000000000000000010000bookings",
+        "_v": "booking_v1",
+        "amount": 10000,
+        "createdAt": 1768863600000,
+        "duration": 30,
+        "durationType": "month",
+        "endDate": "2024-02-03",
+        "pricePerSeat": 10000,
+        "seatIds": [],
+        "startDate": "2024-01-04",
+        "status": "confirmed",
+        "updatedAt": 1768863600000,
+        "userId": "user-active",
+      }
+    `);
+  });
+});
+
+describe("bookings.exportList", () => {
+  it("exports bookings as CSV for admin", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    aggregateTest.register(t, "customerStats");
+
+    const adminAuthed = t.withIdentity({ subject: "admin-user", profile_id: "admin-user" });
+
+    await t.run(async (ctx) => {
+      const userId = "user-export";
+
+      const bookingId = await ctx.db.insert("bookings", {
+        userId,
+        seatIds: [],
+        duration: 1,
+        startDate: todayStr(),
+        endDate: todayStr(),
+        durationType: "day",
+        pricePerSeat: 5000,
+        amount: 5000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      await ctx.db.insert("payments", {
+        bookingId,
+        userId,
+        amount: 5000,
+        method: "bank_transfer",
+        status: "completed",
+        createdAt: Date.now(),
+      });
+    });
+
+    const result = await adminAuthed.runAction(api.bookings.exportList, {
+      month: format(new Date(), "yyyy-MM"),
+    });
+
+    expect(result.storageUrl).toBeTruthy();
   });
 });

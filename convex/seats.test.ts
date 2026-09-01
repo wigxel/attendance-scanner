@@ -432,4 +432,161 @@ describe("checkSeatAvailability", () => {
       }),
     ).rejects.toThrow();
   });
+
+  it("throws when access plan not found", async () => {
+    const t = convexTest(schema, modules);
+
+    const seatId = await t.run(async (ctx) => {
+      return await ctx.db.insert("seats", {
+        seatNumber: 1,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+    });
+
+    await expect(
+      t.query(api.seats.checkSeatAvailability, {
+        seatId,
+        startDate: todayStr(),
+        planKey: "nonexistent",
+      }),
+    ).rejects.toThrow("Access plan not found");
+  });
+
+  it("returns available when seat has no conflicting bookings", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Daily",
+        price: 5000,
+        no_of_days: 1,
+        description: "One day",
+        features: [],
+      });
+    });
+
+    const seatId = await t.run(async (ctx) => {
+      return await ctx.db.insert("seats", {
+        seatNumber: 1,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+    });
+
+    const result = await t.query(api.seats.checkSeatAvailability, {
+      seatId,
+      startDate: todayStr(),
+      planKey: "daily",
+    });
+
+    expect(result.isAvailable).toBe(true);
+    expect(result.hasConflict).toBe(false);
+  });
+
+  it("returns conflict when seat is booked for overlapping period", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Daily",
+        price: 5000,
+        no_of_days: 1,
+        description: "One day",
+        features: [],
+      });
+    });
+
+    const { seatId } = await t.run(async (ctx) => {
+      const seatId = await ctx.db.insert("seats", {
+        seatNumber: 1,
+        isBooked: true,
+        createdAt: Date.now(),
+      });
+
+      const bookingId = await ctx.db.insert("bookings", {
+        userId: "user-1",
+        seatIds: [seatId],
+        duration: 1,
+        startDate: todayStr(),
+        endDate: todayStr(),
+        durationType: "day",
+        pricePerSeat: 5000,
+        amount: 5000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      await ctx.db.insert("bookedSeats", {
+        bookingId,
+        seatId,
+        status: "confirmed",
+      });
+
+      return { seatId, bookingId };
+    });
+
+    const result = await t.query(api.seats.checkSeatAvailability, {
+      seatId,
+      startDate: todayStr(),
+      planKey: "daily",
+    });
+
+    expect(result.isAvailable).toBe(false);
+    expect(result.hasConflict).toBe(true);
+  });
+});
+
+describe("getSeatsById", () => {
+  it("returns matching seats", async () => {
+    const t = convexTest(schema, modules);
+
+    const { id1, id2 } = await t.run(async (ctx) => {
+      const id1 = await ctx.db.insert("seats", {
+        seatNumber: 1,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+      const id2 = await ctx.db.insert("seats", {
+        seatNumber: 2,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+      return { id1, id2 };
+    });
+
+    const result = await t.query(api.seats.getSeatsById, {
+      seatIds: [id1, id2],
+    });
+
+    expect(result).toHaveLength(2);
+  });
+
+  it("filters out deleted seats", async () => {
+    const t = convexTest(schema, modules);
+
+    const { id1, id2 } = await t.run(async (ctx) => {
+      const id1 = await ctx.db.insert("seats", {
+        seatNumber: 1,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+      const id2 = await ctx.db.insert("seats", {
+        seatNumber: 2,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+      await ctx.db.delete(id2);
+      return { id1, id2 };
+    });
+
+    const result = await t.query(api.seats.getSeatsById, {
+      seatIds: [id1, id2],
+    });
+
+    expect(result).toHaveLength(1);
+  });
 });

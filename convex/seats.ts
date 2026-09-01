@@ -155,7 +155,7 @@ export const checkSeatAvailability = query({
     const endDate = pipe(
       DateParse.parse(args.startDate),
       Option.map((parsed_date) =>
-        calculateEndDate(parsed_date, accessPlan.no_of_days),
+        calculateEndDate(parsed_date, accessPlan.no_of_days).toISOString(),
       ),
       Option.getOrThrowWith(
         () => new Error("Invalid startDate. Provide a valid date"),

@@ -224,3 +224,79 @@ describe("backfillDailyCashPayments", () => {
     expect(apr15).toBeNull();
   });
 });
+
+describe("deleteRegisterRecord", () => {
+  it("deletes a register record by id", async () => {
+    const t = convexTest(schema, modules);
+
+    const registerId = await t.run(async (ctx) => {
+      return await ctx.db.insert("daily_register", {
+        userId: "user-1",
+        timestamp: new Date().toISOString(),
+        source: "web",
+        device: makeDevice(),
+        access: { kind: "free" },
+        admitted_by: "staff-1",
+      });
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.runMutation(internal.register.deleteRegisterRecord, {
+        registerId,
+      });
+    });
+
+    const result = await t.run(async (ctx) => ctx.db.get(registerId));
+    expect(result).toBeNull();
+  });
+});
+
+describe("setFreeAccess", () => {
+  it("does nothing when are_you_sure is false", async () => {
+    const t = convexTest(schema, modules);
+
+    const registerId = await t.run(async (ctx) => {
+      return await ctx.db.insert("daily_register", {
+        userId: "user-1",
+        timestamp: new Date().toISOString(),
+        source: "web",
+        device: makeDevice(),
+        access: { kind: "paid", planId: "daily", amountInKobo: 5000, paymentMethod: "cash", _v: "2" },
+        admitted_by: "staff-1",
+      });
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.runMutation(internal.register.setFreeAccess, {
+        are_you_sure: false,
+      });
+    });
+
+    const record = await t.run(async (ctx) => ctx.db.get(registerId));
+    expect(record?.access).toHaveProperty("kind", "paid");
+  });
+
+  it("sets all registers to free when are_you_sure is true", async () => {
+    const t = convexTest(schema, modules);
+
+    const registerId = await t.run(async (ctx) => {
+      return await ctx.db.insert("daily_register", {
+        userId: "user-1",
+        timestamp: new Date().toISOString(),
+        source: "web",
+        device: makeDevice(),
+        access: { kind: "paid", planId: "daily", amountInKobo: 5000, paymentMethod: "cash", _v: "2" },
+        admitted_by: "staff-1",
+      });
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.runMutation(internal.register.setFreeAccess, {
+        are_you_sure: true,
+      });
+    });
+
+    const record = await t.run(async (ctx) => ctx.db.get(registerId));
+    expect(record?.access).toHaveProperty("kind", "free");
+  });
+});
