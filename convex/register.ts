@@ -10,7 +10,7 @@ import { requirePrivilege } from "./acl";
 import { visitsAggregate } from "./customers";
 import { readId } from "./myFunctions";
 import { isRegisteredToday } from "./register_common";
-import { PlanImpl, RegisterImpl } from "./shared";
+import { CurrencyImpl, PlanImpl, RegisterImpl } from "./shared";
 
 const Timezone = {
   now: () => {
@@ -67,7 +67,11 @@ export const saveCount = internalMutation(async ({ db }) => {
 
   const cash = RegisterImpl.filterCash(count);
   const cashCount = cash.length;
-  const cashTotal = RegisterImpl.sumAll(cash) / 100;
+  const cashTotal = pipe(
+    RegisterImpl.sumAll(cash),
+    CurrencyImpl.koboToNaira,
+    CurrencyImpl.parseFloat,
+  );
 
   const existingCash = await db
     .query("dailyCashPayments")
@@ -112,7 +116,11 @@ export const backfillDailyCashPayments = internalMutation({
 
       const cash_records = pipe(rows, RegisterImpl.filterCash);
 
-      const total = RegisterImpl.sumAll(cash_records) / 100;
+      const total = pipe(
+        RegisterImpl.sumAll(cash_records),
+        CurrencyImpl.koboToNaira,
+        CurrencyImpl.parseFloat,
+      );
 
       const existing = await db
         .query("dailyCashPayments")

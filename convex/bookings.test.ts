@@ -2557,7 +2557,10 @@ describe("bookings.exportList", () => {
     await seedAdmin(t);
     aggregateTest.register(t, "customerStats");
 
-    const adminAuthed = t.withIdentity({ subject: "admin-user", profile_id: "admin-user" });
+    const adminAuthed = t.withIdentity({
+      subject: "admin-user",
+      profile_id: "admin-user",
+    });
 
     await t.run(async (ctx) => {
       const userId = "user-export";

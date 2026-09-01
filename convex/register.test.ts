@@ -71,7 +71,7 @@ describe("saveCount cash upsert", () => {
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].count).toBe(2);
-    expect(rows[0].total).toBe(170);
+    expect(rows[0].total).toBe(17000);
   });
 
   it("upserts (idempotent): running twice patches, not duplicates", async () => {
@@ -95,7 +95,7 @@ describe("saveCount cash upsert", () => {
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].count).toBe(1);
-    expect(rows[0].total).toBe(50);
+    expect(rows[0].total).toBe(5000);
   });
 
   it("writes a zero row on a day with no cash", async () => {
@@ -138,27 +138,33 @@ describe("backfillDailyCashPayments", () => {
     const may15 = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", new Date("2026-05-15").getTime()))
+        .withIndex("by_date", (q) =>
+          q.eq("date", new Date("2026-05-15").getTime()),
+        )
         .unique(),
     );
     const jun10 = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", new Date("2026-06-10").getTime()))
+        .withIndex("by_date", (q) =>
+          q.eq("date", new Date("2026-06-10").getTime()),
+        )
         .unique(),
     );
     const jul05 = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", new Date("2026-07-05").getTime()))
+        .withIndex("by_date", (q) =>
+          q.eq("date", new Date("2026-07-05").getTime()),
+        )
         .unique(),
     );
     expect(may15?.count).toBe(1);
-    expect(may15?.total).toBe(50);
+    expect(may15?.total).toBe(5000);
     expect(jun10?.count).toBe(1);
-    expect(jun10?.total).toBe(120);
+    expect(jun10?.total).toBe(12000);
     expect(jul05?.count).toBe(2);
-    expect(jul05?.total).toBe(100);
+    expect(jul05?.total).toBe(10000);
   });
 
   it("writes zero rows for days with no cash", async () => {
@@ -176,7 +182,9 @@ describe("backfillDailyCashPayments", () => {
     const may16 = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", new Date("2026-05-16").getTime()))
+        .withIndex("by_date", (q) =>
+          q.eq("date", new Date("2026-05-16").getTime()),
+        )
         .unique(),
     );
     expect(may16?.count).toBe(0);
@@ -218,7 +226,9 @@ describe("backfillDailyCashPayments", () => {
     const apr15 = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", new Date("2026-04-15").getTime()))
+        .withIndex("by_date", (q) =>
+          q.eq("date", new Date("2026-04-15").getTime()),
+        )
         .unique(),
     );
     expect(apr15).toBeNull();
@@ -261,7 +271,13 @@ describe("setFreeAccess", () => {
         timestamp: new Date().toISOString(),
         source: "web",
         device: makeDevice(),
-        access: { kind: "paid", planId: "daily", amountInKobo: 5000, paymentMethod: "cash", _v: "2" },
+        access: {
+          kind: "paid",
+          planId: "daily",
+          amountInKobo: 5000,
+          paymentMethod: "cash",
+          _v: "2",
+        },
         admitted_by: "staff-1",
       });
     });
@@ -285,7 +301,13 @@ describe("setFreeAccess", () => {
         timestamp: new Date().toISOString(),
         source: "web",
         device: makeDevice(),
-        access: { kind: "paid", planId: "daily", amountInKobo: 5000, paymentMethod: "cash", _v: "2" },
+        access: {
+          kind: "paid",
+          planId: "daily",
+          amountInKobo: 5000,
+          paymentMethod: "cash",
+          _v: "2",
+        },
         admitted_by: "staff-1",
       });
     });

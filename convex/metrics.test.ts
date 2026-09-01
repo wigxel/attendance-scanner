@@ -249,7 +249,7 @@ describe("sumPaidAccess", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toBe(80);
+    expect(result).toBe(8000);
   });
 
   it("handles V1 access (amount field) without dividing by 100", async () => {
@@ -330,7 +330,7 @@ describe("sumPaidAccess", () => {
       end: "2024-04-08T00:00:00.000Z",
     });
 
-    expect(result).toBe(150);
+    expect(result).toBe(15000);
   });
 
   it("sums paid access across a one-month range", async () => {
@@ -389,7 +389,7 @@ describe("sumPaidAccess", () => {
       end: "2024-05-31T23:59:59.999Z",
     });
 
-    expect(result).toBe(230);
+    expect(result).toBe(23000);
   });
 
   it("sums paid access across a six-month range", async () => {
@@ -448,7 +448,7 @@ describe("sumPaidAccess", () => {
       end: "2024-06-30T23:59:59.999Z",
     });
 
-    expect(result).toBe(250);
+    expect(result).toBe(25000);
   });
 
   it("excludes registers outside a six-month range", async () => {
@@ -504,7 +504,7 @@ describe("sumPaidAccess", () => {
       end: "2024-06-30T23:59:59.999Z",
     });
 
-    expect(result).toBe(100);
+    expect(result).toBe(10000);
   });
 
   it("only counts registers within the timestamp range", async () => {
@@ -546,7 +546,7 @@ describe("sumPaidAccess", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toBe(50);
+    expect(result).toBe(5000);
   });
 });
 
@@ -601,7 +601,7 @@ describe("sumCashPayments", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toEqual({ count: 1, total: 50 });
+    expect(result).toEqual({ count: 1, total: 5000 });
   });
 
   it("counts only cash payments, excludes free access", async () => {
@@ -637,10 +637,10 @@ describe("sumCashPayments", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toEqual({ count: 1, total: 50 });
+    expect(result).toEqual({ count: 1, total: 5000 });
   });
 
-  it("sums amounts correctly (V2: amountInKobo / 100)", async () => {
+  it("sums amounts correctly (V2: amountInKobo)", async () => {
     const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
@@ -679,7 +679,7 @@ describe("sumCashPayments", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toEqual({ count: 2, total: 170 });
+    expect(result).toEqual({ count: 2, total: 17000 });
   });
 
   it("filters by date range (excludes outside)", async () => {
@@ -735,7 +735,7 @@ describe("sumCashPayments", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toEqual({ count: 1, total: 30 });
+    expect(result).toEqual({ count: 1, total: 3000 });
   });
 
   it("filters by planId when provided", async () => {
@@ -778,7 +778,7 @@ describe("sumCashPayments", () => {
       planId: "daily",
     });
 
-    expect(result).toEqual({ count: 1, total: 50 });
+    expect(result).toEqual({ count: 1, total: 5000 });
   });
 
   it("ignores planId filter when not provided", async () => {
@@ -820,7 +820,7 @@ describe("sumCashPayments", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toEqual({ count: 2, total: 170 });
+    expect(result).toEqual({ count: 2, total: 17000 });
   });
 
   it("counts all records without a cap", async () => {
@@ -851,7 +851,7 @@ describe("sumCashPayments", () => {
     });
 
     expect(result.count).toBe(55);
-    expect(result.total).toBe(550);
+    expect(result.total).toBe(55000);
   });
 
   it("returns multiple records with correct aggregation over a week", async () => {
@@ -887,7 +887,7 @@ describe("sumCashPayments", () => {
       end: "2024-03-07T23:59:59.999Z",
     });
 
-    expect(result).toEqual({ count: 4, total: 200 });
+    expect(result).toEqual({ count: 4, total: 20000 });
   });
 });
 

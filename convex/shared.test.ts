@@ -636,11 +636,11 @@ describe("PlanImpl.match", () => {
     };
     let received: unknown = null;
     PlanImpl.match(access, {
-      free: () => { },
+      free: () => {},
       paid: (a) => {
         received = a;
       },
-      none: () => { },
+      none: () => {},
     });
     expect(received).toBe(access);
   });
@@ -762,7 +762,7 @@ describe("PlanImpl.amount", () => {
     expect(result).toEqual({
       currency: "naira",
       denomination: "kobo",
-      value: "5000",
+      value: "500000",
     });
   });
 

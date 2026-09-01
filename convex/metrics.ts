@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import { format } from "date-fns";
+import { pipe } from "effect";
 import { query } from "./_generated/server";
-import { PlanImpl, RegisterImpl } from "./shared";
+import { CurrencyImpl, PlanImpl, RegisterImpl } from "./shared";
 
 export const metricsDailyAttendance = query({
   args: {
@@ -63,7 +64,11 @@ export const sumPaidAccess = query({
       .collect();
 
     const paidRegisters = RegisterImpl.filterPaid(registers);
-    const total = RegisterImpl.sumAll(paidRegisters) / 100;
+    const total = pipe(
+      RegisterImpl.sumAll(paidRegisters),
+      CurrencyImpl.koboToNaira,
+      CurrencyImpl.parseFloat,
+    );
 
     return total;
   },
@@ -97,7 +102,11 @@ export const sumCashPayments = query({
     });
 
     const count = cashRegisters.length;
-    const total = RegisterImpl.sumAll(cashRegisters) / 100;
+    const total = pipe(
+      RegisterImpl.sumAll(cashRegisters),
+      CurrencyImpl.koboToNaira,
+      CurrencyImpl.parseFloat,
+    );
 
     return { count, total: total };
   },

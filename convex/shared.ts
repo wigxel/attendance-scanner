@@ -10,6 +10,7 @@ import { O } from "../lib/fp.helpers";
 import type {
   AccessPlan,
   Booking,
+  CurrencyAmount,
   Kobo,
   Naira,
   PlanKey,
@@ -275,7 +276,7 @@ export const PlanImpl = {
       Match.when(
         { planId: Match.nonEmptyString, amountInKobo: Match.number },
         (record) => {
-          return CurrencyImpl.kobo(record.amountInKobo);
+          return CurrencyImpl.nairaToKobo(record.amountInKobo);
         },
       ),
       Match.orElse(() => {
@@ -384,18 +385,24 @@ export const RegisterImpl = {
     );
   }),
 
-  sumAll: (collection: DailyRegister[]) => {
-    return collection.reduce((accumKoboAmount, r) => {
+  sumAll: (collection: DailyRegister[]): Kobo => {
+    const sum = collection.reduce((accumKoboAmount, r) => {
       return PlanImpl.match(r.access, {
         free: () => accumKoboAmount,
         none: () => accumKoboAmount,
-        paid: (value) => accumKoboAmount + +PlanImpl.amount(value).value,
+        paid: (value) => {
+          return (
+            accumKoboAmount + CurrencyImpl.parseFloat(PlanImpl.amount(value))
+          );
+        },
       });
     }, 0);
+
+    return CurrencyImpl.kobo(sum);
   },
 };
 
-const CurrencyImpl = {
+export const CurrencyImpl = {
   empty: {
     currency: "naira",
     denomination: "kobo",
@@ -415,20 +422,40 @@ const CurrencyImpl = {
     throw new Error("Use kobo instead");
   },
 
-  nairaToKobo(amount: number): Kobo {
+  nairaToKobo(amount: number | Naira): Kobo {
+    if (typeof amount === "number") {
+      return {
+        currency: "naira",
+        denomination: "kobo",
+        value: String(amount * 100),
+      };
+    }
+
     return {
       currency: "naira",
       denomination: "kobo",
-      value: String(amount * 100),
+      value: String(+amount.value * 100),
     };
   },
 
-  koboToNaira(amount: number): Naira {
+  koboToNaira(amount: number | Kobo): Naira {
+    if (typeof amount === "number") {
+      return {
+        currency: "naira",
+        denomination: "naira",
+        value: String(amount / 100),
+      };
+    }
+
     return {
       currency: "naira",
       denomination: "naira",
-      value: String(amount / 100),
+      value: String(+amount.value / 100),
     };
+  },
+
+  parseFloat(amount: CurrencyAmount): number {
+    return Number.parseFloat(amount.value);
   },
 
   add(a: Kobo, b: Kobo): Kobo {

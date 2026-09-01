@@ -8,7 +8,12 @@ import type { PlanKey, TaggedBooking } from "../types";
 import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import { type AccessDuration, type AccessStruct, BookImpl, PlanImpl } from "./shared";
+import {
+  type AccessDuration,
+  type AccessStruct,
+  BookImpl,
+  PlanImpl,
+} from "./shared";
 
 type CalcProps = {
   access: AccessStruct;
@@ -86,20 +91,23 @@ export const getDaily = query({
 
       const resolvePlanKey = BookImpl.match.pipe(
         Match.when({ _v: "booking_v2" }, (booking): PlanKey => booking.planKey),
-        Match.when({ _v: "booking_v1" }, (booking) => PlanKeyManager.mapPlanKey(booking.durationType)),
+        Match.when({ _v: "booking_v1" }, (booking) =>
+          PlanKeyManager.mapPlanKey(booking.durationType),
+        ),
         Match.orElse(() => {
           return PlanImpl.match(accessRecord, {
             none: () => null,
             free: () => null,
             paid: (access) => PlanKeyManager.mapPlanKey(access.planId),
           });
-        })
-      )
+        }),
+      );
 
       const planKey = booking ? resolvePlanKey(booking) : null;
-      const fee = planKey != null
-        ? calcFee({ access: accessRecord, planKey, planMap })
-        : 0;
+      const fee =
+        planKey != null
+          ? calcFee({ access: accessRecord, planKey, planMap })
+          : 0;
 
       totalSales += fee;
 
@@ -112,7 +120,10 @@ export const getDaily = query({
       if (booking) {
         if (booking._v === "booking_v1" && booking.durationType === "week") {
           weeklySubscribers++;
-        } else if (booking._v === "booking_v2" && booking.planKey === "weekly") {
+        } else if (
+          booking._v === "booking_v2" &&
+          booking.planKey === "weekly"
+        ) {
           weeklySubscribers++;
         }
       }
@@ -137,8 +148,10 @@ export const getDaily = query({
         }
         const reservation = reservationCache.get(reg.userId);
 
-
-        if (reservation?._v === "booking_v1" || reservation?._v === "booking_v2") {
+        if (
+          reservation?._v === "booking_v1" ||
+          reservation?._v === "booking_v2"
+        ) {
           const values = extractCount(reservation, reg);
 
           weeklySubscribers += values.weeklySubscribers;
