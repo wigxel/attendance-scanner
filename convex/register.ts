@@ -46,6 +46,7 @@ export const saveCount = internalMutation(async ({ db }) => {
   const totalUsers = uniqueUsers.size;
 
   const date = format(yesterday, "yyyy-MM-dd");
+  const timestamp = new Date(date).getTime();
 
   // Check if a metric for this date already exists
   const existingMetric = await db
@@ -70,14 +71,14 @@ export const saveCount = internalMutation(async ({ db }) => {
 
   const existingCash = await db
     .query("dailyCashPayments")
-    .withIndex("by_date", (q) => q.eq("date", date))
+    .withIndex("by_date", (q) => q.eq("date", timestamp))
     .unique();
 
   if (existingCash) {
     await db.patch(existingCash._id, { count: cashCount, total: cashTotal });
   } else {
     await db.insert("dailyCashPayments", {
-      date,
+      date: timestamp,
       count: cashCount,
       total: cashTotal,
     });
@@ -98,6 +99,7 @@ export const backfillDailyCashPayments = internalMutation({
       const dayStart = startOfDay(wd);
       const dayEnd = endOfDay(wd);
       const date = format(wd, "yyyy-MM-dd");
+      const timestamp = new Date(date).getTime();
 
       const rows = await db
         .query("daily_register")
@@ -114,14 +116,14 @@ export const backfillDailyCashPayments = internalMutation({
 
       const existing = await db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", date))
+        .withIndex("by_date", (q) => q.eq("date", timestamp))
         .unique();
 
       if (existing) {
         await db.patch(existing._id, { count: cash_records.length, total });
       } else {
         await db.insert("dailyCashPayments", {
-          date,
+          date: timestamp,
           count: cash_records.length,
           total,
         });

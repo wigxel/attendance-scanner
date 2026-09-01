@@ -1,6 +1,6 @@
 import { v } from "convex/values";
+import { format } from "date-fns";
 import { query } from "./_generated/server";
-import { DEFAULT_LIMIT } from "./constants";
 import { PlanImpl, RegisterImpl } from "./shared";
 
 export const metricsDailyAttendance = query({
@@ -30,16 +30,19 @@ export const metricsDailyCashPayments = query({
     end: v.string(), // yyyy-MM-dd
   },
   handler: async (ctx, args) => {
+    const startTime = new Date(args.start);
+    const endTime = new Date(args.end);
+
     const rows = await ctx.db
       .query("dailyCashPayments")
       .withIndex("by_date", (q) =>
-        q.gte("date", args.start).lte("date", args.end),
+        q.gte("date", startTime.getTime()).lte("date", endTime.getTime()),
       )
       .order("asc")
       .collect();
 
     return rows.map((row) => ({
-      date: row.date,
+      date: format(new Date(row.date), "yyyy-MM-dd"),
       total: row.total,
       count: row.count,
     }));
@@ -71,17 +74,14 @@ export const sumCashPayments = query({
     start: v.string(),
     end: v.string(),
     planId: v.optional(v.string()),
-    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const limit = args.limit ?? DEFAULT_LIMIT;
-
     const registers = await ctx.db
       .query("daily_register")
       .withIndex("by_timestamp", (q) =>
         q.gte("timestamp", args.start).lte("timestamp", args.end),
       )
-      .take(limit);
+      .collect();
 
     const cashRegisters = registers.filter((register) => {
       return PlanImpl.match(register.access, {

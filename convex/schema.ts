@@ -146,7 +146,7 @@ const dailyAttendanceMetrics = defineTable({
 }).index("by_date", ["date"]);
 
 const dailyCashPayments = defineTable({
-  date: v.string(),
+  date: v.number(),
   count: v.number(),
   total: v.number(),
 }).index("by_date", ["date"]);

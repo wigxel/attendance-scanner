@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { format, subDays } from "date-fns";
+import { format, isSameDay, subDays } from "date-fns";
 import { describe, expect, it } from "vitest";
 import { internal } from "./_generated/api";
 import schema from "./schema";
@@ -66,7 +66,7 @@ describe("saveCount cash upsert", () => {
     const rows = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", date))
+        .withIndex("by_date", (q) => q.eq("date", new Date(date).getTime()))
         .collect(),
     );
     expect(rows).toHaveLength(1);
@@ -90,7 +90,7 @@ describe("saveCount cash upsert", () => {
     const rows = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", date))
+        .withIndex("by_date", (q) => q.eq("date", new Date(date).getTime()))
         .collect(),
     );
     expect(rows).toHaveLength(1);
@@ -111,7 +111,7 @@ describe("saveCount cash upsert", () => {
     const rows = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", date))
+        .withIndex("by_date", (q) => q.eq("date", new Date(date).getTime()))
         .collect(),
     );
     expect(rows).toHaveLength(1);
@@ -138,19 +138,19 @@ describe("backfillDailyCashPayments", () => {
     const may15 = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", "2026-05-15"))
+        .withIndex("by_date", (q) => q.eq("date", new Date("2026-05-15").getTime()))
         .unique(),
     );
     const jun10 = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", "2026-06-10"))
+        .withIndex("by_date", (q) => q.eq("date", new Date("2026-06-10").getTime()))
         .unique(),
     );
     const jul05 = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", "2026-07-05"))
+        .withIndex("by_date", (q) => q.eq("date", new Date("2026-07-05").getTime()))
         .unique(),
     );
     expect(may15?.count).toBe(1);
@@ -176,7 +176,7 @@ describe("backfillDailyCashPayments", () => {
     const may16 = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", "2026-05-16"))
+        .withIndex("by_date", (q) => q.eq("date", new Date("2026-05-16").getTime()))
         .unique(),
     );
     expect(may16?.count).toBe(0);
@@ -202,7 +202,7 @@ describe("backfillDailyCashPayments", () => {
     const all = await t.run(async (ctx) =>
       ctx.db.query("dailyCashPayments").collect(),
     );
-    const may15 = all.filter((r) => r.date === "2026-05-15");
+    const may15 = all.filter((r) => isSameDay(r.date, "2026-05-15"));
     expect(may15).toHaveLength(1);
   });
 
@@ -218,7 +218,7 @@ describe("backfillDailyCashPayments", () => {
     const apr15 = await t.run(async (ctx) =>
       ctx.db
         .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", "2026-04-15"))
+        .withIndex("by_date", (q) => q.eq("date", new Date("2026-04-15").getTime()))
         .unique(),
     );
     expect(apr15).toBeNull();

@@ -823,7 +823,7 @@ describe("sumCashPayments", () => {
     expect(result).toEqual({ count: 2, total: 170 });
   });
 
-  it("respects default limit", async () => {
+  it("counts all records without a cap", async () => {
     const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
@@ -850,8 +850,8 @@ describe("sumCashPayments", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result.count).toBe(50);
-    expect(result.total).toBe(500);
+    expect(result.count).toBe(55);
+    expect(result.total).toBe(550);
   });
 
   it("returns multiple records with correct aggregation over a week", async () => {
@@ -896,17 +896,17 @@ describe("metricsDailyCashPayments", () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
       await ctx.db.insert("dailyCashPayments", {
-        date: "2024-01-02",
+        date: new Date("2024-01-02").getTime(),
         count: 2,
         total: 100,
       });
       await ctx.db.insert("dailyCashPayments", {
-        date: "2024-01-01",
+        date: new Date("2024-01-01").getTime(),
         count: 1,
         total: 50,
       });
       await ctx.db.insert("dailyCashPayments", {
-        date: "2024-01-03",
+        date: new Date("2024-01-03").getTime(),
         count: 3,
         total: 150,
       });
@@ -933,17 +933,17 @@ describe("metricsDailyCashPayments", () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
       await ctx.db.insert("dailyCashPayments", {
-        date: "2024-01-01",
+        date: new Date("2024-01-01").getTime(),
         count: 1,
         total: 50,
       });
       await ctx.db.insert("dailyCashPayments", {
-        date: "2024-02-01",
+        date: new Date("2024-02-01").getTime(),
         count: 9,
         total: 900,
       });
       await ctx.db.insert("dailyCashPayments", {
-        date: "2024-03-01",
+        date: new Date("2024-03-01").getTime(),
         count: 3,
         total: 150,
       });
@@ -961,7 +961,7 @@ describe("metricsDailyCashPayments", () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
       await ctx.db.insert("dailyCashPayments", {
-        date: "2024-01-01",
+        date: new Date("2024-01-01").getTime(),
         count: 1,
         total: 50,
       });

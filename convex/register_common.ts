@@ -112,12 +112,6 @@ export async function processReservationCheckIn(
     throw new ConvexError("Ticket not found.");
   }
 
-  if (!booking?.planKey) {
-    throw new ConvexError(
-      "Booking does not have a planKey. This is required since Aug. 30th, 2026",
-    );
-  }
-
   await insertRegisterAndAggregate(ctx, {
     userId: params.userId,
     device: params.device,
