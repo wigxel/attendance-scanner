@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { Option, pipe } from "effect";
 import { DateParse } from "../lib/date.helpers";
 import { DateRangeImpl } from "../lib/date-range";
-import type { DurationGroup } from "../types";
+import { calculateEndDate } from "../lib/utils";
 import type { DataModel } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 
@@ -131,7 +131,7 @@ export const checkSeatAvailability = query({
   args: {
     seatId: v.id("seats"),
     startDate: v.string(),
-    durationType: v.string(),
+    planKey: v.string(),
   },
   handler: async (ctx, args) => {
     const seat = await ctx.db.get(args.seatId);
@@ -139,14 +139,23 @@ export const checkSeatAvailability = query({
       throw new Error(`Seat with ID ${args.seatId} not found`);
     }
 
-    if (!args.durationType) {
-      throw new Error("Duration type is required");
+    if (!args.planKey) {
+      throw new Error("Plan key is required");
+    }
+
+    const accessPlan = await ctx.db
+      .query("accessPlans")
+      .withIndex("plan_key", (q) => q.eq("key", args.planKey))
+      .first();
+
+    if (!accessPlan) {
+      throw new Error(`Access plan not found for key: ${args.planKey}`);
     }
 
     const endDate = pipe(
       DateParse.parse(args.startDate),
-      Option.flatMap((parsed_date) =>
-        DateRangeImpl.match(args.durationType as DurationGroup, parsed_date),
+      Option.map((parsed_date) =>
+        calculateEndDate(parsed_date, accessPlan.no_of_days),
       ),
       Option.getOrThrowWith(
         () => new Error("Invalid startDate. Provide a valid date"),

@@ -368,13 +368,14 @@ function useVisitCount({ userId }: { userId: string }) {
   return Option.fromNullable(response);
 }
 
-export function CustomerAvatar({
-  userId,
-  className = "w-8 h-8",
-}: {
+type CustomerAvatarProps = {
   userId: string;
   className?: string;
-}) {
+};
+
+export function CustomerAvatar(props: CustomerAvatarProps) {
+  const { userId, className = "w-8 h-8" } = props;
+
   const user = useCustomer({ userId }) ?? { firstName: "", lastName: "" };
 
   return (
@@ -389,15 +390,19 @@ export function CustomerAvatar({
   );
 }
 
-export function RegisteredUserEntry({
-  entry,
-  onSelect,
-}: {
-  entry: Partial<DailyRegisterEntry> & { userId: string; timestamp: string };
-  onSelect?: (
-    entry: Partial<DailyRegisterEntry> & { userId: string; timestamp: string },
-  ) => void;
-}) {
+type RegisterEntry = Partial<DailyRegisterEntry> & {
+  userId: string;
+  timestamp: string;
+};
+
+type RegisterUserEntryProps = {
+  entry: RegisterEntry;
+  onSelect?: (entry: RegisterEntry) => void;
+};
+
+export function RegisteredUserEntry(props: RegisterUserEntryProps) {
+  const { entry, onSelect } = props;
+
   const user = useCustomer({ userId: entry.userId }) ?? {
     firstName: "",
     lastName: "",
@@ -639,12 +644,14 @@ export function RegisteredUserEntry({
   );
 }
 
-function AccessTypeButton(props: {
+type AccessTypeButtonProps = {
   id: string;
   size: "compact" | "full";
   disabled?: boolean;
   value?: Pick<AccessStruct, "kind">;
-}) {
+};
+
+function AccessTypeButton(props: AccessTypeButtonProps) {
   const { id, size = "full", value: _value } = props;
 
   const value = _value ?? { kind: "none" };
@@ -688,11 +695,13 @@ function AccessTypeButton(props: {
   );
 }
 
-function PaymentTypeToggle(props: {
+type PaymentTypeToggleProps = {
   id: string;
   value?: "bank_transfer" | "cash";
   disabled?: boolean;
-}) {
+};
+
+function PaymentTypeToggle(props: PaymentTypeToggleProps) {
   const { id, value } = props;
   const changePlan = useMutation(api.register.updateTodaysRegisterAccess);
 
@@ -735,15 +744,14 @@ const variants = {
   visible: { marginLeft: "0%", transition: { duration: 0.2 } },
 };
 
-function PlanTypeToggle({
-  userId: id,
-  value,
-  disabled,
-}: {
+type PlanTypeToggleProps = {
   userId: string;
-  value: AccessStruct | undefined;
   disabled?: boolean;
-}) {
+  value: AccessStruct | undefined;
+};
+
+function PlanTypeToggle(props: PlanTypeToggleProps) {
+  const { userId: id, value, disabled } = props;
   const [showDialog, setShowDialog] = React.useState(false);
 
   const changePlan = useMutation(api.register.updateTodaysRegisterAccess);

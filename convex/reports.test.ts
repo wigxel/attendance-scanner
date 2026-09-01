@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
+import { endOfDay, format, startOfDay } from "date-fns";
 import { describe, expect, it } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -107,24 +108,108 @@ describe("reports getDaily", () => {
   it("calculates sales using accessPlans when available", async () => {
     const t = convexTest(schema, modules);
 
+    const today = new Date();
+    const todayStr = format(today, "yyyy/MM/dd");
+
     await t.run(async (ctx) => {
       await ctx.db.insert("accessPlans", {
         key: "daily",
         name: "Daily Pass",
-        price: 10000,
+        price: 5000,
+        no_of_days: 1,
+        description: "One day access",
+        features: [],
+      });
+      await ctx.db.insert("accessPlans", {
+        key: "monthly",
+        name: "Monthly Pass",
+        price: 30000,
         no_of_days: 30,
-        description: "Monthly pass billed daily",
-        features: ["access"],
+        description: "30 day access",
+        features: [],
+      });
+
+      // user-1: daily plan, cash
+      await ctx.db.insert("bookings", {
+        userId: "user-1",
+        seatIds: [],
+        duration: 1,
+        startDate: startOfDay(today).toISOString(),
+        endDate: endOfDay(today).toISOString(),
+        durationType: "day",
+        pricePerSeat: 5000,
+        amount: 5000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
       await ctx.db.insert("daily_register", {
         userId: "user-1",
-        timestamp: "2024-01-01T10:00:00.000Z",
+        timestamp: startOfDay(today).toISOString(),
         source: "web",
         device: makeDevice(),
         access: {
           kind: "paid",
           planId: "daily",
-          amountInKobo: 10000,
+          amountInKobo: 5000,
+          paymentMethod: "cash",
+          _v: "2",
+        },
+        admitted_by: "staff-1",
+      });
+
+      // user-2: monthly plan, bank_transfer
+      await ctx.db.insert("bookings", {
+        userId: "user-2",
+        seatIds: [],
+        duration: 30,
+        startDate: startOfDay(today).toISOString(),
+        endDate: endOfDay(today).toISOString(),
+        durationType: "month",
+        pricePerSeat: 30000,
+        amount: 30000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("daily_register", {
+        userId: "user-2",
+        timestamp: startOfDay(today).toISOString(),
+        source: "web",
+        device: makeDevice("visitor-2"),
+        access: {
+          kind: "paid",
+          planId: "monthly",
+          amountInKobo: 30000,
+          paymentMethod: "bank_transfer",
+          _v: "2",
+        },
+        admitted_by: "staff-1",
+      });
+
+      // user-3: daily plan, cash (second daily visitor)
+      await ctx.db.insert("bookings", {
+        userId: "user-3",
+        seatIds: [],
+        duration: 1,
+        startDate: startOfDay(today).toISOString(),
+        endDate: endOfDay(today).toISOString(),
+        durationType: "day",
+        pricePerSeat: 5000,
+        amount: 5000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("daily_register", {
+        userId: "user-3",
+        timestamp: startOfDay(today).toISOString(),
+        source: "web",
+        device: makeDevice("visitor-3"),
+        access: {
+          kind: "paid",
+          planId: "daily",
+          amountInKobo: 5000,
           paymentMethod: "cash",
           _v: "2",
         },
@@ -133,12 +218,14 @@ describe("reports getDaily", () => {
     });
 
     const result = await t.query(api.reports.getDaily, {
-      date: "2024/01/01",
+      date: todayStr,
     });
 
-    expect(result.dailyReport.total_sales).toBeCloseTo(10000 / 30);
-    expect(result.dailyReport.cash_sales).toBeCloseTo(10000 / 30);
-    expect(result.dailyReport.transfer_sales).toBe(0);
+    expect(result.dailyReport.no_of_customers).toBe(3);
+    expect(result.dailyReport.no_of_paid_customers).toBe(3);
+    expect(result.dailyReport.total_sales).toBe(11000);
+    expect(result.dailyReport.cash_sales).toBe(10000);
+    expect(result.dailyReport.transfer_sales).toBe(1000);
   });
 
   it("returns 0 sales when no matching accessPlan exists", async () => {

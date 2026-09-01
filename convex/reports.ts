@@ -11,10 +11,10 @@ import { query } from "./_generated/server";
 import { type AccessDuration, type AccessStruct, PlanImpl } from "./shared";
 
 type CalcProps = {
-  access: AccessStruct,
-  planKey: PlanKey,
-  planMap: Map<string, Doc<"accessPlans">>,
-}
+  access: AccessStruct;
+  planKey: PlanKey;
+  planMap: Map<string, Doc<"accessPlans">>;
+};
 
 function calcFee(params: CalcProps): number {
   const { access, planKey, planMap } = params;
@@ -73,7 +73,10 @@ export const getDaily = query({
     let weeklySubscribers = 0;
     const reservationCache = new Map<string, BookingCheck | null>();
 
-    const extractCount = (booking: BookingCheckV1 | undefined, reg: typeof registers[0]) => {
+    const extractCount = (
+      booking: BookingCheckV1 | undefined,
+      reg: (typeof registers)[0],
+    ) => {
       const accessRecord = reg.access as AccessStruct;
 
       let weeklySubscribers = 0,
@@ -81,13 +84,15 @@ export const getDaily = query({
         cashSales = 0,
         totalSales = 0;
 
-
       const planKey = booking
         ? PlanKeyManager.mapPlanKey(booking.durationType)
-        // @ts-expect-error legacy code. Delete soon
-        : PlanKeyManager.mapPlanKey(accessRecord.planId) ?? accessRecord?.planId;
+        : PlanImpl.match(accessRecord, {
+          none: () => "" as const,
+          free: () => "" as const,
+          paid: (access) => PlanKeyManager.mapPlanKey(access.planId),
+        });
 
-      const fee = calcFee({ access: accessRecord, planKey, planMap });
+      const fee = planKey === "" ? 0 : calcFee({ access: accessRecord, planKey, planMap });
 
       totalSales += fee;
 
@@ -101,8 +106,8 @@ export const getDaily = query({
         weeklySubscribers++;
       }
 
-      return { weeklySubscribers, cashSales, transferSales, totalSales }
-    }
+      return { weeklySubscribers, cashSales, transferSales, totalSales };
+    };
 
     for (const reg of registers) {
       uniqueUsers.add(reg.userId);
@@ -111,19 +116,15 @@ export const getDaily = query({
         uniquePaidUsers.add(reg.userId);
 
         if (!reservationCache.has(reg.userId)) {
-          const res = await ctx.runQuery(
-            api.bookings.getUserActiveBookings,
-            {
-              userId: reg.userId,
-            },
-          );
+          const res = await ctx.runQuery(api.bookings.getUserActiveBookings, {
+            userId: reg.userId,
+          });
 
           if (res) {
             reservationCache.set(reg.userId, res);
           }
         }
         const reservation = reservationCache.get(reg.userId);
-
 
         console.log("Reservation", reservation);
 

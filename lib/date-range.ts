@@ -93,12 +93,11 @@ export const PlanKeyManager = {
     );
 
     return DURATION_TYPE_TO_PLAN_KEY[safe_key] as PlanKey;
-  }
+  },
 };
 
-
 export const DurationGroupImpl = {
-  valids: new Set(['day', 'week', 'month']),
+  valids: new Set(["day", "week", "month"]),
 
   resolveFromDays: (noOfDays: number) => {
     if (noOfDays > 0 && noOfDays <= 5) return "day";
@@ -106,5 +105,5 @@ export const DurationGroupImpl = {
     if (noOfDays >= 24 && noOfDays < 365) return "month";
 
     throw new Error("No of Days must be greater than 0");
-  }
-}
+  },
+};

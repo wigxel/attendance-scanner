@@ -913,7 +913,7 @@ describe("createBooking", () => {
           userId: "user-1",
           seatIds: [],
           startDate: futureStr(1),
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow();
     });
@@ -952,7 +952,7 @@ describe("createBooking", () => {
         userId: "user-1",
         seatIds: [seat] as any,
         startDate: futureStr(1),
-        durationType: "day",
+        planKey: "daily",
       });
 
       expect(result.bookingIds).toHaveLength(1);
@@ -993,7 +993,7 @@ describe("createBooking", () => {
           userId: "user-noemail",
           seatIds: [],
           startDate: futureStr(1),
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("email address");
     });
@@ -1018,7 +1018,7 @@ describe("createBooking", () => {
           userId: "user-1",
           seatIds: [],
           startDate: futureStr(1),
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("Access plan not found");
     });
@@ -1052,7 +1052,7 @@ describe("createBooking", () => {
           userId: "user-1",
           seatIds: [],
           startDate: pastStr(1),
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("past dates");
     });
@@ -1086,7 +1086,7 @@ describe("createBooking", () => {
           userId: "user-1",
           seatIds: [],
           startDate: futureStr(1),
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("No seats selected");
     });
@@ -1125,7 +1125,7 @@ describe("createBooking", () => {
         userId: "user-1",
         seatIds: [seat] as any,
         startDate: futureStr(1),
-        durationType: "full_month",
+        planKey: "calendar_month",
       });
 
       expect(result.bookingIds).toHaveLength(1);
@@ -1133,7 +1133,7 @@ describe("createBooking", () => {
       expect(result.amount).toBe(2000000);
 
       const booking = await ctx.db.get(result.bookingIds[0]);
-      expect(booking?.durationType).toBe("full_month");
+      expect(booking?.durationType).toBe("month");
       expect(booking?.duration).toBe(31);
     });
   });
@@ -1158,7 +1158,7 @@ describe("createBooking", () => {
           userId: "ghost",
           seatIds: [],
           startDate: futureStr(1),
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("User profile not found");
     });
@@ -1198,7 +1198,7 @@ describe("createBooking", () => {
           userId: "user-1",
           seatIds: [seat] as any,
           startDate: futureStr(1),
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("non-negative");
     });
@@ -1238,7 +1238,7 @@ describe("createBooking", () => {
           userId: "user-1",
           seatIds: [seat] as any,
           startDate: futureStr(1),
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("Invalid date range");
     });
@@ -1281,7 +1281,7 @@ describe("createBooking", () => {
           userId: "user-1",
           seatIds: [seat] as any,
           startDate: sunday,
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("Cannot book on Sundays");
     });
@@ -1341,7 +1341,7 @@ describe("createBooking", () => {
           userId: "user-1",
           seatIds: [seat] as any,
           startDate: futureStr(1),
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("not available");
     });
@@ -1374,7 +1374,7 @@ describe("updateBooking", () => {
           bookingId,
           startDate: futureStr(1),
           seatIds: [],
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow();
     });
@@ -1385,6 +1385,15 @@ describe("updateBooking", () => {
 
     await t.run(async (ctx) => {
       const authed = t.withIdentity({ profile_id: "user-1" });
+
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Day Pass",
+        price: 1500,
+        no_of_days: 1,
+        description: "One day access",
+        features: [],
+      });
 
       const fakeId = await ctx.db.insert("bookings", {
         userId: "user-1",
@@ -1406,7 +1415,7 @@ describe("updateBooking", () => {
           bookingId: fakeId,
           startDate: futureStr(1),
           seatIds: [],
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("Booking not found");
     });
@@ -1417,6 +1426,15 @@ describe("updateBooking", () => {
 
     await t.run(async (ctx) => {
       const authed = t.withIdentity({ profile_id: "other-user" });
+
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Day Pass",
+        price: 1500,
+        no_of_days: 1,
+        description: "One day access",
+        features: [],
+      });
 
       const bookingId = await ctx.db.insert("bookings", {
         userId: "user-1",
@@ -1437,7 +1455,7 @@ describe("updateBooking", () => {
           bookingId,
           startDate: futureStr(1),
           seatIds: [],
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("not authorized");
     });
@@ -1468,7 +1486,7 @@ describe("updateBooking", () => {
           bookingId,
           startDate: futureStr(1),
           seatIds: [],
-          durationType: "day",
+          planKey: "daily",
         }),
       ).rejects.toThrow("Only pending bookings can be updated");
     });
@@ -1513,7 +1531,7 @@ describe("updateBooking", () => {
         bookingId,
         startDate: futureStr(5),
         seatIds: [seat] as any,
-        durationType: "week",
+        planKey: "weekly",
       });
 
       expect(result.success).toBe(true);

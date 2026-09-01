@@ -9,10 +9,10 @@ import { readId } from "./myFunctions";
 export const getByKey = query({
   args: { planKey: v.string() },
   handler: async (ctx, { planKey }): Promise<AccessPlan | null> => {
-    return await ctx.db
+    return (await ctx.db
       .query("accessPlans")
       .withIndex("plan_key", (q) => q.eq("key", planKey))
-      .first() as AccessPlan | null
+      .first()) as AccessPlan | null;
   },
 });
 

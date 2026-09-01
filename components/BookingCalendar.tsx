@@ -66,6 +66,8 @@ const BookingCalendar = () => {
     selectedDate,
     handleDateChange,
     timePeriodString,
+    planKey,
+    reservablePlans,
     handleTimePeriodChange,
     handleProceed,
   } = useBookingCalendarLogic();
@@ -103,18 +105,16 @@ const BookingCalendar = () => {
         <p className="font-normal text-sm text-gray-900">Reservation Period</p>
 
         {selectedDate && (
-          <Select
-            value={timePeriodString}
-            onValueChange={handleTimePeriodChange}
-          >
+          <Select value={planKey ?? ""} onValueChange={handleTimePeriodChange}>
             <SelectTrigger className="w-full bg-white cursor-pointer">
               <SelectValue placeholder="Select time period" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="day">Day</SelectItem>
-              <SelectItem value="week">Week</SelectItem>
-              <SelectItem value="month">Month</SelectItem>
-              <SelectItem value="calendar_month">Calendar Month</SelectItem>
+              {reservablePlans.map((plan) => (
+                <SelectItem key={plan.key} value={plan.key}>
+                  {plan.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         )}

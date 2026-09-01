@@ -92,16 +92,15 @@ export const selfCheckIn = mutation({
       browser: args.browser ?? "unknown",
     };
 
-    const reservation = await ctx.runQuery(
-      api.bookings.getUserActiveBookings,
-      { userId },
-    );
+    const reservation = await ctx.runQuery(api.bookings.getUserActiveBookings, {
+      userId,
+    });
 
     if (reservation) {
       await processReservationCheckIn(ctx, {
         userId,
         device,
-        admittedBy
+        admittedBy,
       });
       return;
     }

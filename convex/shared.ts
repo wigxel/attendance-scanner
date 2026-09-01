@@ -7,7 +7,14 @@ import { z } from "zod";
 import { safeObj } from "../lib/data.helpers";
 import { DurationGroupImpl } from "../lib/date-range";
 import { O } from "../lib/fp.helpers";
-import type { AccessPlan, Booking, Kobo, Naira, PlanKey, TaggedBooking } from "../types";
+import type {
+  AccessPlan,
+  Booking,
+  Kobo,
+  Naira,
+  PlanKey,
+  TaggedBooking,
+} from "../types";
 import type { DataModel, Doc } from "./_generated/dataModel";
 
 export const featureRequestStatus = v.union(
@@ -83,10 +90,10 @@ export const PlanImpl = {
     db: TDB,
     plan_string: string,
   ): Promise<AccessPlan> {
-    const plan = await db
+    const plan = (await db
       .query("accessPlans")
       .withIndex("plan_key", (gt) => gt.eq("key", plan_string))
-      .first() as AccessPlan | null
+      .first()) as AccessPlan | null;
 
     if (!plan) {
       throw new Error(
@@ -129,13 +136,17 @@ export const PlanImpl = {
           duration: { type: "fullday" }, // important! the least booking we have is a fullday
           amountInKobo: booking.pricePerSeat / booking.duration,
           paymentMethod: "bank_transfer",
-        }
+        };
       }),
       Match.when({ _v: "booking_v1" }, (booking): AccessPaidV2 => {
-        const durationGroup = DurationGroupImpl.resolveFromDays(booking.duration);
+        const durationGroup = DurationGroupImpl.resolveFromDays(
+          booking.duration,
+        );
 
         if (!DurationGroupImpl.valids.has(durationGroup)) {
-          throw new ConvexError(`Invalid booking duration group: ${durationGroup}`);
+          throw new ConvexError(
+            `Invalid booking duration group: ${durationGroup}`,
+          );
         }
 
         return {
@@ -145,12 +156,12 @@ export const PlanImpl = {
           duration: { type: "fullday" }, // important! the least booking we have is a fullday
           amountInKobo: +BookImpl.costPerSeat(booking).value,
           paymentMethod: "bank_transfer",
-        }
+        };
       }),
       Match.orElse(() => {
         throw new ConvexError(`Invalid booking version`);
-      })
-    )
+      }),
+    );
 
     return matcher(BookImpl.normalize(booking));
   },
@@ -239,7 +250,9 @@ export const PlanImpl = {
   },
 
   amount(access: AccessStruct): Kobo {
-    const invalidAmountError = new Error("Failed to resolve amount. Invalid access struct")
+    const invalidAmountError = new Error(
+      "Failed to resolve amount. Invalid access struct",
+    );
 
     const duration = PlanImpl.duration(access);
 
@@ -248,20 +261,27 @@ export const PlanImpl = {
       Match.when({ planId: "hourly" }, (record) => {
         return pipe(
           duration,
-          O.flatMap((dur) => dur.type === "hourly" ? Numer.parse(dur.value.toString()) : O.none()),
+          O.flatMap((dur) =>
+            dur.type === "hourly"
+              ? Numer.parse(dur.value.toString())
+              : O.none(),
+          ),
           O.map((hours) => {
             return CurrencyImpl.kobo(record.amountInKobo * hours);
           }),
           O.getOrThrowWith(() => new PlanError("Duration must be present")),
         );
       }),
-      Match.when({ planId: Match.nonEmptyString, amountInKobo: Match.number }, (record) => {
-        return CurrencyImpl.kobo(record.amountInKobo);
-      }),
+      Match.when(
+        { planId: Match.nonEmptyString, amountInKobo: Match.number },
+        (record) => {
+          return CurrencyImpl.kobo(record.amountInKobo);
+        },
+      ),
       Match.orElse(() => {
-        throw invalidAmountError
+        throw invalidAmountError;
       }),
-    )
+    );
 
     const resolveAmount = (record: AccessPaidV1 | AccessPaidV2) => {
       return pipe(
@@ -271,10 +291,10 @@ export const PlanImpl = {
           CurrencyImpl.nairaToKobo(record.amount),
         ),
         Match.orElse(() => {
-          throw invalidAmountError
-        })
+          throw invalidAmountError;
+        }),
       );
-    }
+    };
 
     return PlanImpl.match(access, {
       none: () => CurrencyImpl.empty,
@@ -379,7 +399,7 @@ const CurrencyImpl = {
   empty: {
     currency: "naira",
     denomination: "kobo",
-    value: "0"
+    value: "0",
   } satisfies Kobo,
 
   kobo(amount: number): Kobo {
@@ -397,10 +417,10 @@ const CurrencyImpl = {
 
   nairaToKobo(amount: number): Kobo {
     return {
-      currency: 'naira',
+      currency: "naira",
       denomination: "kobo",
-      value: String(amount * 100)
-    }
+      value: String(amount * 100),
+    };
   },
 
   koboToNaira(amount: number): Naira {
@@ -419,11 +439,11 @@ const CurrencyImpl = {
         O.all([Numer.parse(a.value), Numer.parse(b.value)]),
         O.map(Numer.sumAll),
         O.map(String),
-        O.getOrThrow
+        O.getOrThrow,
       ),
     };
   },
-}
+};
 
 export const BookImpl = {
   normalize(booking: Booking): TaggedBooking {
@@ -431,7 +451,7 @@ export const BookImpl = {
 
     const safeBooking = safeObj(booking);
 
-    if ('planKey' in safeBooking && safeBooking.planKey) {
+    if ("planKey" in safeBooking && safeBooking.planKey) {
       return {
         _v: "booking_v2",
         ...safeBooking,
@@ -449,5 +469,5 @@ export const BookImpl = {
 
   costPerSeat(booking: TaggedBooking): Kobo {
     return CurrencyImpl.kobo(booking.pricePerSeat / booking.duration);
-  }
-}
+  },
+};

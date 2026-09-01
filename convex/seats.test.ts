@@ -428,7 +428,7 @@ describe("checkSeatAvailability", () => {
       t.query(api.seats.checkSeatAvailability, {
         seatId: fakeId,
         startDate: todayStr(),
-        durationType: "day",
+        planKey: "daily",
       }),
     ).rejects.toThrow();
   });

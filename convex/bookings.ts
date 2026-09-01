@@ -11,14 +11,15 @@ import {
   subWeeks,
 } from "date-fns";
 import { Match } from "effect";
-import {
-  DateRangeImpl,
-  DurationGroupImpl,
-  PlanKeyManager,
-} from "../lib/date-range";
+import { DateRangeImpl, DurationGroupImpl } from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
 import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
-import type { AccessPlan, Booking, BookingCheck, BookingWithDetails } from "../types";
+import type {
+  AccessPlan,
+  Booking,
+  BookingCheck,
+  BookingWithDetails,
+} from "../types";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
@@ -32,7 +33,7 @@ import {
   getAvailableSeatsForDay,
   getUnassignedTicketsForDay,
 } from "./seatOrchestrator";
-import { BookImpl, durationTypeConvexSchema } from "./shared";
+import { BookImpl } from "./shared";
 
 export const getBooking = query({
   args: {
@@ -51,7 +52,9 @@ export const systemGetBooking = query({
     bookingId: v.id("bookings"),
   },
   handler: async (ctx, { bookingId }): Promise<Booking> => {
-    return await ctx.runQuery(api.bookings.getDetails, { bookingId }) as Booking
+    return (await ctx.runQuery(api.bookings.getDetails, {
+      bookingId,
+    })) as Booking;
   },
 });
 
@@ -78,9 +81,9 @@ export const getDetails = query({
       booking.created_by === "system" || booking.created_by === undefined
         ? Promise.resolve("Booking system")
         : ctx.db
-          .get(booking.created_by as Id<"users">)
-          .then((e) => e?.name ?? "Anonymous")
-          .catch(() => "--"),
+            .get(booking.created_by as Id<"users">)
+            .then((e) => e?.name ?? "Anonymous")
+            .catch(() => "--"),
       ctx.db
         .query("accessPlans")
         .filter((q) => q.eq(q.field("no_of_days"), booking.duration))
@@ -94,14 +97,14 @@ export const getDetails = query({
       seats: seats.filter((seat) => seat !== null),
       user: user
         ? {
-          id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          email: user.email,
-        }
+            id: user.id,
+            name: `${user.firstName} ${user.lastName}`,
+            email: user.email,
+          }
         : {
-          name: "Anonymous User",
-          email: "--",
-        },
+            name: "Anonymous User",
+            email: "--",
+          },
     };
   },
 });
@@ -153,7 +156,7 @@ export const createBooking = mutation({
     userId: v.string(),
     seatIds: v.array(v.id("seats")),
     startDate: v.string(),
-    durationType: durationTypeConvexSchema,
+    planKey: v.string(),
   },
   handler: async (ctx, args) => {
     // Get current user from Clerk
@@ -176,20 +179,15 @@ export const createBooking = mutation({
     const userEmail: string = profile.email;
     const userName: string = `${profile.firstName} ${profile.lastName}`;
 
-    if (!args.durationType) throw new ConvexError("Duration type is required");
-
-    const planKey = PlanKeyManager.mapPlanKey(args.durationType);
     const accessPlan: AccessPlan | null = await ctx.runQuery(
       api.accessPlans.getByKey,
       {
-        planKey,
+        planKey: args.planKey,
       },
     );
 
     if (!accessPlan) {
-      throw new ConvexError(
-        `Access plan not found for type: ${args.durationType}`,
-      );
+      throw new ConvexError(`Access plan not found for type: ${args.planKey}`);
     }
 
     const planDuration: number = accessPlan.no_of_days;
@@ -253,7 +251,7 @@ export const createBooking = mutation({
     const now = Date.now();
     const amount = pricePerSeat * args.seatIds.length; // price per seat multiplied by number of seats
 
-    const bookingId: Id<'bookings'> = await ctx.db.insert("bookings", {
+    const bookingId: Id<"bookings"> = await ctx.db.insert("bookings", {
       userId,
       seatIds: args.seatIds,
       duration: planDuration,
@@ -293,7 +291,7 @@ export const updateBooking = mutation({
     bookingId: v.id("bookings"),
     startDate: v.string(),
     seatIds: v.array(v.id("seats")),
-    durationType: durationTypeConvexSchema,
+    planKey: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await readId(ctx);
@@ -317,17 +315,14 @@ export const updateBooking = mutation({
       throw new ConvexError("Only pending bookings can be updated.");
     }
 
-    if (!args.durationType) throw new ConvexError("Duration type is required");
+    if (!args.planKey) throw new ConvexError("Plan key is required");
 
-    const planKey = PlanKeyManager.mapPlanKey(args.durationType);
     const accessPlan = await ctx.runQuery(api.accessPlans.getByKey, {
-      planKey,
+      planKey: args.planKey,
     });
 
     if (!accessPlan) {
-      throw new ConvexError(
-        `Access plan not found for type: ${args.durationType}`,
-      );
+      throw new ConvexError(`Access plan not found for key: ${args.planKey}`);
     }
 
     const duration = accessPlan.no_of_days;
@@ -336,13 +331,13 @@ export const updateBooking = mutation({
       calculateEndDate(new Date(args.startDate), duration),
     );
 
-    const amount = pricePerSeat * args.seatIds.length; // price per seat multiplied by number of seats
+    const amount = pricePerSeat * args.seatIds.length;
 
     await ctx.db.patch(args.bookingId, {
       startDate: args.startDate,
       endDate,
       seatIds: args.seatIds,
-      durationType: args.durationType,
+      durationType: DurationGroupImpl.resolveFromDays(duration),
       duration,
       pricePerSeat,
       amount,
@@ -531,7 +526,7 @@ export const systemActionConfirmBooking = mutation({
     bookingId: v.id("bookings"),
   },
   handler: async (ctx, args) => {
-    const booking = await ctx.db.get(args.bookingId) as Booking | null;
+    const booking = (await ctx.db.get(args.bookingId)) as Booking | null;
     if (!booking) throw new ConvexError("Booking not found");
 
     // Verify all seats exist
@@ -1068,7 +1063,7 @@ export const claimTicket = mutation({
       claimedAt: Date.now(),
     });
 
-    const booking = await ctx.db.get(ticket.bookingId) as Booking | null;
+    const booking = (await ctx.db.get(ticket.bookingId)) as Booking | null;
 
     if (booking) {
       await updateTodaysRegisterForSubscriber(ctx, {
@@ -1109,14 +1104,14 @@ export const getAllBookings = query({
           seats: seats.filter((seat) => seat !== null), // filter out any null values
           user: user
             ? {
-              id: user.id,
-              name: `${user.firstName} ${user.lastName}`,
-              email: user.email,
-            }
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+              }
             : {
-              name: "Anonymous User",
-              email: "--",
-            },
+                name: "Anonymous User",
+                email: "--",
+              },
         };
       }),
     );
@@ -1171,12 +1166,9 @@ export const createManualBooking = mutation({
 
     if (!profile) throw new ConvexError("Customer not found");
 
-    const plan = await ctx.runQuery(
-      api.accessPlans.getByKey,
-      {
-        planKey,
-      },
-    ) as AccessPlan | null
+    const plan = (await ctx.runQuery(api.accessPlans.getByKey, {
+      planKey,
+    })) as AccessPlan | null;
 
     if (plan == null) {
       throw new ConvexError("Invalid plan");
@@ -1284,9 +1276,7 @@ export const createManualBooking = mutation({
       },
     );
 
-    const createdBooking = (await ctx.db.get(
-      bookingId,
-    )) as Booking | null;
+    const createdBooking = (await ctx.db.get(bookingId)) as Booking | null;
 
     if (createdBooking) {
       await updateTodaysRegisterForSubscriber(ctx, {
@@ -1393,15 +1383,15 @@ export const list = query({
           planName: plan?.name ?? `${booking.duration} days`,
           user: user
             ? {
-              id: user.id,
-              name: `${user.firstName} ${user.lastName}`,
-              email: user.email,
-            }
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+              }
             : {
-              id: booking.userId,
-              name: "Anonymous User",
-              email: null,
-            },
+                id: booking.userId,
+                name: "Anonymous User",
+                email: null,
+              },
         };
       }),
     );
@@ -1510,29 +1500,32 @@ export const deleteExport = internalAction({
 export const getUserActiveBookings = query({
   args: { userId: v.string() },
   handler: async (ctx, args): Promise<BookingCheck | null> => {
-    const bookings = await ctx.db
+    const bookings = (await ctx.db
       .query("bookings")
       .withIndex("user_id", (q) => q.eq("userId", args.userId))
       .filter((q) => q.eq(q.field("status"), "confirmed"))
-      .collect() as Booking[];
+      .collect()) as Booking[];
 
     const matcher = pipe(
       BookImpl.match,
-      Match.when({ _v: "booking_v2", planKey: Match.defined }, (booking): BookingCheck => {
-        return {
-          _v: "booking_check_v2",
-          bookingId: booking._id,
-          planKey: booking.planKey,
-          duration: booking.duration,
-        }
-      }),
+      Match.when(
+        { _v: "booking_v2", planKey: Match.defined },
+        (booking): BookingCheck => {
+          return {
+            _v: "booking_check_v2",
+            bookingId: booking._id,
+            planKey: booking.planKey,
+            duration: booking.duration,
+          };
+        },
+      ),
       Match.when(Match.record, (booking): BookingCheck => {
         return {
           _v: "booking_check_v1",
           bookingId: booking._id,
           durationType: booking.durationType,
-          duration: booking.duration
-        }
+          duration: booking.duration,
+        };
       }),
       Match.orElse(() => null),
     );

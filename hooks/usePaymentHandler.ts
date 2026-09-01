@@ -21,13 +21,8 @@ interface PaystackResponse {
 }
 
 export const usePaymentHandler = () => {
-  const {
-    selectedSeatIds,
-    selectedSeatNumbers,
-    price,
-    timePeriodString,
-    bookingId,
-  } = useBookingStore();
+  const { selectedSeatIds, selectedSeatNumbers, price, planKey, bookingId } =
+    useBookingStore();
   const selectedDateString = useBookingStore((state) => state.selectedDate);
   const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
   const endDateString = useBookingStore((state) => state.endDate);
@@ -73,30 +68,6 @@ export const usePaymentHandler = () => {
     }
   };
 
-  /*
-  const handleCancelBooking = async (bookingIdToCancel: Id<"bookings">) => {
-    try {
-      const token = await getToken({ template: "convex" });
-      if (!token) {
-        setPaymentMessage("Authentication error. Please log in again.");
-        setPaymentStatus("failed");
-        return;
-      }
-
-      httpClient.setAuth(token);
-      await httpClient.mutation(api.bookings.cancelBooking, {
-        bookingId: bookingIdToCancel,
-      });
-
-      setPaymentStatus("failed");
-      setPaymentMessage("Booking cancelled!");
-    } catch (error) {
-      setPaymentStatus("failed");
-      setPaymentMessage("Booking cancellation failed.");
-      console.error("Booking cancellation failed:", error);
-    }
-  };
- */
   const handlePayment = async () => {
     try {
       setPaymentLoading(true);
@@ -123,7 +94,7 @@ export const usePaymentHandler = () => {
         return;
       }
 
-      if (!timePeriodString) {
+      if (!planKey) {
         setPaymentStatus("pending");
         setPaymentMessage("Please select a time period.");
         setPaymentLoading(false);
@@ -147,7 +118,7 @@ export const usePaymentHandler = () => {
           {
             seatId,
             startDate: formatDateToLocalISO(selectedDate) || "",
-            durationType: timePeriodString,
+            planKey: planKey,
           },
         );
 
@@ -178,7 +149,7 @@ export const usePaymentHandler = () => {
             userId: user?.id || "",
             startDate: formatDateToLocalISO(selectedDate) || "",
             seatIds: selectedSeatIds,
-            durationType: timePeriodString,
+            planKey: planKey,
           };
 
           const createBooking = await httpClient.mutation(
@@ -204,7 +175,7 @@ export const usePaymentHandler = () => {
             bookingId,
             startDate: formatDateToLocalISO(selectedDate) || "",
             seatIds: selectedSeatIds,
-            durationType: timePeriodString,
+            planKey: planKey,
           });
         } else {
           // Booking is confirmed or cancelled, can't proceed
@@ -221,7 +192,7 @@ export const usePaymentHandler = () => {
           userId: user?.id || "",
           startDate: formatDateToLocalISO(selectedDate) || "",
           seatIds: selectedSeatIds,
-          durationType: timePeriodString,
+          planKey: planKey,
         };
 
         const createBooking = await httpClient.mutation(

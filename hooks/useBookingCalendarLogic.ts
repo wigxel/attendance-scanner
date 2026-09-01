@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   setEndDate,
+  setPlanKey,
   setPrice,
   setSelectedDate,
   setTimePeriodString,
@@ -10,31 +11,40 @@ import {
 } from "@/app/reserve/store";
 import { api } from "@/convex/_generated/api";
 import { safeArray, safeInt } from "@/lib/data.helpers";
+import { DurationGroupImpl } from "@/lib/date-range";
 import { anomaly } from "@/lib/error.helpers";
 import { calculateEndDate } from "@/lib/utils";
-import type { DurationGroup, KnownPlanKey } from "@/types";
+import type { AccessPlan } from "@/types/convex";
 
 export const useBookingCalendarLogic = () => {
   const router = useRouter();
-  const { timePeriodString } = useBookingStore();
+  const { timePeriodString, planKey } = useBookingStore();
   const selectedDateString = useBookingStore((state) => state.selectedDate);
   const selectedDate = selectedDateString ? new Date(selectedDateString) : null;
 
   const fullyBookedDates = useQuery(api.bookings.getFullyBookedDates);
-  const accessPlans = useQuery(api.accessPlans.list);
+  const accessPlans = useQuery(api.accessPlans.list) as
+    | AccessPlan[]
+    | undefined;
 
   if (!accessPlans) {
     return {
-      reserved: [],
+      reserved: [] as { startDate: Date; endDate: Date }[],
       selectedDate,
       setSelectedDate: () => {},
       handleDateChange: () => {},
       formatDate: () => "",
       timePeriodString,
+      planKey,
+      reservablePlans: [] as AccessPlan[],
       handleTimePeriodChange: () => {},
       handleProceed: () => {},
     };
   }
+
+  const reservablePlans = accessPlans.filter((p) =>
+    p.features.includes("booking"),
+  );
 
   const reserved: {
     startDate: Date;
@@ -57,8 +67,12 @@ export const useBookingCalendarLogic = () => {
     });
   };
 
-  const handleTimePeriodChange = (value: DurationGroup) => {
-    setTimePeriodString(value);
+  const handleTimePeriodChange = (key: string) => {
+    setPlanKey(key);
+    const plan = accessPlans.find((p) => p.key === key);
+    if (plan) {
+      setTimePeriodString(DurationGroupImpl.resolveFromDays(plan.no_of_days));
+    }
   };
 
   const handleDateChange = (dates: Date[]) => setSelectedDate(dates[0] || null);
@@ -72,10 +86,7 @@ export const useBookingCalendarLogic = () => {
       return toast.info("Please select another date. We're closed on Sundays");
     }
 
-    const getPlanByKey = (key: KnownPlanKey) =>
-      accessPlans?.find((plan) => plan.key === key);
-
-    const currentPlan = getPlanByKey(timePeriodString as KnownPlanKey);
+    const currentPlan = accessPlans.find((p) => p.key === planKey);
     const timePeriod = safeInt(currentPlan?.no_of_days, 0);
 
     if (!currentPlan) {
@@ -109,6 +120,8 @@ export const useBookingCalendarLogic = () => {
     handleDateChange,
     formatDate,
     timePeriodString,
+    planKey,
+    reservablePlans,
     handleTimePeriodChange,
     handleProceed,
   };

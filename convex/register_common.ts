@@ -73,18 +73,17 @@ export async function processReservationCheckIn(
     admittedBy: string;
   },
 ): Promise<void> {
-  const reservation = await ctx.runQuery(
-    api.bookings.getUserActiveBookings,
-    {
-      userId: params.userId,
-    },
-  );
+  const reservation = await ctx.runQuery(api.bookings.getUserActiveBookings, {
+    userId: params.userId,
+  });
 
   if (!reservation) {
     throw new ConvexError("No active reservation found.");
   }
 
-  const booking = await ctx.db.get(reservation.bookingId as Id<"bookings">) as Booking | null;
+  const booking = (await ctx.db.get(
+    reservation.bookingId as Id<"bookings">,
+  )) as Booking | null;
 
   if (!booking) {
     throw new ConvexError("Booking not found.");
@@ -116,7 +115,9 @@ export async function processReservationCheckIn(
   }
 
   if (!booking?.planKey) {
-    throw new ConvexError("Booking does not have a planKey. This is required since Aug. 30th, 2026");
+    throw new ConvexError(
+      "Booking does not have a planKey. This is required since Aug. 30th, 2026",
+    );
   }
 
   await insertRegisterAndAggregate(ctx, {
@@ -134,7 +135,7 @@ type RegisterFormSubscriberParam = {
   actorId: Id<"users"> | "system";
   ticketId: Id<"tickets">;
   userId: string;
-  booking: Booking
+  booking: Booking;
 };
 
 export async function updateTodaysRegisterForSubscriber(

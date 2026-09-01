@@ -11,6 +11,7 @@ export interface BookingState {
   price: number | null;
   selectedSeatNumbers: string[];
   selectedSeatIds: Id<"seats">[];
+  planKey: string | null;
   timePeriodString: DurationGroup;
   bookingId: Id<"bookings"> | null;
 }
@@ -25,6 +26,7 @@ export const useBookingStore = create<BookingState>()(
       selectedSeatNumbers: [],
       selectedSeatIds: [],
       timePeriodString: "day",
+      planKey: null,
       bookingId: null,
     }),
     {
@@ -96,6 +98,10 @@ export const setTimePeriodString = (
   useBookingStore.setState({ timePeriodString: period });
 };
 
+export const setPlanKey = (planKey: string | null) => {
+  useBookingStore.setState({ planKey });
+};
+
 export const setBookingId = (bookingId: BookingState["bookingId"]) => {
   useBookingStore.setState({ bookingId: bookingId });
 };
@@ -109,6 +115,7 @@ export const resetBookingState = () => {
     selectedSeatNumbers: [],
     selectedSeatIds: [],
     timePeriodString: "day",
+    planKey: null,
     bookingId: null,
   });
 };

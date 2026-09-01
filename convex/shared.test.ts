@@ -1,7 +1,7 @@
 import { Effect, Option } from "effect";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { Booking } from "../types";
+import type { Booking } from "../types";
 import { PlanImpl } from "./shared";
 
 const normalize = (value: unknown) =>
@@ -417,7 +417,7 @@ describe("PlanImpl.fromBooking", () => {
               durationType: dt,
               pricePerSeat: pps,
               duration: dur,
-            }
+            },
           });
           expect(result.amountInKobo).toBeGreaterThanOrEqual(0);
         }),
@@ -436,13 +436,13 @@ describe("PlanImpl.fromBooking", () => {
               booking: {
                 ...base,
                 pricePerSeat: pps,
-              }
+              },
             }).amountInKobo;
             const high = PlanImpl.fromBooking({
               booking: {
                 ...base,
                 pricePerSeat: pps * 2,
-              }
+              },
             }).amountInKobo;
             expect(high).toBe(low * 2);
           },
@@ -466,13 +466,13 @@ describe("PlanImpl.fromBooking", () => {
               booking: {
                 ...base,
                 duration: dur,
-              }
+              },
             }).amountInKobo;
             const long = PlanImpl.fromBooking({
               booking: {
                 ...base,
                 duration: dur * 2,
-              }
+              },
             }).amountInKobo;
             expect(long).toBe(short / 2);
           },
@@ -488,12 +488,12 @@ describe("PlanImpl.fromBooking", () => {
             durationType: dt,
             pricePerSeat: pps,
             duration: dur,
-          }
+          };
           const result = PlanImpl.fromBooking({ booking });
 
           expect(Number.isFinite(result.amountInKobo)).toBe(true);
         }),
-        { verbose: true }
+        { verbose: true },
       );
     });
   });
@@ -589,7 +589,11 @@ describe("PlanImpl.match", () => {
   it("should call free case for free access", () => {
     const result = PlanImpl.match(
       { kind: "free" },
-      { free: () => "free-val", paid: () => "paid-val", none: () => "none-val" },
+      {
+        free: () => "free-val",
+        paid: () => "paid-val",
+        none: () => "none-val",
+      },
     );
     expect(result).toBe("free-val");
   });
@@ -613,7 +617,11 @@ describe("PlanImpl.match", () => {
   it("should call none case for unknown kind", () => {
     const result = PlanImpl.match(
       { kind: "vip" },
-      { free: () => "free-val", paid: () => "paid-val", none: () => "none-val" },
+      {
+        free: () => "free-val",
+        paid: () => "paid-val",
+        none: () => "none-val",
+      },
     );
     expect(result).toBe("none-val");
   });
@@ -628,9 +636,11 @@ describe("PlanImpl.match", () => {
     };
     let received: unknown = null;
     PlanImpl.match(access, {
-      free: () => { },
-      paid: (a) => { received = a; },
-      none: () => { },
+      free: () => {},
+      paid: (a) => {
+        received = a;
+      },
+      none: () => {},
     });
     expect(received).toBe(access);
   });
@@ -718,7 +728,11 @@ describe("PlanImpl.toStruct", () => {
 describe("PlanImpl.amount", () => {
   it("should return zero kobo for free access", () => {
     const result = PlanImpl.amount({ kind: "free" });
-    expect(result).toEqual({ currency: "naira", denomination: "kobo", value: "0" });
+    expect(result).toEqual({
+      currency: "naira",
+      denomination: "kobo",
+      value: "0",
+    });
   });
 
   it("should convert v1 paid amount to kobo", () => {
@@ -782,6 +796,10 @@ describe("PlanImpl.amount", () => {
 
   it("should return zero kobo for unknown kind", () => {
     const result = PlanImpl.amount({ kind: "unknown" } as any);
-    expect(result).toEqual({ currency: "naira", denomination: "kobo", value: "0" });
+    expect(result).toEqual({
+      currency: "naira",
+      denomination: "kobo",
+      value: "0",
+    });
   });
 });
