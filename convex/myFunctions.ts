@@ -1,6 +1,10 @@
 import type { Profile, User } from "@auth/core/types";
 import { TableAggregate } from "@convex-dev/aggregate";
-import { type GenericQueryCtx, paginationOptsValidator } from "convex/server";
+import {
+  type GenericMutationCtx,
+  type GenericQueryCtx,
+  paginationOptsValidator,
+} from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { isNullable } from "effect/Predicate";
 import { z } from "zod";
@@ -46,6 +50,68 @@ export const setAccountExternalId = action({
   },
 });
 
+/**
+ * Finds the `users` record for `email`, creating it (and a matching `profile`)
+ * when it doesn't exist yet. Idempotent on email — a returning person resolves
+ * to the record they already have instead of gaining a duplicate.
+ *
+ * Shared by customer sign-up and staff-entered guest check-in.
+ */
+export async function findOrCreateUser(
+  ctx: GenericMutationCtx<DataModel>,
+  args: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+  },
+): Promise<Id<"users">> {
+  // if user exists
+  const user = await ctx.db
+    .query("users")
+    .filter((q) => q.eq(q.field("email"), args.email))
+    .unique();
+
+  if (user) {
+    return user._id;
+  }
+
+  const user_id = await ctx.db.insert("users", {
+    email: args.email,
+    emailVerificationTime: Date.now(),
+    phone: args.phone,
+    isAnonymous: false,
+    name: `${args.firstName} ${args.lastName}`,
+  });
+
+  const profile = await ctx.db
+    .query("profile")
+    .filter((q) => q.eq(q.field("email"), args.email))
+    .first();
+
+  if (profile) {
+    await ctx.db.patch(profile._id, {
+      id: user_id,
+    });
+  } else {
+    const newId = await ctx.db.insert("profile", {
+      id: user_id,
+      email: args.email,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      occupation: "None",
+      phoneNumber: args.phone,
+      role: "user",
+    });
+    const newProfile = await ctx.db.get(newId);
+    if (newProfile) {
+      await profileAggregate.insert(ctx, newProfile);
+    }
+  }
+
+  return user_id;
+}
+
 export const createUser = mutation({
   args: {
     email: v.string(),
@@ -54,50 +120,7 @@ export const createUser = mutation({
     phone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // if user exists
-    const user = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("email"), args.email))
-      .unique();
-
-    if (user) {
-      return user._id;
-    }
-
-    const user_id = await ctx.db.insert("users", {
-      email: args.email,
-      emailVerificationTime: Date.now(),
-      phone: args.phone,
-      isAnonymous: false,
-      name: `${args.firstName} ${args.lastName}`,
-    });
-
-    const profile = await ctx.db
-      .query("profile")
-      .filter((q) => q.eq(q.field("email"), args.email))
-      .first();
-
-    if (profile) {
-      await ctx.db.patch(profile._id, {
-        id: user_id,
-      });
-    } else {
-      const newId = await ctx.db.insert("profile", {
-        id: user_id,
-        email: args.email,
-        firstName: args.firstName,
-        lastName: args.lastName,
-        occupation: "None",
-        phoneNumber: args.phone,
-        role: "user",
-      });
-      const newProfile = await ctx.db.get(newId);
-      if (newProfile) {
-        await profileAggregate.insert(ctx, newProfile);
-      }
-    }
-
-    return user_id;
+    return await findOrCreateUser(ctx, args);
   },
 });
 
