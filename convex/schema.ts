@@ -211,7 +211,25 @@ const roomMetrics = defineTable({
   temperature: v.number(),
   humidity: v.number(),
   pressure: v.number(),
-});
+  timestamp: v.optional(v.number()),
+  roomId: v.optional(v.string()),
+  deviceId: v.optional(v.string()),
+})
+  .index("by_room", ["roomId"])
+  .index("by_timestamp", ["timestamp"])
+  .index("by_room_and_timestamp", ["roomId", "timestamp"]);
+
+const roomMetrics10m = defineTable({
+  roomId: v.string(),
+  bucketStart: v.number(),
+  avgTemperature: v.number(),
+  avgHumidity: v.number(),
+  avgPressure: v.number(),
+  count: v.number(),
+  updatedAt: v.number(),
+})
+  .index("by_room", ["roomId"])
+  .index("by_room_and_bucket", ["roomId", "bucketStart"]);
 
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
@@ -234,4 +252,5 @@ export default defineSchema({
   auditLog,
   ratings,
   roomMetrics,
+  roomMetrics10m,
 });
