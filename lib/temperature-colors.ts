@@ -9,7 +9,7 @@ export const getBucketIndex = (temperature: number): number => {
 };
 
 export const getColor = (temperature: number | null): string => {
-  if (temperature === null) return "var(--background)";
+  if (temperature === null) return "var(--background-lv1)";
   return palette[getBucketIndex(temperature)];
 };
 
