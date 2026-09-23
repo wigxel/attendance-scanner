@@ -16,8 +16,8 @@ export function Navbar() {
 
   return (
     <nav className="w-full border-b bg-background">
-      <div className="mx-auto flex h-14 container items-center">
-        <div className="flex flex-1 gap-2">
+      <div className="mx-auto overflow-x-scroll md:overflow-hidden flex h-14 md:container items-center">
+        <div className="flex flex-1 pl-6 gap-2">
           <div className="flex gap-4">
             {navItems.map((item) => {
               const isActive = pathname.startsWith(item.href);

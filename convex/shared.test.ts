@@ -762,7 +762,7 @@ describe("PlanImpl.amount", () => {
     expect(result).toEqual({
       currency: "naira",
       denomination: "kobo",
-      value: "500000",
+      value: "5000",
     });
   });
 

@@ -249,7 +249,7 @@ describe("sumPaidAccess", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toBe(8000);
+    expect(result).toBe(80);
   });
 
   it("handles V1 access (amount field) without dividing by 100", async () => {
@@ -330,7 +330,7 @@ describe("sumPaidAccess", () => {
       end: "2024-04-08T00:00:00.000Z",
     });
 
-    expect(result).toBe(15000);
+    expect(result).toBe(150);
   });
 
   it("sums paid access across a one-month range", async () => {
@@ -389,7 +389,7 @@ describe("sumPaidAccess", () => {
       end: "2024-05-31T23:59:59.999Z",
     });
 
-    expect(result).toBe(23000);
+    expect(result).toBe(230);
   });
 
   it("sums paid access across a six-month range", async () => {
@@ -448,7 +448,7 @@ describe("sumPaidAccess", () => {
       end: "2024-06-30T23:59:59.999Z",
     });
 
-    expect(result).toBe(25000);
+    expect(result).toBe(250);
   });
 
   it("excludes registers outside a six-month range", async () => {
@@ -504,7 +504,7 @@ describe("sumPaidAccess", () => {
       end: "2024-06-30T23:59:59.999Z",
     });
 
-    expect(result).toBe(10000);
+    expect(result).toBe(100);
   });
 
   it("only counts registers within the timestamp range", async () => {
@@ -546,7 +546,7 @@ describe("sumPaidAccess", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toBe(5000);
+    expect(result).toBe(50);
   });
 });
 
@@ -601,7 +601,7 @@ describe("sumCashPayments", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toEqual({ count: 1, total: 5000 });
+    expect(result).toEqual({ count: 1, total: 50 });
   });
 
   it("counts only cash payments, excludes free access", async () => {
@@ -637,7 +637,7 @@ describe("sumCashPayments", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toEqual({ count: 1, total: 5000 });
+    expect(result).toEqual({ count: 1, total: 50 });
   });
 
   it("sums amounts correctly (V2: amountInKobo)", async () => {
@@ -679,7 +679,7 @@ describe("sumCashPayments", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toEqual({ count: 2, total: 17000 });
+    expect(result).toEqual({ count: 2, total: 170 });
   });
 
   it("filters by date range (excludes outside)", async () => {
@@ -735,7 +735,7 @@ describe("sumCashPayments", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toEqual({ count: 1, total: 3000 });
+    expect(result).toEqual({ count: 1, total: 30 });
   });
 
   it("filters by planId when provided", async () => {
@@ -778,7 +778,7 @@ describe("sumCashPayments", () => {
       planId: "daily",
     });
 
-    expect(result).toEqual({ count: 1, total: 5000 });
+    expect(result).toEqual({ count: 1, total: 50 });
   });
 
   it("ignores planId filter when not provided", async () => {
@@ -820,7 +820,7 @@ describe("sumCashPayments", () => {
       end: "2024-01-02T00:00:00.000Z",
     });
 
-    expect(result).toEqual({ count: 2, total: 17000 });
+    expect(result).toEqual({ count: 2, total: 170 });
   });
 
   it("counts all records without a cap", async () => {
@@ -851,7 +851,7 @@ describe("sumCashPayments", () => {
     });
 
     expect(result.count).toBe(55);
-    expect(result.total).toBe(55000);
+    expect(result.total).toBe(550);
   });
 
   it("returns multiple records with correct aggregation over a week", async () => {
@@ -887,7 +887,7 @@ describe("sumCashPayments", () => {
       end: "2024-03-07T23:59:59.999Z",
     });
 
-    expect(result).toEqual({ count: 4, total: 20000 });
+    expect(result).toEqual({ count: 4, total: 200 });
   });
 });
 
@@ -898,17 +898,17 @@ describe("metricsDailyCashPayments", () => {
       await ctx.db.insert("dailyCashPayments", {
         date: new Date("2024-01-02").getTime(),
         count: 2,
-        total: 100,
+        total: 1,
       });
       await ctx.db.insert("dailyCashPayments", {
         date: new Date("2024-01-01").getTime(),
         count: 1,
-        total: 50,
+        total: 0.5,
       });
       await ctx.db.insert("dailyCashPayments", {
         date: new Date("2024-01-03").getTime(),
         count: 3,
-        total: 150,
+        total: 1.5,
       });
     });
 
@@ -923,9 +923,9 @@ describe("metricsDailyCashPayments", () => {
       "2024-01-03",
     ]);
     expect(result).toEqual([
-      { date: "2024-01-01", count: 1, total: 50 },
-      { date: "2024-01-02", count: 2, total: 100 },
-      { date: "2024-01-03", count: 3, total: 150 },
+      { date: "2024-01-01", count: 1, total: 0.5 },
+      { date: "2024-01-02", count: 2, total: 1 },
+      { date: "2024-01-03", count: 3, total: 1.5 },
     ]);
   });
 
@@ -935,17 +935,17 @@ describe("metricsDailyCashPayments", () => {
       await ctx.db.insert("dailyCashPayments", {
         date: new Date("2024-01-01").getTime(),
         count: 1,
-        total: 50,
+        total: 0.5,
       });
       await ctx.db.insert("dailyCashPayments", {
         date: new Date("2024-02-01").getTime(),
         count: 9,
-        total: 900,
+        total: 9,
       });
       await ctx.db.insert("dailyCashPayments", {
         date: new Date("2024-03-01").getTime(),
         count: 3,
-        total: 150,
+        total: 1.5,
       });
     });
 
@@ -954,7 +954,7 @@ describe("metricsDailyCashPayments", () => {
       end: "2024-02-29",
     });
 
-    expect(result).toEqual([{ date: "2024-02-01", count: 9, total: 900 }]);
+    expect(result).toEqual([{ date: "2024-02-01", count: 9, total: 9 }]);
   });
 
   it("returns empty array when no rows in range", async () => {
@@ -963,7 +963,7 @@ describe("metricsDailyCashPayments", () => {
       await ctx.db.insert("dailyCashPayments", {
         date: new Date("2024-01-01").getTime(),
         count: 1,
-        total: 50,
+        total: 0.5,
       });
     });
 

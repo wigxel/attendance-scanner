@@ -276,7 +276,7 @@ export const PlanImpl = {
       Match.when(
         { planId: Match.nonEmptyString, amountInKobo: Match.number },
         (record) => {
-          return CurrencyImpl.nairaToKobo(record.amountInKobo);
+          return CurrencyImpl.kobo(record.amountInKobo);
         },
       ),
       Match.orElse(() => {
