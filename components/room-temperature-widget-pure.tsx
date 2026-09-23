@@ -1,5 +1,6 @@
 "use client";
 
+import { capitalize } from "effect/String";
 import { comfortZone, dewPoint, dewPointDepression } from "@/lib/environment";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "./ui/card";
@@ -30,38 +31,46 @@ export function RoomTemperatureWidgetPure({
         : "bg-red-500";
 
   return (
-    <Card className={cn("w-[220px]", className)}>
+    <Card className={className}>
       <CardContent className="p-4 flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
-            {comfort.reason}
+            {capitalize(comfort.reason)}
           </span>
           <span
             className={cn("h-2 w-2 rounded-full", dotClass)}
             aria-label={comfort.status}
           />
         </div>
-        <div className="flex gap-4">
-          <div className="flex flex-col">
+
+        <div className="flex gap-4 divide-x">
+          <div className="flex flex-col flex-1">
             <span className="text-2xl font-semibold">
               {Math.round(temperature * 10) / 10}°C
             </span>
+
             <span className="text-xs text-muted-foreground">
-              temp · {dep.toFixed(1)}° dep
+              Temp · {dep.toFixed(1)}° dep
             </span>
           </div>
-          <div className="flex flex-col">
+
+          <div className="flex flex-col flex-1">
             <span className="text-2xl font-semibold">
               {Math.round(humidity)}%
             </span>
-            <span className="text-xs text-muted-foreground">humidity</span>
+            <span className="text-xs text-muted-foreground">Humidity</span>
           </div>
         </div>
-        {pressure !== undefined && (
-          <span className="text-xs text-muted-foreground">
-            {Math.round(pressure)} hPa
-          </span>
-        )}
+
+        <p className="flex gap-2 mt-4 text-muted-foreground items-center text-xs">
+          <span>Pressure — </span>
+
+          {pressure !== undefined && (
+            <span className="text-foreground">
+              {Math.round(pressure)} hPa
+            </span>
+          )}
+        </p>
       </CardContent>
     </Card>
   );

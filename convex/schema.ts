@@ -231,6 +231,22 @@ const roomMetrics10m = defineTable({
   .index("by_room", ["roomId"])
   .index("by_room_and_bucket", ["roomId", "bucketStart"]);
 
+const roomMetricsDaily = defineTable({
+  roomId: v.string(),
+  date: v.string(),
+  dayStart: v.number(),
+  avgTemperature: v.number(),
+  avgHumidity: v.number(),
+  avgPressure: v.number(),
+  minTemperature: v.number(),
+  maxTemperature: v.number(),
+  count: v.number(),
+  updatedAt: v.number(),
+})
+  .index("by_room", ["roomId"])
+  .index("by_room_and_day", ["roomId", "dayStart"])
+  .index("by_date", ["date"]);
+
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
   users: authTables.users,
@@ -253,4 +269,5 @@ export default defineSchema({
   ratings,
   roomMetrics,
   roomMetrics10m,
+  roomMetricsDaily,
 });

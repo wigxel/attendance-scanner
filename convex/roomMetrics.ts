@@ -1,19 +1,22 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { internalMutation } from "./_generated/server";
-import * as E from "effect/Either";
 import {
+  averageDailyBuckets,
   averageReadings,
   CURSOR_KEY,
+  CURSOR_KEY_DAILY,
   DEFAULT_DEVICE,
   DEFAULT_ROOM,
   groupByBucket,
+  groupByDay,
   isOutlier,
   isValidReading,
   mergeAverages,
-  toBucketStart,
+  toDayKey,
+  toDayStart,
   withDefaults,
 } from "../lib/room-aggregation";
+import type { RoomMetricsBucket, RoomMetricsDailyBucket, RoomMetricsHistory } from "../types/room-metrics";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 // — store: pure validation via functional helpers, defaults via withDefaults
 export const store = mutation({
@@ -41,32 +44,30 @@ export const store = mutation({
   },
 });
 
-// — reads only from smoothed table (roomMetrics10m), returns Either not null
+// — reads only from smoothed table (roomMetrics10m)
 export const getLiveReading = query({
   args: { roomId: v.optional(v.string()) },
-  handler: async (ctx, args): Promise<E.Either<any, string>> => {
+  handler: async (ctx, args): Promise<RoomMetricsBucket | null> => {
     const roomId = args.roomId ?? DEFAULT_ROOM;
     const buckets = await ctx.db
       .query("roomMetrics10m")
       .withIndex("by_room", (q) => q.eq("roomId", roomId))
       .order("desc")
       .take(1);
-    const b = buckets[0];
-    return b ? E.right(b) : E.left("no readings");
+    return buckets[0] ?? null;
   },
 });
 
 export const history = query({
   args: { roomId: v.optional(v.string()), limit: v.optional(v.number()) },
-  handler: async (ctx, args): Promise<E.Either<any, string>> => {
+  handler: async (ctx, args): Promise<RoomMetricsHistory> => {
     const roomId = args.roomId ?? DEFAULT_ROOM;
-    const lim = Math.min(args.limit ?? 100, 200);
-    const buckets = await ctx.db
+    const limit = Math.min(args.limit ?? 100, 200);
+    return await ctx.db
       .query("roomMetrics10m")
       .withIndex("by_room_and_bucket", (q) => q.eq("roomId", roomId))
       .order("desc")
-      .take(lim);
-    return E.right(buckets);
+      .take(limit);
   },
 });
 
@@ -78,7 +79,7 @@ export const smoothAggregations = internalMutation({
       .query("config")
       .withIndex("by_key", (q) => q.eq("key", CURSOR_KEY))
       .unique();
-    const cursor = cursorRow ? Number.parseInt(cursorRow.value, 10) : 0;
+    const cursor = cursorRow ? Number(cursorRow.value) : -1;
 
     const batch: Array<{
       _id: string;
@@ -91,29 +92,27 @@ export const smoothAggregations = internalMutation({
       _creationTime: number;
     }> = await ctx.db
       .query("roomMetrics")
-      .withIndex("by_timestamp")
+      .withIndex("by_timestamp", (query) => query.gt("timestamp", cursor))
       .order("asc")
       .take(500)
       .then((rows) =>
-        rows
-          .map((r) => ({
-            ...r,
-            timestamp: r.timestamp ?? r._creationTime,
-          }))
-          .filter((r) => r.timestamp > cursor),
+        rows.map((reading) => ({
+          ...reading,
+          timestamp: reading.timestamp ?? reading._creationTime,
+        })),
       );
 
     if (batch.length === 0) return { processed: 0, cursor };
 
     const readings = batch
-      .map((r) =>
+      .map((reading) =>
         withDefaults({
-          temperature: r.temperature,
-          humidity: r.humidity,
-          pressure: r.pressure,
-          timestamp: r.timestamp!,
-          roomId: r.roomId,
-          deviceId: r.deviceId,
+          temperature: reading.temperature,
+          humidity: reading.humidity,
+          pressure: reading.pressure,
+          timestamp: reading.timestamp!,
+          roomId: reading.roomId,
+          deviceId: reading.deviceId,
         }),
       )
       .filter(isValidReading);
@@ -122,7 +121,7 @@ export const smoothAggregations = internalMutation({
 
     const bucketStarts = Object.keys(groups)
       .map(Number)
-      .sort((a, b) => a - b);
+      .sort((firstBucket, secondBucket) => firstBucket - secondBucket);
 
     // functional iteration via Promise.all on mapped buckets (no for loops for merge logic)
     await Promise.all(
@@ -139,11 +138,10 @@ export const smoothAggregations = internalMutation({
           .unique();
 
         const filtered = existing
-          ? inBucket.filter((r) => !isOutlier(r, existing))
+          ? inBucket.filter((reading) => !isOutlier(reading, existing))
           : inBucket;
 
         if (filtered.length === 0) return;
-
         const avg = averageReadings(filtered);
 
         if (!existing) {
@@ -166,7 +164,7 @@ export const smoothAggregations = internalMutation({
       }),
     );
 
-    const newCursor = Math.max(...batch.map((r) => r.timestamp!));
+    const newCursor = Math.max(...batch.map((reading) => reading.timestamp!));
     if (cursorRow)
       await ctx.db.patch(cursorRow._id, { value: String(newCursor) });
     else
@@ -187,6 +185,91 @@ export const smoothAggregations = internalMutation({
   },
 });
 
+// — daily aggregation: reads smoothed 10m buckets via cursor, writes daily buckets
+export const aggregateDaily = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cursorRow = await ctx.db.query("config").withIndex("by_key", (query) => query.eq("key", CURSOR_KEY_DAILY)).unique();
+    const cursor = cursorRow ? Number(cursorRow.value) : -1;
+
+    const buckets = await ctx.db
+      .query("roomMetrics10m")
+      .withIndex("by_room_and_bucket", (query) => query.eq("roomId", DEFAULT_ROOM).gt("bucketStart", cursor))
+      .order("asc")
+      .take(500);
+
+    if (buckets.length === 0) return { processed: 0, cursor };
+
+    const grouped = groupByDay(buckets);
+
+    const dayKeys = Object.keys(grouped).sort();
+
+    await Promise.all(
+      dayKeys.map(async (dayKey) => {
+        const dayBuckets = grouped[dayKey] ?? [];
+        if (dayBuckets.length === 0) return;
+        const dayStart = toDayStart(dayBuckets[0].bucketStart);
+        const existing = await ctx.db
+          .query("roomMetricsDaily")
+          .withIndex("by_room_and_day", (query) => query.eq("roomId", DEFAULT_ROOM).eq("dayStart", dayStart))
+          .unique();
+
+        const dailyAvg = averageDailyBuckets(dayBuckets);
+
+        if (!existing) {
+          await ctx.db.insert("roomMetricsDaily", {
+            roomId: DEFAULT_ROOM,
+            date: dayKey,
+            dayStart,
+            avgTemperature: dailyAvg.avgTemperature,
+            avgHumidity: dailyAvg.avgHumidity,
+            avgPressure: dailyAvg.avgPressure,
+            minTemperature: dailyAvg.minTemperature,
+            maxTemperature: dailyAvg.maxTemperature,
+            count: dailyAvg.count,
+            updatedAt: Date.now(),
+          });
+        } else {
+          const totalCount = existing.count + dailyAvg.count;
+          const mergedAvgTemperature = Math.round(((existing.avgTemperature * existing.count + dailyAvg.avgTemperature * dailyAvg.count) / totalCount) * 10) / 10;
+          const mergedAvgHumidity = Math.round(((existing.avgHumidity * existing.count + dailyAvg.avgHumidity * dailyAvg.count) / totalCount) * 10) / 10;
+          const mergedAvgPressure = Math.round(((existing.avgPressure * existing.count + dailyAvg.avgPressure * dailyAvg.count) / totalCount) * 10) / 10;
+          await ctx.db.patch(existing._id, {
+            avgTemperature: mergedAvgTemperature,
+            avgHumidity: mergedAvgHumidity,
+            avgPressure: mergedAvgPressure,
+            minTemperature: Math.min(existing.minTemperature, dailyAvg.minTemperature),
+            maxTemperature: Math.max(existing.maxTemperature, dailyAvg.maxTemperature),
+            count: totalCount,
+            updatedAt: Date.now(),
+          });
+        }
+      }),
+    );
+
+    const newCursor = Math.max(...buckets.map((bucket) => bucket.bucketStart));
+    if (cursorRow) await ctx.db.patch(cursorRow._id, { value: String(newCursor) });
+    else await ctx.db.insert("config", { key: CURSOR_KEY_DAILY, value: String(newCursor) });
+
+    if (buckets.length === 500) await ctx.scheduler.runAfter(0, "roomMetrics:aggregateDaily" as never, {});
+
+    return { processed: buckets.length, cursor: newCursor };
+  },
+});
+
+export const getDailyCalendar = query({
+  args: { roomId: v.optional(v.string()), days: v.optional(v.number()) },
+  handler: async (ctx, args): Promise<RoomMetricsDailyBucket[]> => {
+    const roomId = args.roomId ?? DEFAULT_ROOM;
+    const dayLimit = Math.min(args.days ?? 371, 500);
+    return await ctx.db
+      .query("roomMetricsDaily")
+      .withIndex("by_room_and_day", (query) => query.eq("roomId", roomId))
+      .order("desc")
+      .take(dayLimit);
+  },
+});
+
 // — separate prune cron: reads same cursor, deletes raw older than cursor - 7d
 export const pruneRaw = internalMutation({
   args: {},
@@ -196,7 +279,7 @@ export const pruneRaw = internalMutation({
       .withIndex("by_key", (q) => q.eq("key", CURSOR_KEY))
       .unique();
     if (!cursorRow) return { pruned: 0 };
-    const cursor = Number.parseInt(cursorRow.value, 10);
+    const cursor = Number(cursorRow.value);
     const threshold = cursor - 7 * 24 * 60 * 60 * 1000;
     const stale = await ctx.db
       .query("roomMetrics")
@@ -204,9 +287,9 @@ export const pruneRaw = internalMutation({
       .order("asc")
       .take(500);
     const toDelete = stale.filter(
-      (r) => (r.timestamp ?? r._creationTime) < threshold,
+      (reading) => (reading.timestamp ?? reading._creationTime) < threshold,
     );
-    await Promise.all(toDelete.map((r) => ctx.db.delete(r._id)));
+    await Promise.all(toDelete.map((reading) => ctx.db.delete(reading._id)));
     return { pruned: toDelete.length, threshold };
   },
 });

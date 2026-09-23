@@ -7,6 +7,7 @@ const navItems = [
   { name: "Dashboard", href: "/admin/dashboard" },
   { name: "Reservations", href: "/admin/reservations" },
   { name: "Customers", href: "/admin/customers" },
+  { name: "Environment", href: "/admin/environment" },
   { name: "Settings", href: "/admin/settings" },
 ];
 

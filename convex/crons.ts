@@ -42,4 +42,11 @@ crons.interval(
   {},
 );
 
+crons.daily(
+  "aggregate daily room metrics",
+  { hourUTC: 0, minuteUTC: 5 },
+  internal.roomMetrics.aggregateDaily,
+  {},
+);
+
 export default crons;
