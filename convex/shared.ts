@@ -120,7 +120,7 @@ export const PlanImpl = {
       _v: "2",
       kind: "paid" as const,
       planId: plan.key,
-      amountInKobo: Math.max(0, plan.price / plan.no_of_days),
+      amountInKobo: Math.max(0, (plan.price * 100) / plan.no_of_days),
       paymentMethod: "bank_transfer",
       duration: { type: "fullday" },
     };

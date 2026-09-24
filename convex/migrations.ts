@@ -46,3 +46,21 @@ export const backfillNullMethods = internalMutation({
     return { updated };
   },
 });
+
+export const fixDailyAmountKobo = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const registers = await ctx.db.query("daily_register").collect();
+    let updated = 0;
+    for (const r of registers) {
+      const access: any = r.access;
+      if (access?.kind === "paid" && access?._v === "2" && access?.planId === "daily" && access?.amountInKobo === 3000) {
+        await ctx.db.patch(r._id, {
+          access: { ...access, amountInKobo: 300000 },
+        });
+        updated++;
+      }
+    }
+    return { updated };
+  },
+});
