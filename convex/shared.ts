@@ -86,6 +86,16 @@ type OvewriteV1 = Pick<AccessStruct, "kind"> & Partial<AccessFreeStruct>;
 type OverwriteV2 = Partial<AccessPaidV2>;
 type OverwriteStruct = OvewriteV1 | OverwriteV2;
 
+
+function assertMinKobo(kobo: Kobo) {
+  const n = CurrencyImpl.parseFloat(kobo);
+  const min = CurrencyImpl.parseFloat(CurrencyImpl.MIN_KOBO)
+
+  if (!Number.isInteger(n)) throw new PlanError("amountInKobo must be integer");
+
+  if (n < min) throw new PlanError(`Amount ${n / 100} naira below minimum 500 naira`);
+}
+
 export const PlanImpl = {
   async validatePlan<TDB extends GenericMutationCtx<DataModel>["db"]>(
     db: TDB,
@@ -102,6 +112,10 @@ export const PlanImpl = {
       );
     }
 
+    if (plan.key !== "free") {
+      assertMinKobo(CurrencyImpl.kobo(Math.round(plan.price * 100)));
+    }
+
     return plan;
   },
 
@@ -116,11 +130,13 @@ export const PlanImpl = {
       throw new Error("no_of_days must be greater than 0");
     }
 
+    const computed = Math.round(Math.max(0, (plan.price * 100) / plan.no_of_days));
+    assertMinKobo(CurrencyImpl.kobo(computed));
     return {
       _v: "2",
       kind: "paid" as const,
       planId: plan.key,
-      amountInKobo: Math.max(0, (plan.price * 100) / plan.no_of_days),
+      amountInKobo: computed,
       paymentMethod: "bank_transfer",
       duration: { type: "fullday" },
     };
@@ -130,12 +146,14 @@ export const PlanImpl = {
     const matcher = pipe(
       BookImpl.match,
       Match.when({ _v: "booking_v2" }, (booking): AccessPaidV2 => {
+        const amount = Math.round(booking.pricePerSeat / booking.duration);
+        assertMinKobo(CurrencyImpl.kobo(amount));
         return {
           _v: "2",
           kind: "paid",
           planId: booking.planKey,
           duration: { type: "fullday" }, // important! the least booking we have is a fullday
-          amountInKobo: booking.pricePerSeat / booking.duration,
+          amountInKobo: amount,
           paymentMethod: "bank_transfer",
         };
       }),
@@ -150,12 +168,14 @@ export const PlanImpl = {
           );
         }
 
+        const amount = Math.round(+BookImpl.costPerSeat(booking).value);
+        assertMinKobo(CurrencyImpl.kobo(amount));
         return {
           _v: "2",
           kind: "paid",
           planId: durationGroup as PlanKey,
           duration: { type: "fullday" }, // important! the least booking we have is a fullday
-          amountInKobo: +BookImpl.costPerSeat(booking).value,
+          amountInKobo: amount,
           paymentMethod: "bank_transfer",
         };
       }),
@@ -184,17 +204,23 @@ export const PlanImpl = {
       }
 
       if (!("_v" in record)) {
+        const amountInKobo = Math.round(record.amount * 100);
+        assertMinKobo(CurrencyImpl.kobo(amountInKobo));
         return {
           _v: "2",
           kind: "paid",
           planId: record.planId as PlanKey,
-          amountInKobo: record.amount * 100,
+          amountInKobo,
           paymentMethod: "bank_transfer",
           duration: { type: "fullday" },
         } satisfies AccessPaidV2;
       }
 
-      return record as AccessPaidV2;
+      const v2 = record as AccessPaidV2;
+      const rounded = Math.round(v2.amountInKobo);
+      if (rounded !== v2.amountInKobo) throw new PlanError("amountInKobo must be integer");
+      assertMinKobo(CurrencyImpl.kobo(rounded));
+      return { ...v2, amountInKobo: rounded } as AccessPaidV2;
     });
   },
 
@@ -226,6 +252,11 @@ export const PlanImpl = {
     return (access: unknown): access is AccessPaidV2 => {
       return type_is(access, "free");
     };
+  },
+
+  isV2(access: unknown): access is AccessPaidV2 {
+    const obj = safeObj(access) as any;
+    return "_v" in obj && obj._v === "2";
   },
 
   match<TFree, TPaid, TNone>(
@@ -403,6 +434,10 @@ export const RegisterImpl = {
 };
 
 export const CurrencyImpl = {
+  get MIN_KOBO() {
+    return CurrencyImpl.nairaToKobo(500);
+  },
+
   empty: {
     currency: "naira",
     denomination: "kobo",

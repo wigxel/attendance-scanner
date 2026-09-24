@@ -35,7 +35,7 @@ describe("PlanImpl.toOverwrite", () => {
         _v: "2" as const,
         kind: "paid" as const,
         planId: "p1",
-        amountInKobo: 5000,
+        amountInKobo: 50000,
         paymentMethod: "cash" as const,
       });
       const overwrite = { kind: "free" as const };
@@ -50,7 +50,7 @@ describe("PlanImpl.toOverwrite", () => {
       const overwrite = {
         kind: "paid" as const,
         planId: "p1",
-        amountInKobo: 5000,
+        amountInKobo: 50000,
         paymentMethod: "bank_transfer" as const,
       };
       const result = PlanImpl.toOverwrite(prev, overwrite);
@@ -70,7 +70,7 @@ describe("PlanImpl.toOverwrite", () => {
         _v: "2" as const,
         kind: "paid" as const,
         planId: "p2",
-        amountInKobo: 10000,
+        amountInKobo: 100000,
         paymentMethod: "bank_transfer" as const,
       };
       const result = PlanImpl.toOverwrite(prev, overwrite);
@@ -81,7 +81,7 @@ describe("PlanImpl.toOverwrite", () => {
           _v: "2",
           kind: "paid",
           planId: "p2",
-          amountInKobo: 10000,
+          amountInKobo: 100000,
           paymentMethod: "bank_transfer",
           duration: { type: "fullday" },
         });
@@ -124,14 +124,14 @@ describe("PlanImpl.toOverwrite", () => {
         _v: "2" as const,
         kind: "paid" as const,
         planId: "p1",
-        amountInKobo: 5000,
+        amountInKobo: 50000,
         paymentMethod: "cash" as const,
       };
       const overwrite = {
         _v: "2" as const,
         kind: "paid" as const,
         planId: "p2",
-        amountInKobo: 10000,
+        amountInKobo: 100000,
       };
 
       const result = PlanImpl.toOverwrite(prev, overwrite);
@@ -142,7 +142,7 @@ describe("PlanImpl.toOverwrite", () => {
           _v: "2",
           kind: "paid",
           planId: "p2",
-          amountInKobo: 10000,
+          amountInKobo: 100000,
           paymentMethod: "cash",
         });
       }
@@ -153,7 +153,7 @@ describe("PlanImpl.toOverwrite", () => {
         _v: "2" as const,
         kind: "paid" as const,
         planId: "p1",
-        amountInKobo: 5000,
+        amountInKobo: 50000,
         paymentMethod: "bank_transfer" as const,
       };
       const overwrite = { kind: "paid" as const };
@@ -223,7 +223,7 @@ describe("PlanImpl.normalize", () => {
         _v: "2" as const,
         kind: "paid" as const,
         planId: "p1",
-        amountInKobo: 5000,
+        amountInKobo: 50000,
         paymentMethod: "cash" as const,
       };
       const result = await normalize(record);
@@ -235,7 +235,7 @@ describe("PlanImpl.normalize", () => {
         _v: "2" as const,
         kind: "paid" as const,
         planId: "premium",
-        amountInKobo: 15000,
+        amountInKobo: 150000,
         paymentMethod: "bank_transfer" as const,
       };
       const result = await normalize(record);
@@ -243,7 +243,7 @@ describe("PlanImpl.normalize", () => {
         _v: "2",
         kind: "paid",
         planId: "premium",
-        amountInKobo: 15000,
+        amountInKobo: 150000,
         paymentMethod: "bank_transfer",
       });
     });
@@ -313,7 +313,7 @@ describe("PlanImpl.fromBooking", () => {
     const booking = {
       ...baseBooking,
       durationType: "day" as const,
-      pricePerSeat: 5000,
+      pricePerSeat: 50000,
       duration: 1,
     };
     const result = PlanImpl.fromBooking({ booking });
@@ -323,7 +323,7 @@ describe("PlanImpl.fromBooking", () => {
       paymentMethod: "bank_transfer",
       planId: "day",
       duration: { type: "fullday" },
-      amountInKobo: 5000,
+      amountInKobo: 50000,
     });
   });
 
@@ -331,7 +331,7 @@ describe("PlanImpl.fromBooking", () => {
     const booking = {
       ...baseBooking,
       durationType: "week" as const,
-      pricePerSeat: 14000,
+      pricePerSeat: 350000,
       duration: 7,
     };
     const result = PlanImpl.fromBooking({ booking });
@@ -341,7 +341,7 @@ describe("PlanImpl.fromBooking", () => {
       paymentMethod: "bank_transfer",
       planId: "week",
       duration: { type: "fullday" },
-      amountInKobo: 2000,
+      amountInKobo: 50000,
     });
   });
 
@@ -349,7 +349,7 @@ describe("PlanImpl.fromBooking", () => {
     const booking = {
       ...baseBooking,
       durationType: "month" as const,
-      pricePerSeat: 30000,
+      pricePerSeat: 1500000,
       duration: 30,
     };
     const result = PlanImpl.fromBooking({ booking });
@@ -359,33 +359,25 @@ describe("PlanImpl.fromBooking", () => {
       paymentMethod: "bank_transfer",
       planId: "month",
       duration: { type: "fullday" },
-      amountInKobo: 1000,
+      amountInKobo: 50000,
     });
   });
 
-  it("should handle zero price", () => {
+  it("should throw for zero price below minimum", () => {
     const booking = {
       ...baseBooking,
       durationType: "day" as const,
       pricePerSeat: 0,
       duration: 1,
     };
-    const result = PlanImpl.fromBooking({ booking });
-    expect(result).toStrictEqual({
-      _v: "2",
-      kind: "paid",
-      paymentMethod: "bank_transfer",
-      planId: "day",
-      duration: { type: "fullday" },
-      amountInKobo: 0,
-    });
+    expect(() => PlanImpl.fromBooking({ booking })).toThrow(/500 naira/);
   });
 
-  it("should compute fractional amountInKobo", () => {
+  it("should compute fractional amountInKobo rounded", () => {
     const booking = {
       ...baseBooking,
       durationType: "day" as const,
-      pricePerSeat: 100,
+      pricePerSeat: 200000,
       duration: 3,
     } satisfies Booking;
     const result = PlanImpl.fromBooking({ booking });
@@ -395,7 +387,7 @@ describe("PlanImpl.fromBooking", () => {
       paymentMethod: "bank_transfer",
       planId: "day",
       duration: { type: "fullday" },
-      amountInKobo: 100 / 3,
+      amountInKobo: 66667,
     });
   });
 
@@ -405,7 +397,7 @@ describe("PlanImpl.fromBooking", () => {
       "week" as const,
       "month" as const,
     );
-    const pricePerSeat = fc.integer({ min: 0, max: 100 });
+    const pricePerSeat = fc.integer({ min: 50000 * 364, max: 500000 * 364 });
     const duration = fc.integer({ min: 1, max: 31 });
 
     it("amountInKobo is non-negative for any valid inputs", () => {
@@ -428,7 +420,7 @@ describe("PlanImpl.fromBooking", () => {
       fc.assert(
         fc.property(
           durationType,
-          fc.integer({ min: 1, max: 500_000 }),
+          fc.integer({ min: 50000 * 31, max: 500000 * 31 }),
           duration,
           (dt, pps, dur) => {
             const base = { ...baseBooking, durationType: dt, duration: dur };
@@ -444,7 +436,7 @@ describe("PlanImpl.fromBooking", () => {
                 pricePerSeat: pps * 2,
               },
             }).amountInKobo;
-            expect(high).toBe(low * 2);
+            expect(Math.abs(high - low * 2)).toBeLessThanOrEqual(1);
           },
         ),
       );
@@ -474,7 +466,7 @@ describe("PlanImpl.fromBooking", () => {
                 duration: dur * 2,
               },
             }).amountInKobo;
-            expect(long).toBe(short / 2);
+            expect(Math.abs(long * 2 - short)).toBeLessThanOrEqual(1);
           },
         ),
       );
@@ -510,7 +502,7 @@ describe("PlanImpl.paymentMethod", () => {
     const params = {
       kind: "paid" as const,
       planId: "p1",
-      amountInKobo: 1000,
+      amountInKobo: 100000,
       paymentMethod: "cash" as const,
     } as any;
 
@@ -521,7 +513,7 @@ describe("PlanImpl.paymentMethod", () => {
     const params = {
       kind: "paid" as const,
       planId: "p1",
-      amountInKobo: 1000,
+      amountInKobo: 100000,
       paymentMethod: "bank_transfer" as const,
     } as any;
 
@@ -540,7 +532,7 @@ describe("PlanImpl.duration", () => {
       _v: "2" as const,
       kind: "paid" as const,
       planId: "day",
-      amountInKobo: 5000,
+      amountInKobo: 50000,
       paymentMethod: "cash" as const,
     };
     const result = PlanImpl.duration(access);
@@ -552,7 +544,7 @@ describe("PlanImpl.duration", () => {
       _v: "2" as const,
       kind: "paid" as const,
       planId: "hourly",
-      amountInKobo: 1000,
+      amountInKobo: 100000,
       paymentMethod: "cash" as const,
       duration: { type: "hourly" as const, value: 3 },
     };
@@ -568,7 +560,7 @@ describe("PlanImpl.duration", () => {
       _v: "2" as const,
       kind: "paid" as const,
       planId: "day",
-      amountInKobo: 5000,
+      amountInKobo: 50000,
       paymentMethod: "bank_transfer" as const,
       duration: { type: "fullday" as const },
     };
@@ -603,7 +595,7 @@ describe("PlanImpl.match", () => {
       _v: "2" as const,
       kind: "paid" as const,
       planId: "day",
-      amountInKobo: 5000,
+      amountInKobo: 50000,
       paymentMethod: "cash" as const,
     };
     const result = PlanImpl.match(access, {
@@ -631,7 +623,7 @@ describe("PlanImpl.match", () => {
       _v: "2" as const,
       kind: "paid" as const,
       planId: "week",
-      amountInKobo: 10000,
+      amountInKobo: 100000,
       paymentMethod: "bank_transfer" as const,
     };
     let received: unknown = null;
@@ -676,7 +668,7 @@ describe("PlanImpl.toStruct", () => {
       _v: "2",
       kind: "paid",
       planId: "daily",
-      amountInKobo: 5000,
+      amountInKobo: 500000,
       paymentMethod: "bank_transfer",
       duration: { type: "fullday" },
     });
@@ -689,17 +681,29 @@ describe("PlanImpl.toStruct", () => {
       price: 14000,
       no_of_days: 7,
     });
-    expect(result).toMatchObject({ amountInKobo: 2000 });
+    expect(result).toMatchObject({ amountInKobo: 200000 });
   });
 
-  it("should clamp negative result to 0", () => {
-    const result = PlanImpl.toStruct({
-      ...basePlan,
-      key: "x",
-      price: -100,
-      no_of_days: 1,
-    });
-    expect(result).toMatchObject({ amountInKobo: 0 });
+  it("should throw when amount below 500 naira", () => {
+    expect(() =>
+      PlanImpl.toStruct({
+        ...basePlan,
+        key: "x",
+        price: 400,
+        no_of_days: 1,
+      }),
+    ).toThrow(/500 naira/);
+  });
+
+  it("should clamp negative result to 0 then throw min guard", () => {
+    expect(() =>
+      PlanImpl.toStruct({
+        ...basePlan,
+        key: "x",
+        price: -100,
+        no_of_days: 1,
+      }),
+    ).toThrow(/500 naira/);
   });
 
   it("should throw when no_of_days is zero", () => {
@@ -755,14 +759,14 @@ describe("PlanImpl.amount", () => {
       _v: "2" as const,
       kind: "paid" as const,
       planId: "day",
-      amountInKobo: 5000,
+      amountInKobo: 50000,
       paymentMethod: "cash" as const,
     };
     const result = PlanImpl.amount(access);
     expect(result).toEqual({
       currency: "naira",
       denomination: "kobo",
-      value: "5000",
+      value: "50000",
     });
   });
 
@@ -771,7 +775,7 @@ describe("PlanImpl.amount", () => {
       _v: "2" as const,
       kind: "paid" as const,
       planId: "hourly",
-      amountInKobo: 1000,
+      amountInKobo: 100000,
       paymentMethod: "cash" as const,
       duration: { type: "hourly" as const, value: 3 },
     };
@@ -779,7 +783,7 @@ describe("PlanImpl.amount", () => {
     expect(result).toEqual({
       currency: "naira",
       denomination: "kobo",
-      value: "3000",
+      value: "300000",
     });
   });
 
@@ -788,7 +792,7 @@ describe("PlanImpl.amount", () => {
       _v: "2" as const,
       kind: "paid" as const,
       planId: "hourly",
-      amountInKobo: 1000,
+      amountInKobo: 100000,
       paymentMethod: "cash" as const,
     };
     expect(() => PlanImpl.amount(access)).toThrow();

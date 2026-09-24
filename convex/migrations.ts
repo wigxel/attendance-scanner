@@ -1,5 +1,7 @@
+import { v } from "convex/values";
 import { isNullable } from "effect/Predicate";
 import { internalMutation } from "./_generated/server";
+import { PlanImpl } from "./shared";
 
 export const migrateOccupationNamesToIds = internalMutation({
   args: {},
@@ -48,19 +50,34 @@ export const backfillNullMethods = internalMutation({
 });
 
 export const fixDailyAmountKobo = internalMutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { dryRun: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const dryRun = args.dryRun ?? true;
+
     const registers = await ctx.db.query("daily_register").collect();
-    let updated = 0;
-    for (const r of registers) {
-      const access: any = r.access;
-      if (access?.kind === "paid" && access?._v === "2" && access?.planId === "daily" && access?.amountInKobo === 3000) {
-        await ctx.db.patch(r._id, {
-          access: { ...access, amountInKobo: 300000 },
-        });
-        updated++;
-      }
+
+    const candidates = registers.filter((r) => PlanImpl.isV2(r.access))
+      .map((r) => {
+        const access = r.access as { amountInKobo: number; planId: string };
+        const base = access.planId === "daily" && access.amountInKobo === 3000 ? 300000 : access.amountInKobo;
+        const next = Math.round(base);
+        return next !== access.amountInKobo
+          ? { id: r._id, from: access.amountInKobo, to: next, planId: access.planId, access: r.access }
+          : null;
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+
+    if (dryRun) {
+      return {
+        dryRun: true as const,
+        wouldUpdate: candidates.length,
+        preview: candidates.slice(0, 10).map(({ id, from, to, planId }) => ({ id, from, to, planId })),
+        updated: 0,
+      };
     }
-    return { updated };
+
+    // biome-ignore lint/suspicious/noExplicitAny: Too complex
+    await Promise.all(candidates.map(({ id, to, access }) => ctx.db.patch(id, { access: { ...(access as any), amountInKobo: to } } as any)));
+    return { dryRun: false as const, updated: candidates.length, wouldUpdate: candidates.length };
   },
 });
