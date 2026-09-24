@@ -20,18 +20,26 @@ export const saturationVaporPressure = (temperature: number): number => {
   return 6.112 * Math.exp((magnusA * temperature) / (magnusB + temperature));
 };
 
-export const vaporPressure = (temperature: number, humidity: number): number => {
+export const vaporPressure = (
+  temperature: number,
+  humidity: number,
+): number => {
   return saturationVaporPressure(temperature) * (humidity / 100);
 };
 
 export const dewPoint = (temperature: number, humidity: number): number => {
   const relativeHumidity = Math.max(0.01, Math.min(100, humidity)) / 100;
-  const alpha = Math.log(relativeHumidity) + (magnusA * temperature) / (magnusB + temperature);
+  const alpha =
+    Math.log(relativeHumidity) +
+    (magnusA * temperature) / (magnusB + temperature);
   return (magnusB * alpha) / (magnusA - alpha);
 };
 
 /* g/m³ — 2.1674 is water vapor constant */
-export const absoluteHumidity = (temperature: number, humidity: number): number => {
+export const absoluteHumidity = (
+  temperature: number,
+  humidity: number,
+): number => {
   return (
     (6.112 *
       Math.exp((magnusA * temperature) / (magnusB + temperature)) *
@@ -41,11 +49,17 @@ export const absoluteHumidity = (temperature: number, humidity: number): number 
   );
 };
 
-export const dewPointDepression = (temperature: number, dewPointTemperature: number): number => {
+export const dewPointDepression = (
+  temperature: number,
+  dewPointTemperature: number,
+): number => {
   return temperature - dewPointTemperature;
 };
 
-export const comfortZone = (temperature: number, humidity: number): ComfortResult => {
+export const comfortZone = (
+  temperature: number,
+  humidity: number,
+): ComfortResult => {
   const temperatureGood = temperature >= 22 && temperature <= 26;
   const temperatureWarning = temperature >= 20 && temperature <= 28;
   const humidityGood = humidity >= 30 && humidity <= 60;
@@ -55,6 +69,7 @@ export const comfortZone = (temperature: number, humidity: number): ComfortResul
     return { status: "good", reason: "inside ASHRAE comfort envelope" };
 
   if (temperatureWarning && humidityWarning)
+    // @todo: change warning to good.
     return { status: "warning", reason: "near edge of comfort envelope" };
 
   if (!temperatureWarning)

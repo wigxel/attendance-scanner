@@ -14,7 +14,10 @@ const dayStart = (daysFromEpoch: number) => daysFromEpoch * DAY_MS;
 describe("dailyTemperatureCalendar stored async", () => {
   it("empty when no daily rows", async () => {
     const testEnvironment = convexTest(schema, modules);
-    const result = await testEnvironment.query(api.roomMetrics.getDailyCalendar, { roomId: "all", days: 7 });
+    const result = await testEnvironment.query(
+      api.roomMetrics.getDailyCalendar,
+      { roomId: "all", days: 7 },
+    );
     expect(result).toHaveLength(0);
   });
 
@@ -22,13 +25,31 @@ describe("dailyTemperatureCalendar stored async", () => {
     const testEnvironment = convexTest(schema, modules);
     // seed 3 buckets same day (day 10)
     const baseDay = dayStart(10);
-    await testEnvironment.mutation(api.roomMetrics.store, { temperature: 20, humidity: 40, pressure: 1000, timestamp: baseDay + 1000 });
-    await testEnvironment.mutation(api.roomMetrics.store, { temperature: 24, humidity: 50, pressure: 1020, timestamp: baseDay + 2000 });
-    await testEnvironment.mutation(api.roomMetrics.store, { temperature: 22, humidity: 45, pressure: 1010, timestamp: baseDay + 3000 });
+    await testEnvironment.mutation(api.roomMetrics.store, {
+      temperature: 20,
+      humidity: 40,
+      pressure: 1000,
+      timestamp: baseDay + 1000,
+    });
+    await testEnvironment.mutation(api.roomMetrics.store, {
+      temperature: 24,
+      humidity: 50,
+      pressure: 1020,
+      timestamp: baseDay + 2000,
+    });
+    await testEnvironment.mutation(api.roomMetrics.store, {
+      temperature: 22,
+      humidity: 45,
+      pressure: 1010,
+      timestamp: baseDay + 3000,
+    });
     await testEnvironment.mutation(api.roomMetrics.smoothAggregations, {});
     await testEnvironment.mutation(api.roomMetrics.aggregateDaily, {});
 
-    const daily = await testEnvironment.query(api.roomMetrics.getDailyCalendar, { roomId: "all", days: 7 });
+    const daily = await testEnvironment.query(
+      api.roomMetrics.getDailyCalendar,
+      { roomId: "all", days: 7 },
+    );
     expect(daily).toHaveLength(1);
     expect(daily[0].date).toBe("1970-01-11");
     expect(daily[0].avgTemperature).toBeCloseTo(22, 0);
@@ -39,25 +60,62 @@ describe("dailyTemperatureCalendar stored async", () => {
     const testEnvironment = convexTest(schema, modules);
     const day10 = dayStart(10);
     const day11 = dayStart(11);
-    await testEnvironment.mutation(api.roomMetrics.store, { temperature: 20, humidity: 40, pressure: 1000, timestamp: day10 + TEN_MIN - 1000 });
-    await testEnvironment.mutation(api.roomMetrics.store, { temperature: 30, humidity: 60, pressure: 1015, timestamp: day11 + 1000 });
+    await testEnvironment.mutation(api.roomMetrics.store, {
+      temperature: 20,
+      humidity: 40,
+      pressure: 1000,
+      timestamp: day10 + TEN_MIN - 1000,
+    });
+    await testEnvironment.mutation(api.roomMetrics.store, {
+      temperature: 30,
+      humidity: 60,
+      pressure: 1015,
+      timestamp: day11 + 1000,
+    });
     await testEnvironment.mutation(api.roomMetrics.smoothAggregations, {});
     await testEnvironment.mutation(api.roomMetrics.aggregateDaily, {});
 
-    const daily = await testEnvironment.query(api.roomMetrics.getDailyCalendar, { roomId: "all", days: 7 });
+    const daily = await testEnvironment.query(
+      api.roomMetrics.getDailyCalendar,
+      { roomId: "all", days: 7 },
+    );
     expect(daily).toHaveLength(2);
   });
 
   it("idempotent cursor", async () => {
     const testEnvironment = convexTest(schema, modules);
-    await testEnvironment.mutation(api.roomMetrics.store, { temperature: 22, humidity: 50, pressure: 1013, timestamp: dayStart(5) });
+    await testEnvironment.mutation(api.roomMetrics.store, {
+      temperature: 22,
+      humidity: 50,
+      pressure: 1013,
+      timestamp: dayStart(5),
+    });
     await testEnvironment.mutation(api.roomMetrics.smoothAggregations, {});
     await testEnvironment.mutation(api.roomMetrics.aggregateDaily, {});
-    const firstCursor = await testEnvironment.run(async (context) => await context.db.query("config").withIndex("by_key", (query) => query.eq("key", "roomMetricsDaily_cursor")).unique());
+    const firstCursor = await testEnvironment.run(
+      async (context) =>
+        await context.db
+          .query("config")
+          .withIndex("by_key", (query) =>
+            query.eq("key", "roomMetricsDaily_cursor"),
+          )
+          .unique(),
+    );
     await testEnvironment.mutation(api.roomMetrics.aggregateDaily, {});
-    const secondCursor = await testEnvironment.run(async (ctx) => await ctx.db.query("config").withIndex("by_key", (query) => query.eq("key", "roomMetricsDaily_cursor")).unique());
+    const secondCursor = await testEnvironment.run(
+      async (ctx) =>
+        await ctx.db
+          .query("config")
+          .withIndex("by_key", (query) =>
+            query.eq("key", "roomMetricsDaily_cursor"),
+          )
+          .unique(),
+    );
     expect(firstCursor?.value).toBe(secondCursor?.value);
-    const daily = await testEnvironment.query(api.roomMetrics.getDailyCalendar, { roomId: "all", days: 7 });
+    const daily = await testEnvironment.query(
+      api.roomMetrics.getDailyCalendar,
+      { roomId: "all", days: 7 },
+    );
     expect(daily).toHaveLength(1);
   });
 
@@ -66,10 +124,18 @@ describe("dailyTemperatureCalendar stored async", () => {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayMs = todayStart.getTime();
-    await testEnvironment.mutation(api.roomMetrics.store, { temperature: 25, humidity: 50, pressure: 1013, timestamp: todayMs + 1000 });
+    await testEnvironment.mutation(api.roomMetrics.store, {
+      temperature: 25,
+      humidity: 50,
+      pressure: 1013,
+      timestamp: todayMs + 1000,
+    });
     await testEnvironment.mutation(api.roomMetrics.smoothAggregations, {});
     await testEnvironment.mutation(api.roomMetrics.aggregateDaily, {});
-    const daily = await testEnvironment.query(api.roomMetrics.getDailyCalendar, { roomId: "all", days: 1 });
+    const daily = await testEnvironment.query(
+      api.roomMetrics.getDailyCalendar,
+      { roomId: "all", days: 1 },
+    );
     const todayKey = todayStart.toISOString().slice(0, 10);
     expect(daily[0].date).toBe(todayKey);
   });

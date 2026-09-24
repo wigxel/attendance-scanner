@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getBucketIndex, getColor, getColors, getFallbackColor } from "../../../../../lib/temperature-colors";
+import {
+  getBucketIndex,
+  getColor,
+  getColors,
+  getFallbackColor,
+} from "../../../../../lib/temperature-colors";
 import { addDays, format, startOfWeek, subDays } from "date-fns";
 
 describe("getBucketIndex", () => {
@@ -34,7 +39,13 @@ describe("getColor hex palette", () => {
     expect(getColor(27)).toBe("#02C7FE");
   });
   it("getColors returns 5 hex palette", () => {
-    expect(getColors()).toEqual(["#0102FC", "#0254FE", "#02C7FE", "#FD9704", "#FD3001"]);
+    expect(getColors()).toEqual([
+      "#0102FC",
+      "#0254FE",
+      "#02C7FE",
+      "#FD9704",
+      "#FD3001",
+    ]);
   });
 });
 
@@ -43,19 +54,25 @@ describe("trailing week 53x7", () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const startDate = startOfWeek(subDays(today, 52 * 7), { weekStartsOn: 0 });
-    const cells = Array.from({ length: 371 }, (_, index) => addDays(startDate, index));
+    const cells = Array.from({ length: 371 }, (_, index) =>
+      addDays(startDate, index),
+    );
     const lastCell = cells[cells.length - 1];
     const todayDay = today.getDay();
     const lastCellDay = lastCell.getDay();
     expect(lastCellDay).toBe(6);
     expect(cells.length).toBe(371);
-    expect(format(cells[cells.length - 1 - (6 - todayDay)], "yyyy-MM-dd")).toBe(format(today, "yyyy-MM-dd"));
+    expect(format(cells[cells.length - 1 - (6 - todayDay)], "yyyy-MM-dd")).toBe(
+      format(today, "yyyy-MM-dd"),
+    );
   });
   it("has 53 columns", () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const startDate = startOfWeek(subDays(today, 52 * 7), { weekStartsOn: 0 });
-    const columns = new Set(Array.from({ length: 371 }, (_, index) => Math.floor(index / 7)));
+    const columns = new Set(
+      Array.from({ length: 371 }, (_, index) => Math.floor(index / 7)),
+    );
     expect(columns.size).toBe(53);
     expect(startDate.getDay()).toBe(0);
   });

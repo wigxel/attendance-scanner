@@ -33,9 +33,11 @@ export const CURSOR_KEY_DAILY = "roomMetricsDaily_cursor";
 export const toBucketStart = (timestamp: number): number =>
   Math.floor(timestamp / TEN_MIN) * TEN_MIN;
 
-export const toDayStart = (timestamp: number): number => Math.floor(timestamp / DAY_MS) * DAY_MS;
+export const toDayStart = (timestamp: number): number =>
+  Math.floor(timestamp / DAY_MS) * DAY_MS;
 
-export const toDayKey = (timestamp: number): string => new Date(toDayStart(timestamp)).toISOString().slice(0, 10);
+export const toDayKey = (timestamp: number): string =>
+  new Date(toDayStart(timestamp)).toISOString().slice(0, 10);
 
 export const withDefaults = (readingInput: {
   temperature: number;
@@ -74,7 +76,8 @@ export const averageReadings = (
   const readingCount = readings.length;
   const sums = readings.reduce(
     (accumulator, reading) => ({
-      temperatureSum: accumulator.temperatureSum + reading.temperature / readingCount,
+      temperatureSum:
+        accumulator.temperatureSum + reading.temperature / readingCount,
       humiditySum: accumulator.humiditySum + reading.humidity / readingCount,
       pressureSum: accumulator.pressureSum + reading.pressure / readingCount,
     }),
@@ -122,10 +125,16 @@ export const mergeAverages = (
 export const groupByBucket = (
   readings: readonly Reading[],
 ): Readonly<Record<number, readonly Reading[]>> =>
-  readings.reduce<Record<number, readonly Reading[]>>((groupedBuckets, reading) => {
-    const bucketStart = toBucketStart(reading.timestamp);
-    return { ...groupedBuckets, [bucketStart]: [...(groupedBuckets[bucketStart] ?? []), reading] };
-  }, {});
+  readings.reduce<Record<number, readonly Reading[]>>(
+    (groupedBuckets, reading) => {
+      const bucketStart = toBucketStart(reading.timestamp);
+      return {
+        ...groupedBuckets,
+        [bucketStart]: [...(groupedBuckets[bucketStart] ?? []), reading],
+      };
+    },
+    {},
+  );
 
 // filter-then-partition helpers keep callsite functional (no for/while)
 export const partitionValid = (
@@ -149,20 +158,55 @@ export type DailyBucket = {
 };
 
 export const groupByDay = (
-  buckets: readonly Pick<Bucket, "bucketStart" | "avgTemperature" | "avgHumidity" | "avgPressure" | "count">[],
-): Readonly<Record<string, readonly Pick<Bucket, "bucketStart" | "avgTemperature" | "avgHumidity" | "avgPressure" | "count">[]>> =>
-  buckets.reduce<Record<string, readonly Pick<Bucket, "bucketStart" | "avgTemperature" | "avgHumidity" | "avgPressure" | "count">[]>>((grouped, bucket) => {
+  buckets: readonly Pick<
+    Bucket,
+    "bucketStart" | "avgTemperature" | "avgHumidity" | "avgPressure" | "count"
+  >[],
+): Readonly<
+  Record<
+    string,
+    readonly Pick<
+      Bucket,
+      "bucketStart" | "avgTemperature" | "avgHumidity" | "avgPressure" | "count"
+    >[]
+  >
+> =>
+  buckets.reduce<
+    Record<
+      string,
+      readonly Pick<
+        Bucket,
+        | "bucketStart"
+        | "avgTemperature"
+        | "avgHumidity"
+        | "avgPressure"
+        | "count"
+      >[]
+    >
+  >((grouped, bucket) => {
     const dayKey = toDayKey(bucket.bucketStart);
     return { ...grouped, [dayKey]: [...(grouped[dayKey] ?? []), bucket] };
   }, {});
 
 export const averageDailyBuckets = (
-  dayBuckets: readonly Pick<Bucket, "avgTemperature" | "avgHumidity" | "avgPressure" | "count">[],
-): Pick<DailyBucket, "avgTemperature" | "avgHumidity" | "avgPressure" | "minTemperature" | "maxTemperature" | "count"> => {
+  dayBuckets: readonly Pick<
+    Bucket,
+    "avgTemperature" | "avgHumidity" | "avgPressure" | "count"
+  >[],
+): Pick<
+  DailyBucket,
+  | "avgTemperature"
+  | "avgHumidity"
+  | "avgPressure"
+  | "minTemperature"
+  | "maxTemperature"
+  | "count"
+> => {
   const totalCount = dayBuckets.reduce((sum, bucket) => sum + bucket.count, 0);
   const weighted = dayBuckets.reduce(
     (accumulator, bucket) => ({
-      temperatureSum: accumulator.temperatureSum + bucket.avgTemperature * bucket.count,
+      temperatureSum:
+        accumulator.temperatureSum + bucket.avgTemperature * bucket.count,
       humiditySum: accumulator.humiditySum + bucket.avgHumidity * bucket.count,
       pressureSum: accumulator.pressureSum + bucket.avgPressure * bucket.count,
     }),
@@ -170,7 +214,8 @@ export const averageDailyBuckets = (
   );
   const temperatures = dayBuckets.map((bucket) => bucket.avgTemperature);
   return {
-    avgTemperature: Math.round((weighted.temperatureSum / totalCount) * 10) / 10,
+    avgTemperature:
+      Math.round((weighted.temperatureSum / totalCount) * 10) / 10,
     avgHumidity: Math.round((weighted.humiditySum / totalCount) * 10) / 10,
     avgPressure: Math.round((weighted.pressureSum / totalCount) * 10) / 10,
     minTemperature: Math.min(...temperatures),

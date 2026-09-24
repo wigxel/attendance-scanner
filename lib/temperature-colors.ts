@@ -1,4 +1,10 @@
-export const palette = ["#0102FC", "#0254FE", "#02C7FE", "#FD9704", "#FD3001"] as const;
+export const palette = [
+  "#0102FC",
+  "#0254FE",
+  "#02C7FE",
+  "#FD9704",
+  "#FD3001",
+] as const;
 
 export const getBucketIndex = (temperature: number): number => {
   if (temperature < 22) return 0;
@@ -13,6 +19,7 @@ export const getColor = (temperature: number | null): string => {
   return palette[getBucketIndex(temperature)];
 };
 
-export const getFallbackColor = (temperature: number | null): string => getColor(temperature);
+export const getFallbackColor = (temperature: number | null): string =>
+  getColor(temperature);
 
 export const getColors = (): readonly string[] => palette;

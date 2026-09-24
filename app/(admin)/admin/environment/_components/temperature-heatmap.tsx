@@ -3,7 +3,12 @@
 import { addDays, format, startOfWeek, subDays } from "date-fns";
 import { range } from "effect/Array";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { getColor, palette } from "@/lib/temperature-colors";
 
 type DailyBucket = {
@@ -17,8 +22,6 @@ type DailyBucket = {
 type Properties = {
   dailyBuckets: DailyBucket[];
 };
-
-
 
 export function TemperatureHeatmap({ dailyBuckets }: Properties) {
   const [selectedDay, setSelectedDay] = useState<DailyBucket | null>(null);
@@ -42,14 +45,15 @@ export function TemperatureHeatmap({ dailyBuckets }: Properties) {
   const monthLabels = (() => {
     const labels: Array<{ month: string; column: number }> = [];
     let lastMonth = "";
-    cells.forEach((cell, cellIndex) => {
+    for (let cellIndex = 0; cellIndex < cells.length; cellIndex++) {
+      const cell = cells[cellIndex];
       const month = format(cell.cellDate, "MMM");
       const column = Math.floor(cellIndex / 7);
       if (month !== lastMonth && cell.cellDate.getDay() === 0) {
         labels.push({ month, column });
         lastMonth = month;
       }
-    });
+    }
     return labels;
   })();
 
@@ -57,17 +61,23 @@ export function TemperatureHeatmap({ dailyBuckets }: Properties) {
 
   return (
     <div className="flex flex-col gap-2">
-      <table className="w-full border-separate" style={{ borderSpacing: "4px" }}>
+      <table
+        className="w-full border-separate"
+        style={{ borderSpacing: "4px" }}
+      >
         <thead>
           <tr>
             <th className="w-8" />
             {rows.map((columnIndex) => {
-              const label = monthLabels.find((monthLabel) => monthLabel.column === columnIndex);
+              const label = monthLabels.find(
+                (monthLabel) => monthLabel.column === columnIndex,
+              );
               return (
-                <th key={columnIndex} className="text-xs h-5 font-normal text-muted-foreground/50 text-left relative">
-                  <span className="absolute top-0">
-                    {label?.month ?? ""}
-                  </span>
+                <th
+                  key={columnIndex}
+                  className="text-xs h-5 font-normal text-muted-foreground/50 text-left relative"
+                >
+                  <span className="absolute top-0">{label?.month ?? ""}</span>
                 </th>
               );
             })}
@@ -79,7 +89,13 @@ export function TemperatureHeatmap({ dailyBuckets }: Properties) {
             return (
               <tr key={rowIndex}>
                 <th className="w-8 text-xs font-normal text-muted-foreground/50 text-left pr-1">
-                  {rowIndex === 1 ? "Mon" : rowIndex === 3 ? "Wed" : rowIndex === 5 ? "Fri" : ""}
+                  {rowIndex === 1
+                    ? "Mon"
+                    : rowIndex === 3
+                      ? "Wed"
+                      : rowIndex === 5
+                        ? "Fri"
+                        : ""}
                 </th>
 
                 {rows.map((columnIndex) => {
@@ -92,10 +108,12 @@ export function TemperatureHeatmap({ dailyBuckets }: Properties) {
                       ? `Future ${cell.dateKey}`
                       : `No data ${cell.dateKey}`;
 
-                  const showDetails = () => cell.bucket && setSelectedDay(cell.bucket);
+                  const showDetails = () =>
+                    cell.bucket && setSelectedDay(cell.bucket);
 
                   return (
-                    <td key={cell.dateKey}
+                    <td
+                      key={cell.dateKey}
                       title={tooltip}
                       onClick={showDetails}
                       onKeyUp={showDetails}
@@ -117,18 +135,33 @@ export function TemperatureHeatmap({ dailyBuckets }: Properties) {
         <span>20°C</span>
         <div className="flex gap-[2px] flex-1 max-w-[80px]">
           {palette.map((color) => {
-            return <div key={color} className="h-3 flex-1 rounded-[2px]" style={{ background: color }} />;
+            return (
+              <div
+                key={color}
+                className="h-3 flex-1 rounded-[2px]"
+                style={{ background: color }}
+              />
+            );
           })}
         </div>
         <span>35°C</span>
         <span className="ml-2">Less</span>
         <div className="flex gap-[2px]">
-          <div className="h-3 w-3 rounded-[2px]" style={{ background: "var(--background)", border: "1px solid var(--border)" }} />
+          <div
+            className="h-3 w-3 rounded-[2px]"
+            style={{
+              background: "var(--background)",
+              border: "1px solid var(--border)",
+            }}
+          />
         </div>
         <span>More</span>
       </div>
 
-      <Dialog open={!!selectedDay} onOpenChange={(open) => !open && setSelectedDay(null)}>
+      <Dialog
+        open={!!selectedDay}
+        onOpenChange={(open) => !open && setSelectedDay(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selectedDay?.date}</DialogTitle>
@@ -136,7 +169,10 @@ export function TemperatureHeatmap({ dailyBuckets }: Properties) {
           {selectedDay && (
             <div className="flex flex-col gap-2 text-sm">
               <div>Avg {selectedDay.avgTemperature.toFixed(1)}°C</div>
-              <div>Min {selectedDay.minTemperature.toFixed(1)}°C — Max {selectedDay.maxTemperature.toFixed(1)}°C</div>
+              <div>
+                Min {selectedDay.minTemperature.toFixed(1)}°C — Max{" "}
+                {selectedDay.maxTemperature.toFixed(1)}°C
+              </div>
               <div>{selectedDay.count} readings</div>
             </div>
           )}

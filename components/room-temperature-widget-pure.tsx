@@ -66,9 +66,7 @@ export function RoomTemperatureWidgetPure({
           <span>Pressure — </span>
 
           {pressure !== undefined && (
-            <span className="text-foreground">
-              {Math.round(pressure)} hPa
-            </span>
+            <span className="text-foreground">{Math.round(pressure)} hPa</span>
           )}
         </p>
       </CardContent>
