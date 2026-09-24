@@ -239,10 +239,10 @@ export function SeatStructureGrid() {
         const newSeatNumber =
           entry.length > 0
             ? Math.max(
-                ...entry
-                  .filter((e) => e.type === "seat")
-                  .map((s) => s.seatNumber),
-              ) + 1
+              ...entry
+                .filter((e) => e.type === "seat")
+                .map((s) => s.seatNumber),
+            ) + 1
             : 1;
 
         return [
@@ -426,7 +426,7 @@ export function SeatStructureGrid() {
 
             <DropdownMenuContent
               align="end"
-              className="bg-white max-w-xs py-2 rounded-sm px-2"
+              className="bg-background max-w-xs py-2 rounded-sm px-2"
             >
               <div className="flex gap-px items-center">
                 <Input
@@ -482,8 +482,8 @@ export function SeatStructureGrid() {
                   "data-[active=true]:bg-blue-500/25",
                   "data-[selected=true]:bg-pink-500/25!",
                 )}
-                onKeyDown={() => {}}
-                onFocus={() => {}}
+                onKeyDown={() => { }}
+                onFocus={() => { }}
                 onDoubleClick={() => {
                   remove(e);
                 }}
@@ -512,9 +512,9 @@ export function SeatStructureGrid() {
         {cells.map((entry) => {
           const style = entry.position
             ? {
-                gridColumnStart: `${entry.position.colIndex + 1}`,
-                gridRowStart: `${entry.position.rowIndex + 1}`,
-              }
+              gridColumnStart: `${entry.position.colIndex + 1}`,
+              gridRowStart: `${entry.position.rowIndex + 1}`,
+            }
             : {};
 
           if (entry.type === "seat") {
@@ -648,7 +648,7 @@ export function SLTableItem(props: TableProps) {
   return (
     <div
       className={cn(
-        "bg-white group shadow-2xs flex items-items-center justify-center relative",
+        "bg-background group shadow-2xs flex items-items-center justify-center relative",
         shapeClass,
         className,
         specificGridClasses,
@@ -659,7 +659,7 @@ export function SLTableItem(props: TableProps) {
         <>
           <button
             type="button"
-            className="absolute cursor-pointer top-0 -translate-y-1/2 rounded-full bg-white shadow z-20 group-hover:opacity-100 opacity-0 text-xs font-medium"
+            className="absolute cursor-pointer top-0 -translate-y-1/2 rounded-full bg-background shadow z-20 group-hover:opacity-100 opacity-0 text-xs font-medium"
             onClick={() => toggleRotate()}
           >
             {rotation !== "horizontal" ? <RotateCcw /> : <RotateCw />}
@@ -699,7 +699,7 @@ export function SLSeatItem(
       return `${baseStyles} bg-[#FFF2CC80] border-[#FF9900] border text-[#FF9900] shadow-lg scale-105`;
     }
 
-    return `${baseStyles} border border-transparent bg-white text-gray-800 hover:bg-gray-300`;
+    return `${baseStyles} border border-transparent bg-background text-gray-800 hover:bg-white/20`;
   }, [isBooked, isSelected]);
 
   return (
@@ -714,13 +714,13 @@ export function SLSeatItem(
             !isSelected
               ? { translateY: 0, translateX: 0, opacity: 0, scale: 0.25 }
               : {
-                  scale: 1,
-                  opacity: 100,
-                  translateY: "-50%",
-                  translateX: "-50%",
-                }
+                scale: 1,
+                opacity: 100,
+                translateY: "-50%",
+                translateX: "-50%",
+              }
           }
-          className="absolute top-0 left-0 bg-white bg-white p-2 rounded-full size-8"
+          className="absolute top-0 left-0 bg-background bg-background p-2 rounded-full size-8"
         >
           {" "}
           {index}{" "}

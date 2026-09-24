@@ -1,6 +1,3 @@
-// Business logic for T/H/P derived insights — functional, no Effect, no imperative loops.
-// ponytail: pressure stored for future draft/weather, no derived insight in v1
-
 export type ComfortStatus = "good" | "warning" | "bad";
 
 export type ComfortResult = {

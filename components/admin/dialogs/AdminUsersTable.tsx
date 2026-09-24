@@ -38,13 +38,13 @@ export function AdminUsersTable() {
   const isLoading = identitiesResult === undefined;
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow">
+    <>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-gray-900">
+          <h2 className="text-lg font-medium text-foreground">
             Administrative Users
           </h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Manage users who can access the admin panel. Assign roles to control
             their permissions.
           </p>
@@ -52,17 +52,18 @@ export function AdminUsersTable() {
 
         <InviteTeamMemberDialog />
       </div>
+
       <div className="mt-4 overflow-hidden rounded-md border border-(--border)">
         <table className="min-w-full divide-y divide-(--border)">
           <thead className="bg-background">
             <tr>
-              <th className="py-2.5 pl-4 pr-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              <th className="py-2.5 pl-4 pr-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 User
               </th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Role
               </th>
-              <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Joined
               </th>
               <th className="relative py-2.5 pl-3 pr-4">
@@ -75,7 +76,7 @@ export function AdminUsersTable() {
               <tr>
                 <td
                   colSpan={4}
-                  className="py-8 text-center text-sm text-gray-500"
+                  className="py-8 text-center text-sm text-muted-foreground"
                 >
                   <AppSpinner className="mx-auto " />
                 </td>
@@ -84,7 +85,7 @@ export function AdminUsersTable() {
               <tr>
                 <td
                   colSpan={4}
-                  className="py-8 text-center text-sm text-gray-500"
+                  className="py-8 text-center text-sm text-muted-foreground"
                 >
                   No administrative users found.
                 </td>
@@ -101,9 +102,9 @@ export function AdminUsersTable() {
                 return (
                   <tr key={entry._id}>
                     <td className="whitespace-nowrap py-3 pl-4 pr-3 text-sm">
-                      <div className="font-medium text-gray-900">{name}</div>
+                      <div className="font-medium text-foreground">{name}</div>
                       {email && (
-                        <div className="text-gray-500 text-xs">{email}</div>
+                        <div className="text-muted-foreground text-xs">{email}</div>
                       )}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm">
@@ -111,13 +112,13 @@ export function AdminUsersTable() {
                         className={cn(
                           "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border border-transparent",
                           roleBadgeStyles[roleName] ??
-                            "bg-gray-100 text-gray-800",
+                          "bg-gray-100 text-gray-800",
                         )}
                       >
                         {roleName}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                    <td className="whitespace-nowrap px-3 py-3 text-sm text-muted-foreground">
                       {entry.createdAt
                         ? new Date(entry.createdAt).toLocaleDateString()
                         : "-"}
@@ -142,6 +143,6 @@ export function AdminUsersTable() {
           </tbody>
         </table>
       </div>
-    </div>
+    </>
   );
 }

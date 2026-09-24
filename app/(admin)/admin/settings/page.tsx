@@ -27,7 +27,7 @@ export default function SettingsPage() {
     <div>
       <section className="p-8">
         <h1 className="text-3xl font-bold mb-4">Settings</h1>
-        <p>Manage all settings here.</p>
+        <p className="text-muted-foreground">Manage all settings here.</p>
       </section>
 
       <Tabs defaultValue="onboarding">
