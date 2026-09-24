@@ -18,9 +18,9 @@ describe("getBucketIndex", () => {
 });
 
 describe("getColor hex palette", () => {
-  it("null returns var(--background)", () => {
-    expect(getColor(null)).toBe("var(--background)");
-    expect(getFallbackColor(null)).toBe("var(--background)");
+  it("null returns var(--background-lv1)", () => {
+    expect(getColor(null)).toBe("var(--background-lv1)");
+    expect(getFallbackColor(null)).toBe("var(--background-lv1)");
   });
   it("cold #0102FC at bucket 0", () => {
     expect(getColor(20)).toBe("#0102FC");
