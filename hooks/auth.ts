@@ -3,7 +3,7 @@ import { useQuery } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 import { api } from "@/convex/_generated/api";
-import { type AuthState, resolveAuthState } from "./auth.utils";
+import { resolveAuthState } from "./auth.utils";
 
 export function useCustomer({ userId }: { userId: string }) {
   const profile = useQuery(api.myFunctions.getUserById, {
@@ -21,6 +21,8 @@ export function useProfile() {
   const pathname = usePathname();
 
   useEffect(() => {
+    const isAuthenticated = isSignedIn && user;
+
     console.assert(
       pathname !== "/onboarding",
       "Never use this hook useProfile in the onboarding screen",
@@ -30,14 +32,13 @@ export function useProfile() {
       return;
     }
 
-    if (isSignedIn && user && profile?.id?.startsWith("user_")) {
+    if (isAuthenticated && profile?.id?.startsWith("user_")) {
       router.replace("/onboarding");
       return;
     }
 
     if (
-      isSignedIn &&
-      user &&
+      isAuthenticated &&
       profile?.occupation &&
       profile.occupation === "None"
     ) {
@@ -48,8 +49,7 @@ export function useProfile() {
     // New user whose webhook may or may not have fired: no profile exists yet.
     // Once accountMeta has loaded and confirmed no profile, send to onboarding.
     if (
-      isSignedIn &&
-      user &&
+      isAuthenticated &&
       profile === null &&
       accountMeta !== undefined &&
       accountMeta?.profile === null
@@ -89,13 +89,11 @@ export function useRequireAuth() {
   return { isLoading: false, isAuthenticated: isSignedIn };
 }
 
-export function useAuthEvents(params: {
-  onChange: (event: AuthState) => void;
-}) {
+export function useAuthState() {
   const clerkAuthState = useUser();
   const accountMeta = useQuery(api.myFunctions.getAccountMeta);
 
-  const status = React.useMemo(() => {
+  const authState = React.useMemo(() => {
     if (!clerkAuthState.isLoaded) return null;
 
     return resolveAuthState({
@@ -104,10 +102,5 @@ export function useAuthEvents(params: {
     });
   }, [accountMeta, clerkAuthState]);
 
-  useEffect(() => {
-    if (!status) return;
-    params.onChange(status);
-  }, [status, params]);
-
-  return status;
+  return authState;
 }
