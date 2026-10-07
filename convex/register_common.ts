@@ -40,6 +40,7 @@ export async function insertRegisterAndAggregate(
     access: AccessStruct;
     ticketId?: Id<"tickets">;
     method: "one-tap" | "qr";
+    visiting?: { hostUserId: string };
   },
 ): Promise<void> {
   const user_record = ctx.db.get(params?.userId as Id<"users">);
@@ -57,6 +58,7 @@ export async function insertRegisterAndAggregate(
     access: params.access,
     ticketId: params.ticketId,
     method: params.method,
+    visiting: params.visiting,
   });
 
   const entry = await ctx.db.get(id);

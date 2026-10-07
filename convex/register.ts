@@ -5,11 +5,14 @@ import { isNullable } from "effect/Predicate";
 import { O } from "../lib/fp.helpers";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { internalMutation, mutation } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { visitsAggregate } from "./customers";
-import { readId } from "./myFunctions";
-import { isRegisteredToday } from "./register_common";
+import { findOrCreateUser, readId } from "./myFunctions";
+import {
+  insertRegisterAndAggregate,
+  isRegisteredToday,
+} from "./register_common";
 import { CurrencyImpl, PlanImpl, RegisterImpl } from "./shared";
 
 const Timezone = {
@@ -328,5 +331,127 @@ export const debugRegisterForToday = mutation({
       message:
         "Registered for today. This record will auto-delete in 10 minutes.",
     };
+  },
+});
+
+/**
+ * Lists the customers currently checked in for today — the people who can host
+ * a guest. Guest visits are excluded: a guest cannot themselves host a guest.
+ */
+export const listTodaysHosts = query({
+  args: {},
+  handler: async (ctx) => {
+    const callerId = await readId(ctx);
+    if (!callerId) return [];
+
+    const today = new Date();
+
+    const records = await ctx.db
+      .query("daily_register")
+      .withIndex("by_timestamp", (q) =>
+        q
+          .gte("timestamp", startOfDay(today).toISOString())
+          .lte("timestamp", endOfDay(today).toISOString()),
+      )
+      .collect();
+
+    const hostIds = [
+      ...new Set(
+        records.filter((r) => isNullable(r.visiting)).map((r) => r.userId),
+      ),
+    ];
+
+    const hosts = await Promise.all(
+      hostIds.map(async (userId) => {
+        const profile = await ctx.db
+          .query("profile")
+          .withIndex("by_user_id", (q) => q.eq("id", userId))
+          .first();
+
+        if (!profile) return null;
+
+        return {
+          userId,
+          name: `${profile.firstName} ${profile.lastName}`.trim(),
+        };
+      }),
+    );
+
+    return hosts
+      .filter((host): host is NonNullable<typeof host> => host !== null)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  },
+});
+
+/**
+ * Checks a guest in against the customer they are visiting.
+ *
+ * Guests never sign up: staff capture their details once and they are admitted
+ * on the spot. `findOrCreateUser` is idempotent on email, so a returning guest
+ * resolves to the profile they already have rather than a duplicate.
+ */
+export const checkInGuest = mutation({
+  args: {
+    firstName: v.string(),
+    lastName: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    hostUserId: v.string(),
+    visitorId: v.optional(v.string()),
+    browser: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const scannerId = await readId(ctx);
+    if (!scannerId) {
+      throw new ConvexError("User not authenticated");
+    }
+
+    await requirePrivilege(ctx, "attendance:checkin");
+
+    const host = await ctx.db
+      .query("profile")
+      .withIndex("by_user_id", (q) => q.eq("id", args.hostUserId))
+      .first();
+
+    if (!host) {
+      throw new ConvexError("Host customer not found.");
+    }
+
+    if (!(await isRegisteredToday(ctx, args.hostUserId))) {
+      throw new ConvexError(
+        `${host.firstName} ${host.lastName} is not checked in today and cannot host a guest.`,
+      );
+    }
+
+    const guestUserId = await findOrCreateUser(ctx, {
+      email: args.email,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      phone: args.phone,
+    });
+
+    if (guestUserId === args.hostUserId) {
+      throw new ConvexError("A customer cannot be their own guest.");
+    }
+
+    if (await isRegisteredToday(ctx, guestUserId)) {
+      throw new ConvexError("This person is already registered for today.");
+    }
+
+    await insertRegisterAndAggregate(ctx, {
+      userId: guestUserId,
+      device: {
+        name: "Unknown",
+        visitorId: args.visitorId ?? "unknown",
+        browser: args.browser ?? "unknown",
+      },
+      admittedBy: scannerId,
+      timestamp: new Date().toISOString(),
+      access: { kind: "free" },
+      method: "qr",
+      visiting: { hostUserId: args.hostUserId },
+    });
+
+    return { userId: guestUserId };
   },
 });

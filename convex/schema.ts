@@ -30,12 +30,20 @@ const daily_register = defineTable({
   ticketId: v.optional(v.id("tickets")),
   checkedout_at: v.optional(v.string()), // ISO timestamp
   method: v.optional(v.union(v.literal("one-tap"), v.literal("qr"))),
+  /**
+   * Present only when this visit was a guest visit. The presence of this
+   * field *is* the guest flag — there is no separate boolean to fall out of
+   * sync with it. `hostUserId` is the `profile`.`id` of the customer being
+   * visited.
+   */
+  visiting: v.optional(v.object({ hostUserId: v.string() })),
 })
   .index("admitted_by", ["admitted_by"])
   .index("unique_visitor", ["device.visitorId"])
   .index("access_plan", ["access.kind"])
   .index("user", ["userId"])
   .index("by_ticket", ["ticketId"])
+  .index("by_host", ["visiting.hostUserId"])
   .index("by_timestamp", ["timestamp"]);
 
 const featureRequest = defineTable({
