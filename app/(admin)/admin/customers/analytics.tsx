@@ -68,7 +68,7 @@ function MetricCard({
   const isNewCustomersCard = kind === "newCustomers";
 
   const cardContent = (
-    <Card className="aspect-[3/1.5]">
+    <Card className="aspect-3/1.5">
       <CardContent className="flex pt-4 flex-col gap-2">
         <CardDescription>{label}</CardDescription>
         <span className="text-3xl font-semibold">
@@ -129,7 +129,7 @@ export function Analytics() {
       <div className="flex justify-end mb-4">
         <DateRange.Dropdown />
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4">
         <MetricCard label="Total customers" kind="totalCustomers" />
         <MetricCard label="New customers" kind="newCustomers" />
         <MetricCard label="Active customers" kind="activeCustomers" />
@@ -254,7 +254,7 @@ function CashPaymentsCard() {
             </div>
           </div>
 
-          <div className="h-16 -mx-6 flex *:flex-1">
+          <div className="h-16 aspect-3/1.2 -mx-6 flex *:flex-1">
             {is_empty ? (
               <div className="text-xs text-muted-foreground px-6">
                 No cash payments
@@ -332,7 +332,7 @@ export function TotalRevenue() {
 
   return (
     <div className="@container flex flex-col gap-4">
-      <Card className="aspect-[3/1.5] w-full relative">
+      <Card className="aspect-3/1.5 w-full relative">
         <CardContent className="flex pt-4 flex-col gap-2">
           <CardDescription>Actual Revenue</CardDescription>
           <span className="text-3xl font-semibold">

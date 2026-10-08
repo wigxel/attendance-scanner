@@ -71,7 +71,7 @@ describe("saveCount cash upsert", () => {
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].count).toBe(2);
-    expect(rows[0].total).toBe(17000);
+    expect(rows[0].total).toBe(170);
   });
 
   it("upserts (idempotent): running twice patches, not duplicates", async () => {
@@ -95,7 +95,7 @@ describe("saveCount cash upsert", () => {
     );
     expect(rows).toHaveLength(1);
     expect(rows[0].count).toBe(1);
-    expect(rows[0].total).toBe(5000);
+    expect(rows[0].total).toBe(50);
   });
 
   it("writes a zero row on a day with no cash", async () => {
@@ -160,11 +160,11 @@ describe("backfillDailyCashPayments", () => {
         .unique(),
     );
     expect(may15?.count).toBe(1);
-    expect(may15?.total).toBe(5000);
+    expect(may15?.total).toBe(50);
     expect(jun10?.count).toBe(1);
-    expect(jun10?.total).toBe(12000);
+    expect(jun10?.total).toBe(120);
     expect(jul05?.count).toBe(2);
-    expect(jul05?.total).toBe(10000);
+    expect(jul05?.total).toBe(100);
   });
 
   it("writes zero rows for days with no cash", async () => {

@@ -11,13 +11,14 @@ import { AppLoader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { isDevelopment } from "@/config/constants";
 import { api } from "@/convex/_generated/api";
-import { useAuthEvents } from "@/hooks/auth";
+import { useAuthState } from "@/hooks/auth";
 import { safeStr } from "@/lib/data.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
 
 function ValidateConvexProfile() {
   const router = useRouter();
   const user = useUser();
+  const [triggered, setTriggered] = React.useState(false);
   const createAccount = useMutation(api.myFunctions.createUser);
   const updateConvexExternalId = useAction(
     api.myFunctions.setAccountExternalId,
@@ -51,29 +52,32 @@ function ValidateConvexProfile() {
     },
   });
 
-  const triggered = React.useRef(false);
 
-  useAuthEvents({
-    onChange: (state) => {
-      if (isDevelopment) {
-        console.log("auth state:", state);
-      }
+  const authState = useAuthState();
 
-      if (state.authState === "logged_out") return;
+  const handleAuthStateChange = (authState_: typeof authState) => {
+    if (!authState_) return;
 
-      // Fully synced with Convex — navigate to account
-      if (state.syncState === "synced") {
-        router.push("/account");
-        return;
-      }
+    if (isDevelopment) {
+      console.log(">> auth state:", authState_);
+    }
 
-      // Not synced yet — link Clerk and Convex accounts (once)
-      if (state.syncState === "syncing" && !triggered.current) {
-        triggered.current = true;
-        createAccountMutation.mutate({ clerkUser: user });
-      }
-    },
-  });
+    if (authState_.authState === "logged_out") return;
+
+    // Fully synced with Convex — navigate to account
+    if (authState_.syncState === "synced" && authState_.onboarding === "completed") {
+      router.push("/account");
+      return;
+    }
+
+    // Not synced yet — link Clerk and Convex accounts (once)
+    if (authState_.syncState === "syncing" && triggered) {
+      setTriggered(true);
+      createAccountMutation.mutate({ clerkUser: user });
+    }
+  }
+
+  handleAuthStateChange(authState);
 
   if (createAccountMutation.isError) {
     return (
@@ -85,7 +89,7 @@ function ValidateConvexProfile() {
           variant="outline"
           size="sm"
           onClick={() => {
-            triggered.current = false;
+            setTriggered(false);
             createAccountMutation.mutate({ clerkUser: user });
           }}
         >
@@ -107,7 +111,7 @@ export default function AccountValidationPage() {
     <>
       <title>Customer Account | InSpace</title>
       <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />
-      <div className="z-[2] relative">
+      <div className="z-2 relative">
         <Header />
 
         <main className="px-4 min-h-[calc(100svh-var(--header-height)*2)]">

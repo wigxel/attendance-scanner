@@ -1,5 +1,7 @@
+import { v } from "convex/values";
 import { isNullable } from "effect/Predicate";
 import { internalMutation } from "./_generated/server";
+import { PlanImpl } from "./shared";
 
 export const migrateOccupationNamesToIds = internalMutation({
   args: {},
@@ -47,35 +49,35 @@ export const backfillNullMethods = internalMutation({
   },
 });
 
-/**
- * Backfills bookings left behind by the `durationType` → `planKey` refactor.
- *
- * `calendar_month` used to be a `durationType`. It is now a `planKey`, with the
- * duration itself recorded as `month` (see `convex/bookings.ts` `createBooking`
- * and the expectation in `convex/bookings.test.ts`). Rows written before that
- * change still carry the old shape and fail schema validation.
- *
- * Run this while `durationTypeConvexSchema` still accepts `calendar_month`,
- * then narrow the validator again.
- */
-export const backfillCalendarMonthBookings = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const bookings = await ctx.db.query("bookings").collect();
+export const fixDailyAmountKobo = internalMutation({
+  args: { dryRun: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const dryRun = args.dryRun ?? true;
 
-    let updated = 0;
-    for (const booking of bookings) {
-      // The literal is gone from the validator once this migration has run, so
-      // compare as a plain string rather than against the narrowed union.
-      if ((booking.durationType as string) !== "calendar_month") continue;
+    const registers = await ctx.db.query("daily_register").collect();
 
-      await ctx.db.patch(booking._id, {
-        durationType: "month",
-        planKey: booking.planKey ?? "calendar_month",
-      });
-      updated++;
+    const candidates = registers.filter((r) => PlanImpl.isV2(r.access))
+      .map((r) => {
+        const access = r.access as { amountInKobo: number; planId: string };
+        const base = access.planId === "daily" && access.amountInKobo === 3000 ? 300000 : access.amountInKobo;
+        const next = Math.round(base);
+        return next !== access.amountInKobo
+          ? { id: r._id, from: access.amountInKobo, to: next, planId: access.planId, access: r.access }
+          : null;
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+
+    if (dryRun) {
+      return {
+        dryRun: true as const,
+        wouldUpdate: candidates.length,
+        preview: candidates.slice(0, 10).map(({ id, from, to, planId }) => ({ id, from, to, planId })),
+        updated: 0,
+      };
     }
 
-    return { updated };
+    // biome-ignore lint/suspicious/noExplicitAny: Too complex
+    await Promise.all(candidates.map(({ id, to, access }) => ctx.db.patch(id, { access: { ...(access as any), amountInKobo: to } } as any)));
+    return { dryRun: false as const, updated: candidates.length, wouldUpdate: candidates.length };
   },
 });

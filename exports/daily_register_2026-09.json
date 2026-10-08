@@ -1,0 +1,3581 @@
+[
+  {
+    "_creationTime": 1788252610599.1377,
+    "_id": "jx7bq4wck72ccx9h0p631se4tn8dkw10",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1712wfwkq0p1j9hnz99yeq37s8d9gv9",
+    "timestamp": "2026-09-01T08:50:10.599Z",
+    "userId": "k97ewj26gbkx36amgcz2b404dx81xrpr"
+  },
+  {
+    "_creationTime": 1788252694386.1443,
+    "_id": "jx711s7q9n4rnatz3ngca7ndcs8dk5gd",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-01T08:51:34.386Z",
+    "userId": "k97e42yx3q8dkpmyheew1bjdq9821z96"
+  },
+  {
+    "_creationTime": 1788253251512.154,
+    "_id": "jx741rw6jx55sgkd9h5trega7h8dksps",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m175k3x9vfvn6e34hf2vev5v2s8d79tq",
+    "timestamp": "2026-09-01T09:00:51.512Z",
+    "userId": "k970q7c0kds5wher2gmtf7k49d80e827"
+  },
+  {
+    "_creationTime": 1788259403527.4934,
+    "_id": "jx7fg9344mpajgcf7a3h5wdxe58djjg7",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m172df5jc6qkk9af6yj4wnfax58dge77",
+    "timestamp": "2026-09-01T10:43:23.527Z",
+    "userId": "k9734nxpv51rdc5vb71xek5e7n85a0wm"
+  },
+  {
+    "_creationTime": 1788259428903.0364,
+    "_id": "jx72arpw1k90mtkc4hvpn903yd8dkkh3",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 5
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-01T10:43:48.903Z",
+    "userId": "k97c9cvv1j82evdw5d6ajzqxjd7fce3q"
+  },
+  {
+    "_creationTime": 1788261552893.7236,
+    "_id": "jx76xj26fnj9c7rc667q685z1s8djk5q",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-01T11:19:12.893Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1788266531128.7166,
+    "_id": "jx79pf51wqfcnrahntv975jvnh8dkpev",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-01T12:42:11.128Z",
+    "userId": "k977bmqfeg71frfnehzydjn6n186texe"
+  },
+  {
+    "_creationTime": 1788268071503.2886,
+    "_id": "jx76ctxwkmn5ya8cvp071v139x8dj8av",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-01T13:07:51.503Z",
+    "userId": "k97ajpe46rskxp208wfkqjx1r58djs57"
+  },
+  {
+    "_creationTime": 1788271650853.236,
+    "_id": "jx78rm93zjy9g5c11paezcsj5d8dk503",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-01T14:07:30.853Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1788335910262.195,
+    "_id": "jx75y2krjh2rwqgt3j58p6c7nd8dmjte",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-02T07:58:30.262Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1788345825220.357,
+    "_id": "jx74frvpcnqcgd7hv8hab0hpb18dm86z",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-02T10:43:45.220Z",
+    "userId": "k977bmqfeg71frfnehzydjn6n186texe"
+  },
+  {
+    "_creationTime": 1788345999098.7192,
+    "_id": "jx78jqsr1jqs57960hc1hw4tkd8dnp06",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-02T10:46:39.098Z",
+    "userId": "k97ese3c153ws3ysyvax4dydph8dnyw2"
+  },
+  {
+    "_creationTime": 1788346082012.376,
+    "_id": "jx75pb5y7mspsq9rrhgwabhgts8dmrsp",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m172df5jc6qkk9af6yj4wnfax58dge77",
+    "timestamp": "2026-09-02T10:48:02.012Z",
+    "userId": "k9734nxpv51rdc5vb71xek5e7n85a0wm"
+  },
+  {
+    "_creationTime": 1788346094966.6758,
+    "_id": "jx71rgj7dkx4jqz1yj025b05rn8dnbv7",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1712wfwkq0p1j9hnz99yeq37s8d9gv9",
+    "timestamp": "2026-09-02T10:48:14.966Z",
+    "userId": "k97ewj26gbkx36amgcz2b404dx81xrpr"
+  },
+  {
+    "_creationTime": 1788352210710.0808,
+    "_id": "jx7chacxrnawksbgazsanbdb1h8dnb28",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-02T12:30:10.710Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1788352259559.0928,
+    "_id": "jx76jj8sj2r3dhafz1g2td3v5d8dngxn",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "cash",
+      "planId": "daily"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-02T12:30:59.559Z",
+    "userId": "k97dwj944cbs1evwmp0kyq2wt58dmk18"
+  },
+  {
+    "_creationTime": 1788352548090.8665,
+    "_id": "jx7aa180mzfbez68gg6kh6vk9h8dmq03",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-02T12:35:48.090Z",
+    "userId": "k97epfg0265ejg475q2zpqpf0s7n67nd"
+  },
+  {
+    "_creationTime": 1788433069486.5322,
+    "_id": "jx7azb84tbty7ej7a84qm6z23d8dp227",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m172df5jc6qkk9af6yj4wnfax58dge77",
+    "timestamp": "2026-09-03T10:57:49.486Z",
+    "userId": "k9734nxpv51rdc5vb71xek5e7n85a0wm"
+  },
+  {
+    "_creationTime": 1788433231371.062,
+    "_id": "jx7f7yyygrwttbp6qdzhkpevmx8dqtm0",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-03T11:00:31.371Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1788433298040.9526,
+    "_id": "jx78nw8q7pvgtct79dn0k1ks998dp96n",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1714gzkjhqppw2t7gm5wbebt98cw65x",
+    "timestamp": "2026-09-03T11:01:38.041Z",
+    "userId": "k97a3fgv0n9ef51hxffd25kjp58cwnhw"
+  },
+  {
+    "_creationTime": 1788433377897.5771,
+    "_id": "jx73qhhsgnyb7974enqx18evr58dpxy2",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-03T11:02:57.897Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1788433417616.958,
+    "_id": "jx70v05v0k3v0m1pxexjnss8j18dqj1k",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1712wfwkq0p1j9hnz99yeq37s8d9gv9",
+    "timestamp": "2026-09-03T11:03:37.617Z",
+    "userId": "k97ewj26gbkx36amgcz2b404dx81xrpr"
+  },
+  {
+    "_creationTime": 1788433544983.216,
+    "_id": "jx7dahk8qw0a9e1frh761cp1518dqtkf",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17f5ypqkw3pd8hacg04wz34xh8c2652",
+    "timestamp": "2026-09-03T11:05:44.983Z",
+    "userId": "k970t5126gt4vnmf7hk6tj4wd189100r"
+  },
+  {
+    "_creationTime": 1788433856107.1064,
+    "_id": "jx7acysrxbdhxtk055enf7ke218dq3xv",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-03T11:10:56.107Z",
+    "userId": "k97fybfpjn2nrjfdvxknc8z1wx8453wg"
+  },
+  {
+    "_creationTime": 1788434212780.8718,
+    "_id": "jx7c1kbyva5t1yam3wftyxfcxs8dqa80",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-03T11:16:52.780Z",
+    "userId": "k97d1csns5yyx7mtecb975kchh8dqrd7"
+  },
+  {
+    "_creationTime": 1788438391798.5554,
+    "_id": "jx75szvxk5cj9pfttgqwmsg9g98dq3yw",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-03T12:26:31.798Z",
+    "userId": "k97c9cvv1j82evdw5d6ajzqxjd7fce3q"
+  },
+  {
+    "_creationTime": 1788444951275.0095,
+    "_id": "jx7cff518rpdb8b5jy2amdk2eh8dpmk7",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17bkffxmhemkymjgbwxtw5b118c1gg1",
+    "timestamp": "2026-09-03T14:15:51.275Z",
+    "userId": "k976sb1nq4bzsn4t026148q54s871ynv"
+  },
+  {
+    "_creationTime": 1788451502637.5232,
+    "_id": "jx724c9a9bbks7j4t55rm6pj7d8dq6er",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1758tp5cd9zqnfqq6sh8jp5ah8cbskb",
+    "timestamp": "2026-09-03T16:05:02.637Z",
+    "userId": "k97ecavk9gfk281yzjgkf8sgdd8462xe"
+  },
+  {
+    "_creationTime": 1788508051458.7205,
+    "_id": "jx74h8akdxzqenf8hdrnmypbmn8drbzq",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-04T07:47:31.458Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1788511418796.7712,
+    "_id": "jx7563m20nxwwq3dvh2pt2n5098drjpf",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m175k3x9vfvn6e34hf2vev5v2s8d79tq",
+    "timestamp": "2026-09-04T08:43:38.796Z",
+    "userId": "k970q7c0kds5wher2gmtf7k49d80e827"
+  },
+  {
+    "_creationTime": 1788512708271.0352,
+    "_id": "jx7dfj048r4ze8z3c9ce71zxw58dr0mw",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 4
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-04T09:05:08.271Z",
+    "userId": "k973zyp89rke7qrqhxgjtjdpp17nnar6"
+  },
+  {
+    "_creationTime": 1788514632278.4119,
+    "_id": "jx7a281hgm7z6t7h00nsvkrpxn8drzat",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1758tp5cd9zqnfqq6sh8jp5ah8cbskb",
+    "timestamp": "2026-09-04T09:37:12.278Z",
+    "userId": "k97ecavk9gfk281yzjgkf8sgdd8462xe"
+  },
+  {
+    "_creationTime": 1788517371674.6196,
+    "_id": "jx73qg9se2kdv8hpxk2d00vyxx8dr086",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1714gzkjhqppw2t7gm5wbebt98cw65x",
+    "timestamp": "2026-09-04T10:22:51.674Z",
+    "userId": "k97a3fgv0n9ef51hxffd25kjp58cwnhw"
+  },
+  {
+    "_creationTime": 1788517439743.725,
+    "_id": "jx74mhkn3p6b3edde43tysaj2x8dsjxm",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-04T10:23:59.743Z",
+    "userId": "k97e42yx3q8dkpmyheew1bjdq9821z96"
+  },
+  {
+    "_creationTime": 1788526195832.3403,
+    "_id": "jx7e74rspctjmjc82hgd5vat558dre96",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-04T12:49:55.832Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1788539044801.9082,
+    "_id": "jx7az5zw6nmjnw0x7fzfp0qgj18dsqpf",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-04T16:24:04.801Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1788539061100.0603,
+    "_id": "jx7ag2jmfhvjsmmhkhf2m7x2x98drt2p",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 1
+      },
+      "kind": "paid",
+      "paymentMethod": "cash",
+      "planId": "daily"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-04T16:24:21.100Z",
+    "userId": "k97chhc78pz0j4xswh5ytpw50h8dhz4m"
+  },
+  {
+    "_creationTime": 1788599283193.1008,
+    "_id": "jx759hgrvgxs5hjap9pstdewp18dtyp1",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-05T09:08:03.193Z",
+    "userId": "k978jb9j6wa0s6bt6w9pdkfwts8dvdg5"
+  },
+  {
+    "_creationTime": 1788599441844.7017,
+    "_id": "jx77f3vb9neewyjtjhmv1ty1ch8dvaxv",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-05T09:10:41.844Z",
+    "userId": "k974awnn2a2cnyxwzd4mr9ne1s8dt2pm"
+  },
+  {
+    "_creationTime": 1788599555860.402,
+    "_id": "jx77ywxgajkc49b0f4xmyya3kn8dtma9",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-05T09:12:35.860Z",
+    "userId": "k9768nkn3ptfw9pcqbna0kj1058dvp9d"
+  },
+  {
+    "_creationTime": 1788600062540.8801,
+    "_id": "jx74jnyjm73gg5b875ptnqstm18dtyn3",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-05T09:21:02.540Z",
+    "userId": "k9721azw72vx9c3pjqs290card8dtfqe"
+  },
+  {
+    "_creationTime": 1788600129169.5195,
+    "_id": "jx71hmfqk6ztj9wq4hr8pap9kd8dtqmm",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-05T09:22:09.169Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1788601775892.137,
+    "_id": "jx70ypn7g5zeq2rdtd5b8rss1n8dt7q2",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-05T09:49:35.892Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1788606780061.2925,
+    "_id": "jx7datg9kqpn7chfesjc906fbs8dtrv8",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-05T11:13:00.061Z",
+    "userId": "k97cyrv3wczdbhdh3aapzff4q18dv38d"
+  },
+  {
+    "_creationTime": 1788607292822.563,
+    "_id": "jx734r3seeydsb8rvbgkbcj23x8dvw3g",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-05T11:21:32.822Z",
+    "userId": "k97bdyrbr770ybxn3gz3a4cqen8dvztv"
+  },
+  {
+    "_creationTime": 1788607430256.8428,
+    "_id": "jx746hh909jazm843y3x92akfn8dv0bz",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-05T11:23:50.256Z",
+    "userId": "k97c7r1ghmzv7rcymc2w3c9vjh8dvkvk"
+  },
+  {
+    "_creationTime": 1788607828895.0688,
+    "_id": "jx76tzgk5r1vz8rzgpvfxz3r0x8dtxn0",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-05T11:30:28.895Z",
+    "userId": "k97474msq4wnjh8gg86gdg4zxd8dt0jd"
+  },
+  {
+    "_creationTime": 1788613405499.7124,
+    "_id": "jx76zxm0z362kej2tj92pb6wth8dtkcc",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 3
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-05T13:03:25.499Z",
+    "userId": "k97b6k5pk5sjbjmtnmgzm5bjch7hajf3"
+  },
+  {
+    "_creationTime": 1788614671153.4092,
+    "_id": "jx73h810cfm49zwz4nvjmvmyz98dt0st",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k971q5v1xysb46wenght6x3xn97ewg7d",
+    "device": {
+      "browser": "debug",
+      "name": "Debug",
+      "visitorId": "debug"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-05T13:24:31.153Z",
+    "userId": "k971n80d4tfkdjy4fn58taggan8dtj88"
+  },
+  {
+    "_creationTime": 1788774039737.2234,
+    "_id": "jx7852wen4fx5qe3bn7hzc3px58dzgxe",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-07T09:40:39.737Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1788774106713.521,
+    "_id": "jx77rp8ngpz2ae6jde3pkqfm698dzkkg",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-07T09:41:46.713Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1788774780646.5103,
+    "_id": "jx70neretswevt565z93vyfjc58dyen3",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177wtdks0da6w3rzc4r47e34d8dzbf0",
+    "timestamp": "2026-09-07T09:53:00.646Z",
+    "userId": "k976vz5942ny4skebmqtcr7y9d80nc40"
+  },
+  {
+    "_creationTime": 1788778377698.2961,
+    "_id": "jx70ey69ch72yr98wn7eg3vp598dz40f",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1714gzkjhqppw2t7gm5wbebt98cw65x",
+    "timestamp": "2026-09-07T10:52:57.698Z",
+    "userId": "k97a3fgv0n9ef51hxffd25kjp58cwnhw"
+  },
+  {
+    "_creationTime": 1788786333859.7969,
+    "_id": "jx7efwq1b5jfxcqgenagxbqvp58dyqbe",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1712wfwkq0p1j9hnz99yeq37s8d9gv9",
+    "timestamp": "2026-09-07T13:05:33.859Z",
+    "userId": "k97ewj26gbkx36amgcz2b404dx81xrpr"
+  },
+  {
+    "_creationTime": 1788796978106.6816,
+    "_id": "jx7ah479g06hjekwfnx686ms258dzc3q",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1735mr0kazex597e4z9q9xvvh8dvahc",
+    "timestamp": "2026-09-07T16:02:58.106Z",
+    "userId": "k976sb1nq4bzsn4t026148q54s871ynv"
+  },
+  {
+    "_creationTime": 1788801176899.8237,
+    "_id": "jx788yajnysctvkhd6pgc6fhwn8dyyw4",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1758tp5cd9zqnfqq6sh8jp5ah8cbskb",
+    "timestamp": "2026-09-07T17:12:56.899Z",
+    "userId": "k97ecavk9gfk281yzjgkf8sgdd8462xe"
+  },
+  {
+    "_creationTime": 1788857549560.1301,
+    "_id": "jx73pt2e9tqswtsc0gkxneg1v58e1mc4",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-08T08:52:29.560Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1788857649193.2693,
+    "_id": "jx79p22h5t8s9h9pw57n2dt0fd8e1jmk",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 166666.66666666666,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "week"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17807p8me7vs3858sye9d24j18e0cme",
+    "timestamp": "2026-09-08T08:54:09.193Z",
+    "userId": "k97b6k5pk5sjbjmtnmgzm5bjch7hajf3"
+  },
+  {
+    "_creationTime": 1788857725415.305,
+    "_id": "jx70hhz8bdaw24ytyh35t86xcs8e093h",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m170wtcgt0dkdp16dvqc4frf4s8e1nh8",
+    "timestamp": "2026-09-08T08:55:25.415Z",
+    "userId": "k97c30eyr2fkzp0gtbn71mjke58a2g9y"
+  },
+  {
+    "_creationTime": 1788859710052.3306,
+    "_id": "jx78whfy3fh0wefvg671d9844h8e05yw",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-08T09:28:30.052Z",
+    "userId": "k970t5126gt4vnmf7hk6tj4wd189100r"
+  },
+  {
+    "_creationTime": 1788862861909.6602,
+    "_id": "jx7edr2f54a32mg9sn9hf0b0n18e1czq",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-08T10:21:01.909Z",
+    "userId": "k9707j4tncaneyxbpb92kfnhdn7vj6zb"
+  },
+  {
+    "_creationTime": 1788864255844.833,
+    "_id": "jx7e941mwgj71v58w6pxemacn98e0xcr",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1712wfwkq0p1j9hnz99yeq37s8d9gv9",
+    "timestamp": "2026-09-08T10:44:15.844Z",
+    "userId": "k97ewj26gbkx36amgcz2b404dx81xrpr"
+  },
+  {
+    "_creationTime": 1788867737649.125,
+    "_id": "jx787h5vk9tj9zznze27ya8dp18e08gy",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-08T11:42:17.649Z",
+    "userId": "k9778gcx7jdnh08hcwxvanr4bn8e0epf"
+  },
+  {
+    "_creationTime": 1788868504359.523,
+    "_id": "jx7eh0mz66ajs2fghhp378y03d8e0cj9",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-08T11:55:04.359Z",
+    "userId": "k97e336fa3327408zmyczgprn18e0vv1"
+  },
+  {
+    "_creationTime": 1788871759563.2927,
+    "_id": "jx7d0214h7jp6q3z99q5dzxtvx8e0rwk",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 3
+      },
+      "kind": "paid",
+      "paymentMethod": "cash",
+      "planId": "daily"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-08T12:49:19.563Z",
+    "userId": "k97e3wsr4z3k90pwv90pj6kbk98e0ht3"
+  },
+  {
+    "_creationTime": 1788874089779.0967,
+    "_id": "jx7ezhftx85eqt4xwd1mkw2bd98e0esr",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-08T13:28:09.779Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1788877125304.401,
+    "_id": "jx7cng9k6yexf1cvxnkbw1ph7h8e1gpa",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177wtdks0da6w3rzc4r47e34d8dzbf0",
+    "timestamp": "2026-09-08T14:18:45.304Z",
+    "userId": "k976vz5942ny4skebmqtcr7y9d80nc40"
+  },
+  {
+    "_creationTime": 1788942762673.5466,
+    "_id": "jx7bf6makc027btbkscjcwjfpn8e2f00",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m170wtcgt0dkdp16dvqc4frf4s8e1nh8",
+    "timestamp": "2026-09-09T08:32:42.673Z",
+    "userId": "k97c30eyr2fkzp0gtbn71mjke58a2g9y"
+  },
+  {
+    "_creationTime": 1788943311906.0386,
+    "_id": "jx73mnqv3naqh01ykv6hd4a5398e3ep2",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-09T08:41:51.906Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1788944866920.0298,
+    "_id": "jx7epmn2gtcc0mz6hwj41rxtpn8e2mck",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1735mr0kazex597e4z9q9xvvh8dvahc",
+    "timestamp": "2026-09-09T09:07:46.920Z",
+    "userId": "k976sb1nq4bzsn4t026148q54s871ynv"
+  },
+  {
+    "_creationTime": 1788944869626.619,
+    "_id": "jx7bswpd6qhf2js5352m2dh01s8e231s",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1714gzkjhqppw2t7gm5wbebt98cw65x",
+    "timestamp": "2026-09-09T09:07:49.626Z",
+    "userId": "k97a3fgv0n9ef51hxffd25kjp58cwnhw"
+  },
+  {
+    "_creationTime": 1788945887078.2966,
+    "_id": "jx79thjy2smypb4tjcta445w6h8e3w2c",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 166666.66666666666,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "week"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17807p8me7vs3858sye9d24j18e0cme",
+    "timestamp": "2026-09-09T09:24:47.078Z",
+    "userId": "k97b6k5pk5sjbjmtnmgzm5bjch7hajf3"
+  },
+  {
+    "_creationTime": 1788948522746.5894,
+    "_id": "jx78t07ka6zs467cfkkzc8925d8e20wx",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m175k3x9vfvn6e34hf2vev5v2s8d79tq",
+    "timestamp": "2026-09-09T10:08:42.746Z",
+    "userId": "k970q7c0kds5wher2gmtf7k49d80e827"
+  },
+  {
+    "_creationTime": 1788963036499.9912,
+    "_id": "jx75dws3gnzheftrhnatp1d7858e3bj9",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-09T14:10:36.500Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1788966601149.5398,
+    "_id": "jx73e13s0jp1e1pf4anfgn6rzh8e2mps",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-09T15:10:01.149Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1789026713643.6523,
+    "_id": "jx70r50gakwjn3axdbbyq4pa058e4caq",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-10T07:51:53.643Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1789031932944.1438,
+    "_id": "jx79qh2hze84g8xyykp5wkdeas8e42ge",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-10T09:18:52.944Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1789032730287.6523,
+    "_id": "jx72sbaf4dnhcdx1x0tdbpj07d8e40dc",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-10T09:32:10.287Z",
+    "userId": "k970t5126gt4vnmf7hk6tj4wd189100r"
+  },
+  {
+    "_creationTime": 1789039911607.4998,
+    "_id": "jx73z3pp1pwc8wtrx0amh3g70d8e5tzx",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m175k3x9vfvn6e34hf2vev5v2s8d79tq",
+    "timestamp": "2026-09-10T11:31:51.607Z",
+    "userId": "k970q7c0kds5wher2gmtf7k49d80e827"
+  },
+  {
+    "_creationTime": 1789052159312.8025,
+    "_id": "jx7007620e051a0h5brhqmzw298e560w",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1735mr0kazex597e4z9q9xvvh8dvahc",
+    "timestamp": "2026-09-10T14:55:59.312Z",
+    "userId": "k976sb1nq4bzsn4t026148q54s871ynv"
+  },
+  {
+    "_creationTime": 1789059384474.7952,
+    "_id": "jx74br7gwg5x1yfntzwg4syde58e4m2t",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-10T16:56:24.474Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1789148280602.981,
+    "_id": "jx7en0qxkfjqqcs5rr3vew18x98e6ppb",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-11T17:38:00.603Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1789153681677.7097,
+    "_id": "jx7dwjhbf137hhg9wd18r8wskh8e6yc9",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-11T19:08:01.677Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1789199353017.4697,
+    "_id": "jx79mpzh7d1ak0ta14dyaq3tjs8e8sty",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-12T07:49:13.017Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1789199610805.0596,
+    "_id": "jx73pwhfed6fz3naetk0b81ks18e99xy",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 166666.66666666666,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "week"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17807p8me7vs3858sye9d24j18e0cme",
+    "timestamp": "2026-09-12T07:53:30.805Z",
+    "userId": "k97b6k5pk5sjbjmtnmgzm5bjch7hajf3"
+  },
+  {
+    "_creationTime": 1789203949125.4834,
+    "_id": "jx78pz8xth624frhnc2mhvxvxs8e8r2e",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1735mr0kazex597e4z9q9xvvh8dvahc",
+    "timestamp": "2026-09-12T09:05:49.125Z",
+    "userId": "k976sb1nq4bzsn4t026148q54s871ynv"
+  },
+  {
+    "_creationTime": 1789205563906.2349,
+    "_id": "jx767s334vb2py71gtv506nnd58e81t9",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-12T09:32:43.906Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1789210509412.024,
+    "_id": "jx7b94k99jgq0nhqnpypycbdsd8e9x4p",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-12T10:55:09.412Z",
+    "userId": "k97demz5esd62tfcn17m345sdn8e97ra"
+  },
+  {
+    "_creationTime": 1789213940064.683,
+    "_id": "jx72zcbxqc6dmch2d5y0vtj21x8e9669",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-12T11:52:20.064Z",
+    "userId": "k97e5ted430pk3qwk610rwm1kx88fs3p"
+  },
+  {
+    "_creationTime": 1789225312550.036,
+    "_id": "jx74bfy5dgfdang46zzq3z630x8e8246",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 2
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k97adr6wq08c94qm2vsp08jykn7nd1yr",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-12T15:01:52.550Z",
+    "userId": "k97bv00wy1vvjenfeqn4b7311n85x9jx"
+  },
+  {
+    "_creationTime": 1789373771115.2373,
+    "_id": "jx7ahcb2erhpfkycq88m944fts8ecxab",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 166666.66666666666,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "week"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17807p8me7vs3858sye9d24j18e0cme",
+    "timestamp": "2026-09-14T08:16:11.115Z",
+    "userId": "k97b6k5pk5sjbjmtnmgzm5bjch7hajf3"
+  },
+  {
+    "_creationTime": 1789373866421.9846,
+    "_id": "jx799htbrjf5817hvdy5gn1mrx8ectg3",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-14T08:17:46.422Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1789379810359.2075,
+    "_id": "jx7cs8z6gwrydjzxxahdgr5sps8ec2e3",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-14T09:56:50.359Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1789379994405.0576,
+    "_id": "jx7cs1ac9txezfq43twx52ps6d8ed402",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1714gzkjhqppw2t7gm5wbebt98cw65x",
+    "timestamp": "2026-09-14T09:59:54.405Z",
+    "userId": "k97a3fgv0n9ef51hxffd25kjp58cwnhw"
+  },
+  {
+    "_creationTime": 1789385156663.7139,
+    "_id": "jx78mp2gcnvhbqxb4qdnnpmpx18ecyk2",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m175k3x9vfvn6e34hf2vev5v2s8d79tq",
+    "timestamp": "2026-09-14T11:25:56.663Z",
+    "userId": "k970q7c0kds5wher2gmtf7k49d80e827"
+  },
+  {
+    "_creationTime": 1789409879686.0137,
+    "_id": "jx7emr5jdntbem4tmanj0gg5q98ec1xq",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 1
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-14T18:17:59.686Z",
+    "userId": "k97chhc78pz0j4xswh5ytpw50h8dhz4m"
+  },
+  {
+    "_creationTime": 1789465531919.668,
+    "_id": "jx74er73j9dea9bhgtg2qmaq698efe2a",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-15T09:45:31.919Z",
+    "userId": "k97b6k5pk5sjbjmtnmgzm5bjch7hajf3"
+  },
+  {
+    "_creationTime": 1789468175661.6267,
+    "_id": "jx7cpehy3nqx080bsjgjtsgtgd8ef0yh",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1714gzkjhqppw2t7gm5wbebt98cw65x",
+    "timestamp": "2026-09-15T10:29:35.661Z",
+    "userId": "k97a3fgv0n9ef51hxffd25kjp58cwnhw"
+  },
+  {
+    "_creationTime": 1789469004431.741,
+    "_id": "jx76kj8x23andaw25vtzmpfk5x8eetrk",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m175k3x9vfvn6e34hf2vev5v2s8d79tq",
+    "timestamp": "2026-09-15T10:43:24.431Z",
+    "userId": "k970q7c0kds5wher2gmtf7k49d80e827"
+  },
+  {
+    "_creationTime": 1789469618212.5125,
+    "_id": "jx71aawh92kgyhwq5v4skv8ts98eeahr",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m170wtcgt0dkdp16dvqc4frf4s8e1nh8",
+    "timestamp": "2026-09-15T10:53:38.212Z",
+    "userId": "k97c30eyr2fkzp0gtbn71mjke58a2g9y"
+  },
+  {
+    "_creationTime": 1789471248987.7295,
+    "_id": "jx774hta4jwkhg29vk7hasawdn8eeatr",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-15T11:20:48.987Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1789479420331.1267,
+    "_id": "jx78vgyhev7nab8z23pc4kgvm58eftw5",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177wtdks0da6w3rzc4r47e34d8dzbf0",
+    "timestamp": "2026-09-15T13:37:00.331Z",
+    "userId": "k976vz5942ny4skebmqtcr7y9d80nc40"
+  },
+  {
+    "_creationTime": 1789493434201.054,
+    "_id": "jx73fj08qnzzsqze0heyfqrtkx8ee20n",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-15T17:30:34.201Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1789493459609.4402,
+    "_id": "jx7a52d1g9cprjs77cabfxzgps8eeh32",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 3
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-15T17:30:59.609Z",
+    "userId": "k97chhc78pz0j4xswh5ytpw50h8dhz4m"
+  },
+  {
+    "_creationTime": 1789546742107.9106,
+    "_id": "jx73vctjk1gxyrhgy45zcf56458ehfht",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1714gzkjhqppw2t7gm5wbebt98cw65x",
+    "timestamp": "2026-09-16T08:19:02.107Z",
+    "userId": "k97a3fgv0n9ef51hxffd25kjp58cwnhw"
+  },
+  {
+    "_creationTime": 1789546895140.0522,
+    "_id": "jx799pqpwmm7s33fmv6cz8vpkh8ehyvv",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m175k3x9vfvn6e34hf2vev5v2s8d79tq",
+    "timestamp": "2026-09-16T08:21:35.140Z",
+    "userId": "k970q7c0kds5wher2gmtf7k49d80e827"
+  },
+  {
+    "_creationTime": 1789547090204.2883,
+    "_id": "jx77mkyjde7k71t0fstrc795qd8eg8m8",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-16T08:24:50.204Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1789557427769.9385,
+    "_id": "jx7c2cakjb17wathq3wwzxykes8egw1a",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-16T11:17:07.769Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1789575413937.5178,
+    "_id": "jx7ck2ks4y6697zhdz15hwd5wh8eh4z9",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 2
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-16T16:16:53.937Z",
+    "userId": "k97chhc78pz0j4xswh5ytpw50h8dhz4m"
+  },
+  {
+    "_creationTime": 1789577347510.5637,
+    "_id": "jx78ne835t3qzd2791qng4m9v18eg57t",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-16T16:49:07.510Z",
+    "userId": "k974jprsvmggyc7rqwtm4z041d8ehmv3"
+  },
+  {
+    "_creationTime": 1789634130882.6328,
+    "_id": "jx76z43xaazv7sv2wb88sv3nd18ekbm2",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-17T08:35:30.882Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1789636361602.4824,
+    "_id": "jx7107yn4hmq1emqb9cw82j4858ejxpb",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m1714gzkjhqppw2t7gm5wbebt98cw65x",
+    "timestamp": "2026-09-17T09:12:41.602Z",
+    "userId": "k97a3fgv0n9ef51hxffd25kjp58cwnhw"
+  },
+  {
+    "_creationTime": 1789636619788.257,
+    "_id": "jx7fsnfzxtm6bp189ta6rgx6h98ekahg",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-17T09:16:59.788Z",
+    "userId": "k970t5126gt4vnmf7hk6tj4wd189100r"
+  },
+  {
+    "_creationTime": 1789638135593.3494,
+    "_id": "jx7d1sjq7q7t57mngqywfhc8nd8ejkbm",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-17T09:42:15.593Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1789651581431.9736,
+    "_id": "jx79t2z8ca0gtkt8e3r5ab3mp18ejekq",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-17T13:26:21.431Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1789651756159.0698,
+    "_id": "jx7eng6p1mszbr3nmr8st04c1d8ej4r0",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177wtdks0da6w3rzc4r47e34d8dzbf0",
+    "timestamp": "2026-09-17T13:29:16.159Z",
+    "userId": "k976vz5942ny4skebmqtcr7y9d80nc40"
+  },
+  {
+    "_creationTime": 1789722101975.5745,
+    "_id": "jx716a6jcc2764zz8z3aqbseb58em1g9",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-18T09:01:41.975Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1789722984069.5955,
+    "_id": "jx7bkb7cnhev3vq0zkntx1ynvd8enh5a",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-18T09:16:24.069Z",
+    "userId": "k97a3fgv0n9ef51hxffd25kjp58cwnhw"
+  },
+  {
+    "_creationTime": 1789735348334.7021,
+    "_id": "jx729348sr66287dxkvkx7eas98enw9c",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m179y524xfm92vxg8kqgtmdv558ec4tb",
+    "timestamp": "2026-09-18T12:42:28.334Z",
+    "userId": "k97e34vjhcfm245nh4z5yj3wnh8ecjjc"
+  },
+  {
+    "_creationTime": 1789748312416.4631,
+    "_id": "jx7edw6ps0cv42bn98b7rty7qh8en9h4",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-18T16:18:32.416Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1789821687785.258,
+    "_id": "jx7610jv8yfmepcfg2wxhdtq2n8eq9ps",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 4
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-19T12:41:27.785Z",
+    "userId": "k97chhc78pz0j4xswh5ytpw50h8dhz4m"
+  },
+  {
+    "_creationTime": 1789830244617.541,
+    "_id": "jx70mp1sprxxaehzekqdfw5hp98eq1mq",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-19T15:04:04.617Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1789976921039.186,
+    "_id": "jx77hy00x7z9fyjp6spz0ft4nn8et8r2",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-21T07:48:41.039Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1789985481741.0312,
+    "_id": "jx73qzsz6a0yk2vpce2enajnb58etrbt",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m175k3x9vfvn6e34hf2vev5v2s8d79tq",
+    "timestamp": "2026-09-21T10:11:21.741Z",
+    "userId": "k970q7c0kds5wher2gmtf7k49d80e827"
+  },
+  {
+    "_creationTime": 1789995656876.7961,
+    "_id": "jx74kcchjkcw35bwyz7xtzdkhn8etk6j",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 3
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-21T13:00:56.876Z",
+    "userId": "k97chhc78pz0j4xswh5ytpw50h8dhz4m"
+  },
+  {
+    "_creationTime": 1789999702091.1067,
+    "_id": "jx72bjd76tvzyfh6tkt5rkjc498evssb",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-21T14:08:22.091Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1789999781127.682,
+    "_id": "jx7cxj9q7kt9e921qqfttd00dh8et183",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m179y524xfm92vxg8kqgtmdv558ec4tb",
+    "timestamp": "2026-09-21T14:09:41.127Z",
+    "userId": "k97e34vjhcfm245nh4z5yj3wnh8ecjjc"
+  },
+  {
+    "_creationTime": 1790065186002.421,
+    "_id": "jx75y2v2ex1c14q9kykackr9d98ex476",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k9719y3ftfaycp0qr9zmhfft2h88v4fb",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m174826tdxwdzdjw8r6emvs5x98dbjsm",
+    "timestamp": "2026-09-22T08:19:46.002Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1790069766278.2952,
+    "_id": "jx7dbp3hympgk8pmqhvdxb64tx8ewebq",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m175k3x9vfvn6e34hf2vev5v2s8d79tq",
+    "timestamp": "2026-09-22T09:36:06.278Z",
+    "userId": "k970q7c0kds5wher2gmtf7k49d80e827"
+  },
+  {
+    "_creationTime": 1790069822773.0215,
+    "_id": "jx7e67rea5mcs4t9zp8qhqrmds8exyyk",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177m204mgqze54vr6bfzdpnns8exenm",
+    "timestamp": "2026-09-22T09:37:02.773Z",
+    "userId": "k97a3fgv0n9ef51hxffd25kjp58cwnhw"
+  },
+  {
+    "_creationTime": 1790069884913.86,
+    "_id": "jx75grs2epa9y90zmtwfsev1fx8exr40",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-22T09:38:04.913Z",
+    "userId": "k970t5126gt4vnmf7hk6tj4wd189100r"
+  },
+  {
+    "_creationTime": 1790069935374.9219,
+    "_id": "jx7dmk0fme6q41p3aaqykwjq158exzs0",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-22T09:38:55.374Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1790072289814.4614,
+    "_id": "jx7afs0rcx3080y4m3vga061kn8ewe71",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-22T10:18:09.814Z",
+    "userId": "k9778gcx7jdnh08hcwxvanr4bn8e0epf"
+  },
+  {
+    "_creationTime": 1790074003197.9038,
+    "_id": "jx74fjdnqjxxc4s06zf1g6ek498ex8v0",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17230c7r2kxydwcse3c1900px8exjgk",
+    "timestamp": "2026-09-22T10:46:43.197Z",
+    "userId": "k97e3wsr4z3k90pwv90pj6kbk98e0ht3"
+  },
+  {
+    "_creationTime": 1790078486735.8018,
+    "_id": "jx76677aafvdm2p4pjs90cbeb58ewtzn",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-22T12:01:26.735Z",
+    "userId": "k977favvxdgy6dkzf5pgt86eqd8ewgx8"
+  },
+  {
+    "_creationTime": 1790082387613.453,
+    "_id": "jx7fm42znfxm64b94y699ym1ah8ew19h",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-22T13:06:27.613Z",
+    "userId": "k9707j4tncaneyxbpb92kfnhdn7vj6zb"
+  },
+  {
+    "_creationTime": 1790084468097.5344,
+    "_id": "jx7f9y3drq4qbrwvrcgv60ax258ew0xt",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m179y524xfm92vxg8kqgtmdv558ec4tb",
+    "timestamp": "2026-09-22T13:41:08.097Z",
+    "userId": "k97e34vjhcfm245nh4z5yj3wnh8ecjjc"
+  },
+  {
+    "_creationTime": 1790100304715.187,
+    "_id": "jx71r0wa67g86s9s2vttcjav2n8ewt63",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17byyz1dazrqptw6nppkj12js8exfek",
+    "timestamp": "2026-09-22T18:05:04.715Z",
+    "userId": "k97e42yx3q8dkpmyheew1bjdq9821z96"
+  },
+  {
+    "_creationTime": 1790151119257.5366,
+    "_id": "jx7byp19pqcvk6aw03f2wsfath8ezkvt",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m170wtcgt0dkdp16dvqc4frf4s8e1nh8",
+    "timestamp": "2026-09-23T08:11:59.257Z",
+    "userId": "k97c30eyr2fkzp0gtbn71mjke58a2g9y"
+  },
+  {
+    "_creationTime": 1790151166895.6577,
+    "_id": "jx7a87pngt210ktqw440akvnt18ezz83",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-23T08:12:46.895Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1790167947305.0276,
+    "_id": "jx70v6337g9chtkgfptjwm74j98ezgpj",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-23T12:52:27.305Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1790177224477.785,
+    "_id": "jx79favsfqxhfkjm4gze5m9pz18ezmvv",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-23T15:27:04.477Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  },
+  {
+    "_creationTime": 1790186548238.5776,
+    "_id": "jx73f8f8v4qqkk15nbc1tsk89n8ey406",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17byyz1dazrqptw6nppkj12js8exfek",
+    "timestamp": "2026-09-23T18:02:28.238Z",
+    "userId": "k97e42yx3q8dkpmyheew1bjdq9821z96"
+  },
+  {
+    "_creationTime": 1790205460673.53,
+    "_id": "jx75agrwfjsft4seft4w4rarex8eyff4",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 3000,
+      "duration": {
+        "type": "hourly",
+        "value": 3
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "daily"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-23T18:02:28.238Z",
+    "userId": "k97e42yx3q8dkpmyheew1bjdq9821z96"
+  },
+  {
+    "_creationTime": 1790236707346.9102,
+    "_id": "jx70j4p481xe1x7zsdwwa097hn8f0ktp",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-24T07:58:27.346Z",
+    "userId": "k970t5126gt4vnmf7hk6tj4wd189100r"
+  },
+  {
+    "_creationTime": 1790237970516.0183,
+    "_id": "jx70w11xc1bfgd7rk0ftey4qss8f12dz",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-24T08:19:30.516Z",
+    "userId": "k971yx022y5fgkst9gwkc1heqs8bemyz"
+  },
+  {
+    "_creationTime": 1790240583220.9302,
+    "_id": "jx70gnycz6wjbm868vw92ahjrn8f1vnc",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17230c7r2kxydwcse3c1900px8exjgk",
+    "timestamp": "2026-09-24T09:03:03.220Z",
+    "userId": "k97e3wsr4z3k90pwv90pj6kbk98e0ht3"
+  },
+  {
+    "_creationTime": 1790240790682.3496,
+    "_id": "jx75fs6e078drz8yetr8qy3pdh8f00ak",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m177w4mk7jq5avpbtnzaxj3c098dht7m",
+    "timestamp": "2026-09-24T09:06:30.682Z",
+    "userId": "k97bw35nve3yvy2c7wkp9vzfk17fazcv"
+  },
+  {
+    "_creationTime": 1790243362545.9897,
+    "_id": "jx78v2rvnyfjwt0jmjej6xrtqh8f1zzt",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17byyz1dazrqptw6nppkj12js8exfek",
+    "timestamp": "2026-09-24T09:49:22.545Z",
+    "userId": "k97e42yx3q8dkpmyheew1bjdq9821z96"
+  },
+  {
+    "_creationTime": 1790247212300.895,
+    "_id": "jx7dqm9tvsx8vj6zpjr7hfbj158f1azz",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-24T10:53:32.300Z",
+    "userId": "k9746zv1rwvbd20ypr0qp7j1r58f1xpa"
+  },
+  {
+    "_creationTime": 1790252449571.6326,
+    "_id": "jx76ajvwdb1x71rqsbmda7ydm58f00yx",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 66666.66666666667,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m179y524xfm92vxg8kqgtmdv558ec4tb",
+    "timestamp": "2026-09-24T12:20:49.571Z",
+    "userId": "k97e34vjhcfm245nh4z5yj3wnh8ecjjc"
+  },
+  {
+    "_creationTime": 1790257802283.7756,
+    "_id": "jx74b4q4s0zjnac2pp0wtj2q7s8f0723",
+    "access": {
+      "kind": "free"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "timestamp": "2026-09-24T13:50:02.283Z",
+    "userId": "k977bmqfeg71frfnehzydjn6n186texe"
+  },
+  {
+    "_creationTime": 1790265022096.635,
+    "_id": "jx722es7yv5qz7s2t624dve12s8f024h",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m170wtcgt0dkdp16dvqc4frf4s8e1nh8",
+    "timestamp": "2026-09-24T15:50:22.096Z",
+    "userId": "k97c30eyr2fkzp0gtbn71mjke58a2g9y"
+  },
+  {
+    "_creationTime": 1790265047489.257,
+    "_id": "jx70c94dy84mg6f89ktmws401x8f18m6",
+    "access": {
+      "_v": "2",
+      "amountInKobo": 62500,
+      "duration": {
+        "type": "fullday"
+      },
+      "kind": "paid",
+      "paymentMethod": "bank_transfer",
+      "planId": "month"
+    },
+    "admitted_by": "k97081gcb18bt41nedehh2hvj57hmkym",
+    "device": {
+      "browser": "unknown",
+      "name": "Unknown",
+      "visitorId": "unknown"
+    },
+    "method": "qr",
+    "source": "web",
+    "ticketId": "m17dmwg8q966t379yf282x620n8dagjg",
+    "timestamp": "2026-09-24T15:50:47.489Z",
+    "userId": "k97f79phencnwhy3b81f9kn9n589dqmk"
+  }
+]

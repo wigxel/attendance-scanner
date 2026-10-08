@@ -26,7 +26,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="scanline-root" suppressHydrationWarning>
       <head>
-        <meta name="facebook-domain-verification" content="mlqcvmnf8aodqjh3fajxli7y84w1qy" />
+        <meta
+          name="facebook-domain-verification"
+          content="mlqcvmnf8aodqjh3fajxli7y84w1qy"
+        />
       </head>
 
       <body
@@ -54,7 +57,6 @@ export default function RootLayout({
             <Toaster />
           </ThemeProvider>
         </Suspense>
-
       </body>
     </html>
   );
