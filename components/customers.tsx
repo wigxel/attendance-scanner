@@ -23,6 +23,7 @@ import {
   Package2Icon,
   PackageIcon,
   ReceiptIcon,
+  UserPlus,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
@@ -33,6 +34,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { Drawer } from "vaul";
 import { createColumns } from "@/components/columns";
 import { AppDataTable } from "@/components/DataTable";
+import { GuestCheckInDialog } from "@/components/guests/GuestCheckInDialog";
 import {
   Sheet,
   SheetContent,
@@ -285,6 +287,7 @@ type DailyRegisterEntry = {
   access: AccessStruct;
   admitted_by: string;
   ticketId?: string;
+  visiting?: { hostUserId: string };
 };
 
 export function TodaysCustomers() {
@@ -315,6 +318,15 @@ export function TodaysCustomers() {
         </CardTitle>
 
         <div className="flex gap-2">
+          <If cond={attendanceHandler.isToday}>
+            <GuestCheckInDialog>
+              <Button variant="outline" size="sm" className="h-8 rounded-full">
+                <UserPlus className="h-4 w-4 mr-1" />
+                Guest
+              </Button>
+            </GuestCheckInDialog>
+          </If>
+
           <Button
             variant="outline"
             size="icon"
@@ -410,6 +422,12 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
   const visitCount = useVisitCount({ userId: entry.userId });
   const diffFromNow = format_time_to_now(entry.timestamp);
   const isReservation = !isNullable(entry.ticketId);
+  const isGuest = !isNullable(entry.visiting);
+  const host = useQuery(
+    api.myFunctions.getUserById,
+    entry.visiting ? { userId: entry.visiting.hostUserId } : "skip",
+  );
+  const hostName = host ? `${host.firstName} ${host.lastName}`.trim() : null;
   const can_modify_plan = isReservation
     ? false
     : // eslint-disable-next-line react-hooks/purity
@@ -441,6 +459,14 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
               </div>
 
               <div className="flex gap-2 text-xs text-gray-500 font-mono">
+                {isGuest ? (
+                  <>
+                    <span className="text-amber-600 dark:text-amber-500">
+                      Guest{hostName ? ` of ${hostName}` : ""}
+                    </span>
+                    •
+                  </>
+                ) : null}
                 <PaymentBadge
                   data={entry.access}
                   hasReservation={isReservation}
