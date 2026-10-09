@@ -459,34 +459,35 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
               </div>
 
               <div className="flex gap-2 text-xs text-gray-500 font-mono">
-                {isGuest ? (
-                  <>
-                    <span className="text-amber-600 dark:text-amber-500">
-                      Guest{hostName ? ` of ${hostName}` : ""}
+                {intersperse([
+                  isGuest ? (
+                    <span key="guest" className="text-amber-600 dark:text-amber-500">
+                      Guest
                     </span>
-                    •
-                  </>
-                ) : null}
-                <PaymentBadge
-                  data={entry.access}
-                  hasReservation={isReservation}
-                />
-                •
-                <div>
-                  {pipe(
-                    visitCount,
-                    Option.map(safeNum),
-                    Option.map((visitCount) => {
-                      return (
-                        <React.Fragment key={"visit"}>
-                          {serialNo(visitCount ?? 0)} visit
-                          {visitCount < 2 ? "" : "s"}
-                        </React.Fragment>
-                      );
-                    }),
-                    Option.getOrElse(() => <>-- visits</>),
-                  )}
-                </div>
+                  ) : null,
+                  <PaymentBadge
+                    key="payment"
+                    data={entry.access}
+                    hasReservation={isReservation}
+                  />,
+                  <div key="visits">
+                    {pipe(
+                      visitCount,
+                      Option.map(safeNum),
+                      Option.map((visitCount) => {
+                        return (
+                          <React.Fragment key={"visit"}>
+                            {serialNo(visitCount ?? 0)} visit
+                            {visitCount < 2 ? "" : "s"}
+                          </React.Fragment>
+                        );
+                      }),
+                      Option.getOrElse(() => <>-- visits</>),
+                    )}
+                  </div>
+                ],
+                  <>•</>
+                )}
               </div>
             </div>
 

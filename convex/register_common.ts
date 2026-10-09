@@ -30,6 +30,68 @@ export async function isRegisteredToday(
   return entry !== null;
 }
 
+/**
+ * Guards a guest visit: the host must exist, have a profile, and be checked
+ * in today. (The host dropdown is what excludes guests from hosting; this
+ * only re-checks registration server-side.)
+ */
+export async function requireHostRegisteredToday(
+  ctx: GenericMutationCtx<DataModel>,
+  hostUserId: string,
+): Promise<void> {
+  const host = await ctx.db
+    .query("profile")
+    .withIndex("by_user_id", (q) => q.eq("id", hostUserId))
+    .first();
+
+  if (!host) {
+    throw new ConvexError("Host customer not found.");
+  }
+
+  if (!(await isRegisteredToday(ctx, hostUserId))) {
+    throw new ConvexError(
+      `${host.firstName} ${host.lastName} is not checked in today and cannot host a guest.`,
+    );
+  }
+}
+
+/**
+ * Validates and inserts today's guest visit: a customer cannot host
+ * themselves, and someone already registered today cannot check in again.
+ */
+export async function insertGuestVisit(
+  ctx: GenericMutationCtx<DataModel>,
+  params: {
+    guestUserId: string;
+    hostUserId: string;
+    admittedBy: string;
+    visitorId?: string;
+    browser?: string;
+  },
+): Promise<void> {
+  if (params.guestUserId === params.hostUserId) {
+    throw new ConvexError("A customer cannot be their own guest.");
+  }
+
+  if (await isRegisteredToday(ctx, params.guestUserId)) {
+    throw new ConvexError("This person is already registered for today.");
+  }
+
+  await insertRegisterAndAggregate(ctx, {
+    userId: params.guestUserId,
+    device: {
+      name: "Unknown",
+      visitorId: params.visitorId ?? "unknown",
+      browser: params.browser ?? "unknown",
+    },
+    admittedBy: params.admittedBy,
+    timestamp: new Date().toISOString(),
+    access: { kind: "free" },
+    method: "qr",
+    visiting: { hostUserId: params.hostUserId },
+  });
+}
+
 export async function insertRegisterAndAggregate(
   ctx: GenericMutationCtx<DataModel>,
   params: {

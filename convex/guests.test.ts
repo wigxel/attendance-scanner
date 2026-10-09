@@ -4,6 +4,10 @@ import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { api } from "./_generated/api";
 import { findOrCreateUser } from "./myFunctions";
+import {
+  insertGuestVisit,
+  requireHostRegisteredToday,
+} from "./register_common";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -141,5 +145,154 @@ describe("listTodaysHosts", () => {
     aggregateTest.register(t, "customerStats");
 
     expect(await t.query(api.register.listTodaysHosts, {})).toEqual([]);
+  });
+});
+
+async function seedHostAndGuest(t: ReturnType<typeof convexTest>) {
+  return t.run(async (ctx) => {
+    const hostUserId = await ctx.db.insert("users", {
+      email: "florence@example.com",
+      isAnonymous: false,
+      name: "Florence Host",
+    });
+    await ctx.db.insert("profile", {
+      id: hostUserId,
+      email: "florence@example.com",
+      firstName: "Florence",
+      lastName: "Host",
+      occupation: "None",
+    });
+    await ctx.db.insert("daily_register", {
+      userId: hostUserId,
+      timestamp: new Date().toISOString(),
+      source: "web",
+      device: makeDevice(),
+      access: { kind: "free" },
+      admitted_by: "staff-1",
+    });
+
+    const guestUserId = await ctx.db.insert("users", {
+      email: guest.email,
+      isAnonymous: false,
+      name: `${guest.firstName} ${guest.lastName}`,
+    });
+
+    return { hostUserId, guestUserId };
+  });
+}
+
+describe("requireHostRegisteredToday", () => {
+  it("throws when the host is not checked in today", async () => {
+    const t = convexTest(schema, modules);
+    aggregateTest.register(t, "customerStats");
+
+    const hostUserId = await t.run(async (ctx) => {
+      const userId = await ctx.db.insert("users", {
+        email: "florence@example.com",
+        isAnonymous: false,
+        name: "Florence Host",
+      });
+      await ctx.db.insert("profile", {
+        id: userId,
+        email: "florence@example.com",
+        firstName: "Florence",
+        lastName: "Host",
+        occupation: "None",
+      });
+      return userId;
+    });
+
+    await expect(
+      t.run((ctx) => requireHostRegisteredToday(ctx, hostUserId)),
+    ).rejects.toThrow("is not checked in today");
+  });
+
+  it("throws when the host has no profile", async () => {
+    const t = convexTest(schema, modules);
+    aggregateTest.register(t, "customerStats");
+
+    const hostUserId = await t.run(async (ctx) =>
+      ctx.db.insert("users", {
+        email: "florence@example.com",
+        isAnonymous: false,
+        name: "Florence Host",
+      }),
+    );
+
+    await expect(
+      t.run((ctx) => requireHostRegisteredToday(ctx, hostUserId)),
+    ).rejects.toThrow("Host customer not found.");
+  });
+});
+
+describe("insertGuestVisit", () => {
+  it("inserts a register row linked to the host", async () => {
+    const t = convexTest(schema, modules);
+    aggregateTest.register(t, "customerStats");
+
+    const { hostUserId, guestUserId } = await seedHostAndGuest(t);
+
+    await t.run((ctx) =>
+      insertGuestVisit(ctx, {
+        guestUserId,
+        hostUserId,
+        admittedBy: "staff-1",
+      }),
+    );
+
+    const row = await t.run(async (ctx) =>
+      ctx.db
+        .query("daily_register")
+        .filter((q) => q.eq(q.field("userId"), guestUserId))
+        .unique(),
+    );
+
+    expect(row?.visiting).toEqual({ hostUserId });
+    expect(row?.admitted_by).toBe("staff-1");
+  });
+
+  it("rejects a guest who is their own host", async () => {
+    const t = convexTest(schema, modules);
+    aggregateTest.register(t, "customerStats");
+
+    const { hostUserId } = await seedHostAndGuest(t);
+
+    await expect(
+      t.run((ctx) =>
+        insertGuestVisit(ctx, {
+          guestUserId: hostUserId,
+          hostUserId,
+          admittedBy: "staff-1",
+        }),
+      ),
+    ).rejects.toThrow("A customer cannot be their own guest.");
+  });
+
+  it("rejects a guest already registered today", async () => {
+    const t = convexTest(schema, modules);
+    aggregateTest.register(t, "customerStats");
+
+    const { hostUserId, guestUserId } = await seedHostAndGuest(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("daily_register", {
+        userId: guestUserId,
+        timestamp: new Date().toISOString(),
+        source: "web",
+        device: makeDevice("visitor-2"),
+        access: { kind: "free" },
+        admitted_by: "staff-1",
+      });
+    });
+
+    await expect(
+      t.run((ctx) =>
+        insertGuestVisit(ctx, {
+          guestUserId,
+          hostUserId,
+          admittedBy: "staff-1",
+        }),
+      ),
+    ).rejects.toThrow("This person is already registered for today.");
   });
 });

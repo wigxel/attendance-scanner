@@ -408,20 +408,7 @@ export const checkInGuest = mutation({
 
     await requirePrivilege(ctx, "attendance:checkin");
 
-    const host = await ctx.db
-      .query("profile")
-      .withIndex("by_user_id", (q) => q.eq("id", args.hostUserId))
-      .first();
-
-    if (!host) {
-      throw new ConvexError("Host customer not found.");
-    }
-
-    if (!(await isRegisteredToday(ctx, args.hostUserId))) {
-      throw new ConvexError(
-        `${host.firstName} ${host.lastName} is not checked in today and cannot host a guest.`,
-      );
-    }
+    await requireHostRegisteredToday(ctx, args.hostUserId);
 
     const guestUserId = await findOrCreateUser(ctx, {
       email: args.email,
@@ -430,28 +417,53 @@ export const checkInGuest = mutation({
       phone: args.phone,
     });
 
-    if (guestUserId === args.hostUserId) {
-      throw new ConvexError("A customer cannot be their own guest.");
-    }
-
-    if (await isRegisteredToday(ctx, guestUserId)) {
-      throw new ConvexError("This person is already registered for today.");
-    }
-
-    await insertRegisterAndAggregate(ctx, {
-      userId: guestUserId,
-      device: {
-        name: "Unknown",
-        visitorId: args.visitorId ?? "unknown",
-        browser: args.browser ?? "unknown",
-      },
+    await insertGuestVisit(ctx, {
+      guestUserId,
+      hostUserId: args.hostUserId,
       admittedBy: scannerId,
-      timestamp: new Date().toISOString(),
-      access: { kind: "free" },
-      method: "qr",
-      visiting: { hostUserId: args.hostUserId },
+      visitorId: args.visitorId,
+      browser: args.browser,
     });
 
     return { userId: guestUserId };
+  },
+});
+
+/**
+ * Checks an existing customer in as a guest against the customer they are
+ * visiting. No profile is created or touched — the person picked in the
+ * combobox is used as-is.
+ */
+export const checkInExistingGuest = mutation({
+  args: {
+    guestUserId: v.string(),
+    hostUserId: v.string(),
+    visitorId: v.optional(v.string()),
+    browser: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const scannerId = await readId(ctx);
+    if (!scannerId) {
+      throw new ConvexError("User not authenticated");
+    }
+
+    await requirePrivilege(ctx, "attendance:checkin");
+
+    const guest = await ctx.db.get(args.guestUserId as Id<"users">);
+    if (!guest) {
+      throw new ConvexError("Guest customer not found.");
+    }
+
+    await requireHostRegisteredToday(ctx, args.hostUserId);
+
+    await insertGuestVisit(ctx, {
+      guestUserId: args.guestUserId,
+      hostUserId: args.hostUserId,
+      admittedBy: scannerId,
+      visitorId: args.visitorId,
+      browser: args.browser,
+    });
+
+    return { userId: args.guestUserId };
   },
 });

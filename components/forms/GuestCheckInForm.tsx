@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "convex/react";
 import type * as React from "react";
-import { useForm } from "react-hook-form";
+import { type Control, useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,27 +23,59 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
 import { safeArray } from "@/lib/data.helpers";
+import { CustomerCombobox } from "./CustomerCombobox";
 
-const guestCheckInSchema = z.object({
-  firstName: z.string().min(1, { message: "First name is required" }),
-  lastName: z.string().min(1, { message: "Surname is required" }),
-  email: z.string().email({ message: "A valid email address is required" }),
-  phone: z.string().min(1, { message: "Phone number is required" }),
-  hostUserId: z
-    .string()
-    .min(1, { message: "Select the customer being visited" }),
-});
+type GuestCheckInMode = "existing" | "new";
+
+const guestCheckInSchema = z
+  .object({
+    mode: z.enum(["existing", "new"]),
+    guestUserId: z.string().optional(),
+    hostUserId: z
+      .string()
+      .min(1, { message: "Select the customer being visited" }),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+  })
+  .superRefine((values, ctx) => {
+    const addIssue = (path: string, message: string) =>
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+
+    // Only validate the fields of the active mode.
+    if (values.mode === "existing") {
+      if (!values.guestUserId) {
+        addIssue("guestUserId", "Select the guest");
+      } else if (values.guestUserId === values.hostUserId) {
+        addIssue("guestUserId", "A customer cannot be their own guest.");
+      }
+      return;
+    }
+
+    if (!values.firstName) addIssue("firstName", "First name is required");
+    if (!values.lastName) addIssue("lastName", "Surname is required");
+    if (!values.email) {
+      addIssue("email", "A valid email address is required");
+    } else if (!z.string().email().safeParse(values.email).success) {
+      addIssue("email", "A valid email address is required");
+    }
+    if (!values.phone) addIssue("phone", "Phone number is required");
+  });
 
 export type GuestCheckInFormValues = z.infer<typeof guestCheckInSchema>;
 
 const defaultGuestCheckInState: GuestCheckInFormValues = {
+  mode: "existing",
+  guestUserId: "",
+  hostUserId: "",
   firstName: "",
   lastName: "",
   email: "",
   phone: "",
-  hostUserId: "",
 };
 
 interface GuestCheckInFormProps {
@@ -54,6 +86,62 @@ interface GuestCheckInFormProps {
   ref?: React.Ref<HTMLFormElement>;
 }
 
+function HostField({
+  control,
+  isLoading,
+}: {
+  control: Control<GuestCheckInFormValues>;
+  isLoading: boolean;
+}) {
+  const hosts = useQuery(api.register.listTodaysHosts);
+  const hostOptions = safeArray(hosts);
+  const noHostsToday = hosts !== undefined && hostOptions.length === 0;
+
+  return (
+    <FormField
+      control={control}
+      name="hostUserId"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Customer visiting</FormLabel>
+          <Select
+            onValueChange={field.onChange}
+            value={field.value}
+            disabled={isLoading || hosts === undefined || noHostsToday}
+          >
+            <FormControl>
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder={
+                    hosts === undefined
+                      ? "Loading..."
+                      : "Select the customer they are visiting"
+                  }
+                />
+              </SelectTrigger>
+            </FormControl>
+
+            <SelectContent>
+              {hostOptions.map((host) => (
+                <SelectItem key={host.userId} value={host.userId}>
+                  {host.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {noHostsToday ? (
+            <FormDescription>
+              Nobody is checked in yet. A guest can only be attached to a
+              customer who is already in today&apos;s scan.
+            </FormDescription>
+          ) : null}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
 export function GuestCheckInForm({
   initialFormData,
   isLoading = false,
@@ -62,14 +150,14 @@ export function GuestCheckInForm({
   ref,
 }: GuestCheckInFormProps) {
   const hosts = useQuery(api.register.listTodaysHosts);
+  const noHostsToday = hosts !== undefined && safeArray(hosts).length === 0;
 
   const form = useForm<GuestCheckInFormValues>({
     resolver: zodResolver(guestCheckInSchema),
     defaultValues: { ...defaultGuestCheckInState, ...initialFormData },
   });
 
-  const hostOptions = safeArray(hosts);
-  const noHostsToday = hosts !== undefined && hostOptions.length === 0;
+  const mode = form.watch("mode");
 
   return (
     <Form {...form}>
@@ -78,119 +166,127 @@ export function GuestCheckInForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4"
       >
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>First Name</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={isLoading} autoFocus />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <Tabs
+          value={mode}
+          onValueChange={(value) =>
+            form.setValue("mode", value as GuestCheckInMode)
+          }
+        >
+          <TabsList className="w-full">
+            <TabsTrigger value="existing" className="flex-1">
+              Existing customer
+            </TabsTrigger>
+            <TabsTrigger value="new" className="flex-1">
+              New guest
+            </TabsTrigger>
+          </TabsList>
 
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Surname</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+          <TabsContent value="existing" className="space-y-4">
+            <FormField
+              control={form.control}
+              name="guestUserId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Guest</FormLabel>
+                  <CustomerCombobox
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    disabled={isLoading}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <HostField control={form.control} isLoading={isLoading} />
+          </TabsContent>
 
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  {...field}
-                  disabled={isLoading}
-                  placeholder="email@example.com"
-                />
-              </FormControl>
-              <FormDescription>
-                Used to recognise them on their next visit, and to link this
-                record if they sign up later.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <TabsContent value="new" className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        disabled={isLoading}
+                        autoFocus
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone Number</FormLabel>
-              <FormControl>
-                <Input
-                  type="tel"
-                  {...field}
-                  disabled={isLoading}
-                  placeholder="+234..."
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Surname</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <FormField
-          control={form.control}
-          name="hostUserId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Customer visiting</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value}
-                disabled={isLoading || hosts === undefined || noHostsToday}
-              >
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue
-                      placeholder={
-                        hosts === undefined
-                          ? "Loading..."
-                          : "Select the customer they are visiting"
-                      }
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      {...field}
+                      value={field.value ?? ""}
+                      disabled={isLoading}
+                      placeholder="email@example.com"
                     />
-                  </SelectTrigger>
-                </FormControl>
+                  </FormControl>
+                  <FormDescription>
+                    Used to recognise them on their next visit, and to link this
+                    record if they sign up later.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <SelectContent>
-                  {hostOptions.map((host) => (
-                    <SelectItem key={host.userId} value={host.userId}>
-                      {host.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {noHostsToday ? (
-                <FormDescription>
-                  Nobody is checked in yet. A guest can only be attached to a
-                  customer who is already in today&apos;s scan.
-                </FormDescription>
-              ) : null}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="tel"
+                      {...field}
+                      value={field.value ?? ""}
+                      disabled={isLoading}
+                      placeholder="+234..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <HostField control={form.control} isLoading={isLoading} />
+          </TabsContent>
+        </Tabs>
 
         <div className="flex justify-end gap-2 pt-4">
           {onCancel ? (
