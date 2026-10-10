@@ -23,10 +23,10 @@ export function GuestCheckInDialog({ children }: GuestCheckInDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
 
-      <DialogContent>
+      <DialogContent className="text-start">
         <DialogHeader>
           <DialogTitle>Check in a guest</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm text-start">
             Capture the visitor&apos;s details and attach them to the customer
             they are visiting. They do not need to sign up.
           </DialogDescription>

@@ -17,8 +17,8 @@ function calcFee(access: AccessStruct): number {
     return pipe(
       PlanImpl.amount(access),
       CurrencyImpl.koboToNaira,
-      CurrencyImpl.parseFloat
-    )
+      CurrencyImpl.parseFloat,
+    );
   } catch (err) {
     console.warn("[reports] failed to price access record", err);
     return 0;

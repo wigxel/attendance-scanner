@@ -1,7 +1,7 @@
 "use client";
 import { useMutation } from "convex/react";
 import { format, isToday, isValid } from "date-fns";
-import { Bug, LucideArrowUpRight, LucideQrCode } from "lucide-react";
+import { Bug, InfoIcon, LucideArrowUpRight, LucideQrCode } from "lucide-react";
 import Link from "next/link";
 import posthog from "posthog-js";
 import { useState } from "react";
@@ -18,6 +18,7 @@ import { convex } from "./ConvexClientProvider";
 import { FlagCond } from "./flag-cond";
 import { DebugProfile } from "./forms/debug-profile";
 import { If } from "./if";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card } from "./ui/card";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 
@@ -179,7 +180,7 @@ export function TakeAttendance() {
             <div className="mt-6 p-4 border rounded-lg bg-muted w-full">
               <h2 className="text-lg font-medium mb-2">QR Data:</h2>
               <p className="text-xs p-2 bg-background rounded">
-                <span className="break-words block w-[35ch]">
+                <span className="wrap-break-word block w-[35ch]">
                   {scannedData}
                 </span>
               </p>
@@ -187,18 +188,36 @@ export function TakeAttendance() {
           )}
         </If>
 
-        <div className="p-4 border border-(--border) rounded-lg text-orange-800 dark:text-orange-500">
-          <h2 className="text-xs font-medium mb-2">Instructions:</h2>
-          <ul className="text-xs list-disc list-inside">
-            <li>Select the check-in mode (Walk-in or Reservation).</li>
-            <li>
-              Scan the attendance QR code displayed on the member&apos;s
-              profile.
-            </li>
-            <li>The camera will automatically detect the QR code.</li>
-            <li>Attendance will be recorded instantly.</li>
-          </ul>
-        </div>
+        <Alert>
+          <AlertTitle className="inline-flex gap-2 items-center">
+            <InfoIcon size="1em" />
+            <span>Instructions</span>
+          </AlertTitle>
+
+          <AlertDescription>
+            <ul className="list-disc list-inside">
+              <li className="inline-flex gap-2">
+                <span>•</span>
+                <span>Select the check-in mode (Walk-in or Reservation).</span>
+              </li>
+              <li className="inline-flex gap-2">
+                <span>•</span>
+                <span>
+                  Scan the attendance QR code displayed on the member&apos;s
+                  profile.
+                </span>
+              </li>
+              <li className="inline-flex gap-2">
+                <span>•</span>
+                <span>The camera will automatically detect the QR code.</span>
+              </li>
+              <li className="inline-flex gap-2">
+                <span>•</span>
+                <span>Attendance will be recorded instantly.</span>
+              </li>
+            </ul>
+          </AlertDescription>
+        </Alert>
       </div>
 
       {flags.customer_scanning.enabled ? (

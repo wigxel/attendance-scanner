@@ -92,8 +92,7 @@ export const seedScanRecords = internalMutation({
     const records = [];
     for (let i = 0; i < args.count; i++) {
       const userIdx = i % eligible.length;
-      const dayOffset =
-        (Math.floor(i / eligible.length) + userIdx) % days;
+      const dayOffset = (Math.floor(i / eligible.length) + userIdx) % days;
       const recordId = await ctx.db.insert("daily_register", {
         userId: eligible[userIdx].id,
         timestamp: randomTimeOnDay(dayOffset),

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "convex/react";
+import { AlertCircleIcon } from "lucide-react";
 import type * as React from "react";
 import { type Control, useForm } from "react-hook-form";
 import * as z from "zod";
@@ -26,6 +27,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
 import { safeArray } from "@/lib/data.helpers";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { CustomerCombobox } from "./CustomerCombobox";
 
 type GuestCheckInMode = "existing" | "new";
@@ -86,13 +88,12 @@ interface GuestCheckInFormProps {
   ref?: React.Ref<HTMLFormElement>;
 }
 
-function HostField({
-  control,
-  isLoading,
-}: {
+type HostFieldProps = {
   control: Control<GuestCheckInFormValues>;
   isLoading: boolean;
-}) {
+};
+
+function HostField({ control, isLoading }: HostFieldProps) {
   const hosts = useQuery(api.register.listTodaysHosts);
   const hostOptions = safeArray(hosts);
   const noHostsToday = hosts !== undefined && hostOptions.length === 0;
@@ -129,11 +130,16 @@ function HostField({
               ))}
             </SelectContent>
           </Select>
+
           {noHostsToday ? (
-            <FormDescription>
-              Nobody is checked in yet. A guest can only be attached to a
-              customer who is already in today&apos;s scan.
-            </FormDescription>
+            <Alert variant={"destructive"}>
+              <AlertCircleIcon />
+              <AlertTitle>At least one visitor need</AlertTitle>
+              <AlertDescription>
+                A guest can only be attached to a customer who is already in
+                today&apos;s scan.
+              </AlertDescription>
+            </Alert>
           ) : null}
           <FormMessage />
         </FormItem>

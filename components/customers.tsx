@@ -70,7 +70,13 @@ import { ManualBookingForm } from "./forms/ManualBookingForm";
 import { If } from "./if";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import {
   Dialog,
   DialogContent,
@@ -317,15 +323,6 @@ export function TodaysCustomers() {
         </CardTitle>
 
         <div className="flex gap-2">
-          <If cond={attendanceHandler.isToday}>
-            <GuestCheckInDialog>
-              <Button variant="outline" size="sm" className="h-8 rounded-full">
-                <UserPlus className="h-4 w-4 mr-1" />
-                Guest
-              </Button>
-            </GuestCheckInDialog>
-          </If>
-
           <Button
             variant="outline"
             size="icon"
@@ -367,6 +364,17 @@ export function TodaysCustomers() {
           </CardContent>
         </EmptyStateConceal>
       </EmptyState>
+
+      <If cond={attendanceHandler.isToday}>
+        <CardFooter className="pt-4 p-4 rounded-b-xl">
+          <GuestCheckInDialog>
+            <Button variant="outline" size="sm" className="w-full">
+              <UserPlus className="h-4 w-4 mr-1" />
+              Add Guest
+            </Button>
+          </GuestCheckInDialog>
+        </CardFooter>
+      </If>
     </Card>
   );
 }
@@ -424,7 +432,9 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
   const isGuest = !isNullable(entry.access?.visiting);
   const host = useQuery(
     api.myFunctions.getUserById,
-    entry.visiting ? { userId: entry.visiting.hostUserId } : "skip",
+    entry.access?.visiting
+      ? { userId: entry.access.visiting.hostUserId }
+      : "skip",
   );
   const hostName = host ? `${host.firstName} ${host.lastName}`.trim() : null;
   const can_modify_plan = isReservation
@@ -458,34 +468,39 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
               </div>
 
               <div className="flex gap-2 text-xs text-gray-500 font-mono">
-                {intersperse([
-                  isGuest ? (
-                    <span key="guest" className="text-amber-600 dark:text-amber-500">
-                      Guest
-                    </span>
-                  ) : null,
-                  <PaymentBadge
-                    key="payment"
-                    data={entry.access}
-                    hasReservation={isReservation}
-                  />,
-                  <div key="visits">
-                    {pipe(
-                      visitCount,
-                      Option.map(safeNum),
-                      Option.map((visitCount) => {
-                        return (
-                          <React.Fragment key={"visit"}>
-                            {serialNo(visitCount ?? 0)} visit
-                            {visitCount < 2 ? "" : "s"}
-                          </React.Fragment>
-                        );
-                      }),
-                      Option.getOrElse(() => <>-- visits</>),
-                    )}
-                  </div>
-                ],
-                  <>•</>
+                {intersperse(
+                  [
+                    isGuest ? (
+                      <span
+                        key="guest"
+                        className="text-amber-600 dark:text-amber-500"
+                      >
+                        Guest
+                      </span>
+                    ) : (
+                      <PaymentBadge
+                        key="payment"
+                        data={entry.access}
+                        hasReservation={isReservation}
+                      />
+                    ),
+                    <div key="visits">
+                      {pipe(
+                        visitCount,
+                        Option.map(safeNum),
+                        Option.map((visitCount) => {
+                          return (
+                            <React.Fragment key={"visit"}>
+                              {serialNo(visitCount ?? 0)} visit
+                              {visitCount < 2 ? "" : "s"}
+                            </React.Fragment>
+                          );
+                        }),
+                        Option.getOrElse(() => <>-- visits</>),
+                      )}
+                    </div>,
+                  ],
+                  <>•</>,
                 )}
               </div>
             </div>
@@ -555,6 +570,13 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
           </div>
         </div>
       </li>
+
+      {isGuest && hostName ? (
+        <div className="rounded-lg border px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Invited by </span>
+          <span className="font-semibold">{hostName}</span>
+        </div>
+      ) : null}
 
       <ul className={"flex flex-col gap-4"}>
         <li className="flex justify-between items-center select-none">
