@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { endOfDay, format, parse, startOfDay } from "date-fns";
+import { pipe } from "../lib/fp.helpers";
 import type { TaggedBooking } from "../types";
 import { api } from "./_generated/api";
 import { query } from "./_generated/server";
