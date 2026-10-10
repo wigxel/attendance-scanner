@@ -118,15 +118,15 @@ describe("listTodaysHosts", () => {
         admitted_by: staffUserId,
       });
 
-      // The guest: carries `visiting`, so must not show up as a possible host.
+      // The guest: carries `access.visiting`, so must not show up as a
+      // possible host.
       await ctx.db.insert("daily_register", {
         userId: guestUserId,
         timestamp: new Date().toISOString(),
         source: "web",
         device: makeDevice("visitor-2"),
-        access: { kind: "free" },
+        access: { kind: "free", visiting: { hostUserId } },
         admitted_by: staffUserId,
-        visiting: { hostUserId },
       });
 
       return { hostId: hostUserId };
@@ -247,7 +247,7 @@ describe("insertGuestVisit", () => {
         .unique(),
     );
 
-    expect(row?.visiting).toEqual({ hostUserId });
+    expect(row?.access.visiting).toEqual({ hostUserId });
     expect(row?.admitted_by).toBe("staff-1");
   });
 

@@ -104,7 +104,9 @@ export function AdminUsersTable() {
                     <td className="whitespace-nowrap py-3 pl-4 pr-3 text-sm">
                       <div className="font-medium text-foreground">{name}</div>
                       {email && (
-                        <div className="text-muted-foreground text-xs">{email}</div>
+                        <div className="text-muted-foreground text-xs">
+                          {email}
+                        </div>
                       )}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm">
@@ -112,7 +114,7 @@ export function AdminUsersTable() {
                         className={cn(
                           "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border border-transparent",
                           roleBadgeStyles[roleName] ??
-                          "bg-gray-100 text-gray-800",
+                            "bg-gray-100 text-gray-800",
                         )}
                       >
                         {roleName}

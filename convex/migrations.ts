@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { isNullable } from "effect/Predicate";
+import { HOURLY_RATE } from "../config/constants";
 import { internalMutation } from "./_generated/server";
 import { PlanImpl } from "./shared";
 
@@ -56,13 +57,23 @@ export const fixDailyAmountKobo = internalMutation({
 
     const registers = await ctx.db.query("daily_register").collect();
 
-    const candidates = registers.filter((r) => PlanImpl.isV2(r.access))
+    const candidates = registers
+      .filter((r) => PlanImpl.isV2(r.access))
       .map((r) => {
         const access = r.access as { amountInKobo: number; planId: string };
-        const base = access.planId === "daily" && access.amountInKobo === 3000 ? 300000 : access.amountInKobo;
+        const base =
+          access.planId === "daily" && access.amountInKobo === 3000
+            ? 300000
+            : access.amountInKobo;
         const next = Math.round(base);
         return next !== access.amountInKobo
-          ? { id: r._id, from: access.amountInKobo, to: next, planId: access.planId, access: r.access }
+          ? {
+              id: r._id,
+              from: access.amountInKobo,
+              to: next,
+              planId: access.planId,
+              access: r.access,
+            }
           : null;
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
@@ -71,17 +82,28 @@ export const fixDailyAmountKobo = internalMutation({
       return {
         dryRun: true as const,
         wouldUpdate: candidates.length,
-        preview: candidates.slice(0, 10).map(({ id, from, to, planId }) => ({ id, from, to, planId })),
+        preview: candidates
+          .slice(0, 10)
+          .map(({ id, from, to, planId }) => ({ id, from, to, planId })),
         updated: 0,
       };
     }
 
     // biome-ignore lint/suspicious/noExplicitAny: Too complex
-    await Promise.all(candidates.map(({ id, to, access }) => ctx.db.patch(id, { access: { ...(access as any), amountInKobo: to } } as any)));
-    return { dryRun: false as const, updated: candidates.length, wouldUpdate: candidates.length };
+    await Promise.all(
+      candidates.map(({ id, to, access }) =>
+        ctx.db.patch(id, {
+          access: { ...(access as any), amountInKobo: to },
+        } as any),
+      ),
+    );
+    return {
+      dryRun: false as const,
+      updated: candidates.length,
+      wouldUpdate: candidates.length,
+    };
   },
 });
-
 
 /**
  * Backfills bookings left behind by the `durationType` → `planKey` refactor.
@@ -108,6 +130,59 @@ export const backfillCalendarMonthBookings = internalMutation({
       await ctx.db.patch(booking._id, {
         durationType: "month",
         planKey: booking.planKey ?? "calendar_month",
+      });
+      updated++;
+    }
+
+    return { updated };
+  },
+});
+
+/**
+ * Rewrites register records where an hourly duration was patched onto a
+ * non-hourly plan (the `updateTodaysRegisterAccess` bug that let staff set a
+ * duration without switching planId). Readers price a record from its stored
+ * `amountInKobo`, so these rows bill at the flat daily amount until the
+ * planId, price snapshot, and resolved total are corrected here — cash totals move.
+ * Safe to run over all time: the predicate matches only invalid rows.
+ */
+export const backfillHourlyPlanAccess = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // The snapshot must equal what `PlanImpl.toStruct` would stamp for the
+    // hourly plan, so backfilled rows price identically to new ones.
+    // Fall back to HOURLY_RATE when no hourly plan row exists yet.
+    const plan = await ctx.db
+      .query("accessPlans")
+      .withIndex("plan_key", (q) => q.eq("key", "hourly"))
+      .first();
+    const planPriceInKobo = plan
+      ? Math.round(plan.price * 100)
+      : Math.round(HOURLY_RATE * 100);
+    // Hourly no_of_days is 1, so the per-hour rate equals the snapshot.
+    const rate =
+      plan && plan.no_of_days > 0
+        ? Math.round(Math.max(0, (plan.price * 100) / plan.no_of_days))
+        : planPriceInKobo;
+
+    const registers = await ctx.db.query("daily_register").collect();
+
+    let updated = 0;
+    for (const record of registers) {
+      if (!PlanImpl.isV2(record.access)) continue;
+
+      const access = record.access;
+      const duration = access.duration;
+      if (duration?.type !== "hourly") continue;
+      if (access.planId === "hourly") continue;
+
+      await ctx.db.patch(record._id, {
+        access: {
+          ...access,
+          planId: "hourly",
+          planPriceInKobo,
+          amountInKobo: rate * duration.value,
+        },
       });
       updated++;
     }

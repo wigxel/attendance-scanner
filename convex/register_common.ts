@@ -86,9 +86,8 @@ export async function insertGuestVisit(
     },
     admittedBy: params.admittedBy,
     timestamp: new Date().toISOString(),
-    access: { kind: "free" },
+    access: { kind: "free", visiting: { hostUserId: params.hostUserId } },
     method: "qr",
-    visiting: { hostUserId: params.hostUserId },
   });
 }
 
@@ -102,7 +101,6 @@ export async function insertRegisterAndAggregate(
     access: AccessStruct;
     ticketId?: Id<"tickets">;
     method: "one-tap" | "qr";
-    visiting?: { hostUserId: string };
   },
 ): Promise<void> {
   const user_record = ctx.db.get(params?.userId as Id<"users">);
@@ -120,7 +118,6 @@ export async function insertRegisterAndAggregate(
     access: params.access,
     ticketId: params.ticketId,
     method: params.method,
-    visiting: params.visiting,
   });
 
   const entry = await ctx.db.get(id);
@@ -229,7 +226,13 @@ export async function updateTodaysRegisterForSubscriber(
 
   await ctx.db.patch(existing._id, {
     ticketId: params.ticketId,
-    access: PlanImpl.fromBooking({ booking: params.booking }),
+    // fromBooking builds a fresh struct — re-attach the guest link.
+    access: {
+      ...PlanImpl.fromBooking({ booking: params.booking }),
+      ...(existing.access.visiting
+        ? { visiting: existing.access.visiting }
+        : {}),
+    },
   });
 
   await ctx.scheduler.runAfter(

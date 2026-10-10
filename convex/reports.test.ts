@@ -105,30 +105,13 @@ describe("reports getDaily", () => {
     expect(result.dailyReport.no_of_customers).toBe(1);
   });
 
-  it("calculates sales using accessPlans when available", async () => {
+  it("calculates sales from the stored access amounts", async () => {
     const t = convexTest(schema, modules);
 
     const today = new Date();
     const todayStr = format(today, "yyyy/MM/dd");
 
     await t.run(async (ctx) => {
-      await ctx.db.insert("accessPlans", {
-        key: "daily",
-        name: "Daily Pass",
-        price: 5000,
-        no_of_days: 1,
-        description: "One day access",
-        features: [],
-      });
-      await ctx.db.insert("accessPlans", {
-        key: "monthly",
-        name: "Monthly Pass",
-        price: 30000,
-        no_of_days: 30,
-        description: "30 day access",
-        features: [],
-      });
-
       // user-1: daily plan, cash
       await ctx.db.insert("bookings", {
         userId: "user-1",
@@ -151,14 +134,15 @@ describe("reports getDaily", () => {
         access: {
           kind: "paid",
           planId: "daily",
-          amountInKobo: 5000,
+          amountInKobo: 500000, // stored total: 5000 naira in kobo
           paymentMethod: "cash",
           _v: "2",
         },
         admitted_by: "staff-1",
       });
 
-      // user-2: monthly plan, bank_transfer
+      // user-2: monthly plan, bank_transfer (stored total is per-day:
+      // 30000 naira / 30 days = 1000 naira = 100000 kobo)
       await ctx.db.insert("bookings", {
         userId: "user-2",
         seatIds: [],
@@ -180,7 +164,7 @@ describe("reports getDaily", () => {
         access: {
           kind: "paid",
           planId: "monthly",
-          amountInKobo: 30000,
+          amountInKobo: 100000,
           paymentMethod: "bank_transfer",
           _v: "2",
         },
@@ -209,7 +193,7 @@ describe("reports getDaily", () => {
         access: {
           kind: "paid",
           planId: "daily",
-          amountInKobo: 5000,
+          amountInKobo: 500000,
           paymentMethod: "cash",
           _v: "2",
         },
@@ -228,30 +212,13 @@ describe("reports getDaily", () => {
     expect(result.dailyReport.transfer_sales).toBe(1000);
   });
 
-  it("calculates sales using planKey from v2 bookings", async () => {
+  it("prices stored amounts when the bookings are v2", async () => {
     const t = convexTest(schema, modules);
 
     const today = new Date();
     const todayStr = format(today, "yyyy/MM/dd");
 
     await t.run(async (ctx) => {
-      await ctx.db.insert("accessPlans", {
-        key: "daily",
-        name: "Daily Pass",
-        price: 5000,
-        no_of_days: 1,
-        description: "One day access",
-        features: [],
-      });
-      await ctx.db.insert("accessPlans", {
-        key: "monthly",
-        name: "Monthly Pass",
-        price: 30000,
-        no_of_days: 30,
-        description: "30 day access",
-        features: [],
-      });
-
       // v2 booking with planKey set directly
       await ctx.db.insert("bookings", {
         userId: "user-1",
@@ -275,7 +242,7 @@ describe("reports getDaily", () => {
         access: {
           kind: "paid",
           planId: "daily",
-          amountInKobo: 5000,
+          amountInKobo: 500000, // stored total: 5000 naira in kobo
           paymentMethod: "cash",
           _v: "2",
         },
@@ -305,7 +272,7 @@ describe("reports getDaily", () => {
         access: {
           kind: "paid",
           planId: "monthly",
-          amountInKobo: 30000,
+          amountInKobo: 100000, // per-day share: 30000 / 30 days
           paymentMethod: "bank_transfer",
           _v: "2",
         },
@@ -317,26 +284,47 @@ describe("reports getDaily", () => {
       date: todayStr,
     });
 
-    // daily: 5000/1 = 5000 (cash), monthly: 30000/30 = 1000 (transfer)
+    // stored totals: daily 500000 kobo = 5000 naira (cash),
+    // monthly 100000 kobo = 1000 naira (transfer)
     expect(result.dailyReport.no_of_customers).toBe(2);
     expect(result.dailyReport.total_sales).toBe(6000);
     expect(result.dailyReport.cash_sales).toBe(5000);
     expect(result.dailyReport.transfer_sales).toBe(1000);
   });
 
-  it("returns 0 sales when no matching accessPlan exists", async () => {
+  it("returns 0 sales when a record fails to price", async () => {
     const t = convexTest(schema, modules);
 
+    const today = new Date();
+    const todayStr = format(today, "yyyy/MM/dd");
+
     await t.run(async (ctx) => {
+      // Active booking so extractCount runs...
+      await ctx.db.insert("bookings", {
+        userId: "user-1",
+        seatIds: [],
+        duration: 1,
+        startDate: startOfDay(today).toISOString(),
+        endDate: endOfDay(today).toISOString(),
+        durationType: "day",
+        pricePerSeat: 5000,
+        amount: 5000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      // ...on a record with an empty planId: PlanImpl.amount throws,
+      // calcFee catches it, and one bad row counts as 0 instead of
+      // crashing the report.
       await ctx.db.insert("daily_register", {
         userId: "user-1",
-        timestamp: "2024-01-01T10:00:00.000Z",
+        timestamp: startOfDay(today).toISOString(),
         source: "web",
         device: makeDevice(),
         access: {
           kind: "paid",
-          planId: "nonexistent",
-          amountInKobo: 5000,
+          planId: "",
+          amountInKobo: 50000,
           paymentMethod: "cash",
           _v: "2",
         },
@@ -345,7 +333,7 @@ describe("reports getDaily", () => {
     });
 
     const result = await t.query(api.reports.getDaily, {
-      date: "2024/01/01",
+      date: todayStr,
     });
 
     expect(result.dailyReport.total_sales).toBe(0);

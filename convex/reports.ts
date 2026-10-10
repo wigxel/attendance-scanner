@@ -1,45 +1,27 @@
 import { v } from "convex/values";
 import { endOfDay, format, parse, startOfDay } from "date-fns";
-import { Match } from "effect";
-import { HOURLY_RATE } from "../config/constants";
-import { PlanKeyManager } from "../lib/date-range";
-import { O, pipe } from "../lib/fp.helpers";
-import type { PlanKey, TaggedBooking } from "../types";
+import type { TaggedBooking } from "../types";
 import { api } from "./_generated/api";
-import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import {
-  type AccessDuration,
-  type AccessStruct,
-  BookImpl,
-  PlanImpl,
-} from "./shared";
+import { type AccessStruct, CurrencyImpl, PlanImpl } from "./shared";
 
-type CalcProps = {
-  access: AccessStruct;
-  planKey: PlanKey;
-  planMap: Map<string, Doc<"accessPlans">>;
-};
-
-function calcFee(params: CalcProps): number {
-  const { access, planKey, planMap } = params;
-
+// Prices from the record's stored total via `PlanImpl.amount` — the same
+// function `sumCashPayments` uses — so the report and the metrics can't
+// drift. Returns naira. A record that fails to price logs and counts as 0
+// so one bad row can't crash the whole report.
+function calcFee(access: AccessStruct): number {
   if (!PlanImpl.type("paid")(access)) return 0;
 
-  return pipe(
-    PlanImpl.duration(access),
-    O.getOrElse(() => null as AccessDuration | null),
-    Match.value,
-    Match.when({ type: "hourly" }, (dur) => dur.value * HOURLY_RATE),
-    Match.orElse(() => {
-      const plan = planMap.get(planKey);
-      if (!plan) {
-        console.warn(`[reports] No plan found for key: "${planKey}"`);
-        return 0;
-      }
-      return plan.price / plan.no_of_days;
-    }),
-  );
+  try {
+    return pipe(
+      PlanImpl.amount(access),
+      CurrencyImpl.koboToNaira,
+      CurrencyImpl.parseFloat
+    )
+  } catch (err) {
+    console.warn("[reports] failed to price access record", err);
+    return 0;
+  }
 }
 
 export const getDaily = query({
@@ -63,10 +45,6 @@ export const getDaily = query({
       )
       .collect();
 
-    // Load all access plans for fee calculation
-    const allPlans = await ctx.db.query("accessPlans").collect();
-    const planMap = new Map(allPlans.map((p) => [p.key, p]));
-
     const uniqueUsers = new Set<string>();
     const uniquePaidUsers = new Set<string>();
     const uniqueFreeUsers = new Set<string>();
@@ -89,25 +67,7 @@ export const getDaily = query({
         cashSales = 0,
         totalSales = 0;
 
-      const resolvePlanKey = BookImpl.match.pipe(
-        Match.when({ _v: "booking_v2" }, (booking): PlanKey => booking.planKey),
-        Match.when({ _v: "booking_v1" }, (booking) =>
-          PlanKeyManager.mapPlanKey(booking.durationType),
-        ),
-        Match.orElse(() => {
-          return PlanImpl.match(accessRecord, {
-            none: () => null,
-            free: () => null,
-            paid: (access) => PlanKeyManager.mapPlanKey(access.planId),
-          });
-        }),
-      );
-
-      const planKey = booking ? resolvePlanKey(booking) : null;
-      const fee =
-        planKey != null
-          ? calcFee({ access: accessRecord, planKey, planMap })
-          : 0;
+      const fee = calcFee(accessRecord);
 
       totalSales += fee;
 

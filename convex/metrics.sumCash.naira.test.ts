@@ -42,13 +42,27 @@ describe("sumCashPayments naira", () => {
   });
 
   it("PlanImpl.toStruct daily 3000 price => 300000 kobo (3000 naira)", async () => {
-    const plan = { key: "daily", price: 3000, no_of_days: 1, name: "Daily", description: "", features: [] } as any;
+    const plan = {
+      key: "daily",
+      price: 3000,
+      no_of_days: 1,
+      name: "Daily",
+      description: "",
+      features: [],
+    } as any;
     const struct: any = PlanImpl.toStruct(plan);
     expect(struct.amountInKobo).toBe(300000);
   });
 
   it("hourly 500 price => 50000 kobo base", async () => {
-    const plan = { key: "hourly", price: 500, no_of_days: 1, name: "Hourly", description: "", features: [] } as any;
+    const plan = {
+      key: "hourly",
+      price: 500,
+      no_of_days: 1,
+      name: "Hourly",
+      description: "",
+      features: [],
+    } as any;
     const struct: any = PlanImpl.toStruct(plan);
     expect(struct.amountInKobo).toBe(50000);
   });

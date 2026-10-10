@@ -249,6 +249,31 @@ describe("PlanImpl.normalize", () => {
     });
   });
 
+  describe("guest visits", () => {
+    // The guest link lives inside `access` now; zod strips undeclared keys,
+    // so this guards against normalize silently dropping it.
+    const hostUserId = "k970vx5csnvqshc6jv54ddhvp";
+
+    it("preserves visiting on a free record", async () => {
+      const result = await normalize({
+        kind: "free" as const,
+        visiting: { hostUserId },
+      });
+      expect(result).toEqual({ kind: "free", visiting: { hostUserId } });
+    });
+
+    it("carries visiting across the v1 → v2 upgrade", async () => {
+      const result = await normalize({
+        kind: "paid" as const,
+        planId: "p1",
+        amount: 5000,
+        visiting: { hostUserId },
+      });
+
+      expect(result.visiting).toEqual({ hostUserId });
+    });
+  });
+
   describe("invalid records", () => {
     it("should throw on invalid record", async () => {
       const record = { kind: "unknown" as any };
@@ -323,6 +348,7 @@ describe("PlanImpl.fromBooking", () => {
       paymentMethod: "bank_transfer",
       planId: "day",
       duration: { type: "fullday" },
+      planPriceInKobo: 50000,
       amountInKobo: 50000,
     });
   });
@@ -341,6 +367,7 @@ describe("PlanImpl.fromBooking", () => {
       paymentMethod: "bank_transfer",
       planId: "week",
       duration: { type: "fullday" },
+      planPriceInKobo: 350000,
       amountInKobo: 50000,
     });
   });
@@ -359,6 +386,7 @@ describe("PlanImpl.fromBooking", () => {
       paymentMethod: "bank_transfer",
       planId: "month",
       duration: { type: "fullday" },
+      planPriceInKobo: 1500000,
       amountInKobo: 50000,
     });
   });
@@ -387,6 +415,7 @@ describe("PlanImpl.fromBooking", () => {
       paymentMethod: "bank_transfer",
       planId: "day",
       duration: { type: "fullday" },
+      planPriceInKobo: 200000,
       amountInKobo: 66667,
     });
   });
@@ -668,6 +697,7 @@ describe("PlanImpl.toStruct", () => {
       _v: "2",
       kind: "paid",
       planId: "daily",
+      planPriceInKobo: 500000,
       amountInKobo: 500000,
       paymentMethod: "bank_transfer",
       duration: { type: "fullday" },
@@ -678,10 +708,14 @@ describe("PlanImpl.toStruct", () => {
     const result = PlanImpl.toStruct({
       ...basePlan,
       key: "weekly",
-      price: 14000,
-      no_of_days: 7,
+      price: 10000,
+      no_of_days: 6, // closed Sundays
     });
-    expect(result).toMatchObject({ amountInKobo: 200000 });
+    // Full plan price snapshot vs per-day share, rounding included.
+    expect(result).toMatchObject({
+      planPriceInKobo: 1000000,
+      amountInKobo: 166667,
+    });
   });
 
   it("should throw when amount below 500 naira", () => {
@@ -770,12 +804,15 @@ describe("PlanImpl.amount", () => {
     });
   });
 
-  it("should multiply hourly amountInKobo by hours", () => {
+  it("should return the resolved total on an hourly record", () => {
+    // Reads are duration-free: snapshot 50000 kobo x 3h was resolved to
+    // 150000 kobo at write time and is returned as-is.
     const access = {
       _v: "2" as const,
       kind: "paid" as const,
       planId: "hourly",
-      amountInKobo: 100000,
+      planPriceInKobo: 50000,
+      amountInKobo: 150000,
       paymentMethod: "cash" as const,
       duration: { type: "hourly" as const, value: 3 },
     };
@@ -783,19 +820,46 @@ describe("PlanImpl.amount", () => {
     expect(result).toEqual({
       currency: "naira",
       denomination: "kobo",
-      value: "300000",
+      value: "150000",
     });
   });
 
-  it("should throw for hourly plan without duration", () => {
+  it("amountInKobo is authoritative even when planPriceInKobo disagrees", () => {
+    // Pricing never touches planPriceInKobo — a record carries the total it
+    // was stamped with, even a wrong-looking one.
     const access = {
       _v: "2" as const,
       kind: "paid" as const,
       planId: "hourly",
+      planPriceInKobo: 300000,
+      amountInKobo: 600000,
+      paymentMethod: "cash" as const,
+      duration: { type: "hourly" as const, value: 2 },
+    };
+    const result = PlanImpl.amount(access);
+    expect(result).toEqual({
+      currency: "naira",
+      denomination: "kobo",
+      value: "600000",
+    });
+  });
+
+  it("returns the stored total on an hourly record without duration", () => {
+    // Reads don't need duration: provenance only, stamped at write time.
+    const access = {
+      _v: "2" as const,
+      kind: "paid" as const,
+      planId: "hourly",
+      planPriceInKobo: 50000,
       amountInKobo: 100000,
       paymentMethod: "cash" as const,
     };
-    expect(() => PlanImpl.amount(access)).toThrow();
+    const result = PlanImpl.amount(access);
+    expect(result).toEqual({
+      currency: "naira",
+      denomination: "kobo",
+      value: "100000",
+    });
   });
 
   it("should return zero kobo for unknown kind", () => {

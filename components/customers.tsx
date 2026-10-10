@@ -287,7 +287,6 @@ type DailyRegisterEntry = {
   access: AccessStruct;
   admitted_by: string;
   ticketId?: string;
-  visiting?: { hostUserId: string };
 };
 
 export function TodaysCustomers() {
@@ -422,7 +421,7 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
   const visitCount = useVisitCount({ userId: entry.userId });
   const diffFromNow = format_time_to_now(entry.timestamp);
   const isReservation = !isNullable(entry.ticketId);
-  const isGuest = !isNullable(entry.visiting);
+  const isGuest = !isNullable(entry.access?.visiting);
   const host = useQuery(
     api.myFunctions.getUserById,
     entry.visiting ? { userId: entry.visiting.hostUserId } : "skip",
@@ -783,8 +782,22 @@ function PlanTypeToggle(props: PlanTypeToggleProps) {
 
   const changePlan = useMutation(api.register.updateTodaysRegisterAccess);
 
-  const setOption = (value: AccessDuration) => {
-    changePlan({ duration: value, userId: id });
+  const setOption = (duration: AccessDuration) => {
+    const isHourlyPlan =
+      PlanImpl.type("paid")(value) && value.planId === "hourly";
+
+    // The mutation only accepts an hourly duration on the hourly plan, and
+    // the hourly plan only accepts an hourly duration — so both travel
+    // together. Leaving hourly for a full day drops the customer back to
+    // the daily plan.
+    const plan =
+      duration.type === "hourly"
+        ? "hourly"
+        : isHourlyPlan
+          ? "daily"
+          : undefined;
+
+    changePlan({ userId: id, duration, ...(plan ? { plan } : {}) });
   };
 
   const option = PlanImpl.duration(value).pipe(
