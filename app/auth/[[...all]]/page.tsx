@@ -1,6 +1,7 @@
 import { SignIn } from "@clerk/nextjs";
 import { Posts } from "@/app/posts";
 import { Footer } from "@/components/footer";
+import { RoomEnvironmentWidget } from "@/components/room-environment-widget";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default async function SignInPage() {
@@ -28,6 +29,10 @@ export default async function SignInPage() {
 
       <div className="mt-[-5svh]">
         <Posts />
+      </div>
+
+      <div className="mx-auto max-w-sm py-6">
+        <RoomEnvironmentWidget />
       </div>
 
       <Footer />

@@ -362,6 +362,36 @@ export const getDailyCalendar = query({
   },
 });
 
+// — filled 7-day strip for embeddable widgets: server builds the UTC date
+// spine and left-joins daily buckets, so clients never compute date keys.
+export const getLast7DaysStrip = query({
+  args: { roomId: v.optional(v.string()), asOf: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const roomId = args.roomId ?? DEFAULT_ROOM;
+    // asOf is client-supplied for testability; defaults to now.
+    const todayStart = toDayStart(args.asOf ?? Date.now());
+    const windowStart = todayStart - 6 * DAY_MS;
+    const rows = await ctx.db
+      .query("roomMetricsDaily")
+      .withIndex("by_room_and_day", (query) =>
+        query.eq("roomId", roomId).gte("dayStart", windowStart),
+      )
+      .collect();
+    const byDayStart = new Map(rows.map((row) => [row.dayStart, row]));
+    return Array.from({ length: 7 }, (_, index) => {
+      const dayStart = windowStart + index * DAY_MS;
+      const bucket = byDayStart.get(dayStart) ?? null;
+      return {
+        date: toDayKey(dayStart),
+        avgTemperature: bucket?.avgTemperature ?? null,
+        minTemperature: bucket?.minTemperature ?? null,
+        maxTemperature: bucket?.maxTemperature ?? null,
+        count: bucket?.count ?? 0,
+      };
+    });
+  },
+});
+
 export const startRoomMetricsBackfill = internalMutation({
   args: {
     from: v.optional(v.string()),
