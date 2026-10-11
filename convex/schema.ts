@@ -255,6 +255,46 @@ const roomMetricsDaily = defineTable({
   .index("by_room_and_day", ["roomId", "dayStart"])
   .index("by_date", ["date"]);
 
+const kpiCadence = v.union(
+  v.literal("daily"),
+  v.literal("weekly"),
+  v.literal("monthly"),
+);
+
+const kpis = defineTable({
+  title: v.string(),
+  description: v.optional(v.string()),
+  cadence: kpiCadence,
+  audience: v.union(v.literal("day"), v.literal("night"), v.literal("all")),
+  /** Weekly KPIs: 0=Monday..6=Sunday; hidden until this day each week. */
+  dueWeekday: v.optional(v.number()),
+  /** Monthly KPIs: 1..31; hidden until this day each month (clamped). */
+  dueMonthDay: v.optional(v.number()),
+  points: v.number(),
+  isActive: v.boolean(),
+  /** HH:mm in Africa/Lagos; absent = checkable anytime in the period. */
+  windowStart: v.optional(v.string()),
+  /** HH:mm in Africa/Lagos; absent = checkable anytime in the period. */
+  windowEnd: v.optional(v.string()),
+});
+
+const kpiCompletions = defineTable({
+  kpiId: v.id("kpis"),
+  periodKey: v.string(),
+  completedBy: v.string(),
+  completedAt: v.number(),
+  pointsEarned: v.number(),
+})
+  .index("by_period", ["periodKey"])
+  .index("by_kpi_period_user", ["kpiId", "periodKey", "completedBy"])
+  .index("by_completed_at", ["completedAt"]);
+
+const kpiDailyScores = defineTable({
+  date: v.string(),
+  available: v.number(),
+  earned: v.record(v.string(), v.number()),
+}).index("by_date", ["date"]);
+
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
   users: authTables.users,
@@ -278,4 +318,7 @@ export default defineSchema({
   roomMetrics,
   roomMetrics10m,
   roomMetricsDaily,
+  kpis,
+  kpiCompletions,
+  kpiDailyScores,
 });

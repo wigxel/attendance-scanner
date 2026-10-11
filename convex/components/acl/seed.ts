@@ -41,122 +41,131 @@ export const seedRoles = mutation({
   },
 });
 
+const permissions = [
+  {
+    name: "user:create",
+    description: "Create new user accounts",
+    category: "Users",
+  },
+  {
+    name: "user:read",
+    description: "View user accounts",
+    category: "Users",
+  },
+  {
+    name: "user:update",
+    description: "Edit user accounts",
+    category: "Users",
+  },
+  {
+    name: "user:delete",
+    description: "Delete user accounts",
+    category: "Users",
+  },
+  {
+    name: "user:assign:role",
+    description: "Assign roles to users",
+    category: "Users",
+  },
+  {
+    name: "attendance:read",
+    description: "View attendance records",
+    category: "Attendance",
+  },
+  {
+    name: "attendance:checkin",
+    description: "Check in members",
+    category: "Attendance",
+  },
+  {
+    name: "attendance:checkout",
+    description: "Check out members",
+    category: "Attendance",
+  },
+  {
+    name: "settings:read",
+    description: "View system settings",
+    category: "Settings",
+  },
+  {
+    name: "settings:update",
+    description: "Update system settings",
+    category: "Settings",
+  },
+  {
+    name: "reports:read",
+    description: "View reports",
+    category: "Reports",
+  },
+  { name: "audit:read", description: "View audit logs", category: "Audit" },
+  {
+    name: "notification:read",
+    description: "View notifications",
+    category: "Notifications",
+  },
+  {
+    name: "notification:send",
+    description: "Send notifications",
+    category: "Notifications",
+  },
+  {
+    name: "booking:create",
+    description: "Create manual bookings for customers",
+    category: "Bookings",
+  },
+  {
+    name: "booking:read",
+    description: "View any booking details",
+    category: "Bookings",
+  },
+  {
+    name: "booking:update",
+    description: "Modify or cancel any booking",
+    category: "Bookings",
+  },
+  {
+    name: "booking:delete",
+    description: "Delete bookings/reservations",
+    category: "Bookings",
+  },
+  {
+    name: "feedback:update",
+    description: "Approve or complete suggestions",
+    category: "Feedback",
+  },
+  {
+    name: "feedback:delete",
+    description: "Delete suggestions and feedback",
+    category: "Feedback",
+  },
+  {
+    name: "kpis:complete",
+    description: "Check off daily, weekly and monthly KPIs",
+    category: "KPIs",
+  },
+  {
+    name: "kpis:manage",
+    description: "Create and manage KPI presets",
+    category: "KPIs",
+  },
+];
+
 export const seedPermissions = mutation({
   args: {},
   handler: async (ctx) => {
-    const existing = await ctx.db.query("permissions").first();
+    const existing = await ctx.db.query("permissions").collect();
+    const known = new Set(existing.map((p) => p.name));
 
-    if (existing) {
-      return { success: false, error: "Permissions have already been seeded." };
-    }
-
-    const permissions = [
-      {
-        name: "user:create",
-        description: "Create new user accounts",
-        category: "Users",
-      },
-      {
-        name: "user:read",
-        description: "View user accounts",
-        category: "Users",
-      },
-      {
-        name: "user:update",
-        description: "Edit user accounts",
-        category: "Users",
-      },
-      {
-        name: "user:delete",
-        description: "Delete user accounts",
-        category: "Users",
-      },
-      {
-        name: "user:assign:role",
-        description: "Assign roles to users",
-        category: "Users",
-      },
-      {
-        name: "attendance:read",
-        description: "View attendance records",
-        category: "Attendance",
-      },
-      {
-        name: "attendance:checkin",
-        description: "Check in members",
-        category: "Attendance",
-      },
-      {
-        name: "attendance:checkout",
-        description: "Check out members",
-        category: "Attendance",
-      },
-      {
-        name: "settings:read",
-        description: "View system settings",
-        category: "Settings",
-      },
-      {
-        name: "settings:update",
-        description: "Update system settings",
-        category: "Settings",
-      },
-      {
-        name: "reports:read",
-        description: "View reports",
-        category: "Reports",
-      },
-      { name: "audit:read", description: "View audit logs", category: "Audit" },
-      {
-        name: "notification:read",
-        description: "View notifications",
-        category: "Notifications",
-      },
-      {
-        name: "notification:send",
-        description: "Send notifications",
-        category: "Notifications",
-      },
-      {
-        name: "booking:create",
-        description: "Create manual bookings for customers",
-        category: "Bookings",
-      },
-      {
-        name: "booking:read",
-        description: "View any booking details",
-        category: "Bookings",
-      },
-      {
-        name: "booking:update",
-        description: "Modify or cancel any booking",
-        category: "Bookings",
-      },
-      {
-        name: "booking:delete",
-        description: "Delete bookings/reservations",
-        category: "Bookings",
-      },
-      {
-        name: "feedback:update",
-        description: "Approve or complete suggestions",
-        category: "Feedback",
-      },
-      {
-        name: "feedback:delete",
-        description: "Delete suggestions and feedback",
-        category: "Feedback",
-      },
-    ];
-
+    let added = 0;
     for (const perm of permissions) {
+      if (known.has(perm.name)) continue;
       await ctx.db.insert("permissions", perm);
+      added++;
     }
 
-    return { success: true, data: { count: permissions.length } };
+    return { success: true, data: { count: added } };
   },
 });
-
 export const makeSuperAdmin = internalMutation({
   args: { identity: v.string() },
   handler: async (ctx, args) => {

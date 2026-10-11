@@ -344,7 +344,7 @@ export function TodaysCustomers() {
       </CardHeader>
 
       <EmptyState isEmpty={records.length === 0}>
-        <EmptyStateContent className="px-4">
+        <EmptyStateContent className="px-4 flex-1">
           <EmptyStateTitle className="text-start w-full">
             No scans yet
           </EmptyStateTitle>
@@ -354,7 +354,7 @@ export function TodaysCustomers() {
         </EmptyStateContent>
 
         <EmptyStateConceal>
-          <CardContent className="p-0">
+          <CardContent className="p-0 flex-1">
             <ScrollArea>
               <ul className="h-[32rem]">
                 {records.map((e) => {
@@ -443,7 +443,7 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
   const can_modify_plan = isReservation
     ? false
     : // eslint-disable-next-line react-hooks/purity
-      differenceInHours(Date.now(), entry.timestamp) < 24;
+    differenceInHours(Date.now(), entry.timestamp) < 24;
 
   const handleClick = () => {
     onSelect?.(entry);
