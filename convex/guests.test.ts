@@ -2,7 +2,8 @@
 import aggregateTest from "@convex-dev/aggregate/test";
 import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
-import { api } from "./_generated/api";
+import { api, components } from "./_generated/api";
+import aclSchema from "./components/acl/schema";
 import { findOrCreateUser } from "./myFunctions";
 import {
   insertGuestVisit,
@@ -11,6 +12,7 @@ import {
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
+const aclModules = import.meta.glob("./components/acl/**/*.ts");
 
 const guest = {
   email: "matilda@example.com",

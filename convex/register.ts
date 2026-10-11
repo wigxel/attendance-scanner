@@ -389,6 +389,8 @@ export const listTodaysHosts = query({
     const callerId = await readId(ctx);
     if (!callerId) return [];
 
+    await requirePrivilege(ctx, "attendance:checkin");
+
     const today = new Date();
 
     const records = await ctx.db

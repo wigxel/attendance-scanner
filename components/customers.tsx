@@ -35,6 +35,7 @@ import { Drawer } from "vaul";
 import { createColumns } from "@/components/columns";
 import { AppDataTable } from "@/components/DataTable";
 import { GuestCheckInDialog } from "@/components/guests/GuestCheckInDialog";
+import { RoleHasCSR } from "@/components/RoleHasCSR";
 import {
   Sheet,
   SheetContent,
@@ -366,14 +367,16 @@ export function TodaysCustomers() {
       </EmptyState>
 
       <If cond={attendanceHandler.isToday}>
-        <CardFooter className="pt-4 p-4 rounded-b-xl">
-          <GuestCheckInDialog>
-            <Button variant="outline" size="sm" className="w-full">
-              <UserPlus className="h-4 w-4 mr-1" />
-              Add Guest
-            </Button>
-          </GuestCheckInDialog>
-        </CardFooter>
+        <RoleHasCSR privileges={["attendance:checkin"]}>
+          <CardFooter className="pt-4 p-4 rounded-b-xl">
+            <GuestCheckInDialog>
+              <Button variant="outline" size="sm" className="w-full">
+                <UserPlus className="h-4 w-4 mr-1" />
+                Add Guest
+              </Button>
+            </GuestCheckInDialog>
+          </CardFooter>
+        </RoleHasCSR>
       </If>
     </Card>
   );
