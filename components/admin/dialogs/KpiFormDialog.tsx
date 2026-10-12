@@ -7,6 +7,15 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -88,8 +97,8 @@ function toPayload(data: KpiFormValues) {
 
 type KpiFormDialogProps = {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
   kpi?: KpiPreset | null;
+  onOpenChange: (open: boolean) => void;
 };
 
 export function KpiFormDialog({ open, onOpenChange, kpi }: KpiFormDialogProps) {
@@ -100,7 +109,7 @@ export function KpiFormDialog({ open, onOpenChange, kpi }: KpiFormDialogProps) {
     resolver: zodResolver(kpiSchema),
     defaultValues: defaultState,
   });
-  const { register, handleSubmit, reset, setValue, watch, formState } = form;
+  const { handleSubmit, reset, setValue, formState } = form;
   const isEditing = !!kpi;
 
   useEffect(() => {
@@ -140,8 +149,6 @@ export function KpiFormDialog({ open, onOpenChange, kpi }: KpiFormDialogProps) {
     }
   };
 
-  const errors = formState.errors;
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
@@ -149,212 +156,251 @@ export function KpiFormDialog({ open, onOpenChange, kpi }: KpiFormDialogProps) {
           <SheetTitle>{isEditing ? "Edit KPI" : "Add New KPI"}</SheetTitle>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4 px-4">
-          <div>
-            <label htmlFor="kpi-title" className="block text-sm font-medium">
-              Title *
-            </label>
-            <Input id="kpi-title" {...register("title")} className="mt-1" />
-            {errors.title && (
-              <p className="mt-1 text-xs text-red-600">
-                {errors.title.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label
-              htmlFor="kpi-description"
-              className="block text-sm font-medium"
-            >
-              Description
-            </label>
-            <Textarea
-              id="kpi-description"
-              rows={2}
-              {...register("description")}
-              className="mt-1"
+        <Form {...form}>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4 py-4 px-4"
+          >
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title *</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <span className="block text-sm font-medium">Cadence *</span>
-              <Select
-                value={watch("cadence")}
-                onValueChange={(v) => {
-                  setValue("cadence", v as KpiFormValues["cadence"]);
-                  setValue("dueWeekday", undefined);
-                  setValue("dueMonthDay", undefined);
-                }}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <span className="block text-sm font-medium">Shift *</span>
-              <Select
-                value={watch("audience")}
-                onValueChange={(v) =>
-                  setValue("audience", v as KpiFormValues["audience"])
-                }
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="day">Day</SelectItem>
-                  <SelectItem value="night">Night</SelectItem>
-                  <SelectItem value="all">All shifts</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label htmlFor="kpi-points" className="block text-sm font-medium">
-                Points *
-              </label>
-              <Input
-                id="kpi-points"
-                type="number"
-                min={1}
-                {...register("points")}
-                className="mt-1"
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea rows={2} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="audience"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Shift *</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="day">Day</SelectItem>
+                        <SelectItem value="night">Night</SelectItem>
+                        <SelectItem value="all">All shifts</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.points && (
-                <p className="mt-1 text-xs text-red-600">
-                  {errors.points.message}
-                </p>
+
+              <FormField
+                control={form.control}
+                name="cadence"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cadence *</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={(v) => {
+                        field.onChange(v);
+                        setValue("dueWeekday", undefined);
+                        setValue("dueMonthDay", undefined);
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="points"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Points *</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={1} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {form.watch("cadence") === "weekly" && (
+                <FormField
+                  control={form.control}
+                  name="dueWeekday"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Due day of week</FormLabel>
+                      <Select
+                        value={
+                          field.value === undefined
+                            ? "any"
+                            : String(field.value)
+                        }
+                        onValueChange={(v) =>
+                          field.onChange(v === "any" ? undefined : Number(v))
+                        }
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Any day" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="any">Any day</SelectItem>
+                          <SelectItem value="0">Monday</SelectItem>
+                          <SelectItem value="1">Tuesday</SelectItem>
+                          <SelectItem value="2">Wednesday</SelectItem>
+                          <SelectItem value="3">Thursday</SelectItem>
+                          <SelectItem value="4">Friday</SelectItem>
+                          <SelectItem value="5">Saturday</SelectItem>
+                          <SelectItem value="6">Sunday</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {form.watch("cadence") === "monthly" && (
+                <FormField
+                  control={form.control}
+                  name="dueMonthDay"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Due day of month</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={31}
+                          placeholder="Any day"
+                          {...field}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            field.onChange(
+                              raw === "" ? undefined : Number(raw),
+                            );
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
             </div>
-          </div>
 
-          {watch("cadence") === "weekly" && (
-            <div>
-              <span className="block text-sm font-medium">Due day of week</span>
-              <Select
-                value={
-                  watch("dueWeekday") === undefined
-                    ? "any"
-                    : String(watch("dueWeekday"))
-                }
-                onValueChange={(v) =>
-                  setValue("dueWeekday", v === "any" ? undefined : Number(v))
-                }
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Any day" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any day</SelectItem>
-                  <SelectItem value="0">Monday</SelectItem>
-                  <SelectItem value="1">Tuesday</SelectItem>
-                  <SelectItem value="2">Wednesday</SelectItem>
-                  <SelectItem value="3">Thursday</SelectItem>
-                  <SelectItem value="4">Friday</SelectItem>
-                  <SelectItem value="5">Saturday</SelectItem>
-                  <SelectItem value="6">Sunday</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {watch("cadence") === "monthly" && (
-            <div>
-              <label
-                htmlFor="kpi-due-month-day"
-                className="block text-sm font-medium"
-              >
-                Due day of month
-              </label>
-              <Input
-                id="kpi-due-month-day"
-                type="number"
-                min={1}
-                max={31}
-                placeholder="Any day"
-                {...register("dueMonthDay", {
-                  setValueAs: (v) => (v === "" ? undefined : Number(v)),
-                })}
-                className="mt-1"
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="windowStart"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Window start</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.dueMonthDay && (
-                <p className="mt-1 text-xs text-red-600">
-                  {errors.dueMonthDay.message}
-                </p>
+
+              <FormField
+                control={form.control}
+                name="windowEnd"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Window end</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-2 space-y-0 justify-between bg-muted/50 hover:bg-muted p-4 rounded-lg">
+                  <div className="space-y-1 flex-1">
+                    <FormLabel className="text-foreground text-xs">
+                      Activate immediately
+                    </FormLabel>
+                    <FormDescription className="text-xs max-w-[40ch]">
+                      Live on staff checklists the moment you save. Turn off to
+                      save as a draft. Archived KPIs keep their history.
+                    </FormDescription>
+                  </div>
+
+                  <div className="flex gap-2 shrink-0">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-          )}
+            />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="kpi-window-start"
-                className="block text-sm font-medium"
+            <SheetFooter className="sticky flex-row justify-end bottom-0 pt-4 border-t mt-6">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
               >
-                Window start
-              </label>
-              <Input
-                id="kpi-window-start"
-                type="time"
-                {...register("windowStart")}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="kpi-window-end"
-                className="block text-sm font-medium"
-              >
-                Window end
-              </label>
-              <Input
-                id="kpi-window-end"
-                type="time"
-                {...register("windowEnd")}
-                className="mt-1"
-              />
-              {errors.windowEnd && (
-                <p className="mt-1 text-xs text-red-600">
-                  {errors.windowEnd.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-end">
-            <label
-              htmlFor="kpi-active"
-              className="flex items-center gap-2 text-sm font-medium pb-2"
-            >
-              <Switch
-                id="kpi-active"
-                checked={watch("isActive")}
-                onCheckedChange={(v) => setValue("isActive", v)}
-              />
-              Active
-            </label>
-          </div>
-
-          <SheetFooter className="sticky flex-row *:flex-1 bottom-0 pt-4 border-t mt-6">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={formState.isSubmitting}>
-              {formState.isSubmitting
-                ? "Saving..."
-                : isEditing
-                  ? "Save Changes"
-                  : "Create KPI"}
-            </Button>
-          </SheetFooter>
-        </form>
+                Cancel
+              </Button>
+              <Button size="sm" type="submit" disabled={formState.isSubmitting}>
+                {formState.isSubmitting
+                  ? "Saving..."
+                  : isEditing
+                    ? "Save Changes"
+                    : "Create KPI"}
+              </Button>
+            </SheetFooter>
+          </form>
+        </Form>
       </SheetContent>
     </Sheet>
   );

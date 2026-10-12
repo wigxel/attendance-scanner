@@ -279,7 +279,8 @@ const kpis = defineTable({
 });
 
 const kpiCompletions = defineTable({
-  kpiId: v.id("kpis"),
+  kpiId: v.optional(v.id("kpis")),
+  instanceId: v.optional(v.id("kpiInstances")),
   periodKey: v.string(),
   completedBy: v.string(),
   completedAt: v.number(),
@@ -287,12 +288,22 @@ const kpiCompletions = defineTable({
 })
   .index("by_period", ["periodKey"])
   .index("by_kpi_period_user", ["kpiId", "periodKey", "completedBy"])
+  .index("by_instance_period_user", ["instanceId", "periodKey", "completedBy"])
   .index("by_completed_at", ["completedAt"]);
 
 const kpiDailyScores = defineTable({
   date: v.string(),
   available: v.number(),
   earned: v.record(v.string(), v.number()),
+}).index("by_date", ["date"]);
+
+const kpiInstances = defineTable({
+  title: v.string(),
+  customerId: v.string(),
+  points: v.number(),
+  /** Lagos yyyy-MM-dd; completable that day only. */
+  date: v.string(),
+  createdAt: v.number(),
 }).index("by_date", ["date"]);
 
 export default defineSchema({
@@ -320,5 +331,6 @@ export default defineSchema({
   roomMetricsDaily,
   kpis,
   kpiCompletions,
+  kpiInstances,
   kpiDailyScores,
 });

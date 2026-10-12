@@ -1,6 +1,7 @@
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { ConvexError } from "convex/values";
 import { endOfDay, isWithinInterval, parseISO, startOfDay } from "date-fns";
+import { logger } from "../config/logger";
 import type { Booking } from "../types";
 import { api, internal } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
@@ -123,6 +124,22 @@ export async function insertRegisterAndAggregate(
   const entry = await ctx.db.get(id);
   if (entry) {
     await visitsAggregate.insert(ctx, entry);
+  }
+
+  // First visit ever: spawn dynamic Priority KPIs (checked inside the job).
+  const priorVisits = await ctx.db
+    .query("daily_register")
+    .withIndex("user", (q) => q.eq("userId", params.userId))
+    .take(2);
+  if (priorVisits.length <= 1) {
+    // Observable seam: convex-test cannot run scheduled functions, so this
+    // log is what the hook test asserts on (branch reached + userId).
+    logger.info("Scheduling first-visit dynamic KPIs", {
+      userId: params.userId,
+    });
+    await ctx.scheduler.runAfter(0, internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: params.userId },
+    });
   }
 }
 

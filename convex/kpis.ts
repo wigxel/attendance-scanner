@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import type { MutationCtx } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { readId } from "./myFunctions";
@@ -77,8 +78,8 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function dayKey(p: LagosParts) {
-  return `${p.year}-${pad(p.month)}-${pad(p.day)}`;
+function dayKey(parts: LagosParts) {
+  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
 }
 
 export function isoWeekKey(year: number, month: number, day: number) {
@@ -96,19 +97,20 @@ export function isoWeekKey(year: number, month: number, day: number) {
 
 export function periodKeyFor(
   cadence: "daily" | "weekly" | "monthly",
-  p: LagosParts,
+  parts: LagosParts,
 ) {
-  if (cadence === "daily") return dayKey(p);
-  if (cadence === "weekly") return isoWeekKey(p.year, p.month, p.day);
-  return `${p.year}-${pad(p.month)}`;
+  if (cadence === "daily") return dayKey(parts);
+  if (cadence === "weekly")
+    return isoWeekKey(parts.year, parts.month, parts.day);
+  return `${parts.year}-${pad(parts.month)}`;
 }
 
 type KpiWindow = { windowStart?: string; windowEnd?: string };
 
-export function windowAllows(kpi: KpiWindow, hhmm: string) {
-  if (!kpi.windowStart && !kpi.windowEnd) return true;
-  const start = kpi.windowStart ?? "00:00";
-  const end = kpi.windowEnd ?? "23:59";
+export function windowAllows(rule: KpiWindow, hhmm: string) {
+  if (!rule.windowStart && !rule.windowEnd) return true;
+  const start = rule.windowStart ?? "00:00";
+  const end = rule.windowEnd ?? "23:59";
   // Overnight windows (e.g. 18:00–06:00) wrap past midnight.
   if (end <= start) return hhmm >= start || hhmm <= end;
   return start <= hhmm && hhmm <= end;
@@ -135,8 +137,19 @@ export function lagosDay(ms: number): LagosDay {
   };
 }
 
-export function dayKeyOf(d: LagosDay) {
-  return `${d.year}-${pad(d.month)}-${pad(d.day)}`;
+export function dayKeyOf(day: LagosDay) {
+  return `${day.year}-${pad(day.month)}-${pad(day.day)}`;
+}
+
+export function lagosDayFromKey(date: string): LagosDay {
+  const [year, month, day] = date.split("-").map(Number);
+  return {
+    year,
+    month,
+    day,
+    weekdayMon0: (new Date(Date.UTC(year, month - 1, day)).getUTCDay() + 6) % 7,
+    daysInMonth: new Date(Date.UTC(year, month, 0)).getUTCDate(),
+  };
 }
 
 export function dayBounds(date: string) {
@@ -150,14 +163,114 @@ export type KpiDue = {
   dueMonthDay?: number;
 };
 
-export function isDue(kpi: KpiDue, d: LagosDay) {
+export function isDue(kpi: KpiDue, day: LagosDay) {
   if (kpi.cadence === "weekly" && kpi.dueWeekday !== undefined) {
-    return d.weekdayMon0 >= kpi.dueWeekday;
+    return day.weekdayMon0 >= kpi.dueWeekday;
   }
   if (kpi.cadence === "monthly" && kpi.dueMonthDay !== undefined) {
-    return d.day >= Math.min(kpi.dueMonthDay, d.daysInMonth);
+    return day.day >= Math.min(kpi.dueMonthDay, day.daysInMonth);
   }
   return true;
+}
+
+type CompletionInsert = {
+  kpiId?: Id<"kpis">;
+  instanceId?: Id<"kpiInstances">;
+  periodKey: string;
+  completedBy: string;
+  completedAt: number;
+  pointsEarned: number;
+};
+
+async function findPresetCompletion(
+  ctx: QueryCtx,
+  kpiId: Id<"kpis">,
+  periodKey: string,
+  userId: string,
+): Promise<Doc<"kpiCompletions"> | null> {
+  return await ctx.db
+    .query("kpiCompletions")
+    .withIndex("by_kpi_period_user", (q) =>
+      q.eq("kpiId", kpiId).eq("periodKey", periodKey).eq("completedBy", userId),
+    )
+    .first();
+}
+
+async function findInstanceCompletion(
+  ctx: QueryCtx,
+  instanceId: Id<"kpiInstances">,
+  periodKey: string,
+  userId: string,
+): Promise<Doc<"kpiCompletions"> | null> {
+  return await ctx.db
+    .query("kpiCompletions")
+    .withIndex("by_instance_period_user", (q) =>
+      q
+        .eq("instanceId", instanceId)
+        .eq("periodKey", periodKey)
+        .eq("completedBy", userId),
+    )
+    .first();
+}
+
+function checklistStatus(
+  completion: { completedAt: number } | null,
+  now: number,
+) {
+  return {
+    completed: completion !== null,
+    completedAt: completion?.completedAt ?? null,
+    undoable:
+      completion !== null && now - completion.completedAt <= UNDO_WINDOW_MS,
+  };
+}
+
+async function settleToggle(
+  ctx: MutationCtx,
+  existing: Doc<"kpiCompletions"> | null,
+  insert: CompletionInsert,
+  now: number,
+): Promise<{ checked: boolean }> {
+  if (existing) {
+    if (now - existing.completedAt > UNDO_WINDOW_MS) {
+      throw new Error("Check is locked and cannot be undone.");
+    }
+    await ctx.db.delete("kpiCompletions", existing._id);
+    return { checked: false };
+  }
+  await ctx.db.insert("kpiCompletions", insert);
+  return { checked: true };
+}
+
+async function availableForDay(
+  ctx: QueryCtx,
+  kpis: Doc<"kpis">[],
+  date: string,
+  day: LagosDay,
+): Promise<number> {
+  const presetPoints = kpis
+    .filter((kpi) => isDue(kpi, day))
+    .reduce((sum, kpi) => sum + kpi.points, 0);
+  const instances = await ctx.db
+    .query("kpiInstances")
+    .withIndex("by_date", (q) => q.eq("date", date))
+    .collect();
+  return presetPoints + instances.reduce((sum, inst) => sum + inst.points, 0);
+}
+
+async function closedDates(
+  ctx: QueryCtx,
+  days: string[],
+): Promise<Set<string>> {
+  const rows = await Promise.all(
+    days.map((date) =>
+      ctx.db
+        .query("kpiDailyScores")
+        .withIndex("by_date", (q) => q.eq("date", date))
+        .first(),
+    ),
+  );
+  return new Set(rows.filter((row) => row !== null).map((row) => row.date));
 }
 
 export const myChecklist = query({
@@ -165,37 +278,56 @@ export const myChecklist = query({
   handler: async (ctx) => {
     const caller = await readId(ctx);
     if (!caller) return [];
+    const callerId = String(caller);
     const now = Date.now();
     const parts = lagosParts(now);
     const today = lagosDay(now);
+    const todayKey = dayKeyOf(today);
     const kpis = await ctx.db
       .query("kpis")
       .filter((q) => q.eq(q.field("isActive"), true))
       .collect();
-    const out = [];
+    const items = [];
     for (const kpi of kpis) {
       if (!isDue(kpi, today)) continue;
       const periodKey = periodKeyFor(kpi.cadence, parts);
-      const completion = await ctx.db
-        .query("kpiCompletions")
-        .withIndex("by_kpi_period_user", (q) =>
-          q
-            .eq("kpiId", kpi._id)
-            .eq("periodKey", periodKey)
-            .eq("completedBy", String(caller)),
-        )
-        .first();
-      out.push({
+      const completion = await findPresetCompletion(
+        ctx,
+        kpi._id,
+        periodKey,
+        callerId,
+      );
+      items.push({
         ...kpi,
+        kind: "preset" as const,
         periodKey,
         windowOpen: windowAllows(kpi, parts.hhmm),
-        completed: completion !== null,
-        completedAt: completion?.completedAt ?? null,
-        undoable:
-          completion !== null && now - completion.completedAt <= UNDO_WINDOW_MS,
+        ...checklistStatus(completion, now),
       });
     }
-    return out.sort((a, b) => a._creationTime - b._creationTime);
+    const instances = await ctx.db
+      .query("kpiInstances")
+      .withIndex("by_date", (q) => q.eq("date", todayKey))
+      .collect();
+    for (const instance of instances) {
+      const completion = await findInstanceCompletion(
+        ctx,
+        instance._id,
+        todayKey,
+        callerId,
+      );
+      items.push({
+        _id: instance._id,
+        _creationTime: instance._creationTime,
+        kind: "priority" as const,
+        title: instance.title,
+        points: instance.points,
+        periodKey: todayKey,
+        windowOpen: true,
+        ...checklistStatus(completion, now),
+      });
+    }
+    return items.sort((a, b) => a._creationTime - b._creationTime);
   },
 });
 
@@ -208,14 +340,50 @@ export const listAll = query({
 });
 
 export const toggleCheck = mutation({
-  args: { kpiId: v.id("kpis") },
+  args: {
+    kpiId: v.optional(v.id("kpis")),
+    instanceId: v.optional(v.id("kpiInstances")),
+  },
   handler: async (ctx, args) => {
     await requirePrivilege(ctx, "kpis:complete");
     const caller = await readId(ctx);
     if (!caller) throw new Error("Authentication required.");
-    const kpi = await ctx.db.get("kpis", args.kpiId);
-    if (!kpi?.isActive) throw new Error("KPI not found.");
+    if ((args.kpiId == null) === (args.instanceId == null)) {
+      throw new Error("Provide exactly one of kpiId or instanceId.");
+    }
+    const callerId = String(caller);
     const now = Date.now();
+
+    if (args.instanceId) {
+      const instance = await ctx.db.get("kpiInstances", args.instanceId);
+      if (!instance) throw new Error("KPI not found.");
+      if (instance.date !== dayKeyOf(lagosDay(now))) {
+        throw new Error("This KPI has expired.");
+      }
+      const existing = await findInstanceCompletion(
+        ctx,
+        instance._id,
+        instance.date,
+        callerId,
+      );
+      return settleToggle(
+        ctx,
+        existing,
+        {
+          instanceId: instance._id,
+          periodKey: instance.date,
+          completedBy: callerId,
+          completedAt: now,
+          pointsEarned: instance.points,
+        },
+        now,
+      );
+    }
+
+    const kpiId = args.kpiId;
+    if (kpiId == null) throw new Error("KPI not found.");
+    const kpi = await ctx.db.get("kpis", kpiId);
+    if (!kpi?.isActive) throw new Error("KPI not found.");
     const parts = lagosParts(now);
     if (!isDue(kpi, lagosDay(now))) {
       throw new Error("This KPI is not due yet.");
@@ -224,30 +392,24 @@ export const toggleCheck = mutation({
       throw new Error("This KPI cannot be checked at this time.");
     }
     const periodKey = periodKeyFor(kpi.cadence, parts);
-    const existing = await ctx.db
-      .query("kpiCompletions")
-      .withIndex("by_kpi_period_user", (q) =>
-        q
-          .eq("kpiId", kpi._id)
-          .eq("periodKey", periodKey)
-          .eq("completedBy", String(caller)),
-      )
-      .first();
-    if (existing) {
-      if (now - existing.completedAt > UNDO_WINDOW_MS) {
-        throw new Error("Check is locked and cannot be undone.");
-      }
-      await ctx.db.delete("kpiCompletions", existing._id);
-      return { checked: false };
-    }
-    await ctx.db.insert("kpiCompletions", {
-      kpiId: kpi._id,
+    const existing = await findPresetCompletion(
+      ctx,
+      kpi._id,
       periodKey,
-      completedBy: String(caller),
-      completedAt: now,
-      pointsEarned: kpi.points,
-    });
-    return { checked: true };
+      callerId,
+    );
+    return settleToggle(
+      ctx,
+      existing,
+      {
+        kpiId: kpi._id,
+        periodKey,
+        completedBy: callerId,
+        completedAt: now,
+        pointsEarned: kpi.points,
+      },
+      now,
+    );
   },
 });
 
@@ -292,11 +454,11 @@ export const performance = query({
     }
     const days: string[] = [];
     for (
-      let t = fromMs;
-      t <= toMs && days.length < MAX_RANGE_DAYS;
-      t += 86400000
+      let ms = fromMs;
+      ms <= toMs && days.length < MAX_RANGE_DAYS;
+      ms += 86400000
     ) {
-      days.push(dayKey(lagosParts(t)));
+      days.push(dayKey(lagosParts(ms)));
     }
     const kpis = await ctx.db
       .query("kpis")
@@ -318,17 +480,8 @@ export const performance = query({
     }[] = [];
     const byDay = new Map<string, number>();
     for (const date of days) {
-      const [y, m, d] = date.split("-").map(Number);
-      const day: LagosDay = {
-        year: y,
-        month: m,
-        day: d,
-        weekdayMon0: (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7,
-        daysInMonth: new Date(Date.UTC(y, m, 0)).getUTCDate(),
-      };
-      const available = kpis
-        .filter((k) => isDue(k, day))
-        .reduce((s, k) => s + k.points, 0);
+      const day = lagosDayFromKey(date);
+      const available = await availableForDay(ctx, kpis, date, day);
       const stored = await ctx.db
         .query("kpiDailyScores")
         .withIndex("by_date", (q) => q.eq("date", date))
@@ -348,30 +501,18 @@ export const performance = query({
       byDay.set(date, daily.length);
       daily.push({ date, earned: {}, available });
     }
-    const closed = new Set(
-      (
-        await Promise.all(
-          days.map((date) =>
-            ctx.db
-              .query("kpiDailyScores")
-              .withIndex("by_date", (q) => q.eq("date", date))
-              .first(),
-          ),
-        )
-      )
-        .filter((r) => r !== null)
-        .map((r) => r.date),
-    );
-    for (const c of completions) {
-      const idx = byDay.get(dayKey(lagosParts(c.completedAt)));
-      if (idx === undefined) continue;
-      const bucket = daily[idx];
-      // Closed days are frozen; live completions only feed open days.
-      if (closed.has(bucket.date)) continue;
-      bucket.earned[c.completedBy] =
-        (bucket.earned[c.completedBy] ?? 0) + c.pointsEarned;
-      earnedByUser[c.completedBy] =
-        (earnedByUser[c.completedBy] ?? 0) + c.pointsEarned;
+    // Closed days are frozen; live completions only feed open days.
+    const closed = await closedDates(ctx, days);
+    for (const completion of completions) {
+      const dayIndex = byDay.get(dayKey(lagosParts(completion.completedAt)));
+      if (dayIndex === undefined) continue;
+      const dayBucket = daily[dayIndex];
+      if (closed.has(dayBucket.date)) continue;
+      dayBucket.earned[completion.completedBy] =
+        (dayBucket.earned[completion.completedBy] ?? 0) +
+        completion.pointsEarned;
+      earnedByUser[completion.completedBy] =
+        (earnedByUser[completion.completedBy] ?? 0) + completion.pointsEarned;
     }
     const availableTotal = daily.reduce((s, d) => s + d.available, 0);
     const leaderboard = Object.entries(earnedByUser)
@@ -386,6 +527,65 @@ export const performance = query({
   },
 });
 
+const FIRST_VISIT_POINTS = 5;
+
+const dynamicTemplates = {
+  "first-visit": (name: string) => ({
+    title: `Ask ${name} how their experience was and if we can help make them comfortable before they leave`,
+    points: FIRST_VISIT_POINTS,
+  }),
+};
+
+export type DynamicEvent = { kind: "first-visit"; userId: string };
+
+export const dynamicEventValidator = v.object({
+  kind: v.literal("first-visit"),
+  userId: v.string(),
+});
+
+/** Dispatcher for event-triggered KPIs. Add a case + template per trigger. */
+export async function spawnDynamicKpis(
+  ctx: MutationCtx,
+  event: DynamicEvent,
+): Promise<void> {
+  if (event.kind !== "first-visit") return;
+
+  const visits = await ctx.db
+    .query("daily_register")
+    .withIndex("user", (q) => q.eq("userId", event.userId))
+    .take(2);
+  if (visits.length !== 1) return;
+
+  const today = dayKeyOf(lagosDay(Date.now()));
+  const alreadySpawned = await ctx.db
+    .query("kpiInstances")
+    .withIndex("by_date", (q) => q.eq("date", today))
+    .filter((q) => q.eq(q.field("customerId"), event.userId))
+    .first();
+  if (alreadySpawned) return;
+
+  const profile = await ctx.db
+    .query("profile")
+    .withIndex("by_user_id", (q) => q.eq("id", event.userId))
+    .first();
+  const fullName = profile && `${profile.firstName} ${profile.lastName}`.trim();
+  const template = dynamicTemplates["first-visit"](fullName || "our guest");
+  await ctx.db.insert("kpiInstances", {
+    title: template.title,
+    customerId: event.userId,
+    points: template.points,
+    date: today,
+    createdAt: Date.now(),
+  });
+}
+
+export const onDynamicEvent = internalMutation({
+  args: { event: dynamicEventValidator },
+  handler: async (ctx, args) => {
+    await spawnDynamicKpis(ctx, args.event);
+  },
+});
+
 async function closeKpiDay(ctx: MutationCtx, date: string): Promise<void> {
   const { fromMs, toMs } = dayBounds(date);
   const day = lagosDay(fromMs);
@@ -393,9 +593,7 @@ async function closeKpiDay(ctx: MutationCtx, date: string): Promise<void> {
     .query("kpis")
     .filter((q) => q.eq(q.field("isActive"), true))
     .collect();
-  const available = kpis
-    .filter((k) => isDue(k, day))
-    .reduce((s, k) => s + k.points, 0);
+  const available = await availableForDay(ctx, kpis, date, day);
   const earned: Record<string, number> = {};
   const completions = await ctx.db
     .query("kpiCompletions")
@@ -403,15 +601,16 @@ async function closeKpiDay(ctx: MutationCtx, date: string): Promise<void> {
       q.gte("completedAt", fromMs).lte("completedAt", toMs),
     )
     .collect();
-  for (const c of completions) {
-    earned[c.completedBy] = (earned[c.completedBy] ?? 0) + c.pointsEarned;
+  for (const completion of completions) {
+    earned[completion.completedBy] =
+      (earned[completion.completedBy] ?? 0) + completion.pointsEarned;
   }
-  const existing = await ctx.db
+  const existingScore = await ctx.db
     .query("kpiDailyScores")
     .withIndex("by_date", (q) => q.eq("date", date))
     .first();
-  if (existing) {
-    await ctx.db.patch(existing._id, { available, earned });
+  if (existingScore) {
+    await ctx.db.patch(existingScore._id, { available, earned });
   } else {
     await ctx.db.insert("kpiDailyScores", { date, available, earned });
   }

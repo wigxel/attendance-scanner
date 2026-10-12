@@ -417,7 +417,7 @@ describe("presets", () => {
         cadence: "daily",
         audience: "day",
         points: 5,
-          isActive: true,
+        isActive: true,
       }),
     ).rejects.toThrow('Required privilege: "kpis:manage"');
   });
@@ -429,7 +429,7 @@ describe("presets", () => {
         title: "X",
         cadence: "daily",
         points: 5,
-          isActive: true,
+        isActive: true,
       } as any),
     ).rejects.toThrow();
   });
@@ -590,5 +590,174 @@ describe("closeKpiDayJob", () => {
       available: 5,
       earned: { "mgr-1": 5 },
     });
+  });
+});
+
+async function seedVisit(
+  t: ReturnType<typeof convexTest>,
+  userId: string,
+  firstName = "James",
+) {
+  await t.run(async (ctx) => {
+    await ctx.db.insert("profile", {
+      id: userId,
+      firstName,
+      lastName: "Doe",
+      occupation: "None",
+    });
+    await ctx.db.insert("daily_register", {
+      userId,
+      timestamp: new Date().toISOString(),
+      source: "web",
+      device: { browser: "x", name: "x", visitorId: "x" },
+      access: { kind: "free" },
+      admitted_by: "staff-1",
+    });
+  });
+}
+
+describe("onDynamicEvent", () => {
+  it("spawns a Priority instance on first visit with the customer name", async () => {
+    vi.setSystemTime(NOON);
+    const t = convexTest(schema, modules);
+    await seedVisit(t, "cust-1");
+
+    await t.mutation(internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: "cust-1" },
+    });
+
+    const rows = await t.run(async (ctx) =>
+      ctx.db.query("kpiInstances").collect(),
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      customerId: "cust-1",
+      date: TODAY,
+      points: 5,
+    });
+    expect(rows[0].title).toContain("James");
+  });
+
+  it("does not duplicate on re-run or second visit", async () => {
+    vi.setSystemTime(NOON);
+    const t = convexTest(schema, modules);
+    await seedVisit(t, "cust-1");
+
+    await t.mutation(internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: "cust-1" },
+    });
+    await t.mutation(internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: "cust-1" },
+    });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("daily_register", {
+        userId: "cust-1",
+        timestamp: new Date().toISOString(),
+        source: "web",
+        device: { browser: "x", name: "x", visitorId: "x" },
+        access: { kind: "free" },
+        admitted_by: "staff-1",
+      });
+    });
+    await t.mutation(internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: "cust-1" },
+    });
+
+    const rows = await t.run(async (ctx) =>
+      ctx.db.query("kpiInstances").collect(),
+    );
+    expect(rows).toHaveLength(1);
+  });
+
+  it("spawns nothing without a visit", async () => {
+    vi.setSystemTime(NOON);
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: "ghost" },
+    });
+    const rows = await t.run(async (ctx) =>
+      ctx.db.query("kpiInstances").collect(),
+    );
+    expect(rows).toHaveLength(0);
+  });
+});
+
+describe("priority instances", () => {
+  it("checks, undoes and locks like routine KPIs", async () => {
+    vi.setSystemTime(NOON);
+    const { t, mgr1 } = await setupTwoUsers();
+    await seedVisit(t, "cust-1");
+    await t.mutation(internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: "cust-1" },
+    });
+    const inst = await t.run(async (ctx) =>
+      ctx.db.query("kpiInstances").first(),
+    );
+    if (!inst) throw new Error("setup failed: no instance");
+    const instanceId = inst._id;
+
+    expect(
+      await mgr1.mutation(api.kpis.toggleCheck, {
+        instanceId: instanceId,
+      }),
+    ).toEqual({ checked: true });
+    expect(
+      await mgr1.mutation(api.kpis.toggleCheck, {
+        instanceId: instanceId,
+      }),
+    ).toEqual({ checked: false });
+
+    await mgr1.mutation(api.kpis.toggleCheck, { instanceId: instanceId });
+    vi.setSystemTime(new Date(NOON.getTime() + 11 * 60 * 1000));
+    await expect(
+      mgr1.mutation(api.kpis.toggleCheck, { instanceId: instanceId }),
+    ).rejects.toThrow("locked");
+  });
+
+  it("rejects checks after the day closes", async () => {
+    vi.setSystemTime(NOON);
+    const { t, mgr1 } = await setupTwoUsers();
+    await seedVisit(t, "cust-1");
+    await t.mutation(internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: "cust-1" },
+    });
+    const inst = await t.run(async (ctx) =>
+      ctx.db.query("kpiInstances").first(),
+    );
+    if (!inst) throw new Error("setup failed: no instance");
+    const instanceId = inst._id;
+
+    vi.setSystemTime(new Date(NOON.getTime() + 24 * 60 * 60 * 1000));
+    await expect(
+      mgr1.mutation(api.kpis.toggleCheck, { instanceId: instanceId }),
+    ).rejects.toThrow("expired");
+  });
+
+  it("appears in the checklist as priority and counts toward available", async () => {
+    vi.setSystemTime(NOON);
+    const { t, mgr1 } = await setupTwoUsers();
+    await seedVisit(t, "cust-1");
+    await t.mutation(internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: "cust-1" },
+    });
+
+    const list = await mgr1.query(api.kpis.myChecklist, {});
+    const priority = list.filter((e) => e.kind === "priority");
+    expect(priority).toHaveLength(1);
+    expect(priority[0]).toMatchObject({ completed: false, windowOpen: true });
+
+    const res = await mgr1.query(api.kpis.performance, {
+      from: TODAY,
+      to: TODAY,
+    });
+    expect(res.availableTotal).toBe(5);
+  });
+
+  it("requires exactly one of kpiId or instanceId", async () => {
+    vi.setSystemTime(NOON);
+    const { mgr1 } = await setupTwoUsers();
+    await expect(mgr1.mutation(api.kpis.toggleCheck, {})).rejects.toThrow(
+      "exactly one",
+    );
   });
 });

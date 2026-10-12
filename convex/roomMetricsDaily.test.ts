@@ -170,9 +170,7 @@ describe("getLast7DaysStrip", () => {
     );
     expect(strip).toHaveLength(7);
     expect(strip.map((row) => row.date)).toEqual(
-      [14, 15, 16, 17, 18, 19, 20].map((day) =>
-        toDayKey(dayStart(day)),
-      ),
+      [14, 15, 16, 17, 18, 19, 20].map((day) => toDayKey(dayStart(day))),
     );
     for (const row of strip) {
       expect(row.avgTemperature).toBeNull();

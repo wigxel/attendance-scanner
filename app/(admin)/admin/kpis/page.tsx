@@ -15,11 +15,13 @@ import { getErrorMessage } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
 
 type Kpi = {
-  _id: Id<"kpis">;
+  _id: Id<"kpis"> | Id<"kpiInstances">;
+  kind: "preset" | "priority";
+  instanceId?: Id<"kpiInstances">;
   title: string;
   description?: string;
-  cadence: "daily" | "weekly" | "monthly";
-  audience: "day" | "night" | "all";
+  cadence?: "daily" | "weekly" | "monthly";
+  audience?: "day" | "night" | "all";
   points: number;
   windowStart?: string;
   windowEnd?: string;
@@ -72,7 +74,11 @@ function KpiRow({ kpi }: KpiRowProps) {
 
   const handleChange = async () => {
     try {
-      await toggle({ kpiId: kpi._id });
+      if (kpi.kind === "priority" && kpi.instanceId) {
+        await toggle({ instanceId: kpi.instanceId });
+      } else {
+        await toggle({ kpiId: kpi._id as Id<"kpis"> });
+      }
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
@@ -154,16 +160,19 @@ export default function KpisPage() {
     );
   }
 
+  const presets = kpis.filter((t) => t.kind === "preset");
+  const priority = kpis.filter((t) => t.kind === "priority");
   const visible =
     audience === "all"
-      ? kpis
-      : kpis.filter((t) => t.audience === "all" || t.audience === audience);
-  const earned = visible
+      ? presets
+      : presets.filter((t) => t.audience === "all" || t.audience === audience);
+  const scored = [...visible, ...priority];
+  const earned = scored
     .filter((t) => t.completed)
     .reduce((s, t) => s + t.points, 0);
-  const possible = visible.reduce((s, t) => s + t.points, 0);
+  const possible = scored.reduce((s, t) => s + t.points, 0);
   const pct = possible > 0 ? (earned / possible) * 100 : 0;
-  const doneCount = visible.filter((t) => t.completed).length;
+  const doneCount = scored.filter((t) => t.completed).length;
 
   return (
     <div className="w-full p-6 md:p-8 flex flex-col gap-8">
@@ -221,7 +230,23 @@ export default function KpisPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {visible.length === 0 ? (
+              {priority.length > 0 && (
+                <div className="mb-6">
+                  <div className="mb-2 flex items-baseline gap-2">
+                    <h2 className="text-sm font-semibold">Priority</h2>
+                    <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                      {priority.filter((t) => t.completed).length}/
+                      {priority.length}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {priority.map((t) => (
+                      <KpiRow key={t._id} kpi={t as Kpi} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {visible.length === 0 && priority.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No KPIs for this shift yet. Try another shift, or ask your
                   administrator to add some.

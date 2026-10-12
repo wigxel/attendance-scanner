@@ -3,7 +3,8 @@
 import aggregateTest from "@convex-dev/aggregate/test";
 import { convexTest } from "convex-test";
 import { addDays, format } from "date-fns";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { logger } from "../config/logger";
 import type { Doc } from "./_generated/dataModel";
 import {
   insertRegisterAndAggregate,
@@ -289,6 +290,38 @@ describe("insertRegisterAndAggregate", () => {
       expect(records).toHaveLength(1);
       expect(records[0].userId).toBe("user-1");
     });
+  });
+
+  it("schedules first-visit KPIs on first check-in only", async () => {
+    const t = convexTest(schema, modules);
+    aggregateTest.register(t, "customerStats");
+    const info = vi.spyOn(logger, "info").mockImplementation(() => {});
+    try {
+      const checkIn = (ctx: any) =>
+        insertRegisterAndAggregate(ctx, {
+          userId: "user-1",
+          device: makeDevice(),
+          admittedBy: "staff-1",
+          timestamp: new Date().toISOString(),
+          access: { kind: "free" },
+          method: "qr",
+        });
+
+      await t.run(async (ctx) => {
+        await checkIn(ctx as any);
+      });
+      expect(info).toHaveBeenCalledWith("Scheduling first-visit dynamic KPIs", {
+        userId: "user-1",
+      });
+
+      info.mockClear();
+      await t.run(async (ctx) => {
+        await checkIn(ctx as any);
+      });
+      expect(info).not.toHaveBeenCalled();
+    } finally {
+      info.mockRestore();
+    }
   });
 });
 
