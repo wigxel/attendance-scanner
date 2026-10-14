@@ -21,8 +21,8 @@ import type {
   RoomMetricsDailyBucket,
   RoomMetricsHistory,
 } from "../types/room-metrics";
-import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 const BACKFILL_LOCK = "roomMetrics_backfill_lock";
 const BACKFILL_HEARTBEAT = "roomMetrics_backfill_heartbeat";
@@ -93,6 +93,19 @@ export const history = query({
       .withIndex("by_room_and_bucket", (q) => q.eq("roomId", roomId))
       .order("desc")
       .take(limit);
+  },
+});
+
+/** Timestamp of the most recent raw reading fed into the store. */
+export const lastReading = query({
+  args: {},
+  handler: async (ctx) => {
+    const row = await ctx.db
+      .query("roomMetrics")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .first();
+    return { timestamp: row?.timestamp ?? null };
   },
 });
 
