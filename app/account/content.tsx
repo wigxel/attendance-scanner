@@ -10,6 +10,7 @@ import { usePendingCheckIn } from "@/hooks/pending-checkin";
 import { useSelfCheckIn } from "@/hooks/self-service";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { ActiveBookings } from "./active-bookings";
+import { ExpiryWarning } from "./expiry-warning";
 
 function greet_time(): string {
   const date = new Date();
@@ -62,7 +63,10 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
           {gotoAdmin}
         </div>
 
+        <ExpiryWarning />
+
         <SelfCheckInStatus />
+
 
         <NotRegistered>
           <CheckInCard />
