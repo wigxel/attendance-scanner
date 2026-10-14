@@ -41,10 +41,7 @@ export const getLiveReading = query({
 export const getRawReading = query({
   args: { roomId: v.optional(v.string()) },
   handler: async (ctx, args): Promise<RoomMetricsReading | null> => {
-    return await ctx.runQuery(
-      components.roomMetrics.index.getRawReading,
-      args,
-    );
+    return await ctx.runQuery(components.roomMetrics.index.getRawReading, args);
   },
 });
 

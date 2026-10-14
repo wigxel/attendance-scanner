@@ -35,15 +35,12 @@ async function grantStaffCheckin(
     await ctx.runMutation(components.wigxel_acl.seed.makeSuperAdmin, {
       identity: "test-admin",
     });
-    const role = await ctx.runMutation(
-      components.wigxel_acl.roles.createRole,
-      {
-        callerId: "test-admin",
-        name: "role-staff",
-        description: "",
-        privileges: ["attendance:checkin"],
-      },
-    );
+    const role = await ctx.runMutation(components.wigxel_acl.roles.createRole, {
+      callerId: "test-admin",
+      name: "role-staff",
+      description: "",
+      privileges: ["attendance:checkin"],
+    });
     if (!role.success) throw new Error(role.error);
     const reg = await ctx.runMutation(
       components.wigxel_acl.identities.registerIdentity,

@@ -234,10 +234,7 @@ describe("roomMetrics backfill RED", () => {
       pressure: 1013,
       timestamp: base + 1000,
     });
-    const res: any = await t.mutation(
-      internal.index.smoothAggregations,
-      {},
-    );
+    const res: any = await t.mutation(internal.index.smoothAggregations, {});
     expect(res.skipped).toBe("backfill");
   });
 

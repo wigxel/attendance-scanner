@@ -14,10 +14,10 @@ const dayStart = (daysFromEpoch: number) => daysFromEpoch * DAY_MS;
 describe("dailyTemperatureCalendar stored async", () => {
   it("empty when no daily rows", async () => {
     const testEnvironment = convexTest(schema, modules);
-    const result = await testEnvironment.query(
-      api.index.getDailyCalendar,
-      { roomId: "all", days: 7 },
-    );
+    const result = await testEnvironment.query(api.index.getDailyCalendar, {
+      roomId: "all",
+      days: 7,
+    });
     expect(result).toHaveLength(0);
   });
 
@@ -46,10 +46,10 @@ describe("dailyTemperatureCalendar stored async", () => {
     await testEnvironment.mutation(api.index.smoothAggregations, {});
     await testEnvironment.mutation(api.index.aggregateDaily, {});
 
-    const daily = await testEnvironment.query(
-      api.index.getDailyCalendar,
-      { roomId: "all", days: 7 },
-    );
+    const daily = await testEnvironment.query(api.index.getDailyCalendar, {
+      roomId: "all",
+      days: 7,
+    });
     expect(daily).toHaveLength(1);
     expect(daily[0].date).toBe("1970-01-11");
     expect(daily[0].avgTemperature).toBeCloseTo(22, 0);
@@ -75,10 +75,10 @@ describe("dailyTemperatureCalendar stored async", () => {
     await testEnvironment.mutation(api.index.smoothAggregations, {});
     await testEnvironment.mutation(api.index.aggregateDaily, {});
 
-    const daily = await testEnvironment.query(
-      api.index.getDailyCalendar,
-      { roomId: "all", days: 7 },
-    );
+    const daily = await testEnvironment.query(api.index.getDailyCalendar, {
+      roomId: "all",
+      days: 7,
+    });
     expect(daily).toHaveLength(2);
   });
 
@@ -112,10 +112,10 @@ describe("dailyTemperatureCalendar stored async", () => {
           .unique(),
     );
     expect(firstCursor?.value).toBe(secondCursor?.value);
-    const daily = await testEnvironment.query(
-      api.index.getDailyCalendar,
-      { roomId: "all", days: 7 },
-    );
+    const daily = await testEnvironment.query(api.index.getDailyCalendar, {
+      roomId: "all",
+      days: 7,
+    });
     expect(daily).toHaveLength(1);
   });
 
@@ -132,10 +132,10 @@ describe("dailyTemperatureCalendar stored async", () => {
     });
     await testEnvironment.mutation(api.index.smoothAggregations, {});
     await testEnvironment.mutation(api.index.aggregateDaily, {});
-    const daily = await testEnvironment.query(
-      api.index.getDailyCalendar,
-      { roomId: "all", days: 1 },
-    );
+    const daily = await testEnvironment.query(api.index.getDailyCalendar, {
+      roomId: "all",
+      days: 1,
+    });
     const todayKey = todayStart.toISOString().slice(0, 10);
     expect(daily[0].date).toBe(todayKey);
   });
@@ -164,10 +164,10 @@ describe("getLast7DaysStrip", () => {
 
   it("returns 7 null rows oldest-first when empty", async () => {
     const testEnvironment = convexTest(schema, modules);
-    const strip = await testEnvironment.query(
-      api.index.getLast7DaysStrip,
-      { roomId: "all", asOf: dayStart(20) },
-    );
+    const strip = await testEnvironment.query(api.index.getLast7DaysStrip, {
+      roomId: "all",
+      asOf: dayStart(20),
+    });
     expect(strip).toHaveLength(7);
     expect(strip.map((row) => row.date)).toEqual(
       [14, 15, 16, 17, 18, 19, 20].map((day) => toDayKey(dayStart(day))),
@@ -181,10 +181,10 @@ describe("getLast7DaysStrip", () => {
   it("fills the seeded day and leaves the rest null", async () => {
     const testEnvironment = convexTest(schema, modules);
     await seedDay(testEnvironment, 18);
-    const strip = await testEnvironment.query(
-      api.index.getLast7DaysStrip,
-      { roomId: "all", asOf: dayStart(20) },
-    );
+    const strip = await testEnvironment.query(api.index.getLast7DaysStrip, {
+      roomId: "all",
+      asOf: dayStart(20),
+    });
     expect(strip).toHaveLength(7);
     expect(strip[4].date).toBe(toDayKey(dayStart(18)));
     expect(strip[4].avgTemperature).toBeCloseTo(22, 0);
@@ -199,15 +199,15 @@ describe("getLast7DaysStrip", () => {
   it("excludes data outside the window and other rooms", async () => {
     const testEnvironment = convexTest(schema, modules);
     await seedDay(testEnvironment, 5);
-    const stale = await testEnvironment.query(
-      api.index.getLast7DaysStrip,
-      { roomId: "all", asOf: dayStart(20) },
-    );
+    const stale = await testEnvironment.query(api.index.getLast7DaysStrip, {
+      roomId: "all",
+      asOf: dayStart(20),
+    });
     expect(stale.every((row) => row.avgTemperature === null)).toBe(true);
-    const otherRoom = await testEnvironment.query(
-      api.index.getLast7DaysStrip,
-      { roomId: "other", asOf: dayStart(20) },
-    );
+    const otherRoom = await testEnvironment.query(api.index.getLast7DaysStrip, {
+      roomId: "other",
+      asOf: dayStart(20),
+    });
     expect(otherRoom.every((row) => row.avgTemperature === null)).toBe(true);
   });
 });
