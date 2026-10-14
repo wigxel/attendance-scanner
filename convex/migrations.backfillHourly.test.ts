@@ -59,9 +59,9 @@ describe("backfillHourlyPlanAccess on prod fixture (2026-08-07..2026-10-07)", ()
       {},
     );
 
-    // 34 stale rows in the prod window: 6 cash + 28 bank_transfer, all
+    // 35 stale rows in the prod window: 6 cash + 29 bank_transfer, all
     // planId "daily" carrying an hourly duration.
-    expect(updated).toBe(34);
+    expect(updated).toBe(35);
 
     const snapshotAfter = await accessSnapshot(t);
     expect(snapshotAfter.size).toBe(snapshotBefore.size);
@@ -70,7 +70,7 @@ describe("backfillHourlyPlanAccess on prod fixture (2026-08-07..2026-10-07)", ()
       ([key, access]) =>
         JSON.stringify(access) !== JSON.stringify(snapshotBefore.get(key)),
     );
-    expect(changed).toHaveLength(34);
+    expect(changed).toHaveLength(35);
 
     for (const [, access] of changed) {
       const a = access as {
@@ -113,7 +113,7 @@ describe("backfillHourlyPlanAccess on prod fixture (2026-08-07..2026-10-07)", ()
       internal.migrations.backfillHourlyPlanAccess,
       {},
     );
-    expect(updated).toBe(34);
+    expect(updated).toBe(35);
 
     const after = await t.query(api.metrics.sumCashPayments, WINDOW);
     expect(after).toEqual({ count: 14, total: 24000 + 14 * 600 });
@@ -126,7 +126,7 @@ describe("backfillHourlyPlanAccess on prod fixture (2026-08-07..2026-10-07)", ()
     const patched = rows.filter(
       (r) => (r.access as { planId?: string }).planId === "hourly",
     );
-    expect(patched).toHaveLength(34);
+    expect(patched).toHaveLength(35);
     for (const row of patched) {
       const a = row.access as {
         planPriceInKobo: number;
@@ -146,7 +146,7 @@ describe("backfillHourlyPlanAccess on prod fixture (2026-08-07..2026-10-07)", ()
       internal.migrations.backfillHourlyPlanAccess,
       {},
     );
-    expect(first.updated).toBe(34);
+    expect(first.updated).toBe(35);
 
     const second = await t.mutation(
       internal.migrations.backfillHourlyPlanAccess,
