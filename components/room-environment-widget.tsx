@@ -8,7 +8,13 @@ import { api } from "@/convex/_generated/api";
 import { comfortZone, dewPoint, dewPointDepression } from "@/lib/environment";
 import { getColor } from "@/lib/temperature-colors";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 
 type Props = {
@@ -57,7 +63,9 @@ export function RoomEnvironmentWidget({ roomId = "all", className }: Props) {
       <Card className={className}>
         <CardHeader>
           <CardTitle>Environment</CardTitle>
-          <CardDescription>No readings yet — waiting for sensor data</CardDescription>
+          <CardDescription>
+            No readings yet — waiting for sensor data
+          </CardDescription>
         </CardHeader>
       </Card>
     );
@@ -113,7 +121,13 @@ export function RoomEnvironmentWidget({ roomId = "all", className }: Props) {
 
         <div className="flex gap-2 mt-4" aria-label="Last 7 days">
           {strip.map(
-            ({ date, avgTemperature, minTemperature, maxTemperature, count }) => {
+            ({
+              date,
+              avgTemperature,
+              minTemperature,
+              maxTemperature,
+              count,
+            }) => {
               const tooltip =
                 avgTemperature !== null
                   ? `Avg ${avgTemperature.toFixed(1)}°C · ${minTemperature!.toFixed(1)}–${maxTemperature!.toFixed(1)}°C · ${count} readings on ${date}`

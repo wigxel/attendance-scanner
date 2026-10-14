@@ -62,13 +62,11 @@ describe("RoomEnvironmentWidget", () => {
   });
 
   it("renders empty state when no readings exist", () => {
-    mockedQuery.mockImplementation(
-      ((_reference: unknown, args?: { asOf?: number }) =>
-        args?.asOf ? nullStrip : null) as never,
-    );
-    const html = renderToStaticMarkup(
-      <RoomEnvironmentWidget roomId="all" />,
-    );
+    mockedQuery.mockImplementation(((
+      _reference: unknown,
+      args?: { asOf?: number },
+    ) => (args?.asOf ? nullStrip : null)) as never);
+    const html = renderToStaticMarkup(<RoomEnvironmentWidget roomId="all" />);
     expect(html).toContain("No readings yet");
   });
 
@@ -82,10 +80,10 @@ describe("RoomEnvironmentWidget", () => {
       stripRow("2026-10-10", null),
       stripRow("2026-10-11", null),
     ];
-    mockedQuery.mockImplementation(
-      ((_reference: unknown, args?: { asOf?: number }) =>
-        args?.asOf ? filledStrip : liveBucket) as never,
-    );
+    mockedQuery.mockImplementation(((
+      _reference: unknown,
+      args?: { asOf?: number },
+    ) => (args?.asOf ? filledStrip : liveBucket)) as never);
     const html = renderToStaticMarkup(<RoomEnvironmentWidget />);
     expect(html).toContain("24.0°C");
     expect(html).toContain("55%");

@@ -10,6 +10,7 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/empty-state";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,11 +33,21 @@ type ExpiringRow = {
 type ExpiringRowProps = { row: ExpiringRow; index: number };
 
 function ExpiringSubscriptionRow({ row, index }: ExpiringRowProps) {
+  const initials = row.user.name
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
     <li className="flex items-center gap-2 text-sm">
       <span className="w-5 font-mono text-xs tabular-nums text-muted-foreground">
         {serialNo(index + 1)}
       </span>
+      <Avatar className="h-6 w-6 shrink-0 select-none">
+        <AvatarFallback>{initials}</AvatarFallback>
+      </Avatar>
       <span className="flex-1 truncate">{row.user.name}</span>
       <Badge variant="secondary" className="shrink-0">
         {CADENCE_LABEL[row.durationType] ?? row.durationType}
