@@ -3,19 +3,19 @@ import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
-import { TEN_MIN } from "../lib/room-aggregation";
+import { TEN_MIN } from "./lib";
 
 const modules = import.meta.glob("./**/*.ts");
 
 describe("roomMetrics store", () => {
   it("applies defaults all/general and validates", async () => {
     const t = convexTest(schema, modules);
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 50,
       pressure: 1013,
     });
-    const docs = await t.query(api.roomMetrics.history, {
+    const docs = await t.query(api.index.history, {
       roomId: "all",
       limit: 10,
     });
@@ -31,7 +31,7 @@ describe("roomMetrics store", () => {
   it("rejects out of range", async () => {
     const t = convexTest(schema, modules);
     await expect(
-      t.mutation(api.roomMetrics.store, {
+      t.mutation(api.index.store, {
         temperature: 200,
         humidity: 50,
         pressure: 1013,
@@ -43,7 +43,7 @@ describe("roomMetrics store", () => {
 describe("getLiveReading", () => {
   it("null when no buckets", async () => {
     const t = convexTest(schema, modules);
-    const result = await t.query(api.roomMetrics.getLiveReading, {
+    const result = await t.query(api.index.getLiveReading, {
       roomId: "all",
     });
     expect(result).toBeNull();
@@ -51,21 +51,21 @@ describe("getLiveReading", () => {
 
   it("newest bucket", async () => {
     const t = convexTest(schema, modules);
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 50,
       pressure: 1013,
       timestamp: 0,
     });
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 24,
       humidity: 55,
       pressure: 1014,
       timestamp: TEN_MIN,
     });
-    await t.mutation(api.roomMetrics.smoothAggregations, {});
-    await t.mutation(api.roomMetrics.smoothAggregations, {});
-    const result = await t.query(api.roomMetrics.getLiveReading, {
+    await t.mutation(api.index.smoothAggregations, {});
+    await t.mutation(api.index.smoothAggregations, {});
+    const result = await t.query(api.index.getLiveReading, {
       roomId: "all",
     });
     expect(result?.bucketStart).toBe(TEN_MIN);
@@ -75,7 +75,7 @@ describe("getLiveReading", () => {
 describe("history", () => {
   it("empty array when no buckets", async () => {
     const t = convexTest(schema, modules);
-    const result = await t.query(api.roomMetrics.history, {
+    const result = await t.query(api.index.history, {
       roomId: "all",
       limit: 10,
     });
@@ -85,15 +85,15 @@ describe("history", () => {
   it("respects limit and order desc", async () => {
     const t = convexTest(schema, modules);
     for (let bucketIndex = 0; bucketIndex < 5; bucketIndex += 1) {
-      await t.mutation(api.roomMetrics.store, {
+      await t.mutation(api.index.store, {
         temperature: 22 + bucketIndex,
         humidity: 50,
         pressure: 1013,
         timestamp: bucketIndex * TEN_MIN,
       });
     }
-    await t.mutation(api.roomMetrics.smoothAggregations, {});
-    const result = await t.query(api.roomMetrics.history, {
+    await t.mutation(api.index.smoothAggregations, {});
+    const result = await t.query(api.index.history, {
       roomId: "all",
       limit: 2,
     });
@@ -105,19 +105,19 @@ describe("history", () => {
 describe("smoothAggregations", () => {
   it("wall-clock split and average", async () => {
     const t = convexTest(schema, modules);
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 20,
       humidity: 40,
       pressure: 1000,
       timestamp: TEN_MIN - 1000,
     });
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 24,
       humidity: 50,
       pressure: 1020,
       timestamp: TEN_MIN + 1000,
     });
-    await t.mutation(api.roomMetrics.smoothAggregations, {});
+    await t.mutation(api.index.smoothAggregations, {});
     const buckets = await t.run(
       async (ctx) => await ctx.db.query("roomMetrics10m").collect(),
     );
@@ -131,51 +131,51 @@ describe("smoothAggregations", () => {
   it("outlier clamp when count >=3", async () => {
     const t = convexTest(schema, modules);
     // seed bucket count 5 avg 22
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 45,
       pressure: 1013,
       timestamp: 0,
     });
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 45,
       pressure: 1013,
       timestamp: 1000,
     });
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 45,
       pressure: 1013,
       timestamp: 2000,
     });
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 45,
       pressure: 1013,
       timestamp: 3000,
     });
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 45,
       pressure: 1013,
       timestamp: 4000,
     });
-    await t.mutation(api.roomMetrics.smoothAggregations, {});
+    await t.mutation(api.index.smoothAggregations, {});
     // outlier 35 should be dropped
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 35,
       humidity: 45,
       pressure: 1013,
       timestamp: 5000,
     });
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 23,
       humidity: 45,
       pressure: 1013,
       timestamp: 6000,
     });
-    await t.mutation(api.roomMetrics.smoothAggregations, {});
+    await t.mutation(api.index.smoothAggregations, {});
     const bucket = await t.run(
       async (ctx) =>
         await ctx.db
@@ -190,13 +190,13 @@ describe("smoothAggregations", () => {
 
   it("cursor idempotent", async () => {
     const t = convexTest(schema, modules);
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 50,
       pressure: 1013,
       timestamp: 0,
     });
-    await t.mutation(api.roomMetrics.smoothAggregations, {});
+    await t.mutation(api.index.smoothAggregations, {});
     const first = await t.run(
       async (ctx) =>
         await ctx.db
@@ -206,7 +206,7 @@ describe("smoothAggregations", () => {
           )
           .unique(),
     );
-    await t.mutation(api.roomMetrics.smoothAggregations, {});
+    await t.mutation(api.index.smoothAggregations, {});
     const second = await t.run(
       async (ctx) =>
         await ctx.db

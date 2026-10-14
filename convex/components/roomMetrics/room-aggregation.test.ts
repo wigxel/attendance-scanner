@@ -11,7 +11,7 @@ import {
   TEN_MIN,
   toBucketStart,
   withDefaults,
-} from "./room-aggregation";
+} from "./lib";
 
 describe("toBucketStart", () => {
   it("wall-clock floor to 10min", () => {

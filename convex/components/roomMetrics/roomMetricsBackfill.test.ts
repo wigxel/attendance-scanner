@@ -3,7 +3,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
-import { DAY_MS, TEN_MIN } from "../lib/room-aggregation";
+import { DAY_MS, TEN_MIN } from "./lib";
 
 const modules = import.meta.glob("./**/*.ts");
 const DAY = DAY_MS;
@@ -15,7 +15,7 @@ describe("roomMetrics backfill RED", () => {
   it("startRoomMetricsBackfill exists and rejects invalid date", async () => {
     const t = convexTest(schema, modules);
     await expect(
-      t.mutation(internal.roomMetrics.startRoomMetricsBackfill, {
+      t.mutation(internal.backfill.startRoomMetricsBackfill, {
         from: "bad-date",
       } as any),
     ).rejects.toThrow();
@@ -26,7 +26,7 @@ describe("roomMetrics backfill RED", () => {
     const from = toDateStr(dayStart(10));
     const to = toDateStr(dayStart(11));
     const res: any = await t.mutation(
-      internal.roomMetrics.startRoomMetricsBackfill,
+      internal.backfill.startRoomMetricsBackfill,
       { from, to, target: "10m" },
     );
     expect(res.started).toBe(true);
@@ -42,24 +42,24 @@ describe("roomMetrics backfill RED", () => {
   it("backfillRoomMetrics10m aggregates raw 7d window into 10m buckets", async () => {
     const t = convexTest(schema, modules);
     const base = dayStart(10);
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 20,
       humidity: 40,
       pressure: 1000,
       timestamp: base + 1000,
     });
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 42,
       pressure: 1005,
       timestamp: base + 2000,
     });
-    await t.mutation(internal.roomMetrics.backfillRoomMetrics10m, {
+    await t.mutation(internal.backfill.backfillRoomMetrics10m, {
       cursor: base - 1,
       to: base + DAY,
       target: "10m",
     });
-    const buckets = await t.query(api.roomMetrics.history, {
+    const buckets = await t.query(api.index.history, {
       roomId: "all",
       limit: 10,
     });
@@ -83,11 +83,11 @@ describe("roomMetrics backfill RED", () => {
         });
       });
     }
-    await t.mutation(internal.roomMetrics.backfillRoomMetricsDaily, {
+    await t.mutation(internal.backfill.backfillRoomMetricsDaily, {
       cursor: -1,
       to: dayStart(90),
     });
-    const daily = await t.query(api.roomMetrics.getDailyCalendar, {
+    const daily = await t.query(api.index.getDailyCalendar, {
       roomId: "all",
       days: 100,
     });
@@ -98,25 +98,25 @@ describe("roomMetrics backfill RED", () => {
     const t = convexTest(schema, modules);
     const d5 = dayStart(5);
     const d10 = dayStart(10);
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 20,
       humidity: 40,
       pressure: 1000,
       timestamp: d5 + 1000,
     });
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 30,
       humidity: 60,
       pressure: 1010,
       timestamp: d10 + 1000,
     });
-    await t.mutation(internal.roomMetrics.backfillRoomMetrics10m, {
+    await t.mutation(internal.backfill.backfillRoomMetrics10m, {
       cursor: -1,
       to: d10 + DAY,
       target: "10m",
     });
     // destroy only d10 range
-    await t.mutation(internal.roomMetrics.startRoomMetricsBackfill, {
+    await t.mutation(internal.backfill.startRoomMetricsBackfill, {
       from: toDateStr(d10),
       to: toDateStr(d10),
       target: "10m",
@@ -124,12 +124,12 @@ describe("roomMetrics backfill RED", () => {
       force: true,
     });
     // run the chained 10m backfill for the destroyed window
-    await t.mutation(internal.roomMetrics.backfillRoomMetrics10m, {
+    await t.mutation(internal.backfill.backfillRoomMetrics10m, {
       cursor: d10 - 1,
       to: d10 + DAY,
       target: "10m",
     });
-    const buckets = await t.query(api.roomMetrics.history, {
+    const buckets = await t.query(api.index.history, {
       roomId: "all",
       limit: 10,
     });
@@ -145,24 +145,24 @@ describe("roomMetrics backfill RED", () => {
   it("idempotent double run does not double count", async () => {
     const t = convexTest(schema, modules);
     const base = dayStart(20);
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 50,
       pressure: 1013,
       timestamp: base + 1000,
     });
-    await t.mutation(internal.roomMetrics.backfillRoomMetrics10m, {
+    await t.mutation(internal.backfill.backfillRoomMetrics10m, {
       cursor: base - 1,
       to: base + DAY,
       target: "10m",
     });
     // second run with advanced cursor reads zero new rows
-    await t.mutation(internal.roomMetrics.backfillRoomMetrics10m, {
+    await t.mutation(internal.backfill.backfillRoomMetrics10m, {
       cursor: base + 1000,
       to: base + DAY,
       target: "10m",
     });
-    const buckets = await t.query(api.roomMetrics.history, {
+    const buckets = await t.query(api.index.history, {
       roomId: "all",
       limit: 10,
     });
@@ -173,42 +173,42 @@ describe("roomMetrics backfill RED", () => {
     const t = convexTest(schema, modules);
     const base = dayStart(30);
     // seed 3 normal readings to establish count>=3 then try outlier
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 20,
       humidity: 40,
       pressure: 1000,
       timestamp: base + 1000,
     });
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 20,
       humidity: 40,
       pressure: 1000,
       timestamp: base + 1100,
     });
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 20,
       humidity: 40,
       pressure: 1000,
       timestamp: base + 1200,
     });
-    await t.mutation(internal.roomMetrics.backfillRoomMetrics10m, {
+    await t.mutation(internal.backfill.backfillRoomMetrics10m, {
       cursor: base - 1,
       to: base + DAY,
       target: "10m",
     });
     // outlier temp diff >10 should be dropped
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 50,
       humidity: 40,
       pressure: 1000,
       timestamp: base + 1300,
     });
-    await t.mutation(internal.roomMetrics.backfillRoomMetrics10m, {
+    await t.mutation(internal.backfill.backfillRoomMetrics10m, {
       cursor: base + 1200,
       to: base + DAY,
       target: "10m",
     });
-    const buckets = await t.query(api.roomMetrics.history, {
+    const buckets = await t.query(api.index.history, {
       roomId: "all",
       limit: 10,
     });
@@ -228,14 +228,14 @@ describe("roomMetrics backfill RED", () => {
       });
     });
     const base = dayStart(40);
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 50,
       pressure: 1013,
       timestamp: base + 1000,
     });
     const res: any = await t.mutation(
-      internal.roomMetrics.smoothAggregations,
+      internal.index.smoothAggregations,
       {},
     );
     expect(res.skipped).toBe("backfill");
@@ -243,12 +243,12 @@ describe("roomMetrics backfill RED", () => {
 
   it("cancelRoomMetricsBackfill clears lock", async () => {
     const t = convexTest(schema, modules);
-    await t.mutation(internal.roomMetrics.startRoomMetricsBackfill, {
+    await t.mutation(internal.backfill.startRoomMetricsBackfill, {
       from: toDateStr(dayStart(1)),
       to: toDateStr(dayStart(2)),
       target: "10m",
     });
-    await t.mutation(internal.roomMetrics.cancelRoomMetricsBackfill, {});
+    await t.mutation(internal.backfill.cancelRoomMetricsBackfill, {});
     const lock = await t.run(
       async (ctx) =>
         await ctx.db
@@ -262,29 +262,29 @@ describe("roomMetrics backfill RED", () => {
   it("target both chains 10m -> daily", async () => {
     const t = convexTest(schema, modules);
     const base = dayStart(50);
-    await t.mutation(api.roomMetrics.store, {
+    await t.mutation(api.index.store, {
       temperature: 22,
       humidity: 50,
       pressure: 1013,
       timestamp: base + 1000,
     });
-    await t.mutation(internal.roomMetrics.startRoomMetricsBackfill, {
+    await t.mutation(internal.backfill.startRoomMetricsBackfill, {
       from: toDateStr(base),
       to: toDateStr(base),
       target: "both",
       force: true,
     });
     // drive the self-chain manually: 10m then daily
-    await t.mutation(internal.roomMetrics.backfillRoomMetrics10m, {
+    await t.mutation(internal.backfill.backfillRoomMetrics10m, {
       cursor: base - 1,
       to: base + DAY,
       target: "both",
     });
-    await t.mutation(internal.roomMetrics.backfillRoomMetricsDaily, {
+    await t.mutation(internal.backfill.backfillRoomMetricsDaily, {
       cursor: -1,
       to: base + DAY,
     });
-    const daily = await t.query(api.roomMetrics.getDailyCalendar, {
+    const daily = await t.query(api.index.getDailyCalendar, {
       roomId: "all",
       days: 10,
     });

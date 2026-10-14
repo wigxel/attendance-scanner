@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TEN_MIN, toBucketStart } from "./room-aggregation";
+import { TEN_MIN, toBucketStart } from "./lib";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const toDayStart = (timestamp: number) =>
