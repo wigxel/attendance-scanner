@@ -1,46 +1,50 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { format } from "date-fns";
-import { TriangleAlert } from "lucide-react";
-import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { api } from "@/convex/_generated/api";
+import { useProfile } from "@/hooks/auth";
 
 export function ExpiryWarning() {
   const subscription = useQuery(api.bookings.myExpiringSubscription, {});
+  const { data: profile, user } = useProfile();
 
-  if (subscription === undefined || subscription === null) {
+  if (
+    subscription === undefined ||
+    subscription === null ||
+    subscription.daysLeft > 7
+  ) {
     return null;
   }
 
-  // Monthly plans warn 5 days out; weekly 2 — short plans need less runway.
-  const warnAfter = subscription.durationType === "month" ? 5 : 2;
-  if (subscription.daysLeft > warnAfter) {
-    return null;
-  }
-
-  const endDate = format(new Date(subscription.endDate), "EEE d MMM yyyy");
+  const nameParts = [profile?.firstName, profile?.lastName].filter(
+    (part): part is string => Boolean(part),
+  );
+  const name = nameParts.join(" ");
+  const initials = nameParts
+    .map((part) => part?.[0] ?? "")
+    .slice(0, 2)
+    .join("");
 
   return (
-    <Alert variant="warning">
-      <TriangleAlert />
-      <AlertTitle>Subscription expiring soon</AlertTitle>
-      <AlertDescription className="text-muted-foreground!">
-        {subscription.daysLeft === 0
-          ? `Expires today (${endDate})`
-          : `Expires in ${subscription.daysLeft} ${
-              subscription.daysLeft === 1 ? "day" : "days"
-            } (${endDate})`}
-        {subscription.daysLeft === 0 && (
-          <div className="mt-2">
-            <Button asChild size="sm" className="h-7 px-2 text-xs">
-              <Link href="/reserve">Renew now</Link>
-            </Button>
-          </div>
-        )}
-      </AlertDescription>
+    <Alert>
+      <div className="col-start-2 flex items-center gap-3">
+        <Avatar className="h-9 w-9 shrink-0">
+          {user?.imageUrl && (
+            <AvatarImage src={user.imageUrl} alt={name || "Member"} />
+          )}
+          <AvatarFallback>{initials || "?"}</AvatarFallback>
+        </Avatar>
+        <div>
+          <AlertTitle>Subscription expiring soon</AlertTitle>
+          <AlertDescription>
+            {subscription.daysLeft === 0
+              ? `Expires today (${subscription.endDate})`
+              : `Expires in ${subscription.daysLeft} days (${subscription.endDate})`}
+          </AlertDescription>
+        </div>
+      </div>
     </Alert>
   );
 }

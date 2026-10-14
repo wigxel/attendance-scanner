@@ -47,21 +47,21 @@ const EMPTY_STRIP_DOT_CLASS = `${STRIP_DOT_CLASS} border border-dashed border-mu
 export function RoomEnvironmentWidget({ roomId = "all", className }: Props) {
   // Fixed once per mount so the strip window doesn't shift on every render.
   const [asOf] = useState(() => Date.now());
-  const liveBucket = useQuery(api.roomMetrics.getLiveReading, { roomId });
+  const liveReading = useQuery(api.roomMetrics.getRawReading, { roomId });
   const strip = useQuery(api.roomMetrics.getLast7DaysStrip, {
     roomId,
     asOf,
   });
 
-  if (liveBucket === undefined || strip === undefined) {
+  if (liveReading === undefined || strip === undefined) {
     return <Skeleton className={cn("h-[140px]", className)} />;
   }
 
-  if (liveBucket === null) {
+  if (liveReading === null) {
     return (
       <Card className={className}>
         <CardHeader>
-          <CardTitle>Co-working Air Quality</CardTitle>
+          <CardTitle>Co-working Live Air Quality</CardTitle>
           <CardDescription>
             No readings yet — waiting for sensor data
           </CardDescription>
@@ -70,8 +70,8 @@ export function RoomEnvironmentWidget({ roomId = "all", className }: Props) {
     );
   }
 
-  const temperature = liveBucket.avgTemperature;
-  const humidity = liveBucket.avgHumidity;
+  const temperature = liveReading.temperature;
+  const humidity = liveReading.humidity;
 
   const dewTemperature = dewPoint(temperature, humidity);
   const depression = dewPointDepression(temperature, dewTemperature);
@@ -84,7 +84,9 @@ export function RoomEnvironmentWidget({ roomId = "all", className }: Props) {
     <Card className={className}>
       <CardContent className="p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium">Co-working Air Quality</span>
+          <span className="text-xs font-medium">
+            Co-working Live Air Quality
+          </span>
 
           <div className="flex items-center gap-1.5">
             <span
@@ -169,7 +171,11 @@ export function RoomEnvironmentWidget({ roomId = "all", className }: Props) {
   );
 }
 
-function FlipValue({ value }: { value: string }) {
+type FlipValueProps = {
+  value: string;
+};
+
+function FlipValue({ value }: FlipValueProps) {
   return (
     <MotionConfig reducedMotion="user">
       <span className="inline-flex overflow-hidden align-baseline">

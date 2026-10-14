@@ -20,6 +20,7 @@ import type {
   RoomMetricsBucket,
   RoomMetricsDailyBucket,
   RoomMetricsHistory,
+  RoomMetricsReading,
 } from "../types/room-metrics";
 import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
@@ -80,6 +81,20 @@ export const getLiveReading = query({
       .order("desc")
       .take(1);
     return buckets[0] ?? null;
+  },
+});
+
+// — latest raw device reading with no smoothing — used where freshness beats stability
+export const getRawReading = query({
+  args: { roomId: v.optional(v.string()) },
+  handler: async (ctx, args): Promise<RoomMetricsReading | null> => {
+    const roomId = args.roomId ?? DEFAULT_ROOM;
+    const readings = await ctx.db
+      .query("roomMetrics")
+      .withIndex("by_room_and_timestamp", (q) => q.eq("roomId", roomId))
+      .order("desc")
+      .take(1);
+    return readings[0] ?? null;
   },
 });
 

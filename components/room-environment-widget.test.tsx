@@ -8,16 +8,15 @@ vi.mock("convex/react", () => ({ useQuery: vi.fn() }));
 
 const mockedQuery = vi.mocked(useQuery);
 
-const liveBucket = {
-  _id: "bucket1",
+const liveReading = {
+  _id: "reading1",
   _creationTime: 0,
   roomId: "all",
-  bucketStart: 0,
-  avgTemperature: 24,
-  avgHumidity: 55,
-  avgPressure: 1012,
-  count: 6,
-  updatedAt: 0,
+  temperature: 24,
+  humidity: 55,
+  pressure: 1012,
+  timestamp: 0,
+  deviceId: "device1",
 };
 
 const stripRow = (date: string, avgTemperature: number | null) =>
@@ -83,7 +82,7 @@ describe("RoomEnvironmentWidget", () => {
     mockedQuery.mockImplementation(((
       _reference: unknown,
       args?: { asOf?: number },
-    ) => (args?.asOf ? filledStrip : liveBucket)) as never);
+    ) => (args?.asOf ? filledStrip : liveReading)) as never);
     const html = renderToStaticMarkup(<RoomEnvironmentWidget />);
     expect(html).toContain("24.0°C");
     expect(html).toContain("55%");
