@@ -443,7 +443,7 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
   const can_modify_plan = isReservation
     ? false
     : // eslint-disable-next-line react-hooks/purity
-    differenceInHours(Date.now(), entry.timestamp) < 24;
+      differenceInHours(Date.now(), entry.timestamp) < 24;
 
   const handleClick = () => {
     onSelect?.(entry);

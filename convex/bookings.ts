@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import {
+  differenceInCalendarDays,
   differenceInHours,
   endOfDay,
   endOfMonth,
@@ -25,6 +26,7 @@ import { action, internalAction, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { bookingDeletedAudit } from "./audits/entities";
 import { DEFAULT_LIMIT } from "./constants";
+import { dayKeyOf, lagosDay } from "./kpis";
 import { readId } from "./myFunctions";
 import { updateTodaysRegisterForSubscriber } from "./register_common";
 import {
@@ -463,6 +465,59 @@ export const getUserConfirmedBookings = query({
     ];
 
     return allBookings;
+  },
+});
+
+export const myExpiringSubscription = query({
+  /**
+   * Returns the caller's active subscription expiring soonest, if any.
+   * Active = confirmed booking covering today (Africa/Lagos).
+   *
+   * @returns `{ endDate, daysLeft }` or null when nothing is active.
+   */
+  args: {},
+  handler: async (ctx) => {
+    const identity = await readId(ctx);
+
+    if (!identity) {
+      return null;
+    }
+
+    const userId = identity;
+    const today = dayKeyOf(lagosDay(Date.now()));
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("user_id", (q) => q.eq("userId", userId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "confirmed"),
+          // Subscriptions only: day passes have nothing to renew.
+          q.or(
+            q.eq(q.field("durationType"), "week"),
+            q.eq(q.field("durationType"), "month"),
+          ),
+        ),
+      )
+      .collect();
+
+    const active = bookings.filter(
+      (booking) => booking.startDate <= today && today <= booking.endDate,
+    );
+
+    if (active.length === 0) {
+      return null;
+    }
+
+    const soonest = active.sort((a, b) => (a.endDate < b.endDate ? -1 : 1))[0];
+    const daysLeft = differenceInCalendarDays(
+      parseISO(`${soonest.endDate}T00:00:00+01:00`),
+      parseISO(`${today}T00:00:00+01:00`),
+    );
+    return {
+      endDate: soonest.endDate,
+      daysLeft,
+      durationType: soonest.durationType,
+    };
   },
 });
 
