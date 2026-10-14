@@ -2698,3 +2698,73 @@ describe("myExpiringSubscription", () => {
     ).toBeNull();
   });
 });
+
+// ─── listExpiringSubscriptions ──────────────────────────────────────
+
+describe("listExpiringSubscriptions", () => {
+  async function seedSub(
+    t: ReturnType<typeof convexTest>,
+    endDate: string,
+    durationType: "week" | "month" | "day" = "month",
+  ) {
+    await t.run(async (ctx) => {
+      await ctx.db.insert("bookings", {
+        userId: "user-1",
+        seatIds: [],
+        duration: 30,
+        startDate: "2023-12-01",
+        endDate,
+        durationType,
+        pricePerSeat: 1500000,
+        amount: 10000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+  }
+
+  it("requires the booking:read privilege", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const authed = t.withIdentity({ profile_id: "user-1" });
+    await seedSub(t, "2024-01-09");
+    await expect(
+      authed.query(api.bookings.listExpiringSubscriptions, {}),
+    ).rejects.toThrow('Required privilege: "booking:read"');
+  });
+
+  it("lists active subscriptions ending within 7 days, sorted by end date", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    await seedSub(t, "2024-01-11"); // 7 days out, monthly
+    await seedSub(t, "2024-01-06");
+
+    const rows = await admin.query(api.bookings.listExpiringSubscriptions, {});
+    expect(rows.map((r) => r.endDate)).toEqual(["2024-01-06", "2024-01-11"]);
+    expect(rows[1].user.id).toBe("user-1");
+  });
+
+  it("drops day passes and anything past the 7-day window", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    await seedSub(t, "2024-01-04", "day");
+    await seedSub(t, "2024-01-12");
+
+    const rows = await admin.query(api.bookings.listExpiringSubscriptions, {});
+    expect(rows).toEqual([]);
+  });
+
+  it("shows ending today with zero days left", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    await seedSub(t, "2024-01-04");
+
+    const rows = await admin.query(api.bookings.listExpiringSubscriptions, {});
+    expect(rows).toHaveLength(1);
+    expect(rows[0].daysLeft).toBe(0);
+  });
+});

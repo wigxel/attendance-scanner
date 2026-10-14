@@ -521,6 +521,72 @@ export const myExpiringSubscription = query({
   },
 });
 
+// Horizon for the admin watch-list: both customer thresholds (5/2) fit
+// inside it; an admin seeing tomorrow's warning is one-line tightening.
+// ponytail: flat 7-day horizon, per-cadence split if admins complain.
+const EXPIRING_SOON_WINDOW_DAYS = 7;
+
+export const listExpiringSubscriptions = query({
+  /**
+   * Admin watch-list: confirmed week/month subscriptions active today
+   * (Africa/Lagos) ending soonest, enriched with customer info.
+   *
+   * @returns Rows sorted by end date ascending, capped at 50.
+   */
+  args: {},
+  handler: async (ctx) => {
+    await requirePrivilege(ctx, "booking:read");
+
+    const today = dayKeyOf(lagosDay(Date.now()));
+    const bookings = await ctx.db
+      .query("bookings")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "confirmed"),
+          q.or(
+            q.eq(q.field("durationType"), "week"),
+            q.eq(q.field("durationType"), "month"),
+          ),
+        ),
+      )
+      .collect();
+
+    const active = bookings.filter(
+      (booking) => booking.startDate <= today && today <= booking.endDate,
+    );
+
+    const rows = await Promise.all(
+      active.map(async (booking) => {
+        const daysLeft = differenceInCalendarDays(
+          parseISO(`${booking.endDate}T00:00:00+01:00`),
+          parseISO(`${today}T00:00:00+01:00`),
+        );
+        const user = await ctx.db
+          .query("profile")
+          .withIndex("by_user_id", (q) => q.eq("id", booking.userId))
+          .first();
+        return {
+          bookingId: booking._id,
+          endDate: booking.endDate,
+          daysLeft,
+          durationType: booking.durationType,
+          user: {
+            id: booking.userId,
+            name: user
+              ? `${user.firstName} ${user.lastName}`
+              : "Anonymous User",
+            email: user?.email ?? null,
+          },
+        };
+      }),
+    );
+    return rows
+      .filter((row) => row.daysLeft <= EXPIRING_SOON_WINDOW_DAYS)
+      .sort((a, b) => (a.endDate < b.endDate ? -1 : 1))
+      .slice(0, 50);
+  },
+});
+
 export const getUserPendingBookings = query({
   /**
    * Retrieves all pending bookings for the current user.
