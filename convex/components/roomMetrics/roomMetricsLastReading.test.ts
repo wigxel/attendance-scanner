@@ -13,7 +13,7 @@ const baseReading = {
 };
 
 async function storeAt(t: ReturnType<typeof convexTest>, ts: number) {
-  await t.mutation(api.roomMetrics.store, {
+  await t.mutation(api.index.store, {
     ...baseReading,
     timestamp: ts,
   });
@@ -22,7 +22,7 @@ async function storeAt(t: ReturnType<typeof convexTest>, ts: number) {
 describe("roomMetrics.lastReading", () => {
   it("returns null timestamp for an empty store", async () => {
     const t = convexTest(schema, modules);
-    const result = await t.query(api.roomMetrics.lastReading, {});
+    const result = await t.query(api.index.lastReading, {});
     expect(result).toEqual({ timestamp: null });
   });
 
@@ -33,19 +33,19 @@ describe("roomMetrics.lastReading", () => {
     await storeAt(t, older);
     await storeAt(t, newer);
 
-    const result = await t.query(api.roomMetrics.lastReading, {});
+    const result = await t.query(api.index.lastReading, {});
     expect(result).toEqual({ timestamp: newer });
   });
 
   it("does not depend on smoothing having run", async () => {
     const t = convexTest(schema, modules);
     await storeAt(t, Date.parse("2026-10-14T09:00:00Z"));
-    const buckets = await t.query(api.roomMetrics.history, {
+    const buckets = await t.query(api.index.history, {
       limit: 10,
     });
     expect(buckets).toHaveLength(0);
 
-    const result = await t.query(api.roomMetrics.lastReading, {});
+    const result = await t.query(api.index.lastReading, {});
     expect(result?.timestamp).not.toBeNull();
   });
 });
