@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 import { CheckInCard, NotRegistered } from "@/components/CheckInCard";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
+import { RoomEnvironmentWidget } from "@/components/room-environment-widget";
 import { SelfCheckInStatus } from "@/components/self-checkin-status";
 import { useProfile } from "@/hooks/auth";
 import { usePendingCheckIn } from "@/hooks/pending-checkin";
@@ -74,6 +75,8 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
         <ActiveBookings />
 
         <AttendanceCalendar />
+
+        <RoomEnvironmentWidget />
 
         <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-background0">
           <span />
