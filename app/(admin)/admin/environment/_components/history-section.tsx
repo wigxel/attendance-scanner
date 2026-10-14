@@ -58,9 +58,17 @@ export function HistorySection() {
                 axisLine={false}
                 tickMargin={8}
               />
-              <YAxis tickLine={false} axisLine={false} />
+              <YAxis
+                yAxisId="temp"
+                domain={[16, 50]}
+                unit="°"
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis yAxisId="humidity" hide domain={[0, 100]} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Line
+                yAxisId="temp"
                 type="monotone"
                 dataKey="temperature"
                 stroke="var(--color-temperature)"
@@ -68,6 +76,7 @@ export function HistorySection() {
                 strokeWidth={2}
               />
               <Line
+                yAxisId="humidity"
                 type="monotone"
                 dataKey="humidity"
                 stroke="var(--color-humidity)"

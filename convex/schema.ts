@@ -30,12 +30,20 @@ const daily_register = defineTable({
   ticketId: v.optional(v.id("tickets")),
   checkedout_at: v.optional(v.string()), // ISO timestamp
   method: v.optional(v.union(v.literal("one-tap"), v.literal("qr"))),
+  /**
+   * Present only when this visit was a guest visit. The presence of this
+   * field *is* the guest flag — there is no separate boolean to fall out of
+   * sync with it. `hostUserId` is the `profile`.`id` of the customer being
+   * visited.
+   */
+  visiting: v.optional(v.object({ hostUserId: v.string() })),
 })
   .index("admitted_by", ["admitted_by"])
   .index("unique_visitor", ["device.visitorId"])
   .index("access_plan", ["access.kind"])
   .index("user", ["userId"])
   .index("by_ticket", ["ticketId"])
+  .index("by_host", ["visiting.hostUserId"])
   .index("by_timestamp", ["timestamp"]);
 
 const featureRequest = defineTable({
@@ -247,6 +255,57 @@ const roomMetricsDaily = defineTable({
   .index("by_room_and_day", ["roomId", "dayStart"])
   .index("by_date", ["date"]);
 
+const kpiCadence = v.union(
+  v.literal("daily"),
+  v.literal("weekly"),
+  v.literal("monthly"),
+);
+
+const kpis = defineTable({
+  title: v.string(),
+  description: v.optional(v.string()),
+  cadence: kpiCadence,
+  audience: v.union(v.literal("day"), v.literal("night"), v.literal("all")),
+  /** Weekly KPIs: 0=Monday..6=Sunday; hidden until this day each week. */
+  dueWeekday: v.optional(v.number()),
+  /** Monthly KPIs: 1..31; hidden until this day each month (clamped). */
+  dueMonthDay: v.optional(v.number()),
+  points: v.number(),
+  isActive: v.boolean(),
+  /** HH:mm in Africa/Lagos; absent = checkable anytime in the period. */
+  windowStart: v.optional(v.string()),
+  /** HH:mm in Africa/Lagos; absent = checkable anytime in the period. */
+  windowEnd: v.optional(v.string()),
+});
+
+const kpiCompletions = defineTable({
+  kpiId: v.optional(v.id("kpis")),
+  instanceId: v.optional(v.id("kpiInstances")),
+  periodKey: v.string(),
+  completedBy: v.string(),
+  completedAt: v.number(),
+  pointsEarned: v.number(),
+})
+  .index("by_period", ["periodKey"])
+  .index("by_kpi_period_user", ["kpiId", "periodKey", "completedBy"])
+  .index("by_instance_period_user", ["instanceId", "periodKey", "completedBy"])
+  .index("by_completed_at", ["completedAt"]);
+
+const kpiDailyScores = defineTable({
+  date: v.string(),
+  available: v.number(),
+  earned: v.record(v.string(), v.number()),
+}).index("by_date", ["date"]);
+
+const kpiInstances = defineTable({
+  title: v.string(),
+  customerId: v.string(),
+  points: v.number(),
+  /** Lagos yyyy-MM-dd; completable that day only. */
+  date: v.string(),
+  createdAt: v.number(),
+}).index("by_date", ["date"]);
+
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
   users: authTables.users,
@@ -270,4 +329,8 @@ export default defineSchema({
   roomMetrics,
   roomMetrics10m,
   roomMetricsDaily,
+  kpis,
+  kpiCompletions,
+  kpiInstances,
+  kpiDailyScores,
 });

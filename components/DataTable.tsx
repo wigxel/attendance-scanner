@@ -31,7 +31,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EmptyState, EmptyStateContent, EmptyStateTitle } from "./empty-state";
+import {
+  EmptyState,
+  EmptyStateContent,
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "./empty-state";
 import { Card, CardContent } from "./ui/card";
 
 export function AppDataTable<T>({
@@ -51,6 +56,10 @@ export function AppDataTable<T>({
   isLoading?: boolean;
   emptyState?: React.ReactNode;
 }) {
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -71,13 +80,22 @@ export function AppDataTable<T>({
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      pagination,
     },
   });
+
+  // A new search shrinks the row count; a stale page index would show a blank table.
+  React.useEffect(() => {
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [searchTerm]);
+
+  const searchActive = Boolean(searchTerm?.trim());
 
   return (
     <Card className="w-full">
@@ -164,9 +182,28 @@ export function AppDataTable<T>({
                 ))}
                 <TableRow>
                   <TableCell colSpan={columns.length} className="text-center">
-                    <EmptyStateContent>
-                      {emptyState ?? (
-                        <EmptyStateTitle>No results</EmptyStateTitle>
+                    <EmptyStateContent className="py-24">
+                      {searchActive && onSearchChange ? (
+                        <>
+                          <EmptyStateTitle>
+                            No results matching &ldquo;
+                            {searchTerm}
+                            &rdquo;
+                          </EmptyStateTitle>
+                          <EmptyStateDescription>
+                            <button
+                              type="button"
+                              onClick={() => onSearchChange("")}
+                              className="underline underline-offset-2 cursor-pointer hover:text-foreground"
+                            >
+                              Clear search
+                            </button>
+                          </EmptyStateDescription>
+                        </>
+                      ) : (
+                        (emptyState ?? (
+                          <EmptyStateTitle>No results</EmptyStateTitle>
+                        ))
                       )}
                     </EmptyStateContent>
                   </TableCell>

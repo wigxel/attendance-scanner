@@ -2596,3 +2596,175 @@ describe("bookings.exportList", () => {
     expect(result.storageUrl).toBeTruthy();
   });
 });
+
+// ─── myExpiringSubscription ───────────────────────────────────────────
+// Frozen clock: 2024-01-04T12:00Z = 13:00 in Lagos, so Lagos today is
+// "2024-01-04" regardless of the runner's timezone. End dates are
+// hardcoded against it for the same reason.
+
+describe("myExpiringSubscription", () => {
+  const START = "2023-12-01";
+
+  async function seedBooking(
+    t: ReturnType<typeof convexTest>,
+    endDate: string,
+    status: "confirmed" | "cancelled" = "confirmed",
+    durationType: "day" | "week" | "month" = "month",
+  ) {
+    await t.run(async (ctx) => {
+      await ctx.db.insert("bookings", {
+        userId: "user-1",
+        seatIds: [],
+        duration: 30,
+        startDate: START,
+        endDate,
+        durationType,
+        pricePerSeat: 1500000,
+        amount: 10000,
+        status,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+  }
+
+  it("returns null when unauthenticated", async () => {
+    const t = convexTest(schema, modules);
+    await seedBooking(t, "2024-01-11");
+    expect(await t.query(api.bookings.myExpiringSubscription, {})).toBeNull();
+  });
+
+  it("returns null with no bookings", async () => {
+    const t = convexTest(schema, modules);
+    const authed = t.withIdentity({ profile_id: "user-1" });
+    expect(
+      await authed.query(api.bookings.myExpiringSubscription, {}),
+    ).toBeNull();
+  });
+
+  it("reports daysLeft for a booking ending in 7 days", async () => {
+    const t = convexTest(schema, modules);
+    const authed = t.withIdentity({ profile_id: "user-1" });
+    await seedBooking(t, "2024-01-11");
+    expect(await authed.query(api.bookings.myExpiringSubscription, {})).toEqual(
+      { endDate: "2024-01-11", daysLeft: 7, durationType: "month" },
+    );
+  });
+
+  it("reports 0 daysLeft when ending today", async () => {
+    const t = convexTest(schema, modules);
+    const authed = t.withIdentity({ profile_id: "user-1" });
+    await seedBooking(t, "2024-01-04");
+    expect(await authed.query(api.bookings.myExpiringSubscription, {})).toEqual(
+      { endDate: "2024-01-04", daysLeft: 0, durationType: "month" },
+    );
+  });
+
+  it("still reports bookings more than 7 days out", async () => {
+    const t = convexTest(schema, modules);
+    const authed = t.withIdentity({ profile_id: "user-1" });
+    await seedBooking(t, "2024-01-12");
+    expect(await authed.query(api.bookings.myExpiringSubscription, {})).toEqual(
+      { endDate: "2024-01-12", daysLeft: 8, durationType: "month" },
+    );
+  });
+
+  it("ignores ended and cancelled bookings", async () => {
+    const t = convexTest(schema, modules);
+    const authed = t.withIdentity({ profile_id: "user-1" });
+    await seedBooking(t, "2024-01-03");
+    await seedBooking(t, "2024-01-11", "cancelled");
+    expect(
+      await authed.query(api.bookings.myExpiringSubscription, {}),
+    ).toBeNull();
+  });
+
+  it("picks the soonest of several active bookings", async () => {
+    const t = convexTest(schema, modules);
+    const authed = t.withIdentity({ profile_id: "user-1" });
+    await seedBooking(t, "2024-01-20");
+    await seedBooking(t, "2024-01-09");
+    expect(await authed.query(api.bookings.myExpiringSubscription, {})).toEqual(
+      { endDate: "2024-01-09", daysLeft: 5, durationType: "month" },
+    );
+  });
+
+  it("ignores day-pass bookings entirely", async () => {
+    const t = convexTest(schema, modules);
+    const authed = t.withIdentity({ profile_id: "user-1" });
+    await seedBooking(t, "2024-01-04", "confirmed", "day");
+    expect(
+      await authed.query(api.bookings.myExpiringSubscription, {}),
+    ).toBeNull();
+  });
+});
+
+// ─── listExpiringSubscriptions ──────────────────────────────────────
+
+describe("listExpiringSubscriptions", () => {
+  async function seedSub(
+    t: ReturnType<typeof convexTest>,
+    endDate: string,
+    durationType: "week" | "month" | "day" = "month",
+  ) {
+    await t.run(async (ctx) => {
+      await ctx.db.insert("bookings", {
+        userId: "user-1",
+        seatIds: [],
+        duration: 30,
+        startDate: "2023-12-01",
+        endDate,
+        durationType,
+        pricePerSeat: 1500000,
+        amount: 10000,
+        status: "confirmed",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+  }
+
+  it("requires the booking:read privilege", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const authed = t.withIdentity({ profile_id: "user-1" });
+    await seedSub(t, "2024-01-09");
+    await expect(
+      authed.query(api.bookings.listExpiringSubscriptions, {}),
+    ).rejects.toThrow('Required privilege: "booking:read"');
+  });
+
+  it("lists active subscriptions ending within 7 days, sorted by end date", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    await seedSub(t, "2024-01-11"); // 7 days out, monthly
+    await seedSub(t, "2024-01-06");
+
+    const rows = await admin.query(api.bookings.listExpiringSubscriptions, {});
+    expect(rows.map((r) => r.endDate)).toEqual(["2024-01-06", "2024-01-11"]);
+    expect(rows[1].user.id).toBe("user-1");
+  });
+
+  it("drops day passes and anything past the 7-day window", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    await seedSub(t, "2024-01-04", "day");
+    await seedSub(t, "2024-01-12");
+
+    const rows = await admin.query(api.bookings.listExpiringSubscriptions, {});
+    expect(rows).toEqual([]);
+  });
+
+  it("shows ending today with zero days left", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    await seedSub(t, "2024-01-04");
+
+    const rows = await admin.query(api.bookings.listExpiringSubscriptions, {});
+    expect(rows).toHaveLength(1);
+    expect(rows[0].daysLeft).toBe(0);
+  });
+});

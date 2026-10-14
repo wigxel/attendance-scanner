@@ -386,9 +386,7 @@ function FeedbackItem({ suggestion }: { suggestion: Suggestion }) {
 }
 
 export function VotingSection() {
-  const result = useQuery(api.myFunctions.listSuggestions, {
-    status: "open",
-  });
+  const result = useQuery(api.myFunctions.listSuggestions, {});
   const openSuggestions = safeArray(result?.data);
 
   return (
@@ -412,12 +410,12 @@ export function VotingSection() {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="gap-4 flex flex-col">
+      <CardContent className="gap-4 flex flex-col pt-4">
         <EmptyState isEmpty={openSuggestions.length === 0}>
           <EmptyStateContent>
-            <EmptyStateTitle>No open suggestions</EmptyStateTitle>
+            <EmptyStateTitle>No suggestions yet</EmptyStateTitle>
             <EmptyStateDescription>
-              No suggestions to vote on right now.
+              Customer and team responses will appear here.
             </EmptyStateDescription>
           </EmptyStateContent>
 
@@ -499,12 +497,37 @@ function SuggestionItem({ suggestion }: { suggestion: Suggestion }) {
         </VoteButton>
       </div>
 
-      <div className="flex flex-col gap-0.5 flex-1 group-last:border-0 border-b pb-8">
-        <h6 className="font-semibold">{suggestion.title}</h6>
-        <p className="text-sm">{suggestion.description}</p>
-        <p className="text-sm text-muted-foreground">
-          {formatDistanceToNow(suggestion._creationTime, { addSuffix: true })}
-        </p>
+      <div className="flex text-xs flex-col gap-0.5 flex-1 group-last:border-0 border-b pb-8">
+        <div className="flex items-center mb-2 justify-between gap-2">
+          <div
+            className={cn(
+              "w-min border shadow-inner py-1 px-2 rounded-sm text-xs",
+              STATUS_COLORS[suggestion.status],
+            )}
+          >
+            {suggestion.status}
+          </div>
+
+          <p className="text-xs text-end text-muted-foreground">
+            {formatDistanceToNow(suggestion._creationTime, { addSuffix: true })}
+          </p>
+        </div>
+
+        <div className="pl-2 flex items-center justify-between gap-2">
+          <h6 className="font-bold text-sm">{suggestion.title}</h6>
+        </div>
+
+        <p className="pl-2 text-muted-foreground">{suggestion.description}</p>
+        <div className="relative my-4 items-center flex justify-center gap-2">
+          <div className="border-t flex-1" />
+          <span className="top-0 uppercase bg-background text-[10px] text-foreground">
+            Answer
+          </span>
+        </div>
+
+        {suggestion.comment && (
+          <p className=" pl-2 text-muted-foreground">{suggestion.comment}</p>
+        )}
       </div>
     </div>
   );

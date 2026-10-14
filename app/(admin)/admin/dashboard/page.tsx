@@ -1,5 +1,6 @@
 "use client";
 import { TodaysCustomers } from "@/components/customers";
+import { ExpiringSubscriptions } from "@/components/expiring-subscriptions";
 import { Feedbacks } from "@/components/feedbacks";
 import { MetricsChart } from "@/components/metrics";
 import { TakeAttendance } from "@/components/TakeAttendance";
@@ -33,6 +34,10 @@ const Page = () => {
 
         <div className="col-span-2">
           <TodaysCustomers />
+        </div>
+
+        <div className="col-span-2">
+          <ExpiringSubscriptions />
         </div>
 
         <div className="col-span-2">

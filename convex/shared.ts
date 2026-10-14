@@ -31,22 +31,33 @@ export const durationTypeConvexSchema = v.union(
   v.literal("month"),
 );
 
+// Present only when this visit was a guest visit. The presence of this
+// field *is* the guest flag — there is no separate boolean. `hostUserId` is
+// the `profile`.`id` of the customer being visited.
+const visitingField = {
+  visiting: v.optional(v.object({ hostUserId: v.string() })),
+};
+
 export const accessPlanStruct = v.union(
   v.object({
     kind: v.literal("free"),
+    ...visitingField,
   }),
   v.object({
     kind: v.literal("paid"),
     planId: v.string(),
     amount: v.number(),
+    ...visitingField,
   }),
   v.object({
     _v: v.literal("2"),
     kind: v.literal("paid"),
     planId: v.string(),
+    planPriceInKobo: v.optional(v.number()),
     amountInKobo: v.number(),
     paymentMethod: v.union(v.literal("cash"), v.literal("bank_transfer")),
     duration: v.optional(v.any()),
+    ...visitingField,
   }),
 );
 
@@ -63,22 +74,30 @@ const durationSchemaValidator = z.union([
   }),
 ]);
 
+// Zod strips unknown keys by default, so `visiting` must be declared here
+// too — otherwise `PlanImpl.normalize` silently drops the guest link.
+const visitingSchema = z.optional(z.object({ hostUserId: z.string() }));
+
 export const accessPlanSchemaValidator = z.union([
   z.object({
     kind: z.literal("free"),
+    visiting: visitingSchema,
   }),
   z.object({
     kind: z.literal("paid"),
     planId: z.string(),
     amount: z.number(),
+    visiting: visitingSchema,
   }),
   z.object({
     _v: z.literal("2"),
     kind: z.literal("paid"),
     planId: z.string(),
+    planPriceInKobo: z.optional(z.number()),
     amountInKobo: z.number(),
     paymentMethod: z.union([z.literal("cash"), z.literal("bank_transfer")]),
     duration: z.optional(durationSchemaValidator),
+    visiting: visitingSchema,
   }),
 ]);
 
@@ -86,14 +105,14 @@ type OvewriteV1 = Pick<AccessStruct, "kind"> & Partial<AccessFreeStruct>;
 type OverwriteV2 = Partial<AccessPaidV2>;
 type OverwriteStruct = OvewriteV1 | OverwriteV2;
 
-
-function assertMinKobo(kobo: Kobo) {
+export function assertMinKobo(kobo: Kobo) {
   const n = CurrencyImpl.parseFloat(kobo);
-  const min = CurrencyImpl.parseFloat(CurrencyImpl.MIN_KOBO)
+  const min = CurrencyImpl.parseFloat(CurrencyImpl.MIN_KOBO);
 
   if (!Number.isInteger(n)) throw new PlanError("amountInKobo must be integer");
 
-  if (n < min) throw new PlanError(`Amount ${n / 100} naira below minimum 500 naira`);
+  if (n < min)
+    throw new PlanError(`Amount ${n / 100} naira below minimum 500 naira`);
 }
 
 export const PlanImpl = {
@@ -130,12 +149,21 @@ export const PlanImpl = {
       throw new Error("no_of_days must be greater than 0");
     }
 
-    const computed = Math.round(Math.max(0, (plan.price * 100) / plan.no_of_days));
+    const computed = Math.round(
+      Math.max(0, (plan.price * 100) / plan.no_of_days),
+    );
     assertMinKobo(CurrencyImpl.kobo(computed));
+
+    // Snapshot of the plan's full price in kobo at write time — later
+    // re-pricings must not rewrite history. amountInKobo is the per-day
+    // share (one unit); they coincide only when no_of_days is 1.
+    const planPriceInKobo = Math.round(plan.price * 100);
+
     return {
       _v: "2",
       kind: "paid" as const,
       planId: plan.key,
+      planPriceInKobo,
       amountInKobo: computed,
       paymentMethod: "bank_transfer",
       duration: { type: "fullday" },
@@ -153,6 +181,7 @@ export const PlanImpl = {
           kind: "paid",
           planId: booking.planKey,
           duration: { type: "fullday" }, // important! the least booking we have is a fullday
+          planPriceInKobo: Math.round(booking.pricePerSeat),
           amountInKobo: amount,
           paymentMethod: "bank_transfer",
         };
@@ -175,6 +204,7 @@ export const PlanImpl = {
           kind: "paid",
           planId: durationGroup as PlanKey,
           duration: { type: "fullday" }, // important! the least booking we have is a fullday
+          planPriceInKobo: Math.round(booking.pricePerSeat),
           amountInKobo: amount,
           paymentMethod: "bank_transfer",
         };
@@ -210,15 +240,21 @@ export const PlanImpl = {
           _v: "2",
           kind: "paid",
           planId: record.planId as PlanKey,
+          // No planPriceInKobo: v1 records predate snapshots, and the
+          // per-day amount is not the plan price. A missing snapshot
+          // throws loudly downstream; a wrong one would compute quietly.
           amountInKobo,
           paymentMethod: "bank_transfer",
           duration: { type: "fullday" },
+          // Fresh object — carry the guest link across the v1→v2 upgrade.
+          ...(record.visiting ? { visiting: record.visiting } : {}),
         } satisfies AccessPaidV2;
       }
 
       const v2 = record as AccessPaidV2;
       const rounded = Math.round(v2.amountInKobo);
-      if (rounded !== v2.amountInKobo) throw new PlanError("amountInKobo must be integer");
+      if (rounded !== v2.amountInKobo)
+        throw new PlanError("amountInKobo must be integer");
       assertMinKobo(CurrencyImpl.kobo(rounded));
       return { ...v2, amountInKobo: rounded } as AccessPaidV2;
     });
@@ -286,24 +322,10 @@ export const PlanImpl = {
       "Failed to resolve amount. Invalid access struct",
     );
 
-    const duration = PlanImpl.duration(access);
-
+    // Reads the resolved total stamped at write time (snapshot x hours for
+    // hourly, the stored total for fullday). Never derives from duration here.
     const v2Matcher = pipe(
       Match.type<AccessPaidV2>(),
-      Match.when({ planId: "hourly" }, (record) => {
-        return pipe(
-          duration,
-          O.flatMap((dur) =>
-            dur.type === "hourly"
-              ? Numer.parse(dur.value.toString())
-              : O.none(),
-          ),
-          O.map((hours) => {
-            return CurrencyImpl.kobo(record.amountInKobo * hours);
-          }),
-          O.getOrThrowWith(() => new PlanError("Duration must be present")),
-        );
-      }),
       Match.when(
         { planId: Match.nonEmptyString, amountInKobo: Match.number },
         (record) => {
@@ -340,7 +362,6 @@ export const PlanImpl = {
     overwrite: OverwriteStruct,
   ): O.Option<AccessStruct> {
     const tags = [prev, overwrite] as const;
-
     const free = O.some({ kind: "free" as const });
 
     return pipe(
@@ -376,13 +397,17 @@ export const PlanImpl = {
   },
 };
 
+export type Visiting = { hostUserId: string };
+
 type AccessPaidV2 = {
   _v: "2";
   kind: "paid";
   planId: PlanKey;
+  planPriceInKobo?: number;
   amountInKobo: number;
   paymentMethod: "cash" | "bank_transfer";
   duration?: AccessDuration;
+  visiting?: Visiting;
 };
 
 type AccessPaidV1 = {
@@ -390,9 +415,10 @@ type AccessPaidV1 = {
   planId: PlanKey;
   amount: number;
   paymentMethod: "cash" | "bank_transfer";
+  visiting?: Visiting;
 };
 
-type AccessFreeStruct = { kind: "free" };
+type AccessFreeStruct = { kind: "free"; visiting?: Visiting };
 
 export type AccessStruct = AccessPaidV1 | AccessPaidV2 | AccessFreeStruct;
 

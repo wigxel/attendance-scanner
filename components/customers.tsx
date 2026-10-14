@@ -23,6 +23,7 @@ import {
   Package2Icon,
   PackageIcon,
   ReceiptIcon,
+  UserPlus,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
@@ -33,6 +34,8 @@ import { useMediaQuery } from "usehooks-ts";
 import { Drawer } from "vaul";
 import { createColumns } from "@/components/columns";
 import { AppDataTable } from "@/components/DataTable";
+import { GuestCheckInDialog } from "@/components/guests/GuestCheckInDialog";
+import { RoleHasCSR } from "@/components/RoleHasCSR";
 import {
   Sheet,
   SheetContent,
@@ -68,7 +71,13 @@ import { ManualBookingForm } from "./forms/ManualBookingForm";
 import { If } from "./if";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import {
   Dialog,
   DialogContent,
@@ -335,7 +344,7 @@ export function TodaysCustomers() {
       </CardHeader>
 
       <EmptyState isEmpty={records.length === 0}>
-        <EmptyStateContent className="px-4">
+        <EmptyStateContent className="px-4 flex-1">
           <EmptyStateTitle className="text-start w-full">
             No scans yet
           </EmptyStateTitle>
@@ -345,7 +354,7 @@ export function TodaysCustomers() {
         </EmptyStateContent>
 
         <EmptyStateConceal>
-          <CardContent className="p-0">
+          <CardContent className="p-0 flex-1">
             <ScrollArea>
               <ul className="h-[32rem]">
                 {records.map((e) => {
@@ -356,6 +365,19 @@ export function TodaysCustomers() {
           </CardContent>
         </EmptyStateConceal>
       </EmptyState>
+
+      <If cond={attendanceHandler.isToday}>
+        <RoleHasCSR privileges={["attendance:checkin"]}>
+          <CardFooter className="pt-4 p-4 rounded-b-xl">
+            <GuestCheckInDialog>
+              <Button variant="outline" size="sm" className="w-full">
+                <UserPlus className="h-4 w-4 mr-1" />
+                Add Guest
+              </Button>
+            </GuestCheckInDialog>
+          </CardFooter>
+        </RoleHasCSR>
+      </If>
     </Card>
   );
 }
@@ -410,6 +432,14 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
   const visitCount = useVisitCount({ userId: entry.userId });
   const diffFromNow = format_time_to_now(entry.timestamp);
   const isReservation = !isNullable(entry.ticketId);
+  const isGuest = !isNullable(entry.access?.visiting);
+  const host = useQuery(
+    api.myFunctions.getUserById,
+    entry.access?.visiting
+      ? { userId: entry.access.visiting.hostUserId }
+      : "skip",
+  );
+  const hostName = host ? `${host.firstName} ${host.lastName}`.trim() : null;
   const can_modify_plan = isReservation
     ? false
     : // eslint-disable-next-line react-hooks/purity
@@ -441,26 +471,40 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
               </div>
 
               <div className="flex gap-2 text-xs text-gray-500 font-mono">
-                <PaymentBadge
-                  data={entry.access}
-                  hasReservation={isReservation}
-                />
-                •
-                <div>
-                  {pipe(
-                    visitCount,
-                    Option.map(safeNum),
-                    Option.map((visitCount) => {
-                      return (
-                        <React.Fragment key={"visit"}>
-                          {serialNo(visitCount ?? 0)} visit
-                          {visitCount < 2 ? "" : "s"}
-                        </React.Fragment>
-                      );
-                    }),
-                    Option.getOrElse(() => <>-- visits</>),
-                  )}
-                </div>
+                {intersperse(
+                  [
+                    isGuest ? (
+                      <span
+                        key="guest"
+                        className="text-amber-600 dark:text-amber-500"
+                      >
+                        Guest
+                      </span>
+                    ) : (
+                      <PaymentBadge
+                        key="payment"
+                        data={entry.access}
+                        hasReservation={isReservation}
+                      />
+                    ),
+                    <div key="visits">
+                      {pipe(
+                        visitCount,
+                        Option.map(safeNum),
+                        Option.map((visitCount) => {
+                          return (
+                            <React.Fragment key={"visit"}>
+                              {serialNo(visitCount ?? 0)} visit
+                              {visitCount < 2 ? "" : "s"}
+                            </React.Fragment>
+                          );
+                        }),
+                        Option.getOrElse(() => <>-- visits</>),
+                      )}
+                    </div>,
+                  ],
+                  <>•</>,
+                )}
               </div>
             </div>
 
@@ -529,6 +573,13 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
           </div>
         </div>
       </li>
+
+      {isGuest && hostName ? (
+        <div className="rounded-lg border px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Invited by </span>
+          <span className="font-semibold">{hostName}</span>
+        </div>
+      ) : null}
 
       <ul className={"flex flex-col gap-4"}>
         <li className="flex justify-between items-center select-none">
@@ -756,8 +807,22 @@ function PlanTypeToggle(props: PlanTypeToggleProps) {
 
   const changePlan = useMutation(api.register.updateTodaysRegisterAccess);
 
-  const setOption = (value: AccessDuration) => {
-    changePlan({ duration: value, userId: id });
+  const setOption = (duration: AccessDuration) => {
+    const isHourlyPlan =
+      PlanImpl.type("paid")(value) && value.planId === "hourly";
+
+    // The mutation only accepts an hourly duration on the hourly plan, and
+    // the hourly plan only accepts an hourly duration — so both travel
+    // together. Leaving hourly for a full day drops the customer back to
+    // the daily plan.
+    const plan =
+      duration.type === "hourly"
+        ? "hourly"
+        : isHourlyPlan
+          ? "daily"
+          : undefined;
+
+    changePlan({ userId: id, duration, ...(plan ? { plan } : {}) });
   };
 
   const option = PlanImpl.duration(value).pipe(

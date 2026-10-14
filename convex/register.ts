@@ -2,15 +2,24 @@ import { ConvexError, v } from "convex/values";
 import { addDays, endOfDay, format, startOfDay, subDays } from "date-fns";
 import { Effect, pipe } from "effect";
 import { isNullable } from "effect/Predicate";
-import { O } from "../lib/fp.helpers";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { internalMutation, mutation } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { visitsAggregate } from "./customers";
-import { readId } from "./myFunctions";
-import { isRegisteredToday } from "./register_common";
-import { CurrencyImpl, PlanImpl, RegisterImpl } from "./shared";
+import { findOrCreateUser, readId } from "./myFunctions";
+import {
+  insertGuestVisit,
+  isRegisteredToday,
+  requireHostRegisteredToday,
+} from "./register_common";
+import {
+  CurrencyImpl,
+  PlanError,
+  PlanImpl,
+  RegisterImpl,
+  assertMinKobo,
+} from "./shared";
 
 const Timezone = {
   now: () => {
@@ -161,7 +170,15 @@ export const setFreeAccess = internalMutation({
     const registers = await ctx.db.query("daily_register").collect();
 
     for (const register of registers) {
-      await ctx.db.patch(register._id, { access: { kind: "free" } });
+      // Resetting to free must not wipe a guest visit's host link.
+      await ctx.db.patch(register._id, {
+        access: {
+          kind: "free",
+          ...(register.access.visiting
+            ? { visiting: register.access.visiting }
+            : {}),
+        },
+      });
     }
   },
 });
@@ -217,62 +234,93 @@ export const updateTodaysRegisterAccess = mutation({
       throw new ConvexError("Cannot modify a reserved booking.");
     }
 
-    if (args.plan) {
-      const plan = await PlanImpl.validatePlan(ctx.db, args.plan);
+    // Compose every arg onto one working copy, then patch once. The old
+    // shape read `record` once and patched three times, so a combined
+    // plan+duration call clobbered the plan write with a stale snapshot.
+    const updated = await Effect.runPromise(
+      Effect.gen(function* () {
+        let access = yield* PlanImpl.normalize(record.access);
 
-      await ctx.db.patch(record._id, {
-        access: PlanImpl.toStruct(plan),
-      });
-    }
+        if (args.plan) {
+          const planKey = args.plan;
+          const plan = yield* Effect.promise(() =>
+            PlanImpl.validatePlan(ctx.db, planKey),
+          );
+          access = PlanImpl.toStruct(plan);
+        }
 
-    if (args.paymentType) {
-      const updatePayment = pipe(
-        PlanImpl.normalize(record.access),
-        Effect.andThen(async (access_record) => {
-          if (access_record.kind !== "paid") {
-            return Effect.logInfo("Skipping because Access type is `free`");
+        if (args.paymentType && access.kind === "paid") {
+          access = { ...access, paymentMethod: args.paymentType };
+        }
+
+        if (args.duration) {
+          const res = yield* Effect.promise(() =>
+            PlanImpl.validate("duration", args.duration),
+          );
+
+          if (!res.success) {
+            return yield* new PlanError("Invalid duration");
           }
 
-          const modified_access_plan = PlanImpl.toOverwrite(access_record, {
-            kind: "paid",
-            paymentMethod: args.paymentType,
-          });
-
-          if (O.isSome(modified_access_plan)) {
-            await ctx.db.patch(record._id, {
-              access: modified_access_plan.value,
-            });
-
-            return Effect.logInfo("Update successful");
+          if (access.kind !== "paid") {
+            return yield* new PlanError("Duration requires a paid plan");
           }
 
-          return Effect.logInfo("Skipped. No overwrite needed");
-        }),
-        Effect.flatten,
-      );
+          if (res.data.type === "hourly" && access.planId !== "hourly") {
+            return yield* new PlanError(
+              "Hourly duration requires the hourly plan",
+            );
+          }
 
-      await Effect.runPromise(updatePayment).catch((err) => {
-        throw new ConvexError(err.message);
-      });
-    }
+          access = { ...access, duration: res.data };
 
-    if (args.duration) {
-      const res = await PlanImpl.validate("duration", args.duration);
+          if (res.data.type === "hourly") {
+            // planId is "hourly" here (guarded above): resolve the total
+            // from the plan-price snapshot so reads never derive it from
+            // duration. Hourly no_of_days is 1, so the snapshot is the
+            // per-hour rate and snapshot x hours is exact. A missing
+            // snapshot means a pre-snapshot (or hand-written) row — throw
+            // and make staff re-select the plan rather than multiply a
+            // total by hours. Fractional hours round to whole kobo.
+            const base = access.planPriceInKobo;
+            if (base == null) {
+              return yield* new PlanError(
+                "Record predates pricing snapshots. Re-select the plan.",
+              );
+            }
+            const total = Math.round(base * res.data.value);
+            assertMinKobo(CurrencyImpl.kobo(total));
+            access = { ...access, planPriceInKobo: base, amountInKobo: total };
+          }
+        }
 
-      if (!res.success) {
-        console.error(res.error);
-        throw new ConvexError("Invalid duration");
-      }
+        // The hourly plan must always end the call with an hourly duration —
+        // otherwise `PlanImpl.amount` throws on it downstream.
+        if (
+          access.kind === "paid" &&
+          access.planId === "hourly" &&
+          access.duration?.type !== "hourly"
+        ) {
+          return yield* new PlanError(
+            "Hourly plan requires an hourly duration. Send plan and duration together.",
+          );
+        }
 
-      if (PlanImpl.type("paid")(record.access)) {
-        await ctx.db.patch(record._id, {
-          access: {
-            ...record.access,
-            duration: res.data,
-          },
-        });
-      }
-    }
+        return access;
+      }),
+    ).catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new ConvexError(message);
+    });
+
+    // `toStruct` (plan change) rebuilds from scratch — re-attach the guest
+    // link so a staff edit doesn't drop the badge.
+    await ctx.db.patch(record._id, {
+      access: {
+        ...updated,
+        ...(record.access.visiting ? { visiting: record.access.visiting } : {}),
+      },
+    });
 
     return "success" as const;
   },
@@ -328,5 +376,143 @@ export const debugRegisterForToday = mutation({
       message:
         "Registered for today. This record will auto-delete in 10 minutes.",
     };
+  },
+});
+
+/**
+ * Lists the customers currently checked in for today — the people who can host
+ * a guest. Guest visits are excluded: a guest cannot themselves host a guest.
+ */
+export const listTodaysHosts = query({
+  args: {},
+  handler: async (ctx) => {
+    const callerId = await readId(ctx);
+    if (!callerId) return [];
+
+    await requirePrivilege(ctx, "attendance:checkin");
+
+    const today = new Date();
+
+    const records = await ctx.db
+      .query("daily_register")
+      .withIndex("by_timestamp", (q) =>
+        q
+          .gte("timestamp", startOfDay(today).toISOString())
+          .lte("timestamp", endOfDay(today).toISOString()),
+      )
+      .collect();
+
+    const hostIds = [
+      ...new Set(
+        records
+          .filter((r) => isNullable(r.access.visiting))
+          .map((r) => r.userId),
+      ),
+    ];
+
+    const hosts = await Promise.all(
+      hostIds.map(async (userId) => {
+        const profile = await ctx.db
+          .query("profile")
+          .withIndex("by_user_id", (q) => q.eq("id", userId))
+          .first();
+
+        if (!profile) return null;
+
+        return {
+          userId,
+          name: `${profile.firstName} ${profile.lastName}`.trim(),
+        };
+      }),
+    );
+
+    return hosts
+      .filter((host): host is NonNullable<typeof host> => host !== null)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  },
+});
+
+/**
+ * Checks a guest in against the customer they are visiting.
+ *
+ * Guests never sign up: staff capture their details once and they are admitted
+ * on the spot. `findOrCreateUser` is idempotent on email, so a returning guest
+ * resolves to the profile they already have rather than a duplicate.
+ */
+export const checkInGuest = mutation({
+  args: {
+    firstName: v.string(),
+    lastName: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    hostUserId: v.string(),
+    visitorId: v.optional(v.string()),
+    browser: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const scannerId = await readId(ctx);
+    if (!scannerId) {
+      throw new ConvexError("User not authenticated");
+    }
+
+    await requirePrivilege(ctx, "attendance:checkin");
+
+    await requireHostRegisteredToday(ctx, args.hostUserId);
+
+    const guestUserId = await findOrCreateUser(ctx, {
+      email: args.email,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      phone: args.phone,
+    });
+
+    await insertGuestVisit(ctx, {
+      guestUserId,
+      hostUserId: args.hostUserId,
+      admittedBy: scannerId,
+      visitorId: args.visitorId,
+      browser: args.browser,
+    });
+
+    return { userId: guestUserId };
+  },
+});
+
+/**
+ * Checks an existing customer in as a guest against the customer they are
+ * visiting. No profile is created or touched — the person picked in the
+ * combobox is used as-is.
+ */
+export const checkInExistingGuest = mutation({
+  args: {
+    guestUserId: v.string(),
+    hostUserId: v.string(),
+    visitorId: v.optional(v.string()),
+    browser: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const scannerId = await readId(ctx);
+    if (!scannerId) {
+      throw new ConvexError("User not authenticated");
+    }
+
+    await requirePrivilege(ctx, "attendance:checkin");
+
+    const guest = await ctx.db.get(args.guestUserId as Id<"users">);
+    if (!guest) {
+      throw new ConvexError("Guest customer not found.");
+    }
+
+    await requireHostRegisteredToday(ctx, args.hostUserId);
+
+    await insertGuestVisit(ctx, {
+      guestUserId: args.guestUserId,
+      hostUserId: args.hostUserId,
+      admittedBy: scannerId,
+      visitorId: args.visitorId,
+      browser: args.browser,
+    });
+
+    return { userId: args.guestUserId };
   },
 });

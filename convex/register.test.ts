@@ -2,8 +2,9 @@
 import { convexTest } from "convex-test";
 import { format, isSameDay, subDays } from "date-fns";
 import { describe, expect, it } from "vitest";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import schema from "./schema";
+import { type AccessStruct, PlanImpl } from "./shared";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -320,5 +321,246 @@ describe("setFreeAccess", () => {
 
     const record = await t.run(async (ctx) => ctx.db.get(registerId));
     expect(record?.access).toHaveProperty("kind", "free");
+  });
+});
+
+describe("updateTodaysRegisterAccess: plan/duration invariant", () => {
+  const PAID_DAILY = {
+    _v: "2",
+    kind: "paid",
+    planId: "daily",
+    amountInKobo: 300000,
+    paymentMethod: "bank_transfer",
+    duration: { type: "fullday" },
+  } as const;
+
+  async function seed(t: ReturnType<typeof convexTest>, access: unknown) {
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: "user-1",
+        firstName: "Test",
+        lastName: "User",
+        occupation: "None",
+      });
+      for (const plan of [
+        { key: "daily", name: "Daily", price: 3000 },
+        { key: "hourly", name: "Hourly", price: 500 },
+      ]) {
+        await ctx.db.insert("accessPlans", {
+          ...plan,
+          no_of_days: 1,
+          description: "",
+          features: [],
+        });
+      }
+      await ctx.db.insert("daily_register", {
+        userId: "user-1",
+        timestamp: new Date().toISOString(),
+        source: "web",
+        device: makeDevice(),
+        access: access as never,
+        admitted_by: "staff-1",
+      });
+    });
+    return t.withIdentity({ profile_id: "user-1" });
+  }
+
+  const getAccess = (t: ReturnType<typeof convexTest>) =>
+    t.run(async (ctx) => {
+      const record = await ctx.db.query("daily_register").first();
+      return record?.access;
+    });
+
+  it("rejects a bare number duration on a free record", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seed(t, { kind: "free" });
+
+    await expect(
+      authed.mutation(api.register.updateTodaysRegisterAccess, {
+        userId: "user-1",
+        duration: 3,
+      }),
+    ).rejects.toThrow("Invalid duration");
+
+    expect(await getAccess(t)).toEqual({ kind: "free" });
+  });
+
+  it("rejects an hourly duration on a free record instead of silently succeeding", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seed(t, { kind: "free" });
+
+    await expect(
+      authed.mutation(api.register.updateTodaysRegisterAccess, {
+        userId: "user-1",
+        duration: { type: "hourly", value: 3 },
+      }),
+    ).rejects.toThrow("Duration requires a paid plan");
+
+    expect(await getAccess(t)).toEqual({ kind: "free" });
+  });
+
+  it("rejects an hourly duration on a paid daily plan", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seed(t, PAID_DAILY);
+
+    await expect(
+      authed.mutation(api.register.updateTodaysRegisterAccess, {
+        userId: "user-1",
+        duration: { type: "hourly", value: 3 },
+      }),
+    ).rejects.toThrow("Hourly duration requires the hourly plan");
+
+    expect(await getAccess(t)).toEqual(PAID_DAILY); // untouched
+  });
+
+  it("accepts plan hourly + hourly duration together in one call", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seed(t, { kind: "free" });
+
+    const result = await authed.mutation(
+      api.register.updateTodaysRegisterAccess,
+      {
+        userId: "user-1",
+        plan: "hourly",
+        duration: { type: "hourly", value: 3 },
+      },
+    );
+    expect(result).toBe("success");
+
+    const access = await getAccess(t);
+    expect(access).toEqual({
+      _v: "2",
+      kind: "paid",
+      planId: "hourly",
+      planPriceInKobo: 50000, // hourly rate: 500 naira in kobo
+      amountInKobo: 150000, // resolved at write time: base x 3h
+      paymentMethod: "bank_transfer",
+      duration: { type: "hourly", value: 3 },
+    });
+
+    // End to end: reads return the resolved total, not a re-derivation.
+    expect(PlanImpl.amount(access as AccessStruct)).toEqual({
+      currency: "naira",
+      denomination: "kobo",
+      value: "150000",
+    });
+  });
+
+  it("rejects plan daily + hourly duration in one combined call", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seed(t, PAID_DAILY);
+
+    await expect(
+      authed.mutation(api.register.updateTodaysRegisterAccess, {
+        userId: "user-1",
+        plan: "daily",
+        duration: { type: "hourly", value: 3 },
+      }),
+    ).rejects.toThrow("Hourly duration requires the hourly plan");
+
+    expect(await getAccess(t)).toEqual(PAID_DAILY); // plan write not clobbered into daily+hourly
+  });
+
+  it("rejects the hourly plan without a duration", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seed(t, { kind: "free" });
+
+    await expect(
+      authed.mutation(api.register.updateTodaysRegisterAccess, {
+        userId: "user-1",
+        plan: "hourly",
+      }),
+    ).rejects.toThrow("Hourly plan requires an hourly duration");
+
+    expect(await getAccess(t)).toEqual({ kind: "free" });
+  });
+
+  it("keeps a free record free when no args change anything", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seed(t, { kind: "free" });
+
+    const result = await authed.mutation(
+      api.register.updateTodaysRegisterAccess,
+      { userId: "user-1" },
+    );
+    expect(result).toBe("success");
+    expect(await getAccess(t)).toEqual({ kind: "free" });
+  });
+
+  it("still swaps the payment method on a paid record", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seed(t, PAID_DAILY);
+
+    await authed.mutation(api.register.updateTodaysRegisterAccess, {
+      userId: "user-1",
+      paymentType: "cash",
+    });
+
+    expect(await getAccess(t)).toEqual({
+      ...PAID_DAILY,
+      paymentMethod: "cash",
+    });
+  });
+
+  it("still switches a paid record to the daily plan", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seed(t, PAID_DAILY);
+
+    await authed.mutation(api.register.updateTodaysRegisterAccess, {
+      userId: "user-1",
+      plan: "daily",
+    });
+
+    // `toStruct` rebuilds from the daily plan row: snapshot 300000 kobo,
+    // resolved total = snapshot x 1 unit.
+    expect(await getAccess(t)).toEqual({
+      ...PAID_DAILY,
+      planPriceInKobo: 300000,
+    });
+  });
+
+  it("rejects an hours edit on a snapshot-less hourly record", async () => {
+    const t = convexTest(schema, modules);
+    // Pre-snapshot (or hand-written) row: hourly plan + duration but no
+    // planPriceInKobo. Multiplying its total by hours would silently write
+    // garbage, so the mutation throws — recovery is re-selecting the plan.
+    const authed = await seed(t, {
+      _v: "2",
+      kind: "paid",
+      planId: "hourly",
+      amountInKobo: 150000,
+      paymentMethod: "bank_transfer",
+      duration: { type: "hourly", value: 3 },
+    });
+
+    await expect(
+      authed.mutation(api.register.updateTodaysRegisterAccess, {
+        userId: "user-1",
+        duration: { type: "hourly", value: 2 },
+      }),
+    ).rejects.toThrow("predates pricing snapshots");
+  });
+
+  it("rounds fractional hours to whole kobo at write time", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seed(t, PAID_DAILY);
+
+    await authed.mutation(api.register.updateTodaysRegisterAccess, {
+      userId: "user-1",
+      plan: "hourly",
+      duration: { type: "hourly", value: 2.5 },
+    });
+
+    // 50000 x 2.5 resolves through Math.round: the stored total is always
+    // an integer, which `normalize` demands on the next read.
+    expect(await getAccess(t)).toEqual({
+      _v: "2",
+      kind: "paid",
+      planId: "hourly",
+      planPriceInKobo: 50000,
+      amountInKobo: Math.round(50000 * 2.5),
+      paymentMethod: "bank_transfer",
+      duration: { type: "hourly", value: 2.5 },
+    });
   });
 });

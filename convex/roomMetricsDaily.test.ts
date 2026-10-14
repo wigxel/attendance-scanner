@@ -3,7 +3,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
-import { TEN_MIN } from "../lib/room-aggregation";
+import { TEN_MIN, toDayKey } from "../lib/room-aggregation";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -138,5 +138,76 @@ describe("dailyTemperatureCalendar stored async", () => {
     );
     const todayKey = todayStart.toISOString().slice(0, 10);
     expect(daily[0].date).toBe(todayKey);
+  });
+});
+
+describe("getLast7DaysStrip", () => {
+  const seedDay = async (
+    testEnvironment: ReturnType<typeof convexTest>,
+    day: number,
+  ) => {
+    for (const [temperature, offset] of [
+      [20, 1000],
+      [24, 2000],
+      [22, 3000],
+    ] as const) {
+      await testEnvironment.mutation(api.roomMetrics.store, {
+        temperature,
+        humidity: 50,
+        pressure: 1013,
+        timestamp: dayStart(day) + offset,
+      });
+    }
+    await testEnvironment.mutation(api.roomMetrics.smoothAggregations, {});
+    await testEnvironment.mutation(api.roomMetrics.aggregateDaily, {});
+  };
+
+  it("returns 7 null rows oldest-first when empty", async () => {
+    const testEnvironment = convexTest(schema, modules);
+    const strip = await testEnvironment.query(
+      api.roomMetrics.getLast7DaysStrip,
+      { roomId: "all", asOf: dayStart(20) },
+    );
+    expect(strip).toHaveLength(7);
+    expect(strip.map((row) => row.date)).toEqual(
+      [14, 15, 16, 17, 18, 19, 20].map((day) => toDayKey(dayStart(day))),
+    );
+    for (const row of strip) {
+      expect(row.avgTemperature).toBeNull();
+      expect(row.count).toBe(0);
+    }
+  });
+
+  it("fills the seeded day and leaves the rest null", async () => {
+    const testEnvironment = convexTest(schema, modules);
+    await seedDay(testEnvironment, 18);
+    const strip = await testEnvironment.query(
+      api.roomMetrics.getLast7DaysStrip,
+      { roomId: "all", asOf: dayStart(20) },
+    );
+    expect(strip).toHaveLength(7);
+    expect(strip[4].date).toBe(toDayKey(dayStart(18)));
+    expect(strip[4].avgTemperature).toBeCloseTo(22, 0);
+    expect(strip[4].count).toBe(3);
+    const rest = [...strip.slice(0, 4), ...strip.slice(5)];
+    expect(rest).toHaveLength(6);
+    for (const row of rest) {
+      expect(row.avgTemperature).toBeNull();
+    }
+  });
+
+  it("excludes data outside the window and other rooms", async () => {
+    const testEnvironment = convexTest(schema, modules);
+    await seedDay(testEnvironment, 5);
+    const stale = await testEnvironment.query(
+      api.roomMetrics.getLast7DaysStrip,
+      { roomId: "all", asOf: dayStart(20) },
+    );
+    expect(stale.every((row) => row.avgTemperature === null)).toBe(true);
+    const otherRoom = await testEnvironment.query(
+      api.roomMetrics.getLast7DaysStrip,
+      { roomId: "other", asOf: dayStart(20) },
+    );
+    expect(otherRoom.every((row) => row.avgTemperature === null)).toBe(true);
   });
 });

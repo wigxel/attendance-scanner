@@ -1,4 +1,5 @@
 import { Slot } from "@radix-ui/react-slot";
+import { isDevelopment } from "@/config/constants";
 import { rootLogger } from "@/config/logger";
 
 /**
@@ -16,6 +17,7 @@ export function DebugClick(props: {
   const { children, input: fn } = props;
   const logger = rootLogger.withTag("DebugClick");
 
+  if (!isDevelopment) return children;
   if (props.disabled) return children;
 
   return (

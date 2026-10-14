@@ -52,7 +52,6 @@ function ValidateConvexProfile() {
     },
   });
 
-
   const authState = useAuthState();
 
   const handleAuthStateChange = (authState_: typeof authState) => {
@@ -65,7 +64,10 @@ function ValidateConvexProfile() {
     if (authState_.authState === "logged_out") return;
 
     // Fully synced with Convex — navigate to account
-    if (authState_.syncState === "synced" && authState_.onboarding === "completed") {
+    if (
+      authState_.syncState === "synced" &&
+      authState_.onboarding === "completed"
+    ) {
       router.push("/account");
       return;
     }
@@ -75,7 +77,7 @@ function ValidateConvexProfile() {
       setTriggered(true);
       createAccountMutation.mutate({ clerkUser: user });
     }
-  }
+  };
 
   handleAuthStateChange(authState);
 

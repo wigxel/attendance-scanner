@@ -1,6 +1,7 @@
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { ConvexError } from "convex/values";
 import { endOfDay, isWithinInterval, parseISO, startOfDay } from "date-fns";
+import { logger } from "../config/logger";
 import type { Booking } from "../types";
 import { api, internal } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
@@ -28,6 +29,67 @@ export async function isRegisteredToday(
     .first();
 
   return entry !== null;
+}
+
+/**
+ * Guards a guest visit: the host must exist, have a profile, and be checked
+ * in today. (The host dropdown is what excludes guests from hosting; this
+ * only re-checks registration server-side.)
+ */
+export async function requireHostRegisteredToday(
+  ctx: GenericMutationCtx<DataModel>,
+  hostUserId: string,
+): Promise<void> {
+  const host = await ctx.db
+    .query("profile")
+    .withIndex("by_user_id", (q) => q.eq("id", hostUserId))
+    .first();
+
+  if (!host) {
+    throw new ConvexError("Host customer not found.");
+  }
+
+  if (!(await isRegisteredToday(ctx, hostUserId))) {
+    throw new ConvexError(
+      `${host.firstName} ${host.lastName} is not checked in today and cannot host a guest.`,
+    );
+  }
+}
+
+/**
+ * Validates and inserts today's guest visit: a customer cannot host
+ * themselves, and someone already registered today cannot check in again.
+ */
+export async function insertGuestVisit(
+  ctx: GenericMutationCtx<DataModel>,
+  params: {
+    guestUserId: string;
+    hostUserId: string;
+    admittedBy: string;
+    visitorId?: string;
+    browser?: string;
+  },
+): Promise<void> {
+  if (params.guestUserId === params.hostUserId) {
+    throw new ConvexError("A customer cannot be their own guest.");
+  }
+
+  if (await isRegisteredToday(ctx, params.guestUserId)) {
+    throw new ConvexError("This person is already registered for today.");
+  }
+
+  await insertRegisterAndAggregate(ctx, {
+    userId: params.guestUserId,
+    device: {
+      name: "Unknown",
+      visitorId: params.visitorId ?? "unknown",
+      browser: params.browser ?? "unknown",
+    },
+    admittedBy: params.admittedBy,
+    timestamp: new Date().toISOString(),
+    access: { kind: "free", visiting: { hostUserId: params.hostUserId } },
+    method: "qr",
+  });
 }
 
 export async function insertRegisterAndAggregate(
@@ -62,6 +124,22 @@ export async function insertRegisterAndAggregate(
   const entry = await ctx.db.get(id);
   if (entry) {
     await visitsAggregate.insert(ctx, entry);
+  }
+
+  // First visit ever: spawn dynamic Priority KPIs (checked inside the job).
+  const priorVisits = await ctx.db
+    .query("daily_register")
+    .withIndex("user", (q) => q.eq("userId", params.userId))
+    .take(2);
+  if (priorVisits.length <= 1) {
+    // Observable seam: convex-test cannot run scheduled functions, so this
+    // log is what the hook test asserts on (branch reached + userId).
+    logger.info("Scheduling first-visit dynamic KPIs", {
+      userId: params.userId,
+    });
+    await ctx.scheduler.runAfter(0, internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: params.userId },
+    });
   }
 }
 
@@ -165,7 +243,13 @@ export async function updateTodaysRegisterForSubscriber(
 
   await ctx.db.patch(existing._id, {
     ticketId: params.ticketId,
-    access: PlanImpl.fromBooking({ booking: params.booking }),
+    // fromBooking builds a fresh struct — re-attach the guest link.
+    access: {
+      ...PlanImpl.fromBooking({ booking: params.booking }),
+      ...(existing.access.visiting
+        ? { visiting: existing.access.visiting }
+        : {}),
+    },
   });
 
   await ctx.scheduler.runAfter(

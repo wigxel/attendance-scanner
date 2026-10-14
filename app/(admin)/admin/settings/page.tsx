@@ -2,6 +2,7 @@ import {
   BadgeDollarSign,
   Grid2X2Icon,
   KeyRound,
+  ListChecks,
   ScrollText,
   Shield,
   User,
@@ -13,6 +14,7 @@ import PermissionsSettingsPage from "@/app/(admin)/admin/settings/permissions/pa
 import RolesSettingsPage from "@/app/(admin)/admin/settings/roles/page";
 import TeamSettingsPage from "@/app/(admin)/admin/settings/team/page";
 import { AuditLogsTab } from "@/components/audit-logs-tab";
+import { KpiPresetManagement } from "@/components/manage-kpi-presets";
 import OccupationManagement from "@/components/manage-occupation";
 import PricingManagement from "@/components/manage-pricing";
 import { RoleHas } from "@/components/RoleHas";
@@ -82,6 +84,13 @@ export default function SettingsPage() {
                     Audit Logs
                   </TabsTrigger>
                 </RoleHas>
+
+                <RoleHas privileges={["kpis:manage"]}>
+                  <TabsTrigger value="kpis" className="justify-start w-full">
+                    <ListChecks className="w-4 h-4 mr-2" />
+                    KPIs
+                  </TabsTrigger>
+                </RoleHas>
               </TabsList>
             </div>
 
@@ -126,6 +135,12 @@ export default function SettingsPage() {
               <TabsContent value="audit">
                 <RoleHas privileges={["audit:read"]}>
                   <AuditLogsTab />
+                </RoleHas>
+              </TabsContent>
+
+              <TabsContent value="kpis">
+                <RoleHas privileges={["kpis:manage"]}>
+                  <KpiPresetManagement />
                 </RoleHas>
               </TabsContent>
             </section>

@@ -16,6 +16,13 @@ crons.daily(
   {},
 );
 
+crons.daily(
+  "close KPI day scores",
+  { hourUTC: 23, minuteUTC: 5 },
+  internal.kpis.closeKpiDayJob,
+  {},
+);
+
 crons.interval(
   "cleanup expired pending bookings",
   { minutes: 5 },

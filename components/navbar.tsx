@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard" },
+  { name: "KPIs", href: "/admin/kpis" },
   { name: "Reservations", href: "/admin/reservations" },
   { name: "Customers", href: "/admin/customers" },
   { name: "Environment", href: "/admin/environment" },

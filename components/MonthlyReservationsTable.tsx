@@ -10,7 +10,7 @@ import {
   DownloadIcon,
   Filter,
 } from "lucide-react";
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 import { toast } from "sonner";
 import { AppSpinner } from "@/components/loader";
 import { Badge } from "@/components/ui/badge";
@@ -182,6 +182,8 @@ function getColumns(): ColumnDef<BookingWithCustomer>[] {
 export function MonthlyReservationsTable() {
   const [overflow, setOverflow] = useState(false);
   const [filterPlanKey, setFilterPlanKey] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearch = useDeferredValue(searchTerm);
   const [selectedBookingId, setSelectedBookingId] =
     useState<Id<"bookings"> | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -207,6 +209,15 @@ export function MonthlyReservationsTable() {
 
   const isLoading = data === null;
   const bookings = data?.bookings ?? [];
+
+  const query = deferredSearch.trim().toLowerCase();
+  const filteredBookings = query
+    ? bookings.filter(
+        (booking) =>
+          booking.user.name.toLowerCase().includes(query) ||
+          (booking.user.email ?? "").toLowerCase().includes(query),
+      )
+    : bookings;
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -377,8 +388,10 @@ export function MonthlyReservationsTable() {
 
           <AppDataTable
             columns={getColumns()}
-            data={bookings}
+            data={filteredBookings}
             onRowClick={handleRowClick}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
             emptyState={
               <EmptyStateContent>
                 <EmptyStateTitle>No reservations found</EmptyStateTitle>

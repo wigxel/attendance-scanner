@@ -21,8 +21,8 @@ import type {
   RoomMetricsDailyBucket,
   RoomMetricsHistory,
 } from "../types/room-metrics";
-import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 const BACKFILL_LOCK = "roomMetrics_backfill_lock";
 const BACKFILL_HEARTBEAT = "roomMetrics_backfill_heartbeat";
@@ -93,6 +93,19 @@ export const history = query({
       .withIndex("by_room_and_bucket", (q) => q.eq("roomId", roomId))
       .order("desc")
       .take(limit);
+  },
+});
+
+/** Timestamp of the most recent raw reading fed into the store. */
+export const lastReading = query({
+  args: {},
+  handler: async (ctx) => {
+    const row = await ctx.db
+      .query("roomMetrics")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .first();
+    return { timestamp: row?.timestamp ?? null };
   },
 });
 
@@ -359,6 +372,36 @@ export const getDailyCalendar = query({
       .withIndex("by_room_and_day", (query) => query.eq("roomId", roomId))
       .order("desc")
       .take(dayLimit);
+  },
+});
+
+// — filled 7-day strip for embeddable widgets: server builds the UTC date
+// spine and left-joins daily buckets, so clients never compute date keys.
+export const getLast7DaysStrip = query({
+  args: { roomId: v.optional(v.string()), asOf: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const roomId = args.roomId ?? DEFAULT_ROOM;
+    // asOf is client-supplied for testability; defaults to now.
+    const todayStart = toDayStart(args.asOf ?? Date.now());
+    const windowStart = todayStart - 6 * DAY_MS;
+    const rows = await ctx.db
+      .query("roomMetricsDaily")
+      .withIndex("by_room_and_day", (query) =>
+        query.eq("roomId", roomId).gte("dayStart", windowStart),
+      )
+      .collect();
+    const byDayStart = new Map(rows.map((row) => [row.dayStart, row]));
+    return Array.from({ length: 7 }, (_, index) => {
+      const dayStart = windowStart + index * DAY_MS;
+      const bucket = byDayStart.get(dayStart) ?? null;
+      return {
+        date: toDayKey(dayStart),
+        avgTemperature: bucket?.avgTemperature ?? null,
+        minTemperature: bucket?.minTemperature ?? null,
+        maxTemperature: bucket?.maxTemperature ?? null,
+        count: bucket?.count ?? 0,
+      };
+    });
   },
 });
 
