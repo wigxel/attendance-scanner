@@ -64,7 +64,6 @@ export function LastUpdated() {
               isStale ? "bg-amber-500" : "bg-emerald-500",
             )}
           />
-
           Last update: {formatLagos(last.timestamp)}{" "}
         </span>
         <span className="ml-1 text-xs">

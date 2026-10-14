@@ -67,7 +67,6 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
 
         <SelfCheckInStatus />
 
-
         <NotRegistered>
           <CheckInCard />
         </NotRegistered>

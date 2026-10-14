@@ -21,7 +21,7 @@ export default async function SignInPage() {
 
           <SignIn
             fallback={
-              <Skeleton className="max-w-[402px] w-full aspect-[402/479]"></Skeleton>
+              <Skeleton className="max-w-[402px] w-full aspect-402/479"></Skeleton>
             }
           />
         </div>

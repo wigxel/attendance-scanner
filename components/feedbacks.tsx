@@ -526,12 +526,10 @@ function SuggestionItem({ suggestion }: { suggestion: Suggestion }) {
         </div>
 
         {suggestion.comment && (
-          <p className=" pl-2 text-muted-foreground">
-            {suggestion.comment}
-          </p>
+          <p className=" pl-2 text-muted-foreground">{suggestion.comment}</p>
         )}
       </div>
-    </div >
+    </div>
   );
 }
 
