@@ -13,34 +13,40 @@ import {
 const Page = () => {
   return (
     <>
-      <section className="p-8">
+      <section className="px-8 pt-8">
         <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
       </section>
 
-      <div className="flex px-4 flex-col mt-8 md:grid-cols-6 md:grid gap-4">
-        <div className="flex *:w-full items-stretch col-span-2">
+      <div className="flex p-8 pt-0 flex-col md:grid md:grid-cols-6 gap-4">
+        <div className="flex *:w-full items-stretch md:col-span-2">
           <TakeAttendance />
         </div>
 
-        <div className="col-span-4">
+        <div className="md:col-span-4">
           <MetricsChart />
         </div>
 
-        <div className="flex flex-col gap-4 col-span-2">
+        <div className="md:col-span-2">
           <TotalVisits />
+        </div>
+
+        <div className="md:col-span-2">
           <TotalRevenue />
+        </div>
+
+        <div className="md:col-span-2">
           <CashPayments />
         </div>
 
-        <div className="col-span-2">
+        <div className="md:col-span-4">
           <TodaysCustomers />
         </div>
 
-        <div className="col-span-2">
+        <div className="md:col-span-2">
           <ExpiringSubscriptions />
         </div>
 
-        <div className="col-span-2">
+        <div className="md:col-span-6">
           <Feedbacks />
         </div>
       </div>

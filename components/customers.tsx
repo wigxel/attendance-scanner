@@ -306,7 +306,7 @@ export function TodaysCustomers() {
   ) as DailyRegisterEntry[];
 
   return (
-    <Card className="min-h-[32rem]">
+    <Card>
       <CardHeader className="flex flex-row items-center space-y-0">
         <CardTitle className="flex-1">
           <span>
@@ -355,13 +355,11 @@ export function TodaysCustomers() {
 
         <EmptyStateConceal>
           <CardContent className="p-0 flex-1">
-            <ScrollArea>
-              <ul className="h-[32rem]">
-                {records.map((e) => {
-                  return <RegisteredUserEntry entry={e} key={e._id} />;
-                })}
-              </ul>
-            </ScrollArea>
+            <ul className="max-h-[28rem] overflow-y-auto">
+              {records.map((e) => {
+                return <RegisteredUserEntry entry={e} key={e._id} />;
+              })}
+            </ul>
           </CardContent>
         </EmptyStateConceal>
       </EmptyState>

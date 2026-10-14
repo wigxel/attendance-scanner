@@ -24,7 +24,6 @@ import { api } from "@/convex/_generated/api";
 import { useCachedQuery } from "@/hooks/use-cached-query";
 import { currencyFormatter } from "@/lib/currency.helpers";
 import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
-import { O, pipe } from "@/lib/fp.helpers";
 
 type MetricKind =
   | "totalCustomers"
@@ -174,9 +173,9 @@ function TotalVisitsCard() {
   const is_nullable = isNullable(count);
 
   return (
-    <div className="@container">
-      <Card className="aspect-[3/2] w-full">
-        <CardContent className="flex pt-4 flex-1 flex-col">
+    <div className="@container h-full">
+      <Card className="w-full h-full">
+        <CardContent className="flex pt-4 flex-1 flex-col gap-2">
           <div className="flex justify-between">
             <CardDescription className="text-muted-foreground">
               Total visits
@@ -228,8 +227,8 @@ function CashPaymentsCard() {
   const is_empty = safeArray(trend).length === 0;
 
   return (
-    <div className="@container">
-      <Card className="aspect-[3/2] w-full">
+    <div className="@container h-full">
+      <Card className="w-full h-full">
         <CardContent className="flex pt-4 flex-1 flex-col justify-between gap-4">
           <div className="flex justify-between">
             <div className="flex gap-2 items-end">
@@ -254,7 +253,7 @@ function CashPaymentsCard() {
             </div>
           </div>
 
-          <div className="h-16 aspect-3/1.2 -mx-6 flex *:flex-1">
+          <div className="h-12 -mx-6 flex *:flex-1">
             {is_empty ? (
               <div className="text-xs text-muted-foreground px-6">
                 No cash payments
@@ -327,43 +326,33 @@ export function TotalRevenue() {
   const count = useQuery(api.myFunctions.countAttendance, range);
   const total = useQuery(api.metrics.sumPaidAccess, range);
 
-  const is_nullable = isNullable(count);
   const base_fee = 1000;
 
   return (
-    <div className="@container flex flex-col gap-4">
-      <Card className="aspect-3/1.5 w-full relative">
-        <CardContent className="flex pt-4 flex-col gap-2">
-          <CardDescription>Actual Revenue</CardDescription>
-          <span className="text-3xl font-semibold">
-            <If cond={!is_nullable}>
-              {pipe(
-                O.fromNullable(total),
-                O.map((value) => MetricsValue.currency(value)),
-                O.getOrElse(() => "--"),
-              )}
-            </If>
-            <If cond={is_nullable}>{"--"}</If>
-          </span>
-          <div className="p-4 text-xs text-muted-foreground absolute bottom-0 right-0">
-            Area is for graph
+    <div className="@container h-full">
+      <Card className="w-full h-full">
+        <CardContent className="flex pt-4 flex-1 flex-col gap-2">
+          <div className="flex justify-between">
+            <CardDescription className="text-muted-foreground">
+              Revenue
+            </CardDescription>
+            <span className="text-xs text-muted-foreground">This month</span>
           </div>
-        </CardContent>
-      </Card>
 
-      <Card className="aspect-[3/1.5] w-full relative">
-        <CardContent className="flex pt-4 flex-col gap-2">
-          <CardDescription>Estimated Revenue</CardDescription>
-          <span className="text-3xl font-semibold">
-            <If cond={!is_nullable}>
-              {MetricsValue.currency(safeNum(count) * base_fee)}
-            </If>
-            <If cond={is_nullable}>{"--"}</If>
-          </span>
-
-          <div className="p-4 text-xs text-muted-foreground absolute bottom-0 right-0">
-            Area is for graph
+          <div>
+            <span className="text-3xl font-semibold">
+              {MetricsValue.currency(total)}
+            </span>
+            <div className="text-xs opacity-50 text-muted-foreground">
+              Actual revenue
+            </div>
           </div>
+
+          <p className="mt-auto text-xs text-muted-foreground">
+            {count === undefined
+              ? "Estimating…"
+              : `Estimated ${MetricsValue.currency(safeNum(count) * base_fee)} · ${MetricsValue.count(count)} visits × base fee`}
+          </p>
         </CardContent>
       </Card>
     </div>
