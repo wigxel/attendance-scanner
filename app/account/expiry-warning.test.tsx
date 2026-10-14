@@ -1,16 +1,28 @@
 // @vitest-environment node
 
+import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ExpiryWarning } from "./expiry-warning";
 
 vi.mock("convex/react", () => ({ useQuery: vi.fn() }));
+vi.mock("@clerk/nextjs", () => ({ useUser: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  usePathname: () => "/account",
+}));
 
 const mockedQuery = vi.mocked(useQuery);
+const mockedUser = vi.mocked(useUser);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockedUser.mockReturnValue({
+    user: null,
+    isSignedIn: false,
+    isLoaded: true,
+  } as never);
 });
 
 function sub(daysLeft: number, durationType: "week" | "month") {

@@ -13,7 +13,7 @@ export function ExpiryWarning() {
   if (
     subscription === undefined ||
     subscription === null ||
-    subscription.daysLeft > 7
+    subscription.daysLeft > (subscription.durationType === "week" ? 2 : 5)
   ) {
     return null;
   }
@@ -41,7 +41,10 @@ export function ExpiryWarning() {
           <AlertDescription>
             {subscription.daysLeft === 0
               ? `Expires today (${subscription.endDate})`
-              : `Expires in ${subscription.daysLeft} days (${subscription.endDate})`}
+              : subscription.daysLeft === 1
+                ? `Expires in 1 day (${subscription.endDate})`
+                : `Expires in ${subscription.daysLeft} days (${subscription.endDate})`}
+            {subscription.daysLeft === 0 && <a href="/reserve">Renew now</a>}
           </AlertDescription>
         </div>
       </div>
