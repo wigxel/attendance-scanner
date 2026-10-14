@@ -35,25 +35,4 @@ crons.interval(
   api.bookings.markCompletedBookingsAsUsedUp,
 );
 
-crons.interval(
-  "smooth roomMetrics 10m buckets",
-  { minutes: 2 },
-  internal.roomMetrics.smoothAggregations,
-  {},
-);
-
-crons.interval(
-  "prune raw roomMetrics",
-  { hours: 24 },
-  internal.roomMetrics.pruneRaw,
-  {},
-);
-
-crons.daily(
-  "aggregate daily room metrics",
-  { hourUTC: 0, minuteUTC: 5 },
-  internal.roomMetrics.aggregateDaily,
-  {},
-);
-
 export default crons;

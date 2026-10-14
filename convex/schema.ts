@@ -215,46 +215,6 @@ const ratings = defineTable({
   createdAt: v.string(),
 }).index("user_id", ["userId"]);
 
-const roomMetrics = defineTable({
-  temperature: v.number(),
-  humidity: v.number(),
-  pressure: v.number(),
-  timestamp: v.optional(v.number()),
-  roomId: v.optional(v.string()),
-  deviceId: v.optional(v.string()),
-})
-  .index("by_room", ["roomId"])
-  .index("by_timestamp", ["timestamp"])
-  .index("by_room_and_timestamp", ["roomId", "timestamp"]);
-
-const roomMetrics10m = defineTable({
-  roomId: v.string(),
-  bucketStart: v.number(),
-  avgTemperature: v.number(),
-  avgHumidity: v.number(),
-  avgPressure: v.number(),
-  count: v.number(),
-  updatedAt: v.number(),
-})
-  .index("by_room", ["roomId"])
-  .index("by_room_and_bucket", ["roomId", "bucketStart"]);
-
-const roomMetricsDaily = defineTable({
-  roomId: v.string(),
-  date: v.string(),
-  dayStart: v.number(),
-  avgTemperature: v.number(),
-  avgHumidity: v.number(),
-  avgPressure: v.number(),
-  minTemperature: v.number(),
-  maxTemperature: v.number(),
-  count: v.number(),
-  updatedAt: v.number(),
-})
-  .index("by_room", ["roomId"])
-  .index("by_room_and_day", ["roomId", "dayStart"])
-  .index("by_date", ["date"]);
-
 const kpiCadence = v.union(
   v.literal("daily"),
   v.literal("weekly"),
@@ -326,9 +286,6 @@ export default defineSchema({
   config,
   auditLog,
   ratings,
-  roomMetrics,
-  roomMetrics10m,
-  roomMetricsDaily,
   kpis,
   kpiCompletions,
   kpiInstances,

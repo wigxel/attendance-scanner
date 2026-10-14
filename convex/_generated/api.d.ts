@@ -104,6 +104,7 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   wigxel_acl: import("../components/acl/_generated/component.js").ComponentApi<"wigxel_acl">;
+  roomMetrics: import("../components/roomMetrics/_generated/component.js").ComponentApi<"roomMetrics">;
   aggregate: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"aggregate">;
   customerStats: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"customerStats">;
 };

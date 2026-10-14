@@ -25,6 +25,38 @@ function makeDevice(visitorId = "visitor-1") {
   return { browser: "Chrome", name: "Test", visitorId };
 }
 
+async function grantStaffCheckin(
+  t: ReturnType<typeof convexTest>,
+  staffUserId: string,
+) {
+  t.registerComponent("wigxel_acl", aclSchema, aclModules);
+  await t.run(async (ctx) => {
+    await ctx.runMutation(components.wigxel_acl.seed.seedRoles, {});
+    await ctx.runMutation(components.wigxel_acl.seed.makeSuperAdmin, {
+      identity: "test-admin",
+    });
+    const role = await ctx.runMutation(
+      components.wigxel_acl.roles.createRole,
+      {
+        callerId: "test-admin",
+        name: "role-staff",
+        description: "",
+        privileges: ["attendance:checkin"],
+      },
+    );
+    if (!role.success) throw new Error(role.error);
+    const reg = await ctx.runMutation(
+      components.wigxel_acl.identities.registerIdentity,
+      {
+        callerId: "test-admin",
+        identity: staffUserId,
+        roleId: role.data.roleId,
+      },
+    );
+    if (!reg.success) throw new Error(reg.error);
+  });
+}
+
 describe("findOrCreateUser", () => {
   it("creates a users row and a matching profile for a new guest", async () => {
     const t = convexTest(schema, modules);
@@ -87,7 +119,7 @@ describe("listTodaysHosts", () => {
     const t = convexTest(schema, modules);
     aggregateTest.register(t, "customerStats");
 
-    const { hostId } = await t.run(async (ctx) => {
+    const { hostId, staffId } = await t.run(async (ctx) => {
       const staffUserId = await ctx.db.insert("users", {
         email: "staff@example.com",
         isAnonymous: false,
@@ -131,8 +163,10 @@ describe("listTodaysHosts", () => {
         admitted_by: staffUserId,
       });
 
-      return { hostId: hostUserId };
+      return { hostId: hostUserId, staffId: staffUserId };
     });
+
+    await grantStaffCheckin(t, staffId);
 
     const hosts = await t
       .withIdentity({ subject: "staff", email: "staff@example.com" })

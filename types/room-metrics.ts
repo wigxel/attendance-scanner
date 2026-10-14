@@ -1,4 +1,4 @@
-import type { Doc } from "../convex/_generated/dataModel";
+import type { Doc } from "../convex/components/roomMetrics/_generated/dataModel";
 
 export type RoomMetricsBucket = Doc<"roomMetrics10m">;
 
