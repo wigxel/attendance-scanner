@@ -320,6 +320,7 @@ export const myChecklist = query({
         _id: instance._id,
         _creationTime: instance._creationTime,
         kind: "priority" as const,
+        instanceId: instance._id,
         title: instance.title,
         points: instance.points,
         periodKey: todayKey,

@@ -744,6 +744,7 @@ describe("priority instances", () => {
     const list = await mgr1.query(api.kpis.myChecklist, {});
     const priority = list.filter((e) => e.kind === "priority");
     expect(priority).toHaveLength(1);
+    expect(priority[0].instanceId).toBe(priority[0]._id);
     expect(priority[0]).toMatchObject({ completed: false, windowOpen: true });
 
     const res = await mgr1.query(api.kpis.performance, {
