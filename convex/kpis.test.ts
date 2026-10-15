@@ -597,6 +597,7 @@ async function seedVisit(
   t: ReturnType<typeof convexTest>,
   userId: string,
   firstName = "James",
+  access: AccessStruct = { kind: "free" },
 ) {
   await t.run(async (ctx) => {
     await ctx.db.insert("profile", {
@@ -610,7 +611,7 @@ async function seedVisit(
       timestamp: new Date().toISOString(),
       source: "web",
       device: { browser: "x", name: "x", visitorId: "x" },
-      access: { kind: "free" },
+      access,
       admitted_by: "staff-1",
     });
   });
@@ -636,6 +637,52 @@ describe("onDynamicEvent", () => {
       points: 5,
     });
     expect(rows[0].title).toContain("James");
+  });
+
+  it("spawns the free-drink task for a first visit on a paid non-hourly plan", async () => {
+    vi.setSystemTime(NOON);
+    const t = convexTest(schema, modules);
+    await seedVisit(t, "cust-1", "James", {
+      kind: "paid",
+      planId: "daily",
+      amount: 0,
+    });
+
+    await t.mutation(internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: "cust-1" },
+    });
+
+    const rows = await t.run(async (ctx) =>
+      ctx.db.query("kpiInstances").collect(),
+    );
+    expect(rows).toHaveLength(2);
+    expect(
+      rows.find((r) => r.title.includes("free drink")),
+    ).toMatchObject({ customerId: "cust-1", date: TODAY, points: 3 });
+  });
+
+  it("never spawns the free-drink task for hourly payers", async () => {
+    vi.setSystemTime(NOON);
+    const t = convexTest(schema, modules);
+    await seedVisit(t, "cust-1", "James", {
+      _v: "2",
+      kind: "paid",
+      planId: "hourly",
+      planPriceInKobo: 50000,
+      amountInKobo: 150000,
+      paymentMethod: "cash",
+      duration: { type: "hourly", value: 3 },
+    });
+
+    await t.mutation(internal.kpis.onDynamicEvent, {
+      event: { kind: "first-visit", userId: "cust-1" },
+    });
+
+    const rows = await t.run(async (ctx) =>
+      ctx.db.query("kpiInstances").collect(),
+    );
+    expect(rows).toHaveLength(1); // only the experience-check task
+    expect(rows[0].title).not.toContain("free drink");
   });
 
   it("does not duplicate on re-run or second visit", async () => {

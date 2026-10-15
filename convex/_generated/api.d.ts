@@ -33,6 +33,7 @@ import type * as reports from "../reports.js";
 import type * as roomMetrics from "../roomMetrics.js";
 import type * as seatOrchestrator from "../seatOrchestrator.js";
 import type * as seats from "../seats.js";
+import type * as seed from "../seed.js";
 import type * as seedScanRecords from "../seedScanRecords.js";
 import type * as seedSeats from "../seedSeats.js";
 import type * as selfService from "../selfService.js";
@@ -72,6 +73,7 @@ declare const fullApi: ApiFromModules<{
   roomMetrics: typeof roomMetrics;
   seatOrchestrator: typeof seatOrchestrator;
   seats: typeof seats;
+  seed: typeof seed;
   seedScanRecords: typeof seedScanRecords;
   seedSeats: typeof seedSeats;
   selfService: typeof selfService;

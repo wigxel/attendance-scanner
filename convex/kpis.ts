@@ -529,12 +529,31 @@ export const performance = query({
 });
 
 const FIRST_VISIT_POINTS = 5;
+const FREE_DRINK_POINTS = 3;
+
+type VisitAccess = { kind?: string; planId?: string };
+
+type FirstVisitInput = { name: string; earnedFreeDrink: boolean };
 
 const dynamicTemplates = {
-  "first-visit": (name: string) => ({
-    title: `Ask ${name} how their experience was and if we can help make them comfortable before they leave`,
-    points: FIRST_VISIT_POINTS,
-  }),
+  "first-visit": (input: FirstVisitInput) => {
+    const { name, earnedFreeDrink } = input;
+    // Free drink is a perk for the first time a customer actually pays
+    // (any plan except hourly). Hourly payers and free visits don't get it.
+    const tasks = [
+      {
+        title: `Ask ${name} how their experience was and if we can help make them comfortable before they leave`,
+        points: FIRST_VISIT_POINTS,
+      },
+    ];
+    if (earnedFreeDrink) {
+      tasks.push({
+        title: `Offer ${name} a free drink of choice`,
+        points: FREE_DRINK_POINTS,
+      });
+    }
+    return tasks;
+  },
 };
 
 export type DynamicEvent = { kind: "first-visit"; userId: string };
@@ -570,14 +589,23 @@ export async function spawnDynamicKpis(
     .withIndex("by_user_id", (q) => q.eq("id", event.userId))
     .first();
   const fullName = profile && `${profile.firstName} ${profile.lastName}`.trim();
-  const template = dynamicTemplates["first-visit"](fullName || "our guest");
-  await ctx.db.insert("kpiInstances", {
-    title: template.title,
-    customerId: event.userId,
-    points: template.points,
-    date: today,
-    createdAt: Date.now(),
+  const name = fullName || "our guest";
+  const firstVisitAccess = visits[0].access as VisitAccess;
+  const earnedFreeDrink =
+    firstVisitAccess.kind === "paid" && firstVisitAccess.planId !== "hourly";
+  const firstVisitTasks = dynamicTemplates["first-visit"]({
+    name,
+    earnedFreeDrink,
   });
+  for (const task of firstVisitTasks) {
+    await ctx.db.insert("kpiInstances", {
+      title: task.title,
+      customerId: event.userId,
+      points: task.points,
+      date: today,
+      createdAt: Date.now(),
+    });
+  }
 }
 
 export const onDynamicEvent = internalMutation({

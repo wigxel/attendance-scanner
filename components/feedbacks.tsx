@@ -472,7 +472,9 @@ function VoteButton({
   );
 }
 
-function SuggestionItem({ suggestion }: { suggestion: Suggestion }) {
+type SuggestionItemProps = { suggestion: Suggestion }
+
+function SuggestionItem({ suggestion }: SuggestionItemProps) {
   return (
     <div className="flex group gap-6">
       <div className="flex flex-col mt-1 gap-1 self-start text-base items-center">
@@ -518,15 +520,18 @@ function SuggestionItem({ suggestion }: { suggestion: Suggestion }) {
         </div>
 
         <p className="pl-2 text-muted-foreground">{suggestion.description}</p>
-        <div className="relative my-4 items-center flex justify-center gap-2">
-          <div className="border-t flex-1" />
-          <span className="top-0 uppercase bg-background text-[10px] text-foreground">
-            Answer
-          </span>
-        </div>
 
         {suggestion.comment && (
-          <p className=" pl-2 text-muted-foreground">{suggestion.comment}</p>
+          <>
+            <div className="relative my-4 items-center flex justify-center gap-2">
+              <div className="border-t flex-1" />
+              <span className="top-0 uppercase bg-background text-[10px] text-foreground">
+                Answer
+              </span>
+            </div>
+
+            <p className=" pl-2 text-muted-foreground">{suggestion.comment}</p>
+          </>
         )}
       </div>
     </div>
