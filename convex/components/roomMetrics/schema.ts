@@ -41,6 +41,21 @@ const roomMetricsDaily = defineTable({
   .index("by_room_and_day", ["roomId", "dayStart"])
   .index("by_date", ["date"]);
 
+// Generic anomaly alerts. Producers write via ensureAlert (alerts.ts);
+// type/dedupeKey are free strings — dedupeKey e.g.
+// `all:temperature_breach:<bucketStart>` — so new alert kinds need no
+// schema change.
+const alerts = defineTable({
+  type: v.string(),
+  roomId: v.string(),
+  dedupeKey: v.string(),
+  value: v.optional(v.number()),
+  detail: v.string(),
+  severity: v.optional(v.string()),
+  acknowledged: v.boolean(),
+  notifiedAt: v.optional(v.number()),
+}).index("by_dedupe_key", ["dedupeKey"]);
+
 const config = defineTable({
   key: v.string(),
   value: v.string(),
@@ -50,5 +65,6 @@ export default defineSchema({
   roomMetrics,
   roomMetrics10m,
   roomMetricsDaily,
+  alerts,
   config,
 });

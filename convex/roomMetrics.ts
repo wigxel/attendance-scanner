@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import type {
+  RoomMetricsAlert,
   RoomMetricsBucket,
   RoomMetricsDailyBucket,
   RoomMetricsHistory,
@@ -87,5 +88,23 @@ export const getLast7DaysStrip = query({
       components.roomMetrics.index.getLast7DaysStrip,
       args,
     );
+  },
+});
+
+// — alerts live in the roomMetrics component (generic `alerts` table);
+// these wrappers keep client call sites on api.roomMetrics.*.
+export const recentAlerts = query({
+  args: { type: v.optional(v.string()), limit: v.optional(v.number()) },
+  handler: async (ctx, args): Promise<RoomMetricsAlert[]> => {
+    return await ctx.runQuery(components.roomMetrics.alerts.recentAlerts, args);
+  },
+});
+
+// alertId crosses the component boundary as a string: `alerts` exists in
+// the component schema, not the app's, so v.id("alerts") here would fail.
+export const acknowledge = mutation({
+  args: { alertId: v.string() },
+  handler: async (ctx, args): Promise<void> => {
+    await ctx.runMutation(components.roomMetrics.alerts.acknowledge, args);
   },
 });

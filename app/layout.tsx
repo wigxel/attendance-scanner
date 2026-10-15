@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   icons: {
     icon: "/logo.svg",
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({

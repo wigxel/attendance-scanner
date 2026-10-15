@@ -1,3 +1,4 @@
+import { addDays, format, startOfWeek, subDays } from "date-fns";
 import { describe, expect, it } from "vitest";
 import {
   getBucketIndex,
@@ -5,7 +6,6 @@ import {
   getColors,
   getFallbackColor,
 } from "../../../../../lib/temperature-colors";
-import { addDays, format, startOfWeek, subDays } from "date-fns";
 
 describe("getBucketIndex", () => {
   it("buckets by comfort-aligned thresholds", () => {

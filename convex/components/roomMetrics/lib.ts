@@ -1,6 +1,6 @@
 // Functional helpers for T/H/P smoothing + 10-min bucketing — Effect only for Result.
 
-import * as E from "effect/Either";
+import type * as E from "effect/Either";
 
 export type Reading = {
   readonly temperature: number;
@@ -29,6 +29,22 @@ export const DEFAULT_ROOM = "all";
 export const DEFAULT_DEVICE = "general";
 export const CURSOR_KEY = "roomMetrics10m_cursor";
 export const CURSOR_KEY_DAILY = "roomMetricsDaily_cursor";
+
+// Temperature anomaly alert thresholds (strict: exactly 12/45 is in range)
+export const ALERT_LOW_C = 12;
+export const ALERT_HIGH_C = 45;
+
+// Detection only fires for fresh buckets, so cursor replays/backfills
+// after a sensor outage can't flood old alerts in.
+export const ALERT_RECENT_WINDOW_MS = 60 * 60 * 1000;
+
+export type Breach = "low" | "high";
+
+export const classifyBreach = (avgTemperature: number): Breach | null => {
+  if (avgTemperature < ALERT_LOW_C) return "low";
+  if (avgTemperature > ALERT_HIGH_C) return "high";
+  return null;
+};
 
 export const toBucketStart = (timestamp: number): number =>
   Math.floor(timestamp / TEN_MIN) * TEN_MIN;

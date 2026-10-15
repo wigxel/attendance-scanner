@@ -1,9 +1,22 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import {
+  internalMutation,
+  type MutationCtx,
+  mutation,
+  query,
+} from "./_generated/server";
+import { ensureAlert } from "./alerts";
+import {
+  ALERT_HIGH_C,
+  ALERT_LOW_C,
+  ALERT_RECENT_WINDOW_MS,
   averageDailyBuckets,
   averageReadings,
   CURSOR_KEY,
   CURSOR_KEY_DAILY,
+  classifyBreach,
   DAY_MS,
   DEFAULT_ROOM,
   groupByBucket,
@@ -15,14 +28,6 @@ import {
   toDayStart,
   withDefaults,
 } from "./lib";
-import type { Doc } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
-import {
-  internalMutation,
-  mutation,
-  query,
-  type MutationCtx,
-} from "./_generated/server";
 
 type RoomMetricsBucket = Doc<"roomMetrics10m">;
 type RoomMetricsReading = Doc<"roomMetrics">;
@@ -210,21 +215,37 @@ export const smoothAggregations = internalMutation({
         if (filtered.length === 0) return;
         const avg = averageReadings(filtered);
 
+        const finalAvg = existing
+          ? mergeAverages(existing, avg, filtered.length)
+          : avg;
+
         if (!existing) {
           await ctx.db.insert("roomMetrics10m", {
             roomId: DEFAULT_ROOM,
             bucketStart,
-            avgTemperature: avg.avgTemperature,
-            avgHumidity: avg.avgHumidity,
-            avgPressure: avg.avgPressure,
+            avgTemperature: finalAvg.avgTemperature,
+            avgHumidity: finalAvg.avgHumidity,
+            avgPressure: finalAvg.avgPressure,
             count: filtered.length,
             updatedAt: Date.now(),
           });
         } else {
-          const merged = mergeAverages(existing, avg, filtered.length);
           await ctx.db.patch(existing._id, {
-            ...merged,
+            ...finalAvg,
             updatedAt: Date.now(),
+          });
+        }
+
+        // only alert for fresh buckets — cursor replays must not flood
+        const breach = classifyBreach(finalAvg.avgTemperature);
+        if (breach && bucketStart >= Date.now() - ALERT_RECENT_WINDOW_MS) {
+          const limit = breach === "low" ? ALERT_LOW_C : ALERT_HIGH_C;
+          await ensureAlert(ctx, {
+            type: "temperature_breach",
+            roomId: DEFAULT_ROOM,
+            dedupeKey: `${DEFAULT_ROOM}:temperature_breach:${bucketStart}`,
+            value: finalAvg.avgTemperature,
+            detail: `avg ${finalAvg.avgTemperature}°C (limit ${limit}) — ${breach} breach`,
           });
         }
       }),

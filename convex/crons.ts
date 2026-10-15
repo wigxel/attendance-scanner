@@ -24,6 +24,13 @@ crons.daily(
 );
 
 crons.interval(
+  "deliver temperature alert push",
+  { minutes: 2 },
+  internal.pushSender.deliverTemperatureAlerts,
+  {},
+);
+
+crons.interval(
   "cleanup expired pending bookings",
   { minutes: 5 },
   api.bookings.markExpiredPendingBookings,

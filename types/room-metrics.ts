@@ -7,3 +7,6 @@ export type RoomMetricsReading = Doc<"roomMetrics">;
 export type RoomMetricsHistory = RoomMetricsBucket[];
 
 export type RoomMetricsDailyBucket = Doc<"roomMetricsDaily">;
+
+// generic alert row from the roomMetrics component's `alerts` table
+export type RoomMetricsAlert = Doc<"alerts">;

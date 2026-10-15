@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as alerts from "../alerts.js";
 import type * as backfill from "../backfill.js";
 import type * as crons from "../crons.js";
 import type * as index from "../index.js";
@@ -21,6 +22,7 @@ import type {
 import { anyApi, componentsGeneric } from "convex/server";
 
 const fullApi: ApiFromModules<{
+  alerts: typeof alerts;
   backfill: typeof backfill;
   crons: typeof crons;
   index: typeof index;

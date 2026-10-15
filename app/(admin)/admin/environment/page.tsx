@@ -2,6 +2,7 @@ import { CalendarSection } from "./_components/calendar-section";
 import { HistorySection } from "./_components/history-section";
 import { InsightsSection } from "./_components/insights-section";
 import { LastUpdated } from "./_components/last-updated";
+import { AlertsSection } from "./_components/alerts-section";
 
 export default function EnvironmentPage() {
   return (
@@ -10,6 +11,7 @@ export default function EnvironmentPage() {
         <h1 className="text-3xl font-bold">Environment</h1>
         <LastUpdated />
       </header>
+      <AlertsSection />
       <InsightsSection />
       <HistorySection />
       <CalendarSection />

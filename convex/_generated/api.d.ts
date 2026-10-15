@@ -25,6 +25,8 @@ import type * as metrics from "../metrics.js";
 import type * as migrations from "../migrations.js";
 import type * as myFunctions from "../myFunctions.js";
 import type * as permissions from "../permissions.js";
+import type * as push from "../push.js";
+import type * as pushSender from "../pushSender.js";
 import type * as register from "../register.js";
 import type * as register_common from "../register_common.js";
 import type * as reports from "../reports.js";
@@ -62,6 +64,8 @@ declare const fullApi: ApiFromModules<{
   migrations: typeof migrations;
   myFunctions: typeof myFunctions;
   permissions: typeof permissions;
+  push: typeof push;
+  pushSender: typeof pushSender;
   register: typeof register;
   register_common: typeof register_common;
   reports: typeof reports;

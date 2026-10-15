@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   averageReadings,
+  classifyBreach,
   DEFAULT_DEVICE,
   DEFAULT_ROOM,
   groupByBucket,
@@ -207,6 +208,18 @@ describe("isOutlier", () => {
       timestamp: 0,
     });
     expect(isOutlier(r, bucket)).toBe(false);
+  });
+});
+
+describe("classifyBreach", () => {
+  it("flags strict out-of-range averages", () => {
+    expect(classifyBreach(11.9)).toBe("low");
+    expect(classifyBreach(45.1)).toBe("high");
+  });
+  it("12 and 45 are within range", () => {
+    expect(classifyBreach(12)).toBeNull();
+    expect(classifyBreach(45)).toBeNull();
+    expect(classifyBreach(22)).toBeNull();
   });
 });
 

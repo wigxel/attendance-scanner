@@ -23,6 +23,30 @@ import type { FunctionReference } from "convex/server";
  */
 export type ComponentApi<Name extends string | undefined = string | undefined> =
   {
+    alerts: {
+      acknowledge: FunctionReference<
+        "mutation",
+        "internal",
+        { alertId: string },
+        any,
+        Name
+      >;
+      markNotified: FunctionReference<
+        "mutation",
+        "internal",
+        { alertId: string },
+        any,
+        Name
+      >;
+      recentAlerts: FunctionReference<
+        "query",
+        "internal",
+        { limit?: number; type?: string },
+        any,
+        Name
+      >;
+      unnotifiedAlerts: FunctionReference<"query", "internal", {}, any, Name>;
+    };
     index: {
       getDailyCalendar: FunctionReference<
         "query",

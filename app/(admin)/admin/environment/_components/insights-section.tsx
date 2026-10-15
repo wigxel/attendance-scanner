@@ -18,6 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { api } from "@/convex/_generated/api";
+import type { ComfortResult } from "@/lib/environment";
 import {
   comfortZone,
   condensationRisk,
@@ -26,7 +27,6 @@ import {
   dryAirRisk,
   moldRisk,
 } from "@/lib/environment";
-import type { ComfortResult } from "@/lib/environment";
 
 const COMFORT_TOOLTIPS = {
   good: "Air feels nice — not too hot, not too cold.",

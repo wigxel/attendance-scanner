@@ -2,8 +2,8 @@
 import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { api, internal } from "./_generated/api";
-import schema from "./schema";
 import { DAY_MS, TEN_MIN } from "./lib";
+import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
 const DAY = DAY_MS;

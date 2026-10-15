@@ -266,6 +266,15 @@ const kpiInstances = defineTable({
   createdAt: v.number(),
 }).index("by_date", ["date"]);
 
+// Browser web-push subscriptions (PWA). One row per browser endpoint;
+// subscribe upserts by endpoint. No user linkage — fan-out to all.
+const pushSubscriptions = defineTable({
+  endpoint: v.string(),
+  p256dh: v.string(),
+  auth: v.string(),
+  createdAt: v.number(),
+}).index("by_endpoint", ["endpoint"]);
+
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
   users: authTables.users,
@@ -290,4 +299,5 @@ export default defineSchema({
   kpiCompletions,
   kpiInstances,
   kpiDailyScores,
+  pushSubscriptions,
 });
