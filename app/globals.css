@@ -198,3 +198,12 @@
 .transition-default {
   @apply transition-all duration-200 ease-in-out;
 }
+
+/* Makers landing: smooth anchor scroll that respects reduced motion
+   (PRD nav behaviour). scroll-mt-* on sections handles the sticky-bar
+   offset, so headings never hide under it. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
