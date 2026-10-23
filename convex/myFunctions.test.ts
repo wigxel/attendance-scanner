@@ -383,6 +383,30 @@ describe("myFunctions.countAttendance", () => {
 
     expect(result).toBe(1);
   });
+
+  it("counts UTC rows when the range is sent with a local offset", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("daily_register", {
+        userId: "user-local",
+        // 00:30 on 14 Oct at +01:00, stored as the previous UTC day.
+        timestamp: "2026-10-13T23:30:00.000Z",
+        admitted_by: "admin-1",
+        device: { name: "Chrome", visitorId: "local", browser: "Chrome" },
+        access: { kind: "free" },
+        method: "one-tap",
+        source: "web",
+      });
+    });
+
+    const result = await t.query(api.myFunctions.countAttendance, {
+      start: "2026-10-14T00:00:00+01:00",
+      end: "2026-10-14T23:59:59+01:00",
+    });
+
+    expect(result).toBe(1);
+  });
 });
 
 describe("myFunctions.getAttendanceByMonth", () => {

@@ -48,6 +48,7 @@ export function AlertsSection() {
   const vapidPublicKey = useQuery(api.push.vapidPublicKey, {});
   const acknowledge = useMutation(api.roomMetrics.acknowledge);
   const subscribe = useMutation(api.push.subscribe);
+  const unsubscribe = useMutation(api.push.unsubscribe);
   const [pushEnabled, setPushEnabled] = useState(false);
 
   useEffect(() => {
@@ -100,6 +101,21 @@ export function AlertsSection() {
     toast.success("Push alerts enabled");
   };
 
+  const disablePush = async () => {
+    const registration = await navigator.serviceWorker.register("/sw.js");
+    const subscription = await registration.pushManager.getSubscription();
+
+    // Drop both sides, so a rotated endpoint cannot leave a stale row behind
+    // and keep delivering duplicate notifications.
+    if (subscription) {
+      await subscription.unsubscribe();
+      await unsubscribe({ endpoint: subscription.endpoint });
+    }
+
+    setPushEnabled(false);
+    toast.success("Push alerts disabled");
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -114,11 +130,10 @@ export function AlertsSection() {
             variant="outline"
             size="sm"
             className="ml-auto"
-            disabled={pushEnabled}
-            onClick={enablePush}
+            onClick={pushEnabled ? disablePush : enablePush}
           >
             <Bell className="size-4" />
-            {pushEnabled ? "Push alerts enabled" : "Enable push alerts"}
+            {pushEnabled ? "Disable push alerts" : "Enable push alerts"}
           </Button>
         )}
       </CardHeader>

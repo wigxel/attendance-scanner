@@ -31,11 +31,25 @@ export const durationTypeConvexSchema = v.union(
   v.literal("month"),
 );
 
+export const guestTypeValidator = v.union(
+  v.literal("visitor"),
+  v.literal("student"),
+  v.literal("event_attendee"),
+);
+
+export type GuestType = "visitor" | "student" | "event_attendee";
+
 // Present only when this visit was a guest visit. The presence of this
 // field *is* the guest flag — there is no separate boolean. `hostUserId` is
 // the `profile`.`id` of the customer being visited.
 const visitingField = {
-  visiting: v.optional(v.object({ hostUserId: v.string() })),
+  visiting: v.optional(
+    v.object({
+      hostUserId: v.string(),
+      // Optional so the 3,776 guest rows written before this field stay valid.
+      guestType: v.optional(guestTypeValidator),
+    }),
+  ),
 };
 
 export const accessPlanStruct = v.union(
@@ -76,7 +90,12 @@ const durationSchemaValidator = z.union([
 
 // Zod strips unknown keys by default, so `visiting` must be declared here
 // too — otherwise `PlanImpl.normalize` silently drops the guest link.
-const visitingSchema = z.optional(z.object({ hostUserId: z.string() }));
+const visitingSchema = z.optional(
+  z.object({
+    hostUserId: z.string(),
+    guestType: z.optional(z.enum(["visitor", "student", "event_attendee"])),
+  }),
+);
 
 export const accessPlanSchemaValidator = z.union([
   z.object({
@@ -397,7 +416,7 @@ export const PlanImpl = {
   },
 };
 
-export type Visiting = { hostUserId: string };
+export type Visiting = { hostUserId: string; guestType?: GuestType };
 
 type AccessPaidV2 = {
   _v: "2";

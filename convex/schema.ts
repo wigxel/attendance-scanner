@@ -5,6 +5,7 @@ import {
   accessPlanStruct,
   durationTypeConvexSchema,
   featureRequestStatus,
+  guestTypeValidator,
 } from "./shared";
 
 const accessPlans = defineTable({
@@ -36,7 +37,12 @@ const daily_register = defineTable({
    * sync with it. `hostUserId` is the `profile`.`id` of the customer being
    * visited.
    */
-  visiting: v.optional(v.object({ hostUserId: v.string() })),
+  visiting: v.optional(
+    v.object({
+      hostUserId: v.string(),
+      guestType: v.optional(guestTypeValidator),
+    }),
+  ),
 })
   .index("admitted_by", ["admitted_by"])
   .index("unique_visitor", ["device.visitorId"])

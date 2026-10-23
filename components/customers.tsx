@@ -5,10 +5,11 @@ import {
   differenceInHours,
   differenceInMinutes,
   differenceInSeconds,
-  formatISO,
+  endOfDay,
+  format,
   isToday,
   parseISO,
-  setHours,
+  startOfDay,
 } from "date-fns";
 import { Match, Option, pipe } from "effect";
 import { range } from "effect/Array";
@@ -240,21 +241,21 @@ export function CustomersTable() {
   );
 }
 
-function useAttendanceRegister() {
-  const today = React.useMemo(() => {
-    const today = new Date();
-    const start = formatISO(setHours(today, 0));
-    const end = formatISO(setHours(today, 23));
+// Timestamps are stored as UTC `Z` strings, so send UTC bounds — a local
+// offset (`+01:00`) compares lexicographically against them and drops rows.
+function toDayRange(date: Date) {
+  return {
+    start: startOfDay(date).toISOString(),
+    end: endOfDay(date).toISOString(),
+  };
+}
 
-    return { start, end };
-  }, []);
+function useAttendanceRegister() {
+  const today = React.useMemo(() => toDayRange(new Date()), []);
 
   const [current, setCurrent] = React.useState(() => today);
 
-  const createDateRange = useEvent((date: Date) => ({
-    start: formatISO(setHours(date, 0)),
-    end: formatISO(setHours(date, 23)),
-  }));
+  const createDateRange = useEvent(toDayRange);
 
   const adjustDate = React.useCallback(
     (days: number) => {
@@ -526,6 +527,10 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
           <div className="flex-1 flex-col gap-1 flex">
             <div className="font-semibold">
               {user.firstName} {user.lastName}
+            </div>
+
+            <div className="text-xs text-muted-foreground">
+              Scanned {format(new Date(entry.timestamp), "do MMM yyyy, h:mm a")}
             </div>
 
             <div className="flex gap-2 text-xs text-gray-500 font-mono">
@@ -1018,6 +1023,15 @@ export function TopCustomersAvatarGroup() {
   );
 }
 
+// Stable keys for the loading rows; placeholders have no id of their own.
+const SKELETON_ROW_KEYS = [
+  "skeleton-1",
+  "skeleton-2",
+  "skeleton-3",
+  "skeleton-4",
+  "skeleton-5",
+] as const;
+
 function TopCustomersSheet() {
   const [filter, setFilter] = React.useState<"all" | "free" | "paid">("all");
 
@@ -1070,8 +1084,8 @@ function TopCustomersSheet() {
 
         <ScrollArea className="h-[80svh]">
           {response === undefined ? (
-            [...Array(5)].map((_, i) => (
-              <li key={i} className="flex items-center gap-4 py-4 px-4">
+            SKELETON_ROW_KEYS.map((key) => (
+              <li key={key} className="flex items-center gap-4 py-4 px-4">
                 <Skeleton className="w-8 h-8 rounded-full" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="w-24 h-4" />
