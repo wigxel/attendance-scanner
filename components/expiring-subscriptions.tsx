@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { format } from "date-fns";
 import { CalendarClock } from "lucide-react";
 import {
@@ -63,7 +63,11 @@ function ExpiringSubscriptionRow({ row, index }: ExpiringRowProps) {
 }
 
 export function ExpiringSubscriptions() {
-  const rows = useQuery(api.bookings.listExpiringSubscriptions, {});
+  const { isAuthenticated } = useConvexAuth();
+  const rows = useQuery(
+    api.bookings.listExpiringSubscriptions,
+    isAuthenticated ? {} : "skip",
+  );
 
   return (
     <Card className="h-full">

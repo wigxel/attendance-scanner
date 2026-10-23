@@ -1,5 +1,5 @@
 "use client";
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { format } from "date-fns";
 import * as React from "react";
 import {
@@ -74,12 +74,14 @@ function LeaderboardRow({ userId, earned, pct, rank }: LeaderboardRowProps) {
 
 function PerformanceChild() {
   const { filter } = DateRange.useState();
+  const { isAuthenticated } = useConvexAuth();
   const [from, to] = filter.get_range(new Date());
-
-  const data = useQuery(api.kpis.performance, {
+  const range = {
     from: format(from, "yyyy-MM-dd"),
     to: format(to, "yyyy-MM-dd"),
-  });
+  };
+
+  const data = useQuery(api.kpis.performance, isAuthenticated ? range : "skip");
 
   const chartData = React.useMemo(() => {
     if (!data) return [];
