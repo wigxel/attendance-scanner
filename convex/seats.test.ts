@@ -251,6 +251,40 @@ describe("getAllSeatsForDateRange", () => {
     expect(booked!.isBooked).toBe(true);
     expect(free!.isBooked).toBe(false);
   });
+
+  it("ignores confirmed bookings with unparseable dates", async () => {
+    const t = convexTest(schema, modules);
+    const today = todayStr();
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("seats", {
+        seatNumber: 1,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("bookings", {
+        userId: "user-1",
+        seatIds: [],
+        startDate: "",
+        endDate: "NaN-NaN-NaN",
+        duration: 1,
+        durationType: "day",
+        status: "confirmed",
+        amount: 5000,
+        pricePerSeat: 5000,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    const result = await t.query(api.seats.getAllSeatsForDateRange, {
+      startDate: today,
+      endDate: today,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].isBooked).toBe(false);
+  });
 });
 
 describe("getSeatsById", () => {
