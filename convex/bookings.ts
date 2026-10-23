@@ -328,9 +328,11 @@ export const updateBooking = mutation({
 
     const duration = accessPlan.no_of_days;
     const pricePerSeat = accessPlan.price * 100;
-    const endDate = formatDateToLocalISO(
-      calculateEndDate(new Date(args.startDate), duration),
-    );
+    const startDate = parseISO(args.startDate);
+    if (Number.isNaN(startDate.getTime())) {
+      throw new ConvexError("Invalid start date.");
+    }
+    const endDate = formatDateToLocalISO(calculateEndDate(startDate, duration));
 
     const amount = pricePerSeat * args.seatIds.length;
 
