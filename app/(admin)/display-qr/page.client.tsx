@@ -16,6 +16,34 @@ export function nextRefreshDelay(succeeded: boolean): number {
   return succeeded ? REFRESH_INTERVAL : RETRY_INTERVAL;
 }
 
+type QrPanelProps = {
+  token: string | null;
+  qrUrl: string;
+  generating: boolean;
+};
+
+function QrPanel({ token, qrUrl, generating }: QrPanelProps) {
+  if (token) {
+    return (
+      <QRCodeSVG value={qrUrl} size={320} fgColor="#000000" bgColor="#ffffff" />
+    );
+  }
+
+  if (generating) {
+    return (
+      <div className="w-[320px] h-[320px] flex items-center justify-center">
+        <AppSpinner size="xl" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-[320px] h-[320px] flex items-center justify-center text-muted-foreground">
+      No active code
+    </div>
+  );
+}
+
 export default function DisplayQRCSR() {
   const { id: authUserId, isLoading } = useAuthId();
   const [token, setToken] = useState<string | null>(null);
@@ -92,22 +120,7 @@ export default function DisplayQRCSR() {
         <div
           className={`relative bg-white p-4 rounded-2xl shadow-lg border transition-opacity ${generating ? "opacity-50" : "opacity-100"}`}
         >
-          {token ? (
-            <QRCodeSVG
-              value={qrUrl}
-              size={320}
-              fgColor="#000000"
-              bgColor="#ffffff"
-            />
-          ) : generating ? (
-            <div className="w-[320px] h-[320px] flex items-center justify-center">
-              <AppSpinner size="xl" />
-            </div>
-          ) : (
-            <div className="w-[320px] h-[320px] flex items-center justify-center text-muted-foreground">
-              No active code
-            </div>
-          )}
+          <QrPanel token={token} qrUrl={qrUrl} generating={generating} />
         </div>
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
