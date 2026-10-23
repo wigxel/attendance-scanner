@@ -1,5 +1,5 @@
 "use client";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, TriangleAlert } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useState } from "react";
 import { useEvent } from "react-use-event-hook";
@@ -9,12 +9,19 @@ import { APP_URL } from "@/config/constants";
 import { useAuthId } from "@/hooks/auth";
 
 const REFRESH_INTERVAL = 5 * 60 * 1000;
+const RETRY_INTERVAL = 15 * 1000;
+
+/** QR payloads expire after 5 minutes: retry fast after a failed refresh. */
+export function nextRefreshDelay(succeeded: boolean): number {
+  return succeeded ? REFRESH_INTERVAL : RETRY_INTERVAL;
+}
 
 export default function DisplayQRCSR() {
   const { id: authUserId, isLoading } = useAuthId();
   const [token, setToken] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(REFRESH_INTERVAL);
   const [generating, setGenerating] = useState(true);
+  const [failed, setFailed] = useState(false);
 
   const refreshToken = useEvent(async (adminId: string) => {
     setGenerating(true);
@@ -22,6 +29,13 @@ export default function DisplayQRCSR() {
       const t = await generateQRToken(adminId);
       setToken(t);
       setCountdown(REFRESH_INTERVAL);
+      setFailed(false);
+      return true;
+    } catch {
+      // Keep the kiosk honest: never leave an expired QR on screen.
+      setToken(null);
+      setFailed(true);
+      return false;
     } finally {
       setGenerating(false);
     }
@@ -30,13 +44,21 @@ export default function DisplayQRCSR() {
   useEffect(() => {
     if (isLoading || !authUserId) return;
 
-    refreshToken(authUserId);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
 
-    const interval = setInterval(() => {
-      refreshToken(authUserId);
-    }, REFRESH_INTERVAL);
+    const refresh = async (adminId: string) => {
+      const succeeded = await refreshToken(adminId);
+      if (cancelled) return;
+      timer = setTimeout(() => refresh(adminId), nextRefreshDelay(succeeded));
+    };
 
-    return () => clearInterval(interval);
+    refresh(authUserId);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [isLoading, refreshToken, authUserId]);
 
   useEffect(() => {
@@ -77,18 +99,37 @@ export default function DisplayQRCSR() {
               fgColor="#000000"
               bgColor="#ffffff"
             />
-          ) : (
+          ) : generating ? (
             <div className="w-[320px] h-[320px] flex items-center justify-center">
               <AppSpinner size="xl" />
+            </div>
+          ) : (
+            <div className="w-[320px] h-[320px] flex items-center justify-center text-muted-foreground">
+              No active code
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <RefreshCw size="1rem" className={generating ? "animate-spin" : ""} />
-          <span>
-            Refreshes in {mins}:{secs.toString().padStart(2, "0")}
-          </span>
+          {failed ? (
+            <span
+              className="flex items-center gap-2 text-destructive"
+              role="status"
+            >
+              <TriangleAlert size="1rem" />
+              Could not refresh the code. Retrying…
+            </span>
+          ) : (
+            <>
+              <RefreshCw
+                size="1rem"
+                className={generating ? "animate-spin" : ""}
+              />
+              <span>
+                Refreshes in {mins}:{secs.toString().padStart(2, "0")}
+              </span>
+            </>
+          )}
         </div>
 
         <p className="text-xs text-muted-foreground font-mono break-all max-w-sm">
