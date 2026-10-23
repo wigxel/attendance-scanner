@@ -29,6 +29,7 @@ export function GuestCheckInIntegrated({
         await checkInExistingGuest({
           guestUserId: values.guestUserId ?? "",
           hostUserId: values.hostUserId,
+          guestType: values.guestType,
         });
         toast.success("Guest checked in");
       } else {
@@ -38,6 +39,7 @@ export function GuestCheckInIntegrated({
           email: values.email ?? "",
           phone: values.phone,
           hostUserId: values.hostUserId,
+          guestType: values.guestType,
         });
         toast.success(`${values.firstName} ${values.lastName} checked in`);
       }

@@ -28,6 +28,17 @@ import {
 } from "./register_common";
 import { featureRequestStatus, PlanImpl } from "./shared";
 
+/**
+ * `daily_register.timestamp` is stored as a UTC `Z` string and range-filtered
+ * by string comparison, so bounds must be UTC too. Browser callers can send
+ * local-offset ISO (e.g. `2026-10-14T00:00:00+01:00`), which compares before
+ * the UTC value it means and silently drops rows.
+ */
+function toUtcIso(value: string): string {
+  const time = Date.parse(value);
+  return Number.isNaN(time) ? value : new Date(time).toISOString();
+}
+
 export const authUser = query({
   args: {},
   handler: async (ctx) => {
@@ -205,7 +216,9 @@ export const countAttendance = query({
     const count = await ctx.db
       .query("daily_register")
       .withIndex("by_timestamp", (q) =>
-        q.gte("timestamp", args.start).lte("timestamp", args.end),
+        q
+          .gte("timestamp", toUtcIso(args.start))
+          .lte("timestamp", toUtcIso(args.end)),
       )
       .collect();
 
@@ -230,8 +243,8 @@ export const getAttendanceByMonth = query({
       .withIndex("user", (q) => q.eq("userId", userId))
       .filter((q) =>
         q.and(
-          q.gte(q.field("timestamp"), args.start),
-          q.lte(q.field("timestamp"), args.end),
+          q.gte(q.field("timestamp"), toUtcIso(args.start)),
+          q.lte(q.field("timestamp"), toUtcIso(args.end)),
         ),
       )
       .take(limit);
@@ -348,7 +361,9 @@ export const getDailyRegister = query({
     const registers = await ctx.db
       .query("daily_register")
       .withIndex("by_timestamp", (q) =>
-        q.gte("timestamp", args.start).lte("timestamp", args.end),
+        q
+          .gte("timestamp", toUtcIso(args.start))
+          .lte("timestamp", toUtcIso(args.end)),
       )
       .order("desc")
       .take(limit);

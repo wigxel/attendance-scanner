@@ -100,6 +100,12 @@ export function MobileMenuContent(props: MobileMenuContentProps) {
 
   const ctx = useMobileMenu();
 
+  // The portal only exists in the browser; render nothing until after mount so
+  // the first client render matches SSR instead of hydrating a portal node
+  // where the server emitted the page content.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
@@ -171,9 +177,7 @@ export function MobileMenuContent(props: MobileMenuContentProps) {
     }
   }, [ctx.open]);
 
-  // Create a simple portal target
-  const portalRoot = typeof document !== "undefined" ? document.body : null;
-  if (!portalRoot) return null;
+  if (!mounted) return null;
 
   const panel = (
     <div
@@ -221,5 +225,5 @@ export function MobileMenuContent(props: MobileMenuContentProps) {
     </div>
   );
 
-  return createPortal(panel, portalRoot);
+  return createPortal(panel, document.body);
 }

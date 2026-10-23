@@ -280,8 +280,36 @@ describe("insertGuestVisit", () => {
         .unique(),
     );
 
-    expect(row?.access.visiting).toEqual({ hostUserId });
+    expect(row?.access.visiting).toEqual({
+      hostUserId,
+      guestType: "visitor",
+    });
     expect(row?.admitted_by).toBe("staff-1");
+  });
+
+  it("records an explicit guest type", async () => {
+    const t = convexTest(schema, modules);
+    aggregateTest.register(t, "customerStats");
+
+    const { hostUserId, guestUserId } = await seedHostAndGuest(t);
+
+    await t.run((ctx) =>
+      insertGuestVisit(ctx, {
+        guestUserId,
+        hostUserId,
+        admittedBy: "staff-1",
+        guestType: "student",
+      }),
+    );
+
+    const row = await t.run(async (ctx) =>
+      ctx.db
+        .query("daily_register")
+        .filter((q) => q.eq(q.field("userId"), guestUserId))
+        .unique(),
+    );
+
+    expect(row?.access.visiting?.guestType).toBe("student");
   });
 
   it("rejects a guest who is their own host", async () => {

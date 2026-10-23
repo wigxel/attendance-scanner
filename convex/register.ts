@@ -14,11 +14,12 @@ import {
   requireHostRegisteredToday,
 } from "./register_common";
 import {
+  assertMinKobo,
   CurrencyImpl,
+  guestTypeValidator,
   PlanError,
   PlanImpl,
   RegisterImpl,
-  assertMinKobo,
 } from "./shared";
 
 const Timezone = {
@@ -446,6 +447,7 @@ export const checkInGuest = mutation({
     email: v.string(),
     phone: v.optional(v.string()),
     hostUserId: v.string(),
+    guestType: v.optional(guestTypeValidator),
     visitorId: v.optional(v.string()),
     browser: v.optional(v.string()),
   },
@@ -470,6 +472,7 @@ export const checkInGuest = mutation({
       guestUserId,
       hostUserId: args.hostUserId,
       admittedBy: scannerId,
+      guestType: args.guestType,
       visitorId: args.visitorId,
       browser: args.browser,
     });
@@ -487,6 +490,7 @@ export const checkInExistingGuest = mutation({
   args: {
     guestUserId: v.string(),
     hostUserId: v.string(),
+    guestType: v.optional(guestTypeValidator),
     visitorId: v.optional(v.string()),
     browser: v.optional(v.string()),
   },
@@ -509,6 +513,7 @@ export const checkInExistingGuest = mutation({
       guestUserId: args.guestUserId,
       hostUserId: args.hostUserId,
       admittedBy: scannerId,
+      guestType: args.guestType,
       visitorId: args.visitorId,
       browser: args.browser,
     });

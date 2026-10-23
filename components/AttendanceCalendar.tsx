@@ -1,6 +1,13 @@
 "use client";
 import { useQuery } from "convex/react";
-import { addDays, addMonths, format, formatISO, parseISO } from "date-fns";
+import {
+  addDays,
+  addMonths,
+  endOfDay,
+  format,
+  parseISO,
+  startOfDay,
+} from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion as m } from "motion/react";
 import { createStore, useStore } from "zustand";
@@ -56,8 +63,8 @@ function useAttendanceList() {
   return (
     useQuery(api.myFunctions.getAttendanceByMonth, {
       userId: profile?.id,
-      start: formatISO(addDays(addMonths(month, -1), 1)),
-      end: formatISO(addDays(addMonths(month, 1), -1)),
+      start: startOfDay(addDays(addMonths(month, -1), 1)).toISOString(),
+      end: endOfDay(addDays(addMonths(month, 1), -1)).toISOString(),
     }) || []
   );
 }
