@@ -4,7 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useState } from "react";
 import { useEvent } from "react-use-event-hook";
 import { generateQRToken } from "@/app/actions/encrypt";
-import { AppSpinner } from "@/components/loader";
+import { AppLoader, AppSpinner } from "@/components/loader";
 import { APP_URL } from "@/config/constants";
 import { useAuthId } from "@/hooks/auth";
 
@@ -23,24 +23,18 @@ type QrPanelProps = {
 };
 
 function QrPanel({ token, qrUrl, generating }: QrPanelProps) {
-  // No valid token: keep the QR shape on screen but unreadable, like the
-  // account page blurred placeholder.
+  // No valid token: keep the QR shape on screen but unreadable, using the same
+  // frosted overlay as the account page QR.
   const scannable = token !== null;
 
   return (
     <div className="w-[320px] h-[320px] relative overflow-hidden">
-      <QRCodeSVG
-        value={qrUrl}
-        size={320}
-        fgColor="#000000"
-        bgColor="#ffffff"
-        className={scannable ? "" : "blur-lg"}
-      />
+      <QRCodeSVG value={qrUrl} size={320} fgColor="#000000" bgColor="#ffffff" />
 
       {!scannable && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 bg-white/[0.3] backdrop-blur-lg flex items-center justify-center">
           {generating ? (
-            <AppSpinner size="xl" />
+            <AppLoader />
           ) : (
             <span className="bg-white/80 text-muted-foreground font-mono px-4 py-2 rounded-full text-xs">
               No active code
@@ -123,7 +117,7 @@ export default function DisplayQRCSR() {
         </p>
 
         <div
-          className={`relative bg-white p-4 rounded-2xl shadow-lg border transition-opacity ${generating ? "opacity-50" : "opacity-100"}`}
+          className={`relative bg-white p-4 rounded-2xl shadow-lg border transition-opacity ${generating && token ? "opacity-50" : "opacity-100"}`}
         >
           <QrPanel token={token} qrUrl={qrUrl} generating={generating} />
         </div>
