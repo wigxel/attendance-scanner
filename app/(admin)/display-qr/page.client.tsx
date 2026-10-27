@@ -1,5 +1,5 @@
 "use client";
-import { RefreshCw, TriangleAlert } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useState } from "react";
 import { useEvent } from "react-use-event-hook";
@@ -23,23 +23,31 @@ type QrPanelProps = {
 };
 
 function QrPanel({ token, qrUrl, generating }: QrPanelProps) {
-  if (token) {
-    return (
-      <QRCodeSVG value={qrUrl} size={320} fgColor="#000000" bgColor="#ffffff" />
-    );
-  }
-
-  if (generating) {
-    return (
-      <div className="w-[320px] h-[320px] flex items-center justify-center">
-        <AppSpinner size="xl" />
-      </div>
-    );
-  }
+  // No valid token: keep the QR shape on screen but unreadable, like the
+  // account page blurred placeholder.
+  const scannable = token !== null;
 
   return (
-    <div className="w-[320px] h-[320px] flex items-center justify-center text-muted-foreground">
-      No active code
+    <div className="w-[320px] h-[320px] relative overflow-hidden">
+      <QRCodeSVG
+        value={qrUrl}
+        size={320}
+        fgColor="#000000"
+        bgColor="#ffffff"
+        className={scannable ? "" : "blur-lg"}
+      />
+
+      {!scannable && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          {generating ? (
+            <AppSpinner size="xl" />
+          ) : (
+            <span className="bg-white/80 text-muted-foreground font-mono px-4 py-2 rounded-full text-xs">
+              No active code
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -49,7 +57,6 @@ export default function DisplayQRCSR() {
   const [token, setToken] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(REFRESH_INTERVAL);
   const [generating, setGenerating] = useState(true);
-  const [failed, setFailed] = useState(false);
 
   const refreshToken = useEvent(async (adminId: string) => {
     setGenerating(true);
@@ -57,12 +64,10 @@ export default function DisplayQRCSR() {
       const t = await generateQRToken(adminId);
       setToken(t);
       setCountdown(REFRESH_INTERVAL);
-      setFailed(false);
       return true;
     } catch {
-      // Keep the kiosk honest: never leave an expired QR on screen.
+      // Keep the kiosk honest: never leave an expired QR scannable.
       setToken(null);
-      setFailed(true);
       return false;
     } finally {
       setGenerating(false);
@@ -124,25 +129,10 @@ export default function DisplayQRCSR() {
         </div>
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {failed ? (
-            <span
-              className="flex items-center gap-2 text-destructive"
-              role="status"
-            >
-              <TriangleAlert size="1rem" />
-              Could not refresh the code. Retrying…
-            </span>
-          ) : (
-            <>
-              <RefreshCw
-                size="1rem"
-                className={generating ? "animate-spin" : ""}
-              />
-              <span>
-                Refreshes in {mins}:{secs.toString().padStart(2, "0")}
-              </span>
-            </>
-          )}
+          <RefreshCw size="1rem" className={generating ? "animate-spin" : ""} />
+          <span>
+            Refreshes in {mins}:{secs.toString().padStart(2, "0")}
+          </span>
         </div>
 
         <p className="text-xs text-muted-foreground font-mono break-all max-w-sm">
