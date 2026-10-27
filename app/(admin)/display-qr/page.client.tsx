@@ -4,11 +4,47 @@ import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useState } from "react";
 import { useEvent } from "react-use-event-hook";
 import { generateQRToken } from "@/app/actions/encrypt";
-import { AppSpinner } from "@/components/loader";
+import { AppLoader, AppSpinner } from "@/components/loader";
 import { APP_URL } from "@/config/constants";
 import { useAuthId } from "@/hooks/auth";
 
 const REFRESH_INTERVAL = 5 * 60 * 1000;
+const RETRY_INTERVAL = 15 * 1000;
+
+/** QR payloads expire after 5 minutes: retry fast after a failed refresh. */
+export function nextRefreshDelay(succeeded: boolean): number {
+  return succeeded ? REFRESH_INTERVAL : RETRY_INTERVAL;
+}
+
+type QrPanelProps = {
+  token: string | null;
+  qrUrl: string;
+  generating: boolean;
+};
+
+function QrPanel({ token, qrUrl, generating }: QrPanelProps) {
+  // No valid token: keep the QR shape on screen but unreadable, using the same
+  // frosted overlay as the account page QR.
+  const scannable = token !== null;
+
+  return (
+    <div className="w-[320px] h-[320px] relative overflow-hidden">
+      <QRCodeSVG value={qrUrl} size={320} fgColor="#000000" bgColor="#ffffff" />
+
+      {!scannable && (
+        <div className="absolute inset-0 bg-white/[0.3] backdrop-blur-lg flex items-center justify-center">
+          {generating ? (
+            <AppLoader />
+          ) : (
+            <span className="bg-white/80 text-muted-foreground font-mono px-4 py-2 rounded-full text-xs">
+              No active code
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function DisplayQRCSR() {
   const { id: authUserId, isLoading } = useAuthId();
@@ -22,6 +58,11 @@ export default function DisplayQRCSR() {
       const t = await generateQRToken(adminId);
       setToken(t);
       setCountdown(REFRESH_INTERVAL);
+      return true;
+    } catch {
+      // Keep the kiosk honest: never leave an expired QR scannable.
+      setToken(null);
+      return false;
     } finally {
       setGenerating(false);
     }
@@ -30,13 +71,21 @@ export default function DisplayQRCSR() {
   useEffect(() => {
     if (isLoading || !authUserId) return;
 
-    refreshToken(authUserId);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
 
-    const interval = setInterval(() => {
-      refreshToken(authUserId);
-    }, REFRESH_INTERVAL);
+    const refresh = async (adminId: string) => {
+      const succeeded = await refreshToken(adminId);
+      if (cancelled) return;
+      timer = setTimeout(() => refresh(adminId), nextRefreshDelay(succeeded));
+    };
 
-    return () => clearInterval(interval);
+    refresh(authUserId);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [isLoading, refreshToken, authUserId]);
 
   useEffect(() => {
@@ -68,20 +117,9 @@ export default function DisplayQRCSR() {
         </p>
 
         <div
-          className={`relative bg-white p-4 rounded-2xl shadow-lg border transition-opacity ${generating ? "opacity-50" : "opacity-100"}`}
+          className={`relative bg-white p-4 rounded-2xl shadow-lg border transition-opacity ${generating && token ? "opacity-50" : "opacity-100"}`}
         >
-          {token ? (
-            <QRCodeSVG
-              value={qrUrl}
-              size={320}
-              fgColor="#000000"
-              bgColor="#ffffff"
-            />
-          ) : (
-            <div className="w-[320px] h-[320px] flex items-center justify-center">
-              <AppSpinner size="xl" />
-            </div>
-          )}
+          <QrPanel token={token} qrUrl={qrUrl} generating={generating} />
         </div>
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
