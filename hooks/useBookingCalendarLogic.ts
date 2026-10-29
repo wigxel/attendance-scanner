@@ -1,5 +1,6 @@
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import {
   setEndDate,
@@ -10,6 +11,7 @@ import {
   useBookingStore,
 } from "@/app/reserve/store";
 import { api } from "@/convex/_generated/api";
+import { getReservablePlans, resolvePlanKey } from "@/lib/booking-plans";
 import { safeArray, safeInt } from "@/lib/data.helpers";
 import { DurationGroupImpl } from "@/lib/date-range";
 import { anomaly } from "@/lib/error.helpers";
@@ -27,6 +29,27 @@ export const useBookingCalendarLogic = () => {
     | AccessPlan[]
     | undefined;
 
+  // Auto-select the first reservable plan so Proceed works without opening the
+  // dropdown, and so a planKey persisted from an older plan set is replaced.
+  useEffect(() => {
+    if (!accessPlans) {
+      return;
+    }
+
+    const plans = getReservablePlans(accessPlans);
+
+    if (plans.length === 0 || plans.some((plan) => plan.key === planKey)) {
+      return;
+    }
+
+    const [firstPlan] = plans;
+
+    setPlanKey(firstPlan.key);
+    setTimePeriodString(
+      DurationGroupImpl.resolveFromDays(firstPlan.no_of_days),
+    );
+  }, [accessPlans, planKey]);
+
   if (!accessPlans) {
     return {
       reserved: [] as { startDate: Date; endDate: Date }[],
@@ -42,9 +65,8 @@ export const useBookingCalendarLogic = () => {
     };
   }
 
-  const reservablePlans = accessPlans.filter((p) =>
-    p.features.includes("booking"),
-  );
+  const reservablePlans = getReservablePlans(accessPlans);
+  const activePlanKey = resolvePlanKey(planKey, reservablePlans);
 
   const reserved: {
     startDate: Date;
@@ -86,7 +108,7 @@ export const useBookingCalendarLogic = () => {
       return toast.info("Please select another date. We're closed on Sundays");
     }
 
-    const currentPlan = accessPlans.find((p) => p.key === planKey);
+    const currentPlan = accessPlans.find((p) => p.key === activePlanKey);
     const timePeriod = safeInt(currentPlan?.no_of_days, 0);
 
     if (!currentPlan) {
@@ -120,7 +142,7 @@ export const useBookingCalendarLogic = () => {
     handleDateChange,
     formatDate,
     timePeriodString,
-    planKey,
+    planKey: activePlanKey,
     reservablePlans,
     handleTimePeriodChange,
     handleProceed,
