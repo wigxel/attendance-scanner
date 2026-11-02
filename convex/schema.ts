@@ -273,13 +273,17 @@ const kpiInstances = defineTable({
 }).index("by_date", ["date"]);
 
 // Browser web-push subscriptions (PWA). One row per browser endpoint;
-// subscribe upserts by endpoint. No user linkage — fan-out to all.
+// subscribe upserts by endpoint. `recipientKey` (`user:<id>`) is absent on
+// rows stored before it existed — those still receive broadcast deliveries.
 const pushSubscriptions = defineTable({
   endpoint: v.string(),
   p256dh: v.string(),
   auth: v.string(),
+  recipientKey: v.optional(v.string()),
   createdAt: v.number(),
-}).index("by_endpoint", ["endpoint"]);
+})
+  .index("by_endpoint", ["endpoint"])
+  .index("by_recipient_key", ["recipientKey"]);
 
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.

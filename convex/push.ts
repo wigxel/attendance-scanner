@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
+import { readId } from "./myFunctions";
 
 // — push subscription storage (app concern, not part of the roomMetrics
 // component). The "use node" sender lives in pushSender.ts; node files
@@ -15,9 +16,16 @@ export const vapidPublicKey = query({
   },
 });
 
+// Stamps the signed-in user on the row so a delivery addressed to
+// `user:<id>` reaches only that user's devices. Unauthenticated browsers
+// (and rows stored before recipientKey existed) stay unkeyed and only
+// receive broadcast deliveries.
 export const subscribe = mutation({
   args: { endpoint: v.string(), p256dh: v.string(), auth: v.string() },
   handler: async (ctx, args): Promise<void> => {
+    const userId = await readId(ctx);
+    const recipientKey = userId ? `user:${userId}` : undefined;
+
     const existing = await ctx.db
       .query("pushSubscriptions")
       .withIndex("by_endpoint", (q) => q.eq("endpoint", args.endpoint))
@@ -27,6 +35,7 @@ export const subscribe = mutation({
       await ctx.db.patch(existing._id, {
         p256dh: args.p256dh,
         auth: args.auth,
+        recipientKey: recipientKey ?? existing.recipientKey,
         createdAt: Date.now(),
       });
       return;
@@ -36,6 +45,7 @@ export const subscribe = mutation({
       endpoint: args.endpoint,
       p256dh: args.p256dh,
       auth: args.auth,
+      recipientKey,
       createdAt: Date.now(),
     });
   },
@@ -55,9 +65,19 @@ export const unsubscribe = mutation({
   },
 });
 
+// omit recipientKey for the whole fan-out list (broadcasts)
 export const listSubscriptions = query({
-  args: {},
-  handler: async (ctx): Promise<PushSubscriptionDoc[]> => {
+  args: { recipientKey: v.optional(v.string()) },
+  handler: async (ctx, args): Promise<PushSubscriptionDoc[]> => {
+    const key = args.recipientKey;
+
+    if (key !== undefined) {
+      return await ctx.db
+        .query("pushSubscriptions")
+        .withIndex("by_recipient_key", (q) => q.eq("recipientKey", key))
+        .take(500);
+    }
+
     return await ctx.db.query("pushSubscriptions").take(500);
   },
 });

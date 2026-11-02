@@ -11,6 +11,7 @@ const BATCH = 20;
 
 type DeliveryRow = {
   _id: string;
+  recipientKey: string;
   channel: "push" | "email";
   to?: string;
   title: string;
@@ -19,6 +20,15 @@ type DeliveryRow = {
 };
 
 type SubscriptionRow = { endpoint: string; p256dh: string; auth: string };
+
+// Broadcast deliveries (`broadcast:<topic>`) fan out to every subscription;
+// a per-user delivery (`user:<id>`) only reaches that user's devices.
+const BROADCAST_PREFIX = "broadcast:";
+
+const isBroadcast = (recipientKey: string) =>
+  recipientKey.startsWith(BROADCAST_PREFIX);
+
+type SubscriptionFor = (recipientKey: string) => Promise<SubscriptionRow[]>;
 
 // retryable=false means retrying cannot help (bad config, no recipient),
 // so the row goes straight to "failed" with the reason logged.
@@ -45,13 +55,8 @@ export const deliver = internalAction({
     if (rows.length === 0) return null;
 
     const pushRows = rows.filter((row) => row.channel === "push");
-    const subscriptions = pushRows.length
-      ? ((await ctx.runQuery(
-          api.push.listSubscriptions,
-          {},
-        )) as SubscriptionRow[])
-      : [];
     const push = pushRows.length ? await setupPush() : null;
+    const subscriptions = subscriptionsByRecipient(ctx);
 
     for (const row of rows) {
       try {
@@ -80,13 +85,33 @@ type PushSetup =
   | { webpush: Awaited<ReturnType<typeof loadWebpush>>; failure?: undefined }
   | { webpush?: undefined; failure: SendError };
 
+// one query per distinct recipient per drain, however many rows it has
+const subscriptionsByRecipient = (ctx: ActionCtx): SubscriptionFor => {
+  const cache = new Map<string | undefined, SubscriptionRow[]>();
+
+  return async (recipientKey) => {
+    // broadcasts fan out to every device, keyed or not
+    const key = isBroadcast(recipientKey) ? undefined : recipientKey;
+    const cached = cache.get(key);
+    if (cached) return cached;
+
+    const rows = (await ctx.runQuery(
+      api.push.listSubscriptions,
+      key === undefined ? {} : { recipientKey: key },
+    )) as SubscriptionRow[];
+
+    cache.set(key, rows);
+    return rows;
+  };
+};
+
 const deliverRow = async (
   ctx: ActionCtx,
   row: DeliveryRow,
   push: PushSetup | null,
-  subscriptions: SubscriptionRow[],
+  subscriptionsFor: SubscriptionFor,
 ) => {
-  if (row.channel === "push") return sendPush(ctx, push, subscriptions, row);
+  if (row.channel === "push") return sendPush(ctx, push, subscriptionsFor, row);
   return sendEmail(row);
 };
 
@@ -129,19 +154,26 @@ async function loadWebpush() {
   return webpush;
 }
 
-// Push is a broadcast today: every stored subscription gets every push
-// delivery. Per-recipient routing needs a user key on pushSubscriptions.
+// Broadcasts go to every stored subscription. A per-user delivery goes to
+// that user's keyed subscriptions only; having no device registered is not a
+// delivery failure, so the row is marked sent rather than retried forever.
 async function sendPush(
   ctx: ActionCtx,
   push: PushSetup | null,
-  subscriptions: SubscriptionRow[],
+  subscriptionsFor: SubscriptionFor,
   row: DeliveryRow,
 ) {
   if (!push) throw new SendError("web-push is unavailable", false);
   if (push.failure) throw push.failure;
   const webpush = push.webpush;
+
+  const subscriptions = await subscriptionsFor(row.recipientKey);
   if (subscriptions.length === 0) {
-    throw new SendError("no push subscriptions", false);
+    if (isBroadcast(row.recipientKey)) {
+      throw new SendError("no push subscriptions", false);
+    }
+    console.warn(`push: no subscriptions for ${row.recipientKey}`);
+    return;
   }
 
   const payload = JSON.stringify({
