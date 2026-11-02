@@ -81,6 +81,35 @@ export const suggestionDeletedAudit = makeAudit<{
   highlights: ["title"],
 });
 
+export const planCreatedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"accessPlans">;
+  key: string;
+  name: string;
+  price: number;
+  no_of_days: number;
+}>({
+  action: "plan.created",
+  targetType: "accessPlan",
+  highlights: ["key", "name", "price"],
+});
+
+export const planUpdatedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"accessPlans">;
+  key: string;
+  name: string;
+  price: number;
+  no_of_days: number;
+  previousName: string;
+  previousPrice: number;
+  previousNoOfDays: number;
+}>({
+  action: "plan.updated",
+  targetType: "accessPlan",
+  highlights: ["name", "price", "previousPrice"],
+});
+
 export const planDeletedAudit = makeAudit<{
   actorId: string;
   targetId: Id<"accessPlans">;
