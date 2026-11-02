@@ -152,11 +152,11 @@ export function AlertsSection() {
                   key={alert._id}
                   className={
                     alert.acknowledged
-                      ? "flex items-center justify-between gap-3 opacity-70"
-                      : "flex items-center justify-between gap-3"
+                      ? "flex flex-col gap-2 opacity-70"
+                      : "flex flex-col gap-2"
                   }
                 >
-                  <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
+                  <div className="flex flex-col gap-1">
                     <span className="flex items-baseline gap-2">
                       <span
                         className={
@@ -176,7 +176,7 @@ export function AlertsSection() {
                       {alert.detail}
                     </span>
                   </div>
-                  <span className="flex shrink-0 items-center gap-3">
+                  <span className="flex items-center justify-between gap-3">
                     <span className="text-xs text-muted-foreground">
                       {format(new Date(alert._creationTime), "MMM d, HH:mm")}
                     </span>

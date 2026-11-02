@@ -99,7 +99,7 @@ export function InsightsSection() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
         <RoomTemperatureWidgetPure
           temperature={temperature}
           humidity={humidity}
