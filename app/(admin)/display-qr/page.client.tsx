@@ -7,6 +7,7 @@ import { generateQRToken } from "@/app/actions/encrypt";
 import { AppLoader, AppSpinner } from "@/components/loader";
 import { APP_URL } from "@/config/constants";
 import { useAuthId } from "@/hooks/auth";
+import { cn } from "@/lib/utils";
 
 const REFRESH_INTERVAL = 5 * 60 * 1000;
 const RETRY_INTERVAL = 15 * 1000;
@@ -117,13 +118,16 @@ export default function DisplayQRCSR() {
         </p>
 
         <div
-          className={`relative bg-white p-4 rounded-2xl shadow-lg border transition-opacity ${generating && token ? "opacity-50" : "opacity-100"}`}
+          className={cn(
+            "relative bg-white p-4 rounded-2xl shadow-lg border transition-opacity",
+            generating && token ? "opacity-50" : "opacity-100",
+          )}
         >
           <QrPanel token={token} qrUrl={qrUrl} generating={generating} />
         </div>
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <RefreshCw size="1rem" className={generating ? "animate-spin" : ""} />
+          <RefreshCw size="1rem" className={cn(generating && "animate-spin")} />
           <span>
             Refreshes in {mins}:{secs.toString().padStart(2, "0")}
           </span>
