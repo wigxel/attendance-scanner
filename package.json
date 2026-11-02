@@ -26,7 +26,6 @@
     "@clerk/nextjs": "^6.39.5",
     "@convex-dev/aggregate": "^0.2.1",
     "@convex-dev/auth": "^0.0.94",
-    "@demark-pro/react-booking-calendar": "^4.0.3",
     "@effect/cluster": "^0.60.2",
     "@effect/sql": "^0.52.1",
     "@fingerprintjs/fingerprintjs": "^4.6.2",
