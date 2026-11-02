@@ -206,7 +206,7 @@ export function TribesSection() {
               We have room for more.
             </p>
             <p className="mt-2 text-sm font-normal text-pretty text-muted-foreground">
-              Propose a tribe and lead it.
+              Propose a tribe
             </p>
           </a>
         </li>
@@ -217,7 +217,7 @@ export function TribesSection() {
   );
 }
 
-// /makers/tribes: PRD sub-blocks 3.3–3.7
+// /makers/tribes: PRD sub-blocks 4.3–4.7
 export function TribesDetail() {
   return (
     <div className="flex max-w-3xl flex-col gap-16">

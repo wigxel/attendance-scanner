@@ -1,7 +1,9 @@
 import { heading } from "@/app/font";
+import { BlogSection } from "@/components/makers/blog-section";
 import { BuildSection } from "@/components/makers/build";
 import { MakersHero } from "@/components/makers/hero";
 import { LeadersSection } from "@/components/makers/leaders";
+import { TrustedByMarquee } from "@/components/makers/marquee";
 // Section 3 layout variants — swap this import to compare (export name is
 // the same in all three):
 //   A "the cadastre"  — @/components/makers/tribes           (square matrix)
@@ -17,13 +19,13 @@ const SECTION_SHELLS: ReadonlyArray<{
   hidden?: boolean;
   fullBleed?: boolean;
 }> = [
-  { id: "tribes", title: "Tribes", tone: "lv1" },
-  { id: "build", tone: "base", fullBleed: true },
-  // hidden until ≥3 real artefacts are published (PRD section 5 rule),
-  // nav drops the link then — no dead link.
-  { id: "resources", title: "Resources", tone: "lv1", hidden: true },
-  { id: "leaders", title: "Community Leaders", tone: "base" },
-];
+    { id: "tribes", title: "Tribes", tone: "lv1" },
+    { id: "build", tone: "base", fullBleed: true },
+    // hidden until ≥3 real artefacts are published (PRD section 5 rule),
+    // nav drops the link then — no dead link.
+    { id: "resources", title: "Resources", tone: "lv1", hidden: true },
+    { id: "leaders", title: "Community Leaders", tone: "base" },
+  ];
 
 const toneClass = { base: "bg-background", lv1: "bg-(--background-lv1)" };
 
@@ -33,6 +35,7 @@ export default function MakersPage() {
   return (
     <>
       <MakersHero />
+      <TrustedByMarquee />
       {shells.map((shell) => (
         <section
           key={shell.id}
@@ -70,6 +73,7 @@ export default function MakersPage() {
           )}
         </section>
       ))}
+      <BlogSection />
     </>
   );
 }

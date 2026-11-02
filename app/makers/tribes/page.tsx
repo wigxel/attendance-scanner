@@ -3,7 +3,7 @@ import { TribesDetail } from "@/components/makers/tribes";
 import { cn } from "@/lib/utils";
 
 // /makers/tribes — the verification path behind the landing teaser:
-// PRD sub-blocks 3.3–3.7. Reached by "How verification works" in section 3.
+// PRD sub-blocks 4.3–4.7. Reached by "How verification works" in section 4.
 export default function MakerTribesPage() {
   return (
     <section

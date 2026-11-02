@@ -207,3 +207,27 @@
     scroll-behavior: smooth;
   }
 }
+
+/* Trusted by marquee (PRD section 2). Plain CSS loop so it runs without
+   JS; the explicit pause control is the only JS-dependent part. */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee 60s linear infinite;
+}
+
+.marquee-paused,
+.group:hover .marquee-track,
+.group:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}

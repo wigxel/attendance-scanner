@@ -26,7 +26,7 @@ export function MakersHero() {
         </h1>
       </Balancer>
 
-      {/* PRD section 2 description minus the hard count "five" (owner rule:
+      {/* PRD section 3 description minus the hard count "five" (owner rule:
           counts go stale with every tribe) — re-paste on your PRD update */}
       <p className="max-w-[60ch] text-lg text-pretty text-muted-foreground">
         Inspace Makers unites Nigerian developers and Makers. Their work is

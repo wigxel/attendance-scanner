@@ -2,9 +2,10 @@ import Image from "next/image";
 import { heading } from "@/app/font";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PERMITTED_CLIENTS } from "./clients-data";
 import { TRIBES } from "./tribes";
 
-// Section 4 — clients and partners, distinct audience from section 3.
+// Section 5 — clients and partners, distinct audience from section 4.
 // Copy is a DRAFT from the PRD's client messages — owner review pending.
 // PRD rules held here: no income promises ("paid"/"earn"/"income" appear
 // only in the section 3 developer FAQ), no client names, nothing fake.
@@ -93,7 +94,7 @@ function HireButton({ className }: { className?: string }) {
   );
 }
 
-// 4.2 rides on TRIBES so a tribe rename is one edit. No hard "five" in
+// 5.3 rides on TRIBES so a tribe rename is one edit. No hard "five" in
 // copy (owner rule: counts go stale).
 const CLAIMS: ReadonlyArray<readonly [string, string]> = [
   [
@@ -110,7 +111,7 @@ const CLAIMS: ReadonlyArray<readonly [string, string]> = [
   ],
 ];
 
-// 4.3 — the sequence a client actually walks through; numbering is the
+// 5.4 — the sequence a client actually walks through; numbering is the
 // information, on the margin axis like every other annotation
 const ENGAGEMENT: ReadonlyArray<readonly [string, string]> = [
   [
@@ -131,7 +132,7 @@ const ENGAGEMENT: ReadonlyArray<readonly [string, string]> = [
   ],
 ];
 
-// 4.6
+// 5.7
 const FAQ: ReadonlyArray<readonly [string, string]> = [
   [
     "Who works on our project?",
@@ -155,7 +156,7 @@ const FAQ: ReadonlyArray<readonly [string, string]> = [
   ],
 ];
 
-// 4.4 — real artefacts only. Empty until the community publishes real
+// 5.5 — real artefacts only. Empty until the community publishes real
 // work (PRD: nothing that is not real on the day it is shown). Batch D
 // owns this list; the block renders only while non-empty.
 const ARTEFACTS: ReadonlyArray<readonly [string, string, string]> = [];
@@ -187,7 +188,7 @@ export function BuildSection() {
           gradient is dense at the top where the H2 is, lighter below */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-transparent"
+        className="absolute inset-0 bg-linear-to-b from-black/70 via-black/30 to-transparent"
       />
       <h2
         className={cn(
@@ -212,7 +213,7 @@ export function BuildSection() {
   );
 }
 
-// /makers/build — the dedicated client page. PRD sub-blocks 4.1–4.6 on
+// /makers/build — the dedicated client page. PRD sub-blocks 5.1–5.7 on
 // the block grid.
 export function BuildDetail() {
   return (
@@ -247,7 +248,7 @@ export function BuildDetail() {
           >
             Build with Inspace Makers.
           </h1>
-          {/* 4.1 The offer */}
+          {/* 5.1 The offer */}
           <p className="max-w-[56ch] text-pretty text-muted-foreground">
             When an organisation needs software, AI, additive manufacturing,
             games or blockchain built, a build team of verified members delivers
@@ -259,6 +260,42 @@ export function BuildDetail() {
           </div>
         </Field>
       </div>
+
+      {/* PRD 5.2 Clients — a name shows only with written permission on
+          file; while none is, the block holds the fallback line only.
+          Each card would link to its project in 5.5 where one exists. */}
+      <Block id="clients" tag="Clients">
+        {PERMITTED_CLIENTS.length > 0 ? (
+          <ul className="flex flex-col gap-y-2 lg:col-span-6 lg:col-start-1">
+            {PERMITTED_CLIENTS.map((client) => (
+              <li
+                key={client.name}
+                className={cn(
+                  "grid items-baseline gap-x-8 gap-y-2 border-t border-(--border) py-4 first:border-t-0",
+                  GRID,
+                )}
+              >
+                <span className="font-medium lg:col-span-2">{client.name}</span>
+                <span className="font-mono text-xs text-muted-foreground lg:col-span-1">
+                  {client.sector}
+                </span>
+                <span className="text-muted-foreground lg:col-span-2">
+                  {client.line}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <Field>
+            {/* owner-verify these sectors are real before publish — same
+                real-only rule as everything else on the page */}
+            <p className="max-w-[56ch] text-pretty text-muted-foreground">
+              Build teams have delivered for organisations across fintech,
+              health, education and the public sector.
+            </p>
+          </Field>
+        )}
+      </Block>
 
       {/* three real client claims, same-width cells, hairline-divided:
           the one loud block — size carries importance (grid rule) */}
@@ -280,7 +317,7 @@ export function BuildDetail() {
         </Field>
       </Block>
 
-      {/* 4.2 Capabilities — dot on the margin axis, name fields 1–2,
+      {/* 5.3 Capabilities — dot on the margin axis, name fields 1–2,
           description fields 3–5; edges coincide with every other block */}
       <Block id="capabilities" tag="Capabilities">
         <ul
@@ -308,7 +345,7 @@ export function BuildDetail() {
         </ul>
       </Block>
 
-      {/* 4.3 How an engagement runs — numbers on the margin axis */}
+      {/* 5.4 How an engagement runs — numbers on the margin axis */}
       <Block id="engagement" tag="How an engagement runs">
         <ol className="flex flex-col gap-y-2 lg:col-span-6 lg:col-start-1">
           {ENGAGEMENT.map(([title, body], i) => (
@@ -334,7 +371,7 @@ export function BuildDetail() {
         </ol>
       </Block>
 
-      {/* 4.4 Proof teaser — hidden until real artefacts exist */}
+      {/* 5.5 Projects — hidden until real artefacts exist */}
       {ARTEFACTS.length > 0 && (
         <Block id="proof" tag="Proof">
           <ul className="flex flex-col gap-y-2 lg:col-span-6 lg:col-start-1">
@@ -361,7 +398,7 @@ export function BuildDetail() {
         </Block>
       )}
 
-      {/* 4.5 Partners and sponsors */}
+      {/* 5.6 Partners and sponsors */}
       <Block id="partners" tag="Partners">
         <Field>
           <p className="max-w-[56ch] text-pretty text-muted-foreground">
@@ -378,7 +415,7 @@ export function BuildDetail() {
         </Field>
       </Block>
 
-      {/* 4.6 Questions clients ask — question at the title edge, answer
+      {/* 5.7 Questions clients ask — question at the title edge, answer
           at the body edge; q/a read as aligned columns on lg */}
       <Block id="questions" tag="Questions">
         <dl className="flex flex-col gap-y-2 lg:col-span-6 lg:col-start-1">

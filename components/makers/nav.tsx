@@ -1,74 +1,28 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   MobileMenu,
-  MobileMenuContent,
-  MobileMenuTrigger,
-  useMobileMenu,
+  useMobileMenu
 } from "@/components/mobile-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// Nav links map one-to-one to page sections (PRD architecture table).
-// resourcesHidden tracks the PRD rule: fewer than three real artefacts →
-// the link is dropped, not rendered dead.
-// anchors are absolute: makers routes (/makers, /makers/tribes) both land
-// on the landing page sections
 const NAV_LINKS = [
-  { id: "tribes", label: "Tribes" },
-  { id: "build", label: "Build with Inspace Makers" },
-  { id: "resources", label: "Resources" },
-  { id: "leaders", label: "Community Leaders" },
+  { id: "Makers", label: "Makers", href: "/makers" },
+  { id: "Co-working", label: "Booking", href: "/reserve" },
+  { id: "Blog", label: "Blog", href: "/blog" },
 ] as const;
 
-const RESOURCES_HIDDEN = true; // ponytail: batch D computes from real artefact count
-
-const SECTION_IDS = ["top", ...NAV_LINKS.map((link) => link.id)] as const;
-
 export function MakersNav() {
-  const [current, setCurrent] = useState<string>("top");
-  const [scrolled, setScrolled] = useState(false);
-
-  const links = NAV_LINKS.filter(
-    (link) => !(link.id === "resources" && RESOURCES_HIDDEN),
-  );
-
-  useEffect(() => {
-    const visible = SECTION_IDS.filter(
-      (id) => !(id === "resources" && RESOURCES_HIDDEN),
-    );
-
-    const observers = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) setCurrent(entry.target.id);
-        }
-      },
-      { rootMargin: "-45% 0px -45% 0px" },
-    );
-
-    for (const id of visible) {
-      const element = document.getElementById(id);
-      if (element) observers.observe(element);
-    }
-    return () => observers.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const current = usePathname();
 
   return (
     <MobileMenu>
       <header
         className={cn(
           "sticky top-0 z-40 bg-background",
-          scrolled && "border-b border-(--border)",
         )}
       >
         <nav
@@ -79,14 +33,14 @@ export function MakersNav() {
             Inspace Makers
           </a>
           <div className="hidden items-center gap-8 font-mono text-sm lg:flex">
-            {links.map((link) => (
+            {NAV_LINKS.map((link) => (
               <a
                 key={link.id}
-                href={`/#${link.id}`}
-                aria-current={current === link.id ? "true" : undefined}
+                href={link.href}
+                aria-current={current === link.href ? "true" : undefined}
                 className={cn(
                   "text-muted-foreground hover:text-foreground",
-                  current === link.id && "text-foreground underline",
+                  current === link.href && "text-foreground underline",
                 )}
               >
                 {link.label}
@@ -99,17 +53,6 @@ export function MakersNav() {
           </Button>
         </nav>
       </header>
-
-      {/* established mobile menu idiom: floating trigger + portal sheet
-          (components/mobile-menu.tsx owns trap/escape/scroll-lock) */}
-      <MobileMenuTrigger className="transition-default fixed top-3 end-3.5 z-[10000] p-2">
-        <Menu className="size-5" aria-hidden />
-        <span className="sr-only">Menu</span>
-      </MobileMenuTrigger>
-
-      <MobileMenuContent innerClassName="bg-background text-foreground">
-        <MakersMenuLinks links={links} />
-      </MobileMenuContent>
     </MobileMenu>
   );
 }

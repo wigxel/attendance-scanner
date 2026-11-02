@@ -73,7 +73,7 @@ export function TribesSection() {
                 We have room for more.
               </p>
               <p className="text-sm font-normal text-pretty text-muted-foreground">
-                Propose a tribe and lead it.
+                Propose a tribe
               </p>
             </div>
             {/* the index column stays empty — no /06 on an open slot */}

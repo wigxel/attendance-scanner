@@ -1,7 +1,7 @@
 import { BuildDetail } from "@/components/makers/build";
 
 // /makers/build — the client-facing page behind the landing teaser:
-// PRD sub-blocks 4.1–4.6 for the clients audience, on the block grid
+// PRD sub-blocks 5.1–5.7 for the clients audience, on the block grid
 // (1 margin field + 5 content fields). Reached from #build on the
 // landing; hero "Hire a build team" still scrolls there first.
 export default function MakersBuildPage() {

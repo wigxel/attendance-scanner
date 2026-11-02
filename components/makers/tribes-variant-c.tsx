@@ -49,7 +49,7 @@ export function TribesSection() {
               We have room for more.
             </p>
             <p className="text-sm font-normal text-pretty text-muted-foreground">
-              Propose a tribe and lead it.
+              Propose a tribe
             </p>
           </a>
         </li>

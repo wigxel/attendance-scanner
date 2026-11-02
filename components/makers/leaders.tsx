@@ -6,7 +6,7 @@ import { useState } from "react";
 import { heading } from "@/app/font";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ApplyLink, TRIBES } from "./tribes";
+import { TRIBES } from "./tribes";
 
 type Leader = {
   name: string;

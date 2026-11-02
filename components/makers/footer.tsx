@@ -7,7 +7,30 @@ import { cn } from "@/lib/utils";
 // Footer on makers routes (app/makers/layout.tsx): the shared footer speaks
 // for the product, not the community page. Both buttons are mailto until
 // batch F ships the form modals — same precedent as the build-team enquiry.
-// id="contact" is the target every ApplyLink scrolls to.
+// id="contact" is the target every ApplyLink scrolls to. The sitemap nav
+// doubles the footer as the site map: every makers route is reachable here.
+const SITEMAP = [
+  {
+    heading: "The community",
+    links: [
+      ["Home", "/makers"],
+      ["Tribes", "/makers#tribes"],
+      ["Community Leaders", "/makers#leaders"],
+    ],
+  },
+  {
+    heading: "For organisations",
+    links: [["Build with Inspace Makers", "/makers/build"]],
+  },
+  {
+    heading: "The record",
+    links: [
+      ["What we shipped", "/makers#blog"],
+      ["Weekly logs", "/makers/logs"],
+    ],
+  },
+] as const;
+
 export function MakersFooter() {
   return (
     <footer id="contact" className="scroll-mt-16 border-t border-(--border)">
@@ -19,7 +42,7 @@ export function MakersFooter() {
               "max-w-[22ch] tracking-tight text-3xl text-pretty md:text-5xl",
             )}
           >
-            Start with a visit.
+            We are stronger together
           </p>
           <div className="flex flex-col gap-3 sm:flex-row md:ml-auto">
             <Button asChild size="lg">
@@ -34,6 +57,32 @@ export function MakersFooter() {
             </Button>
           </div>
         </div>
+
+        {/* standard-footer sitemap: every makers route, reachable from here */}
+        <nav
+          aria-label="Sitemap"
+          className="grid gap-8 border-t border-(--border) pt-12 sm:grid-cols-3"
+        >
+          {SITEMAP.map((group) => (
+            <div key={group.heading} className="flex flex-col gap-3">
+              <p className="font-mono text-xs text-muted-foreground">
+                {group.heading}
+              </p>
+              <ul className="flex flex-col gap-2 text-sm">
+                {group.links.map(([label, href]) => (
+                  <li key={href}>
+                    <a
+                      href={href}
+                      className="underline-offset-4 hover:underline"
+                    >
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
 
         <div className="flex flex-col gap-2 font-mono text-xs text-muted-foreground sm:flex-row sm:justify-between">
           <span>
