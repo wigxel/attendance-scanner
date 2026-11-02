@@ -86,6 +86,22 @@ export const getVisitHistory = query({
   },
 });
 
+// when this customer was registered: the write time of their earliest scan
+// row (the `user` index orders by userId then _creationTime, so the first
+// row returned is the first one written). No scans yet means no registration.
+export const getRegistration = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args): Promise<number | null> => {
+    const firstScan = await ctx.db
+      .query("daily_register")
+      .withIndex("user", (q) => q.eq("userId", args.userId))
+      .order("asc")
+      .first();
+
+    return firstScan?._creationTime ?? null;
+  },
+});
+
 export const getCustomerVisitTrend = query({
   args: {
     userId: v.string(),
