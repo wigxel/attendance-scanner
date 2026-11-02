@@ -1,11 +1,19 @@
 import { ConvexError, v } from "convex/values";
-import { addDays, endOfDay, format, startOfDay, subDays } from "date-fns";
+import {
+  addDays,
+  differenceInHours,
+  endOfDay,
+  format,
+  startOfDay,
+  subDays,
+} from "date-fns";
 import { Effect, pipe } from "effect";
 import { isNullable } from "effect/Predicate";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
+import { guestConversionAudit } from "./audits/entities";
 import { visitsAggregate } from "./customers";
 import { findOrCreateUser, readId } from "./myFunctions";
 import {
@@ -322,6 +330,82 @@ export const updateTodaysRegisterAccess = mutation({
         ...(record.access.visiting ? { visiting: record.access.visiting } : {}),
       },
     });
+
+    return "success" as const;
+  },
+});
+
+/**
+ * Reclassifies today's visit as a guest visit. The access kind and plan fields
+ * are kept as they are, so payment and duration data survive; only the
+ * `visiting` link is added.
+ */
+export const markTodaysVisitAsGuest = mutation({
+  args: {
+    userId: v.string(),
+    hostUserId: v.string(),
+    guestType: v.optional(guestTypeValidator),
+  },
+  handler: async (ctx, args) => {
+    const actorId = await readId(ctx);
+    if (!actorId) {
+      throw new ConvexError("User not authenticated");
+    }
+
+    await requirePrivilege(ctx, "attendance:checkin");
+
+    if (args.userId === args.hostUserId) {
+      throw new ConvexError("A customer cannot be their own guest.");
+    }
+
+    const today = new Date();
+    const record = await ctx.db
+      .query("daily_register")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), args.userId),
+          q.gte(q.field("timestamp"), startOfDay(today).toISOString()),
+          q.lte(q.field("timestamp"), endOfDay(today).toISOString()),
+        ),
+      )
+      .first();
+
+    if (!record) {
+      throw new ConvexError("Customer not found in today's register.");
+    }
+
+    // Reservations stay read-only, same as the plan edit.
+    if (!isNullable(record.ticketId)) {
+      throw new ConvexError("Cannot modify a reserved booking.");
+    }
+
+    // Mirrors can_modify_plan in the attendance drawer.
+    if (differenceInHours(Date.now(), record.timestamp) >= 24) {
+      throw new ConvexError("Record is older than 24 hours.");
+    }
+
+    await requireHostRegisteredToday(ctx, args.hostUserId);
+
+    const guestType = args.guestType ?? "visitor";
+    const guestAccess = {
+      ...record.access,
+      visiting: { hostUserId: args.hostUserId, guestType },
+    };
+
+    await ctx.db.patch(record._id, { access: guestAccess });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.audit.log,
+      guestConversionAudit({
+        actorId,
+        targetId: record._id,
+        userId: args.userId,
+        hostUserId: args.hostUserId,
+        guestType,
+        previousKind: record.access.kind,
+      }),
+    );
 
     return "success" as const;
   },
