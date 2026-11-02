@@ -24,6 +24,7 @@ import {
   Package2Icon,
   PackageIcon,
   ReceiptIcon,
+  UserCheck,
   UserPlus,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -35,6 +36,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { Drawer } from "vaul";
 import { createColumns } from "@/components/columns";
 import { AppDataTable } from "@/components/DataTable";
+import { ConvertToRegularDialog } from "@/components/guests/ConvertToRegularDialog";
 import { GuestCheckInDialog } from "@/components/guests/GuestCheckInDialog";
 import { RoleHasCSR } from "@/components/RoleHasCSR";
 import {
@@ -582,6 +584,15 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
           <span className="text-muted-foreground">Invited by </span>
           <span className="font-semibold">{hostName}</span>
         </div>
+      ) : null}
+
+      {isGuest && can_modify_plan ? (
+        <ConvertToRegularDialog userId={entry.userId}>
+          <Button variant="outline" size="sm" className="w-full">
+            <UserCheck className="h-4 w-4 mr-1" />
+            Mark as regular visit
+          </Button>
+        </ConvertToRegularDialog>
       ) : null}
 
       <ul className={"flex flex-col gap-4"}>
