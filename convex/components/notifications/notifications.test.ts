@@ -83,7 +83,7 @@ describe("notifications queue", () => {
     await t.mutation(api.index.claim, { now: Date.now() });
     await t.mutation(api.index.markFailed, {
       deliveryId,
-      error: "resend 503: busy",
+      error: "zeptomail 503: busy",
     });
     let [row] = await t.query(api.index.listDeliveries, {
       recipientKey: "user:1",
@@ -96,12 +96,12 @@ describe("notifications queue", () => {
       await t.mutation(api.index.claim, { now: Date.now() + 2 * 60 * 60_000 });
       await t.mutation(api.index.markFailed, {
         deliveryId,
-        error: "resend 503: busy",
+        error: "zeptomail 503: busy",
       });
     }
     [row] = await t.query(api.index.listDeliveries, { recipientKey: "user:1" });
     expect(row.status).toBe("failed");
-    expect(row.error).toBe("resend 503: busy");
+    expect(row.error).toBe("zeptomail 503: busy");
   });
 
   it("fails immediately on a non-retryable error", async () => {
@@ -114,7 +114,7 @@ describe("notifications queue", () => {
     await t.mutation(api.index.claim, { now: Date.now() });
     await t.mutation(api.index.markFailed, {
       deliveryId: queued[0],
-      error: "RESEND_API_KEY is not set",
+      error: "ZEPTOMAIL_TOKEN is not set",
       retryable: false,
     });
 
