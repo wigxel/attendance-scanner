@@ -12,6 +12,81 @@ Convex agent skills for common tasks can be installed by running
 
 <!-- convex-ai-end -->
 
+## Pull requests
+
+Never push to `main`. Every change lands through a PR against `main`.
+
+### Branch
+
+Branch from a fresh `origin/main`, one concern per branch, named
+`<type>/<bead-id>-<slug>`:
+
+    fix/attendance-scanner-92o-zeptomail
+    feat/attendance-scanner-t4r-todoist-mirror
+
+`type` is one of `fix`, `feat`, `chore`, `refactor`, `perf`, `test`, `docs`.
+Use the full bead id (`attendance-scanner-<hash>`), never the bare `bd-<hash>`
+short form — `bd show bd-92o` fails, so a branch carrying it cannot be traced
+back to its bead. PR-feedback branches use `pr-comment/<pr-number>` instead.
+
+### Gates before you open
+
+- `pnpm vitest run <changed test files>`
+- `pnpm typecheck` — one error is expected and unrelated: `TS2307 … @/public/checkmark.svg`
+  in `app/reserve/success/page.tsx`. Anything else you introduced is yours to fix.
+- `pnpm exec biome check <changed files>`
+
+The husky pre-push hook runs that same typecheck and fails on the pre-existing
+error, so push with `git push --no-verify` and say so in the body. Never skip the
+gates themselves.
+
+### Title
+
+Conventional Commits, 72 characters at most, scope optional:
+
+    fix(display-qr): handle failed QR refresh instead of leaving a dead code
+
+### Body
+
+Keep these sections, in this order, and delete the ones that do not apply:
+
+1. `## Issue` — bead id or PostHog issue id, error text, page, occurrences.
+2. `## Evidence` — the code path and why it fails; quote the lines that matter.
+3. `## What changed` — one bullet per file, naming the behaviour change.
+4. `## Tests` — the exact commands and their results, including the known
+   typecheck error, so a reviewer knows what you did and did not run.
+5. `## Notes` or `## Not changed here` — migrations, follow-ups, related issues
+   you ruled out and why.
+
+Open with:
+
+    gh pr create --repo wigxel/attendance-scanner --base main \
+      --title "fix(scope): …" --body-file -
+
+Pipe the body in on stdin; never leave a placeholder section.
+
+### Draft or ready
+
+Open ready only when the gates above ran and the diff is complete. Use `--draft`
+when a gate could not run or the work is a first pass. Do not flip a draft to
+ready without running the gates.
+
+### Link the work
+
+- Put `Bead: <id>` (or `Closes #<n>`) in the body.
+- Comment the PR URL back on the bead: `bd comment <id> "PR: <url>"`.
+- Leave the bead open until the PR merges.
+
+### Review comments
+
+Address feedback in a new commit on the same branch — never force-push a branch
+someone has reviewed. Reply on the PR with what changed and the commit sha.
+
+### Never
+
+merge, deploy, push to `main`, close someone else's PR, or rewrite a shared
+branch's history.
+
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->
 ## Beads Issue Tracker
