@@ -20,6 +20,7 @@ import { Button } from "./ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 import { ScrollArea } from "./ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
+import { Skeleton } from "./ui/skeleton";
 
 function CustomerSheet({
   userId,
@@ -125,6 +126,7 @@ function CustomerSheet({
                 <p className="text-muted-foreground text-sm">
                   {customer.occupation}
                 </p>
+                {userId && <CustomerRegistration userId={userId} />}
               </div>
 
               {userId && <CustomerVisitTrend userId={userId} />}
@@ -196,6 +198,20 @@ function CustomerSheet({
         </ScrollArea>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function CustomerRegistration({ userId }: { userId: string }) {
+  const registeredAt = useQuery(api.customers.getRegistration, { userId });
+
+  if (registeredAt === undefined) return <Skeleton className="h-4 w-44" />;
+  if (registeredAt === null) return null;
+
+  return (
+    <p className="text-muted-foreground text-sm tabular-nums">
+      Registered {format(registeredAt, "MMM dd, yyyy")} •{" "}
+      {format(registeredAt, "h:mm a")}
+    </p>
   );
 }
 
