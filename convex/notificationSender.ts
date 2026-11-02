@@ -4,8 +4,8 @@ import { type ActionCtx, internalAction } from "./_generated/server";
 
 // Drains the notifications component queue. Runs on a 1-minute cron and
 // right after anything enqueues (notifications.send schedules it). Email is
-// Resend over plain fetch; push is the same web-push fan-out the temperature
-// alerts used before.
+// ZeptoMail over plain fetch; push is the same web-push fan-out the
+// temperature alerts used before.
 
 const BATCH = 20;
 
@@ -185,21 +185,29 @@ async function sendPush(
 }
 
 async function sendEmail(row: DeliveryRow) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new SendError("RESEND_API_KEY is not set", false);
+  const token = process.env.ZEPTOMAIL_TOKEN;
+  const fromAddress = process.env.ZEPTOMAIL_FROM_ADDRESS;
+  if (!token) throw new SendError("ZEPTOMAIL_TOKEN is not set", false);
+  if (!fromAddress) {
+    throw new SendError("ZEPTOMAIL_FROM_ADDRESS is not set", false);
+  }
   if (!row.to) throw new SendError("delivery has no recipient email", false);
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetch(zeptoEndpoint(), {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Accept: "application/json",
       "Content-Type": "application/json",
+      Authorization: `Zoho-enczapikey ${token}`,
     },
     body: JSON.stringify({
-      from: process.env.EMAIL_FROM ?? "Attendly <onboarding@resend.dev>",
-      to: row.to,
+      from: {
+        address: fromAddress,
+        name: process.env.ZEPTOMAIL_FROM_NAME ?? "Attendly",
+      },
+      to: [{ email_address: { address: row.to, name: row.to } }],
       subject: row.title,
-      html: renderEmail(row),
+      htmlbody: renderEmail(row),
     }),
   });
 
@@ -207,9 +215,17 @@ async function sendEmail(row: DeliveryRow) {
     const detail = (await response.text()).slice(0, 200);
     // 4xx other than 429 is a bad request — retrying will not help
     const retryable = response.status >= 500 || response.status === 429;
-    throw new SendError(`resend ${response.status}: ${detail}`, retryable);
+    throw new SendError(`zeptomail ${response.status}: ${detail}`, retryable);
   }
 }
+
+// ZeptoMail takes the regional host, e.g. `api.zeptomail.com/` — scheme and
+// trailing slash are optional so the existing .env values work unchanged.
+const zeptoEndpoint = () => {
+  const base = process.env.ZEPTOMAIL_URL ?? "api.zeptomail.com/";
+  const withScheme = base.startsWith("http") ? base : `https://${base}`;
+  return `${withScheme.replace(/\/?$/, "/")}v1.1/email`;
+};
 
 function renderEmail(row: DeliveryRow) {
   const link = row.url
