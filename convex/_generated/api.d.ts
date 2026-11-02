@@ -24,6 +24,8 @@ import type * as kpis from "../kpis.js";
 import type * as metrics from "../metrics.js";
 import type * as migrations from "../migrations.js";
 import type * as myFunctions from "../myFunctions.js";
+import type * as notificationSender from "../notificationSender.js";
+import type * as notifications from "../notifications.js";
 import type * as permissions from "../permissions.js";
 import type * as push from "../push.js";
 import type * as pushSender from "../pushSender.js";
@@ -64,6 +66,8 @@ declare const fullApi: ApiFromModules<{
   metrics: typeof metrics;
   migrations: typeof migrations;
   myFunctions: typeof myFunctions;
+  notificationSender: typeof notificationSender;
+  notifications: typeof notifications;
   permissions: typeof permissions;
   push: typeof push;
   pushSender: typeof pushSender;
@@ -111,6 +115,7 @@ export declare const internal: FilterApi<
 export declare const components: {
   wigxel_acl: import("../components/acl/_generated/component.js").ComponentApi<"wigxel_acl">;
   roomMetrics: import("../components/roomMetrics/_generated/component.js").ComponentApi<"roomMetrics">;
+  notifications: import("../components/notifications/_generated/component.js").ComponentApi<"notifications">;
   aggregate: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"aggregate">;
   customerStats: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"customerStats">;
 };
