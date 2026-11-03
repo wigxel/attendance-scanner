@@ -148,6 +148,11 @@ const permissions = [
     description: "Create and manage KPI presets",
     category: "KPIs",
   },
+  {
+    name: "inventory:manage",
+    description: "Create stock items and record purchases, restocks and usage",
+    category: "Inventory",
+  },
 ];
 
 export const seedPermissions = mutation({

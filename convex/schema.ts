@@ -272,6 +272,47 @@ const kpiInstances = defineTable({
   createdAt: v.number(),
 }).index("by_date", ["date"]);
 
+/**
+ * Stock items tracked by the inventory module. `quantity` is the current
+ * count; every change is also written to `inventoryMovements` so the count
+ * can be reconstructed and audited.
+ */
+const inventoryItems = defineTable({
+  name: v.string(),
+  sku: v.optional(v.string()),
+  /** What one unit of `quantity` is: bottle, pack, carton. */
+  unit: v.string(),
+  quantity: v.number(),
+  /** Show a low-stock warning once quantity drops to or below this. */
+  reorderLevel: v.number(),
+  /** Latest cost per unit, in naira. */
+  costPrice: v.number(),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+}).index("by_name", ["name"]);
+
+const inventoryMovements = defineTable({
+  itemId: v.id("inventoryItems"),
+  /** purchase/restock add stock, usage removes it, adjustment is signed. */
+  kind: v.union(
+    v.literal("purchase"),
+    v.literal("restock"),
+    v.literal("usage"),
+    v.literal("adjustment"),
+  ),
+  /** Absolute count the user entered. */
+  quantity: v.number(),
+  /** Signed change actually applied to the item's quantity. */
+  delta: v.number(),
+  /** Cost per unit paid, for purchases. */
+  unitCost: v.optional(v.number()),
+  note: v.optional(v.string()),
+  recordedBy: v.string(),
+  createdAt: v.number(),
+})
+  .index("by_item", ["itemId"])
+  .index("by_created_at", ["createdAt"]);
+
 // Browser web-push subscriptions (PWA). One row per browser endpoint;
 // subscribe upserts by endpoint. `recipientKey` (`user:<id>`) is absent on
 // rows stored before it existed — those still receive broadcast deliveries.
@@ -310,4 +351,6 @@ export default defineSchema({
   kpiInstances,
   kpiDailyScores,
   pushSubscriptions,
+  inventoryItems,
+  inventoryMovements,
 });
