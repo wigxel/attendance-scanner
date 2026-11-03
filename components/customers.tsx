@@ -104,6 +104,12 @@ export function useUsers(searchTerm = "") {
     search: searchTerm,
   });
 
+  // The cursor is an offset into the filtered list, so it is only valid for the
+  // search it was taken from. Start over when the term changes.
+  React.useEffect(() => {
+    setPaginationOpts(defaultPaginationOpts);
+  }, [searchTerm]);
+
   const loadMore = React.useCallback(() => {
     if (record && !record.isDone && record.continueCursor) {
       setPaginationOpts((prev) => ({
@@ -129,7 +135,7 @@ export function useUsers(searchTerm = "") {
 export function CustomersTable() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const debouncedSearch = React.useDeferredValue(searchTerm);
-  const { data: users, record } = useUsers(debouncedSearch);
+  const { data: users, record, hasMore, loadMore } = useUsers(debouncedSearch);
   const isLoading = record === undefined;
   const [selectedUserId, setSelectedUserId] = React.useState<string | null>(
     null,
@@ -209,6 +215,8 @@ export function CustomersTable() {
         searchTerm={debouncedSearch}
         onSearchChange={setSearchTerm}
         isLoading={isLoading}
+        hasMore={hasMore}
+        onLoadMore={loadMore}
       />
 
       <CustomerSheet
