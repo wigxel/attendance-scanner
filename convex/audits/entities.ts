@@ -43,6 +43,19 @@ export const subscriberUpdateAudit = makeAudit<{
   ticketId: Id<"tickets">;
 }>({ action: "register.subscriber-updated", targetType: "daily_register" });
 
+export const guestConversionAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"daily_register">;
+  userId: string;
+  hostUserId: string;
+  guestType: string;
+  previousKind: string;
+}>({
+  action: "register.converted-to-guest",
+  targetType: "daily_register",
+  highlights: ["hostUserId", "guestType"],
+});
+
 export const bookingDeletedAudit = makeAudit<{
   actorId: string;
   targetId: Id<"bookings">;
