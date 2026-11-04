@@ -35,6 +35,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { Drawer } from "vaul";
 import { createColumns } from "@/components/columns";
 import { AppDataTable } from "@/components/DataTable";
+import { ConvertToGuestDialog } from "@/components/guests/ConvertToGuestDialog";
 import { GuestCheckInDialog } from "@/components/guests/GuestCheckInDialog";
 import { RoleHasCSR } from "@/components/RoleHasCSR";
 import {
@@ -50,6 +51,7 @@ import { api } from "@/convex/_generated/api";
 import {
   type AccessDuration,
   type AccessStruct,
+  type GuestType,
   PlanImpl,
 } from "@/convex/shared";
 import { useCustomer } from "@/hooks/auth";
@@ -87,6 +89,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
+import { SelectSeparator } from "./ui/select";
 import { Skeleton } from "./ui/skeleton";
 
 const defaultPaginationOpts = {
@@ -416,6 +419,12 @@ type RegisterEntry = Partial<DailyRegisterEntry> & {
   timestamp: string;
 };
 
+const guestTypeLabels: Record<GuestType, string> = {
+  visitor: "Visitor",
+  student: "Student",
+  event_attendee: "Event attendee",
+};
+
 type RegisterUserEntryProps = {
   entry: RegisterEntry;
   onSelect?: (entry: RegisterEntry) => void;
@@ -529,10 +538,6 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
               {user.firstName} {user.lastName}
             </div>
 
-            <div className="text-xs text-muted-foreground">
-              Scanned {format(new Date(entry.timestamp), "do MMM yyyy, h:mm a")}
-            </div>
-
             <div className="flex gap-2 text-xs text-gray-500 font-mono">
               {intersperse(
                 [
@@ -581,7 +586,26 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
         <div className="rounded-lg border px-3 py-2 text-sm">
           <span className="text-muted-foreground">Invited by </span>
           <span className="font-semibold">{hostName}</span>
+          {entry.access?.visiting?.guestType ? (
+            <span className="text-muted-foreground">
+              {" · "}
+              {guestTypeLabels[entry.access.visiting.guestType]}
+            </span>
+          ) : null}
         </div>
+      ) : null}
+
+      {can_modify_plan ? (
+        <ConvertToGuestDialog
+          userId={entry.userId}
+          hostUserId={entry.access?.visiting?.hostUserId}
+          guestType={entry.access?.visiting?.guestType}
+        >
+          <Button variant="secondary" size="sm" className="w-full">
+            <UserPlus className="h-4 w-4 mr-1" />
+            {isGuest ? "Change guest details" : "Mark as guest"}
+          </Button>
+        </ConvertToGuestDialog>
       ) : null}
 
       <ul className={"flex flex-col gap-4"}>
@@ -640,6 +664,15 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
           </p>
         </div>
       </If>
+
+      <SelectSeparator />
+
+      <div className="text-xs text-muted-foreground font-mono">
+        Scanned{" "}
+        <span className="text-foreground">
+          {format(new Date(entry.timestamp), "do MMM yyyy, h:mm a")}
+        </span>
+      </div>
     </section>
   );
 

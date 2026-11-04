@@ -55,7 +55,7 @@ export function LastUpdated() {
 
   return (
     <p className="flex items-center gap-2 text-xs text-muted-foreground">
-      <span className="flex flex-col gap-1 text-end">
+      <span className="flex flex-row md:flex-col gap-1 text-end">
         <span className="flex text-foreground items-center gap-2">
           <span
             aria-hidden
