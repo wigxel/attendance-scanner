@@ -6,15 +6,17 @@ import { cn } from "@/lib/utils";
 import { If } from "./if";
 import { Button } from "./ui/button";
 
+interface RangePreviewProps {
+  selectedDate: Date;
+  endDate: Date;
+  handleChangeDate: () => void
+}
+
 export function RangePreview({
   selectedDate,
   endDate,
   handleChangeDate,
-}: {
-  selectedDate: Date;
-  endDate: Date;
-  handleChangeDate: () => void;
-}) {
+}: RangePreviewProps) {
   const opening_hour = "09:00am";
   const closing_hour = "05:00pm";
 
@@ -65,16 +67,21 @@ export function RangePreview({
             <p className="text-muted-foreground">Day Plan</p>
           </div>
         </div>
+
         <div className="border-t flex justify-end items-center relative border-border w-full">
-          <Button
-            variant={"outline"}
-            className="absolute top-0 -translate-y-1/2"
-            onClick={handleChangeDate}
+          <div
+            className="absolute top-0 -translate-y-1/2 pl-2 bg-background"
           >
-            Adjust
-            <SlidersHorizontal strokeWidth={1} size="1.5em" />
-          </Button>
+            <Button
+              variant={"outline"}
+              onClick={handleChangeDate}
+            >
+              Adjust
+              <SlidersHorizontal strokeWidth={1} size="1.5em" />
+            </Button>
+          </div>
         </div>
+
         <div className="flex gap-x-3 tabular-nums items-start">
           <BookingCalendarBox startDate={endDate} />
           <div className="text-sm">
@@ -89,15 +96,17 @@ export function RangePreview({
   );
 }
 
+type RangePreviewSimpleProps = {
+  startDate: Date;
+  endDate: Date;
+  variant?: "default" | "sm";
+};
+
 export function RangePreviewSimple({
   startDate,
   variant = "default",
   endDate,
-}: {
-  startDate: Date;
-  endDate: Date;
-  variant?: "default" | "sm";
-}) {
+}: RangePreviewSimpleProps) {
   const is_same_day = isSameDay(startDate, endDate);
 
   return (
