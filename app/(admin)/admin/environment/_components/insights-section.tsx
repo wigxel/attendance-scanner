@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { capitalize } from "effect/String";
 import { Info } from "lucide-react";
 import { RoomTemperatureWidgetPure } from "@/components/room-temperature-widget-pure";
 import {
@@ -99,7 +100,7 @@ export function InsightsSection() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
         <RoomTemperatureWidgetPure
           temperature={temperature}
           humidity={humidity}
@@ -123,9 +124,10 @@ export function InsightsSection() {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-4 text-xs text-muted-foreground">
-            {comfort.reason}
+            {capitalize(comfort.reason)}
           </CardContent>
         </Card>
+
         <Card className="aspect-3/1.2">
           <CardHeader className="p-4 pb-2">
             <CardDescription className="flex items-center gap-1.5">
@@ -139,12 +141,15 @@ export function InsightsSection() {
                 </TooltipContent>
               </Tooltip>
             </CardDescription>
-            <CardTitle className="text-base">{moldStatus}</CardTitle>
+
+            <CardTitle className="text-base">{capitalize(moldStatus)}</CardTitle>
           </CardHeader>
+
           <CardContent className="px-4 pb-4 text-xs text-muted-foreground">
-            RH&gt;60% or depression&lt;3°C
+            <abbr title="Relative humidity" className="cursor-help">RH</abbr> &gt; 60% or depression&lt;3°C
           </CardContent>
         </Card>
+
         <Card className="aspect-3/1.2">
           <CardHeader className="p-4 pb-2">
             <CardDescription className="flex items-center gap-1.5">
@@ -158,9 +163,10 @@ export function InsightsSection() {
                 </TooltipContent>
               </Tooltip>
             </CardDescription>
-            <CardTitle className="text-base">{dryStatus}</CardTitle>
+            <CardTitle className="text-base">{capitalize(dryStatus)}</CardTitle>
           </CardHeader>
         </Card>
+
         <Card className="aspect-3/1.2">
           <CardHeader className="p-4 pb-2">
             <CardDescription className="flex items-center gap-1.5">
@@ -174,13 +180,14 @@ export function InsightsSection() {
                 </TooltipContent>
               </Tooltip>
             </CardDescription>
-            <CardTitle className="text-base">{condensationStatus}</CardTitle>
+            <CardTitle className="text-base">{capitalize(condensationStatus)}</CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-4 text-xs text-muted-foreground">
             depression {depression.toFixed(1)}°C · Td {dewPointValue.toFixed(1)}
             °C
           </CardContent>
         </Card>
+
       </div>
     </TooltipProvider>
   );
