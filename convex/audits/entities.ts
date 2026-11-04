@@ -56,6 +56,19 @@ export const guestDismissalAudit = makeAudit<{
   highlights: ["hostUserId", "guestType", "linkedUserId"],
 });
 
+export const guestConversionAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"daily_register">;
+  userId: string;
+  hostUserId: string;
+  guestType: string;
+  previousKind: string;
+}>({
+  action: "register.converted-to-guest",
+  targetType: "daily_register",
+  highlights: ["hostUserId", "guestType"],
+});
+
 export const bookingDeletedAudit = makeAudit<{
   actorId: string;
   targetId: Id<"bookings">;
@@ -92,6 +105,35 @@ export const suggestionDeletedAudit = makeAudit<{
   action: "suggestion.deleted",
   targetType: "featureRequest",
   highlights: ["title"],
+});
+
+export const planCreatedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"accessPlans">;
+  key: string;
+  name: string;
+  price: number;
+  no_of_days: number;
+}>({
+  action: "plan.created",
+  targetType: "accessPlan",
+  highlights: ["key", "name", "price"],
+});
+
+export const planUpdatedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"accessPlans">;
+  key: string;
+  name: string;
+  price: number;
+  no_of_days: number;
+  previousName: string;
+  previousPrice: number;
+  previousNoOfDays: number;
+}>({
+  action: "plan.updated",
+  targetType: "accessPlan",
+  highlights: ["name", "price", "previousPrice"],
 });
 
 export const planDeletedAudit = makeAudit<{

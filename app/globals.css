@@ -149,8 +149,11 @@
   /*--scanline-image: "";*/
 }
 
+/* clip, not hidden: hidden makes this a scroll container, which stops
+   position: sticky from pinning inside the shell (e.g. the environment
+   alerts rail). */
 .scanline-root .scanline-container {
-  @apply overflow-hidden;
+  @apply overflow-clip;
 }
 
 .scanline-root .scanline-container:after {

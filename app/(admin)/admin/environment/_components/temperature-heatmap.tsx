@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getColor, palette } from "@/lib/temperature-colors";
+import { cn } from "@/lib/utils";
 
 type DailyBucket = {
   date: string;
@@ -61,75 +62,86 @@ export function TemperatureHeatmap({ dailyBuckets }: Properties) {
 
   return (
     <div className="flex flex-col gap-2">
-      <table
-        className="w-full border-separate"
-        style={{ borderSpacing: "4px" }}
-      >
-        <thead>
-          <tr>
-            <th className="w-8" />
-            {rows.map((columnIndex) => {
-              const label = monthLabels.find(
-                (monthLabel) => monthLabel.column === columnIndex,
-              );
+      <div className="overflow-x-auto">
+        <table
+          className="w-full min-w-[55rem] border-separate lg:min-w-0"
+          style={{ borderSpacing: "4px" }}
+        >
+          <thead>
+            <tr>
+              <th className="w-8" />
+              {rows.map((columnIndex) => {
+                const label = monthLabels.find(
+                  (monthLabel) => monthLabel.column === columnIndex,
+                );
+                return (
+                  <th
+                    key={columnIndex}
+                    className="text-xs h-5 font-normal text-muted-foreground/50 text-left relative"
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-0",
+                        // the last label would otherwise stick out of the
+                        // table and force a scrollbar on the heatmap
+                        columnIndex === rows.length - 1 && "right-0",
+                      )}
+                    >
+                      {label?.month ?? ""}
+                    </span>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+
+          <tbody>
+            {range(0, 6).map((rowIndex) => {
               return (
-                <th
-                  key={columnIndex}
-                  className="text-xs h-5 font-normal text-muted-foreground/50 text-left relative"
-                >
-                  <span className="absolute top-0">{label?.month ?? ""}</span>
-                </th>
+                <tr key={rowIndex}>
+                  <th className="w-8 text-xs font-normal text-muted-foreground/50 text-left pr-1">
+                    {rowIndex === 1
+                      ? "Mon"
+                      : rowIndex === 3
+                        ? "Wed"
+                        : rowIndex === 5
+                          ? "Fri"
+                          : ""}
+                  </th>
+
+                  {rows.map((columnIndex) => {
+                    const cellIndex = columnIndex * 7 + rowIndex;
+                    const cell = cells[cellIndex];
+                    const backgroundColor = getColor(cell?.temperature);
+                    const tooltip = cell?.bucket
+                      ? `Avg ${cell.bucket.avgTemperature.toFixed(1)}°C · ${cell.bucket.minTemperature.toFixed(1)}–${cell.bucket.maxTemperature.toFixed(1)}°C · ${cell.bucket.count} readings on ${cell.dateKey}`
+                      : cell?.isFuture
+                        ? `Future ${cell.dateKey}`
+                        : `No data ${cell.dateKey}`;
+
+                    const showDetails = () =>
+                      cell.bucket && setSelectedDay(cell.bucket);
+
+                    return (
+                      <td
+                        key={cell.dateKey}
+                        title={tooltip}
+                        onClick={showDetails}
+                        onKeyUp={showDetails}
+                        aria-label={tooltip}
+                        className="aspect-square rounded-sm rounded-[2px] border border-transparent hover:border-foreground/20 transition-colors"
+                        style={{ background: backgroundColor }}
+                      >
+                        <div className="aspect-square w-full" />
+                      </td>
+                    );
+                  })}
+                </tr>
               );
             })}
-          </tr>
-        </thead>
-
-        <tbody>
-          {range(0, 6).map((rowIndex) => {
-            return (
-              <tr key={rowIndex}>
-                <th className="w-8 text-xs font-normal text-muted-foreground/50 text-left pr-1">
-                  {rowIndex === 1
-                    ? "Mon"
-                    : rowIndex === 3
-                      ? "Wed"
-                      : rowIndex === 5
-                        ? "Fri"
-                        : ""}
-                </th>
-
-                {rows.map((columnIndex) => {
-                  const cellIndex = columnIndex * 7 + rowIndex;
-                  const cell = cells[cellIndex];
-                  const backgroundColor = getColor(cell?.temperature);
-                  const tooltip = cell?.bucket
-                    ? `Avg ${cell.bucket.avgTemperature.toFixed(1)}°C · ${cell.bucket.minTemperature.toFixed(1)}–${cell.bucket.maxTemperature.toFixed(1)}°C · ${cell.bucket.count} readings on ${cell.dateKey}`
-                    : cell?.isFuture
-                      ? `Future ${cell.dateKey}`
-                      : `No data ${cell.dateKey}`;
-
-                  const showDetails = () =>
-                    cell.bucket && setSelectedDay(cell.bucket);
-
-                  return (
-                    <td
-                      key={cell.dateKey}
-                      title={tooltip}
-                      onClick={showDetails}
-                      onKeyUp={showDetails}
-                      aria-label={tooltip}
-                      className="aspect-square rounded-sm w-3! rounded-[2px] border border-transparent hover:border-foreground/20 transition-colors"
-                      style={{ background: backgroundColor }}
-                    >
-                      <div className="aspect-square w-full" />
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
 
       <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
         <span>20°C</span>
