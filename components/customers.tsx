@@ -24,6 +24,7 @@ import {
   Package2Icon,
   PackageIcon,
   ReceiptIcon,
+  UserCheck,
   UserPlus,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -33,10 +34,11 @@ import useEvent from "react-use-event-hook";
 import { toast } from "sonner";
 import { useMediaQuery } from "usehooks-ts";
 import { Drawer } from "vaul";
+import { ConvertToGuestDialog } from "@/components/admin/dialogs/ConvertToGuestDialog";
+import { ConvertToRegularDialog } from "@/components/admin/dialogs/ConvertToRegularDialog";
+import { GuestCheckInDialog } from "@/components/admin/dialogs/GuestCheckInDialog";
 import { createColumns } from "@/components/columns";
 import { AppDataTable } from "@/components/DataTable";
-import { ConvertToGuestDialog } from "@/components/guests/ConvertToGuestDialog";
-import { GuestCheckInDialog } from "@/components/guests/GuestCheckInDialog";
 import { RoleHasCSR } from "@/components/RoleHasCSR";
 import {
   Sheet,
@@ -596,16 +598,27 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
       ) : null}
 
       {can_modify_plan ? (
-        <ConvertToGuestDialog
-          userId={entry.userId}
-          hostUserId={entry.access?.visiting?.hostUserId}
-          guestType={entry.access?.visiting?.guestType}
-        >
-          <Button variant="secondary" size="sm" className="w-full">
-            <UserPlus className="h-4 w-4 mr-1" />
-            {isGuest ? "Change guest details" : "Mark as guest"}
-          </Button>
-        </ConvertToGuestDialog>
+        <>
+          <ConvertToGuestDialog
+            userId={entry.userId}
+            hostUserId={entry.access?.visiting?.hostUserId}
+            guestType={entry.access?.visiting?.guestType}
+          >
+            <Button variant="secondary" size="sm" className="w-full">
+              <UserPlus className="h-4 w-4 mr-1" />
+              {isGuest ? "Change guest details" : "Mark as guest"}
+            </Button>
+          </ConvertToGuestDialog>
+
+          {isGuest ? (
+            <ConvertToRegularDialog userId={entry.userId}>
+              <Button variant="outline" size="sm" className="w-full">
+                <UserCheck className="h-4 w-4 mr-1" />
+                Mark as regular visit
+              </Button>
+            </ConvertToRegularDialog>
+          ) : null}
+        </>
       ) : null}
 
       <ul className={"flex flex-col gap-4"}>
