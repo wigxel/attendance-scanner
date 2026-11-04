@@ -72,10 +72,10 @@ export function ConvertToRegularDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
 
-      <DialogContent className="text-start">
+      <DialogContent className="text-start w-sm">
         <DialogHeader>
           <DialogTitle>Mark as a regular visit</DialogTitle>
-          <DialogDescription className="text-sm text-start">
+          <DialogDescription className="text-sm text-start mt-4 mb-8">
             This visit stops being a guest visit. The pricing plan and payment
             stay as they are, and it stays on the same day in the register.
           </DialogDescription>
@@ -103,11 +103,12 @@ export function ConvertToRegularDialog({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => setOpen(false)}
             disabled={isSubmitting}
+            onClick={() => setOpen(false)}
           >
             Cancel
           </Button>
+
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? "Saving..." : "Mark as regular"}
           </Button>

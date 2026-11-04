@@ -34,10 +34,10 @@ import useEvent from "react-use-event-hook";
 import { toast } from "sonner";
 import { useMediaQuery } from "usehooks-ts";
 import { Drawer } from "vaul";
+import { ConvertToRegularDialog } from "@/components/admin/dialogs/ConvertToRegularDialog";
+import { GuestCheckInDialog } from "@/components/admin/dialogs/GuestCheckInDialog";
 import { createColumns } from "@/components/columns";
 import { AppDataTable } from "@/components/DataTable";
-import { ConvertToRegularDialog } from "@/components/guests/ConvertToRegularDialog";
-import { GuestCheckInDialog } from "@/components/guests/GuestCheckInDialog";
 import { RoleHasCSR } from "@/components/RoleHasCSR";
 import {
   Sheet,
