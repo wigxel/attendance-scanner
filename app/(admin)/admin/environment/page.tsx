@@ -6,20 +6,27 @@ import { LastUpdated } from "./_components/last-updated";
 
 export default function EnvironmentPage() {
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-8">
-      <header className="flex flex-wrap items-baseline justify-between gap-2">
+    <div className="flex flex-col gap-4 p-4 md:p-8 [--gap:--spacing(4)]">
+
+      <header className="flex flex-wrap items-baseline justify-between gap-2 mb-8 md:mb-12">
         <h1 className="text-3xl font-bold">Environment</h1>
         <LastUpdated />
       </header>
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-        <div className="flex min-w-0 flex-col gap-4">
-          <InsightsSection />
-          <HistorySection />
-          <CalendarSection />
+
+      <div className="flex flex-col gap-(--gap)">
+        <InsightsSection />
+
+        <div className="flex gap-(--gap) md:flex-row flex-col">
+          <div className="flex-1 flex *:flex-1 basis-8/12">
+            <HistorySection />
+          </div>
+
+          <div className="basis-4/12 flex *:flex-1">
+            <AlertsSection />
+          </div>
         </div>
-        <div className="min-w-0 lg:sticky lg:top-(--header-height) lg:max-h-[calc(100svh-var(--header-height)-2rem)] lg:overflow-y-auto">
-          <AlertsSection />
-        </div>
+
+        <CalendarSection />
       </div>
     </div>
   );
