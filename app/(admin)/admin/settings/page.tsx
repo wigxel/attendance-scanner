@@ -45,10 +45,12 @@ export default function SettingsPage() {
                   <Wrench className="w-4 h-4 mr-2" />
                   Onboarding
                 </TabsTrigger>
-                <TabsTrigger value="pricing" className="justify-start w-full">
-                  <BadgeDollarSign className="w-4 h-4 mr-2" />
-                  Pricing
-                </TabsTrigger>
+                <RoleHas privileges={["plans:manage"]}>
+                  <TabsTrigger value="pricing" className="justify-start w-full">
+                    <BadgeDollarSign className="w-4 h-4 mr-2" />
+                    Pricing
+                  </TabsTrigger>
+                </RoleHas>
                 <TabsTrigger value="profile" className="justify-start w-full">
                   <User className="w-4 h-4 mr-2" />
                   User Profile
@@ -101,7 +103,9 @@ export default function SettingsPage() {
               </TabsContent>
 
               <TabsContent value="pricing">
-                <PricingManagement />
+                <RoleHas privileges={["plans:manage"]}>
+                  <PricingManagement />
+                </RoleHas>
               </TabsContent>
 
               <TabsContent value="profile">Work In Progress</TabsContent>
