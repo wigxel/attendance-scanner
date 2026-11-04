@@ -189,18 +189,27 @@ export const countTotalCustomers = query({
 });
 
 /**
- * Returns the number of customer profiles created on or after `startTime`.
+ * Returns the number of customer profiles created in `[startTime, endTime)`.
  * Useful for counting new customers since a given timestamp (e.g. start of month).
  *
+ * `endTime` must be passed when computing a historical day, otherwise profiles
+ * created after that day are counted into it.
+ *
  * @param startTime - Unix timestamp (ms) used as the inclusive lower bound.
+ * @param endTime   - Unix timestamp (ms) used as the exclusive upper bound.
  */
 export const countNewCustomers = query({
   args: {
     startTime: v.number(),
+    endTime: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const lower = { key: args.startTime, inclusive: true };
+    if (args.endTime === undefined) {
+      return await profileAggregate.count(ctx, { bounds: { lower } });
+    }
     return await profileAggregate.count(ctx, {
-      bounds: { lower: { key: args.startTime, inclusive: true } },
+      bounds: { lower, upper: { key: args.endTime, inclusive: false } },
     });
   },
 });
@@ -229,20 +238,30 @@ export const listNewCustomers = query({
 });
 
 /**
- * Returns the number of customer profiles created on or after `startTime`.
- * Intended to approximate "active" customers by filtering to a recent window
- * (e.g. the last 30 days).
+ * Returns the number of distinct customers who visited in `[startTime, endTime)`.
+ * A customer is active when they checked in during the window — when they
+ * registered is irrelevant.
  *
  * @param startTime - Unix timestamp (ms) used as the inclusive lower bound.
+ * @param endTime   - Unix timestamp (ms) used as the exclusive upper bound.
+ *                    Defaults to now.
  */
 export const countActiveCustomers = query({
   args: {
     startTime: v.number(),
+    endTime: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    return await profileAggregate.count(ctx, {
-      bounds: { lower: { key: args.startTime, inclusive: true } },
-    });
+    const fromISO = new Date(args.startTime).toISOString();
+    const toISO = new Date(args.endTime ?? Date.now()).toISOString();
+    const visits = await ctx.db
+      .query("daily_register")
+      .withIndex("by_timestamp", (q) =>
+        q.gte("timestamp", fromISO).lt("timestamp", toISO),
+      )
+      .collect();
+
+    return new Set(visits.map((visit) => visit.userId)).size;
   },
 });
 
@@ -265,26 +284,35 @@ async function computeMetricsForDate(
   const targetDate = parseISO(date);
   const monthStart = startOfMonth(targetDate);
   const thirtyDaysAgo = subDays(targetDate, 30);
+  // Everything a day's metrics report must stop at the end of that day.
+  // Without this cap a backfilled day counts visits and profiles that happened
+  // long after it, so historical metrics grow every time the backfill runs.
+  const nextDayStart = addDays(targetDate, 1);
 
   const totalCustomers = await ctx.runQuery(api.customers.countTotalCustomers);
   const monthStartTime = monthStart.getTime();
   const thirtyDaysAgoTime = thirtyDaysAgo.getTime();
+  const nextDayStartTime = nextDayStart.getTime();
 
   const newCustomers = await ctx.runQuery(api.customers.countNewCustomers, {
     startTime: monthStartTime,
+    endTime: nextDayStartTime,
   });
 
   const activeCustomers = await ctx.runQuery(
     api.customers.countActiveCustomers,
     {
       startTime: thirtyDaysAgoTime,
+      endTime: nextDayStartTime,
     },
   );
 
   const allRegisters = await ctx.db
     .query("daily_register")
     .withIndex("by_timestamp", (q) =>
-      q.gte("timestamp", monthStart.toISOString()),
+      q
+        .gte("timestamp", monthStart.toISOString())
+        .lt("timestamp", nextDayStart.toISOString()),
     )
     .collect();
 
@@ -751,11 +779,11 @@ export const getTopCustomers = query({
 
         if (count === 0) return null;
 
-        const sortedByTime = registers.sort(
-          (a, b) =>
-            Number.parseInt(b.timestamp, 10) - Number.parseInt(a.timestamp, 10),
+        // Timestamps are ISO-8601 UTC strings, so a plain string compare is
+        // chronological. `parseInt(timestamp, 10)` only ever reads the year.
+        const mostRecent = registers.reduce((latest, visit) =>
+          visit.timestamp > latest.timestamp ? visit : latest,
         );
-        const mostRecent = sortedByTime[0];
         const accessPlan = mostRecent.access.kind;
 
         return {
