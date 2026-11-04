@@ -68,15 +68,52 @@ Conventional Commits, 72 characters at most, scope optional:
 
 ### Body
 
-Keep these sections, in this order, and delete the ones that do not apply:
+Keep these sections, in this order. `## In plain words` is required on every
+PR; delete the others when they do not apply:
 
-1. `## Issue` — bead id or PostHog issue id, error text, page, occurrences.
-2. `## Evidence` — the code path and why it fails; quote the lines that matter.
-3. `## What changed` — one bullet per file, naming the behaviour change.
-4. `## Tests` — the exact commands and their results, including the known
+1. `## In plain words` — the problem and the fix in language a smart
+   nine-year-old could follow.
+2. `## Issue` — bead id or PostHog issue id, error text, page, occurrences.
+3. `## Evidence` — the code path and why it fails; quote the lines that matter.
+4. `## What changed` — one bullet per file, naming the behaviour change.
+5. `## Tests` — the exact commands and their results, including the known
    typecheck error, so a reviewer knows what you did and did not run.
-5. `## Notes` or `## Not changed here` — migrations, follow-ups, related issues
+6. `## Notes` or `## Not changed here` — migrations, follow-ups, related issues
    you ruled out and why.
+
+#### `## In plain words`
+
+Two short paragraphs, 120 words at most:
+
+- What was broken, as the person using the product felt it. Name the screen and
+  the symptom: "the customers page stopped at 50 people, so Next went grey and
+  everyone past #50 was invisible."
+- What now happens instead, in the same terms.
+
+Rules:
+
+- No file paths, function names, error codes, or jargon (index, cursor,
+  aggregate, race, idempotent, payload). If a nine-year-old would not know the
+  word, define it in passing or drop it.
+- Say what the user sees, not how the code works. "The list keeps loading" —
+  not "the cursor is threaded through paginationOpts".
+- An analogy is fine when it makes the mechanism obvious, one sentence, and it
+  must not soften the consequence.
+- Never claim more than `## Evidence` supports. If the fix is partial, say
+  which part is still wrong.
+- No filler: "the system now works correctly" says nothing and is rejected.
+
+Example:
+
+    ## In plain words
+
+    The customers page only ever showed the first 50 people. If you kept
+    clicking Next it turned grey while hundreds more customers were still
+    waiting behind it, so anyone past #50 could not be found, edited or
+    checked.
+
+    The page now fetches the next batch each time you reach the end of what
+    it has, so Next keeps working until the last customer.
 
 Open with:
 
