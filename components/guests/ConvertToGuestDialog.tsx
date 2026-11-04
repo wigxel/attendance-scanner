@@ -57,9 +57,9 @@ export function ConvertToGuestDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hosts = useQuery(api.register.listTodaysHosts);
+  const markAsGuest = useMutation(api.register.markTodaysVisitAsGuest);
   const hostOptions = safeArray(hosts);
   const noHostsToday = hosts !== undefined && hostOptions.length === 0;
-  const markAsGuest = useMutation(api.register.markTodaysVisitAsGuest);
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);

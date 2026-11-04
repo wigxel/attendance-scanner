@@ -8,14 +8,15 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
+import type * as index from "../index.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 import { anyApi, componentsGeneric } from "convex/server";
-import type * as crons from "../crons.js";
-import type * as index from "../index.js";
 
 const fullApi: ApiFromModules<{
   crons: typeof crons;

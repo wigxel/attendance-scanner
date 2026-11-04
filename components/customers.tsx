@@ -89,6 +89,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
+import { SelectSeparator } from "./ui/select";
 import { Skeleton } from "./ui/skeleton";
 
 const defaultPaginationOpts = {
@@ -537,10 +538,6 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
               {user.firstName} {user.lastName}
             </div>
 
-            <div className="text-xs text-muted-foreground">
-              Scanned {format(new Date(entry.timestamp), "do MMM yyyy, h:mm a")}
-            </div>
-
             <div className="flex gap-2 text-xs text-gray-500 font-mono">
               {intersperse(
                 [
@@ -604,7 +601,7 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
           hostUserId={entry.access?.visiting?.hostUserId}
           guestType={entry.access?.visiting?.guestType}
         >
-          <Button variant="outline" size="sm" className="w-full">
+          <Button variant="secondary" size="sm" className="w-full">
             <UserPlus className="h-4 w-4 mr-1" />
             {isGuest ? "Change guest details" : "Mark as guest"}
           </Button>
@@ -667,6 +664,15 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
           </p>
         </div>
       </If>
+
+      <SelectSeparator />
+
+      <div className="text-xs text-muted-foreground font-mono">
+        Scanned{" "}
+        <span className="text-foreground">
+          {format(new Date(entry.timestamp), "do MMM yyyy, h:mm a")}
+        </span>
+      </div>
     </section>
   );
 
