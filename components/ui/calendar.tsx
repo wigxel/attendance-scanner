@@ -5,12 +5,12 @@ import { DayPicker } from "react-day-picker";
 
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CalendarCaption } from "../AttendanceCalendar";
 
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  components,
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
   return (
@@ -60,15 +60,13 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Caption: (props) => {
-          return <CalendarCaption key={props.displayIndex} />;
-        },
         IconLeft: ({ className, ...props }) => (
           <ChevronLeft className={cn("size-4", className)} {...props} />
         ),
         IconRight: ({ className, ...props }) => (
           <ChevronRight className={cn("size-4", className)} {...props} />
         ),
+        ...components,
       }}
       {...props}
     />
