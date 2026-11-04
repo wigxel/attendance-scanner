@@ -39,6 +39,16 @@ import {
 } from "./empty-state";
 import { Card, CardContent } from "./ui/card";
 
+export type LoadMoreState = {
+  canNextPage: boolean;
+  hasMore?: boolean;
+  isLoading?: boolean;
+};
+
+export function shouldLoadMore(state: LoadMoreState) {
+  return !state.canNextPage && Boolean(state.hasMore) && !state.isLoading;
+}
+
 export function AppDataTable<T>({
   columns,
   data,
@@ -47,6 +57,8 @@ export function AppDataTable<T>({
   onSearchChange,
   isLoading,
   emptyState,
+  hasMore,
+  onLoadMore,
 }: {
   columns: ColumnDef<T>[];
   data: T[];
@@ -55,6 +67,10 @@ export function AppDataTable<T>({
   onSearchChange?: (term: string) => void;
   isLoading?: boolean;
   emptyState?: React.ReactNode;
+  /** True when the server holds rows beyond the ones already passed in `data`. */
+  hasMore?: boolean;
+  /** Fetch the next server page. Called when the last local page is reached. */
+  onLoadMore?: () => void;
 }) {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
@@ -94,6 +110,18 @@ export function AppDataTable<T>({
   React.useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [searchTerm]);
+
+  // Local pages only cover the rows already fetched. On the last one the server
+  // may still hold more, so pull the next page in instead of stopping there.
+  const shouldFetchNextPage = shouldLoadMore({
+    canNextPage: table.getCanNextPage(),
+    hasMore,
+    isLoading,
+  });
+
+  React.useEffect(() => {
+    if (shouldFetchNextPage) onLoadMore?.();
+  }, [shouldFetchNextPage, onLoadMore]);
 
   const searchActive = Boolean(searchTerm?.trim());
 
@@ -231,7 +259,7 @@ export function AppDataTable<T>({
               variant="outline"
               size="sm"
               onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              disabled={!table.getCanNextPage() && !hasMore}
             >
               Next
             </Button>
