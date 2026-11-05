@@ -67,6 +67,22 @@ export const listByCategory = query({
   },
 });
 
+/** How many access plans carry each feature name. */
+export const planUsage = query({
+  handler: async (ctx): Promise<Record<string, number>> => {
+    const plans = await ctx.db.query("accessPlans").collect();
+    const counts: Record<string, number> = {};
+
+    for (const plan of plans) {
+      for (const name of plan.features) {
+        counts[name] = (counts[name] ?? 0) + 1;
+      }
+    }
+
+    return counts;
+  },
+});
+
 export const create = mutation({
   args: {
     name: v.string(),

@@ -301,6 +301,37 @@ describe("list", () => {
   });
 });
 
+describe("planUsage", () => {
+  it("counts the plans carrying each feature name", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Daily",
+        price: 1000,
+        no_of_days: 1,
+        description: "",
+        features: ["priority-check-in", "booking"],
+      });
+      await ctx.db.insert("accessPlans", {
+        key: "weekly",
+        name: "Weekly",
+        price: 5000,
+        no_of_days: 7,
+        description: "",
+        features: ["priority-check-in"],
+      });
+    });
+
+    const usage = await t.run(async (ctx) =>
+      ctx.runQuery(api.planFeatures.planUsage),
+    );
+
+    expect(usage).toEqual({ "priority-check-in": 2, booking: 1 });
+  });
+});
+
 describe("seedPlanFeatures", () => {
   it("seeds the catalogue and backfills the six seat plans idempotently", async () => {
     const t = convexTest(schema, modules);

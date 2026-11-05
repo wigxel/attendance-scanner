@@ -115,32 +115,34 @@ function FeaturePicker({
   return (
     <div className="space-y-4">
       {activeGroups.map(([category, items]) => (
-        <div key={category} className="space-y-2">
+        <div key={category} className="space-y-4">
           <h4 className="text-xs font-semibold uppercase tracking-wider">
             {category}
           </h4>
-          {items.map((feature) => (
-            <label
-              key={feature.name}
-              htmlFor={`feature-${feature.name}`}
-              className="flex items-start gap-2 cursor-pointer"
-            >
-              <Checkbox
-                id={`feature-${feature.name}`}
-                checked={selected.includes(feature.name)}
-                onCheckedChange={() => toggle(feature.name)}
-                disabled={disabled}
-              />
-              <span className="text-sm leading-snug">
-                <span className="font-medium">{feature.label}</span>
-                {feature.description && (
-                  <span className="block text-muted-foreground">
-                    {feature.description}
-                  </span>
-                )}
-              </span>
-            </label>
-          ))}
+          <div className="pl-8 space-y-2">
+            {items.map((feature) => (
+              <label
+                key={feature.name}
+                htmlFor={`feature-${feature.name}`}
+                className="flex items-start gap-2 cursor-pointer"
+              >
+                <Checkbox
+                  id={`feature-${feature.name}`}
+                  checked={selected.includes(feature.name)}
+                  onCheckedChange={() => toggle(feature.name)}
+                  disabled={disabled}
+                />
+                <span className="text-sm leading-snug">
+                  <span className="font-medium">{feature.label}</span>
+                  {feature.description && (
+                    <span className="block text-muted-foreground">
+                      {feature.description}
+                    </span>
+                  )}
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
       ))}
 
@@ -310,8 +312,10 @@ export function AccessPlanForm({
           control={form.control}
           name="features"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Features</FormLabel>
+            <FormItem className="mt-8">
+              <FormLabel className="uppercase text-xs mb-4 text-muted-foreground">
+                Plan Features
+              </FormLabel>
               <FeaturePicker
                 catalogue={features}
                 selected={field.value ?? []}
