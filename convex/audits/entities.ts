@@ -143,6 +143,44 @@ export const planDeletedAudit = makeAudit<{
   name: string;
 }>({ action: "plan.deleted", targetType: "accessPlan", highlights: ["name"] });
 
+export const featureCreatedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"planFeatures">;
+  name: string;
+  label: string;
+  category: string;
+}>({
+  action: "feature.created",
+  targetType: "planFeature",
+  highlights: ["name", "label", "category"],
+});
+
+export const featureUpdatedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"planFeatures">;
+  name: string;
+  label: string;
+  isActive: boolean;
+  previousName: string;
+  previousLabel: string;
+  previousIsActive: boolean;
+}>({
+  action: "feature.updated",
+  targetType: "planFeature",
+  highlights: ["name", "label", "isActive", "previousName", "previousIsActive"],
+});
+
+export const featureDeletedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"planFeatures">;
+  name: string;
+  label: string;
+}>({
+  action: "feature.deleted",
+  targetType: "planFeature",
+  highlights: ["name", "label"],
+});
+
 export const permissionDeletedAudit = makeAudit<{
   actorId: string;
   targetId: string;

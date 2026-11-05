@@ -17,6 +17,18 @@ const accessPlans = defineTable({
   features: v.array(v.string()),
 }).index("plan_key", ["key"]);
 
+// Admin-editable catalogue of access-plan features. `name` is the value stored
+// in `accessPlans.features`; the rest is display metadata.
+const planFeatures = defineTable({
+  name: v.string(),
+  label: v.string(),
+  description: v.string(),
+  category: v.string(),
+  isActive: v.boolean(),
+})
+  .index("by_name", ["name"])
+  .index("by_active", ["isActive"]);
+
 const daily_register = defineTable({
   userId: v.string(), // v.id("profile"),
   timestamp: v.string(),
@@ -292,6 +304,7 @@ export default defineSchema({
   profile,
   featureRequest,
   accessPlans,
+  planFeatures,
   occupations,
   featureVotes,
   dailyAttendanceMetrics,
