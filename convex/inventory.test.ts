@@ -3,6 +3,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { api, components } from "./_generated/api";
 import aclSchema from "./components/acl/schema";
+import { DEFAULT_UNIT_NAMES } from "./components/inventory/defaultUnits";
 import inventorySchema from "./components/inventory/schema";
 import schema from "./schema";
 
@@ -63,5 +64,27 @@ describe("inventory host boundary", () => {
     const products = await admin.query(api.inventory.listProducts, {});
     expect(products).toHaveLength(1);
     expect(products[0].name).toBe("Peak Milk");
+  });
+});
+
+describe("seedUnits", () => {
+  it("previews by default and seeds without auth", async () => {
+    const t = convexTest(schema, modules);
+    await seedAcl(t, false);
+
+    const preview = await t.mutation(api.inventory.seedUnits, {});
+    expect(preview.dryRun).toBe(true);
+    expect(preview.added).toBe(0);
+    expect(preview.missing).toEqual([...DEFAULT_UNIT_NAMES]);
+
+    const seeded = await t.mutation(api.inventory.seedUnits, {
+      dryRun: false,
+    });
+    expect(seeded.dryRun).toBe(false);
+    expect(seeded.added).toBe(DEFAULT_UNIT_NAMES.length);
+
+    const again = await t.mutation(api.inventory.seedUnits, { dryRun: false });
+    expect(again.added).toBe(0);
+    expect(again.missing).toEqual([]);
   });
 });

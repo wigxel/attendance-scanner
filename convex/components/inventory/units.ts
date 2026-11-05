@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { DEFAULT_UNIT_NAMES } from "./defaultUnits";
 
 export function normalise(value: string) {
   return value.trim().toLowerCase();
@@ -91,12 +92,11 @@ export const archive = mutation({
 export const seedDefaultUnits = mutation({
   args: {},
   handler: async (ctx) => {
-    const defaults = ["pack", "bottle", "carton", "roll", "sachet", "box"];
     const units = await ctx.db.query("units").collect();
     const known = new Set(units.map((unit) => normalise(unit.name)));
 
     let added = 0;
-    for (const name of defaults) {
+    for (const name of DEFAULT_UNIT_NAMES) {
       if (known.has(name)) continue;
       await ctx.db.insert("units", {
         name,

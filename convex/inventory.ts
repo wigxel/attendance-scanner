@@ -8,6 +8,7 @@ import {
 } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import type { Doc } from "./components/inventory/_generated/dataModel";
+import { DEFAULT_UNIT_NAMES } from "./components/inventory/defaultUnits";
 import { readId } from "./myFunctions";
 
 const PRIVILEGE = "inventory:manage";
@@ -126,12 +127,25 @@ export const archiveUnit = mutation({
 });
 
 export const seedUnits = mutation({
-  args: {},
-  handler: async (ctx) => {
-    await requireCallerId(ctx);
-    return await ctx.runMutation(
+  args: { dryRun: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const dryRun = args.dryRun ?? true;
+
+    const units = (await ctx.runQuery(components.inventory.units.list, {
+      includeArchived: true,
+    })) as Doc<"units">[];
+    const known = new Set(units.map((unit) => unit.name.trim().toLowerCase()));
+    const missing = DEFAULT_UNIT_NAMES.filter((name) => !known.has(name));
+
+    if (dryRun) {
+      return { dryRun, added: 0, missing };
+    }
+
+    const added = await ctx.runMutation(
       components.inventory.units.seedDefaultUnits,
       {},
     );
+
+    return { dryRun, added, missing };
   },
 });
