@@ -1,5 +1,6 @@
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import {
   setEndDate,
@@ -13,6 +14,7 @@ import { api } from "@/convex/_generated/api";
 import { safeArray, safeInt } from "@/lib/data.helpers";
 import { DurationGroupImpl } from "@/lib/date-range";
 import { anomaly } from "@/lib/error.helpers";
+import { isReservable, resolvePlanKey } from "@/lib/plan-features";
 import { calculateEndDate } from "@/lib/utils";
 import type { AccessPlan } from "@/types/convex";
 
@@ -27,6 +29,23 @@ export const useBookingCalendarLogic = () => {
     | AccessPlan[]
     | undefined;
 
+  const reservablePlans = (accessPlans ?? []).filter((p) =>
+    isReservable(p.features),
+  );
+  const resolvedPlanKey = resolvePlanKey(planKey, reservablePlans);
+
+  // Auto-select so Proceed works without opening the dropdown, and drop a key
+  // persisted from an older plan set.
+  useEffect(() => {
+    if (!accessPlans || resolvedPlanKey === planKey) return;
+
+    setPlanKey(resolvedPlanKey);
+    const plan = accessPlans.find((p) => p.key === resolvedPlanKey);
+    if (plan) {
+      setTimePeriodString(DurationGroupImpl.resolveFromDays(plan.no_of_days));
+    }
+  }, [accessPlans, planKey, resolvedPlanKey]);
+
   if (!accessPlans) {
     return {
       reserved: [] as { startDate: Date; endDate: Date }[],
@@ -35,16 +54,12 @@ export const useBookingCalendarLogic = () => {
       handleDateChange: () => {},
       formatDate: () => "",
       timePeriodString,
-      planKey,
+      planKey: resolvedPlanKey,
       reservablePlans: [] as AccessPlan[],
       handleTimePeriodChange: () => {},
       handleProceed: () => {},
     };
   }
-
-  const reservablePlans = accessPlans.filter((p) =>
-    p.features.includes("booking"),
-  );
 
   const reserved: {
     startDate: Date;
@@ -86,7 +101,7 @@ export const useBookingCalendarLogic = () => {
       return toast.info("Please select another date. We're closed on Sundays");
     }
 
-    const currentPlan = accessPlans.find((p) => p.key === planKey);
+    const currentPlan = accessPlans.find((p) => p.key === resolvedPlanKey);
     const timePeriod = safeInt(currentPlan?.no_of_days, 0);
 
     if (!currentPlan) {
@@ -120,7 +135,7 @@ export const useBookingCalendarLogic = () => {
     handleDateChange,
     formatDate,
     timePeriodString,
-    planKey,
+    planKey: resolvedPlanKey,
     reservablePlans,
     handleTimePeriodChange,
     handleProceed,

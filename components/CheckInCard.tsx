@@ -1,5 +1,4 @@
 "use client";
-import { useFlags } from "@flagsmith/flagsmith/react";
 import { useQuery } from "convex/react";
 import { XIcon } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
@@ -8,6 +7,7 @@ import { AppLoader } from "@/components/loader";
 import { APP_URL } from "@/config/constants";
 import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";
+import { useCheckInMode } from "@/hooks/flags";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
 import { safeStr } from "@/lib/data.helpers";
 import { cn } from "@/lib/utils";
@@ -59,9 +59,11 @@ function QRCode() {
 }
 
 export function CheckInCard() {
-  const flags = useFlags(["customer_scanning"]);
+  const mode = useCheckInMode();
 
-  if (flags.customer_scanning.enabled) {
+  // The personal QR is only the staff-scan path; self-service modes use the
+  // kiosk QR / one-tap button instead.
+  if (mode !== "staff_scan") {
     return null;
   }
 
