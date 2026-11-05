@@ -4,10 +4,14 @@ import { format, isSameYear } from "date-fns";
 import { Globe, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Area, AreaChart } from "recharts";
+import { toast } from "sonner";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import type { CheckInMode } from "@/convex/shared";
 import { useCustomer } from "@/hooks/auth";
+import { getErrorMessage } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
+import { CheckInModeSelect } from "./check-in-mode-select";
 import {
   EmptyState,
   EmptyStateContent,
@@ -36,6 +40,7 @@ function CustomerSheet({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateProfile = useMutation(api.customers.updateProfile);
+  const setCheckInMode = useMutation(api.customers.setCheckInMode);
 
   const {
     results: visits,
@@ -67,6 +72,17 @@ function CustomerSheet({
       setIsEditing(false);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleModeChange = async (mode: CheckInMode | "auto") => {
+    if (!userId) return;
+
+    try {
+      await setCheckInMode({ userId, mode });
+      toast.success("Check-in mode updated");
+    } catch (err) {
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -132,6 +148,21 @@ function CustomerSheet({
               {userId && <CustomerVisitTrend userId={userId} />}
             </div>
           ) : null}
+
+          <div className="p-6 border-t">
+            <h4 className="font-semibold mb-1">Check-in mode</h4>
+            <p className="text-xs text-muted-foreground mb-3 text-pretty">
+              Auto uses the app-wide default. Staff can always check anyone in
+              from the attendance page.
+            </p>
+            {customer ? (
+              <CheckInModeSelect
+                value={customer.checkInMode ?? "auto"}
+                onChange={handleModeChange}
+                allowAuto
+              />
+            ) : null}
+          </div>
 
           <div className="p-6 pt-0 border-t">
             <h4 className="font-semibold mb-4 mt-4">Visit History</h4>

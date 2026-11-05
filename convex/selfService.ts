@@ -4,12 +4,20 @@ import { isNullable } from "effect/Predicate";
 import { safeDict } from "../lib/data.helpers";
 import { api } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
+import { resolveCheckInMode } from "./flags";
 import { readId } from "./myFunctions";
 import {
   insertRegisterAndAggregate,
   isRegisteredToday,
   processReservationCheckIn,
 } from "./register_common";
+import { SelfCheckInMessages } from "./shared";
+
+/** Each self-service method is only valid under one check-in mode. */
+const METHOD_MODE = {
+  "one-tap": "one_tap",
+  qr: "self_checkin",
+} as const;
 
 export const getTodaysRating = query({
   args: {},
@@ -69,6 +77,12 @@ export const selfCheckIn = mutation({
 
     if (!userId) {
       throw new ConvexError("User not authenticated");
+    }
+
+    const mode = await resolveCheckInMode(ctx, userId);
+
+    if (mode !== METHOD_MODE[args.method]) {
+      throw new ConvexError(SelfCheckInMessages[mode]);
     }
 
     if (await isRegisteredToday(ctx, userId)) {

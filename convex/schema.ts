@@ -3,6 +3,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
   accessPlanStruct,
+  checkInModeValidator,
   durationTypeConvexSchema,
   featureRequestStatus,
   guestTypeValidator,
@@ -71,6 +72,8 @@ const profile = defineTable({
   occupation: v.union(v.id("occupations"), v.literal("None")),
   /** @deprecated No longer needed. use ACL utils */
   role: v.optional(v.string()),
+  /** Per-customer override. Falls back to `config.default_check_in_mode`. */
+  checkInMode: v.optional(checkInModeValidator),
 })
   .index("occupation", ["occupation"])
   .index("by_user_id", ["id"])

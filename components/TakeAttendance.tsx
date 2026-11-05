@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { isDevelopment } from "@/config/constants";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useDefaultCheckInMode } from "@/hooks/flags";
 import { getErrorMessage } from "@/lib/error.helpers";
-import { useFlags } from "@/services/flagsmith";
 import { convex } from "./ConvexClientProvider";
 import { FlagCond } from "./flag-cond";
 import { DebugProfile } from "./forms/debug-profile";
@@ -40,7 +40,7 @@ export const ScanTimeCodec = {
 };
 
 export function TakeAttendance() {
-  const flags = useFlags(["customer_scanning"]);
+  const defaultMode = useDefaultCheckInMode();
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [scanningEnabled, setScanningEnabled] = useState(true);
@@ -220,7 +220,7 @@ export function TakeAttendance() {
         </Alert>
       </div>
 
-      {flags.customer_scanning.enabled ? (
+      {defaultMode && defaultMode !== "staff_scan" ? (
         <CustomerScanFeature />
       ) : (
         <div className="flex justify-end px-4">
