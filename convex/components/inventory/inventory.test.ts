@@ -164,6 +164,7 @@ describe("stock movements", () => {
     expect(movement.unitId).toBe(unitId);
     expect(movement.unitFactor).toBe(1);
     expect(movement.quantityInBase).toBe(4);
+    expect(movement.source).toBe("manual");
   });
 
   it("exposes no edit or delete mutation", () => {
@@ -220,7 +221,7 @@ describe("stock movements", () => {
     expect(statusOf(quiet.productId)).toBe("out");
   });
 
-  it("records one adjustment per non-empty opening row and skips blanks", async () => {
+  it("records one adjustment per non-empty bulk row and skips blanks", async () => {
     const t = convexTest(schema, modules);
     const milk = await seedProduct(t);
     const sugar = await t.mutation(api.products.create, {
@@ -229,7 +230,7 @@ describe("stock movements", () => {
       baseUnitId: milk.unitId,
     });
 
-    const written = await t.mutation(api.stockMovements.recordOpeningStock, {
+    const written = await t.mutation(api.stockMovements.recordBulkAdjustment, {
       callerId: "admin",
       rows: [
         { productId: milk.productId, quantity: 12 },
@@ -245,6 +246,8 @@ describe("stock movements", () => {
     expect(movements[0].productId).toBe(milk.productId);
     expect(movements[0].kind).toBe("adjustment");
     expect(movements[0].quantityInBase).toBe(12);
+    expect(movements[0].source).toBe("bulk");
+    expect(movements[0].note).toBe("Bulk stock adjustment");
   });
 
   it("rejects movements against an archived product", async () => {

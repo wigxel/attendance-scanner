@@ -25,11 +25,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/convex/_generated/api";
+import { cn } from "@/lib/utils";
 
 type MovementHistorySheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  product?: { productId: string; name: string; baseUnitName: string } | null;
+  product?: {
+    productId: string;
+    name: string;
+    baseUnitName: string;
+    baseUnitAbbreviation?: string;
+  } | null;
 };
 
 export function MovementHistorySheet({
@@ -46,9 +52,10 @@ export function MovementHistorySheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{product ? product.name : "Movements"}</SheetTitle>
+          <SheetTitle>{product ? product.name : "Stock changes"}</SheetTitle>
           <SheetDescription>
-            The last 20 movements, newest first. The ledger is the audit trail.
+            The last 20 stock changes, newest first. The ledger is the audit
+            trail.
           </SheetDescription>
         </SheetHeader>
 
@@ -62,7 +69,7 @@ export function MovementHistorySheet({
           ) : (
             <EmptyState isEmpty={movements.length === 0}>
               <EmptyStateContent>
-                <EmptyStateTitle>No movements yet</EmptyStateTitle>
+                <EmptyStateTitle>No stock changes yet</EmptyStateTitle>
                 <EmptyStateDescription>
                   Record a restock, usage, or adjustment to start the ledger.
                 </EmptyStateDescription>
@@ -79,22 +86,47 @@ export function MovementHistorySheet({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {movements.map((movement) => (
-                    <TableRow key={movement._id}>
-                      <TableCell>{movementKindLabels[movement.kind]}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {movement.quantityInBase > 0 ? "+" : ""}
-                        {movement.quantityInBase} {product?.baseUnitName}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {new Date(movement.occurredAt).toLocaleString()}
-                      </TableCell>
-                      <TableCell>{movement.recordedBy}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {movement.note ?? "—"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {movements.map((movement) => {
+                    // Older rows predate `source` and only carry the note.
+                    const isBulkAdjustment =
+                      movement.source === "bulk" ||
+                      (movement.source === undefined &&
+                        (movement.note === "Opening stock" ||
+                          movement.note === "Bulk stock adjustment"));
+                    const isNegativeBulk =
+                      isBulkAdjustment && movement.quantityInBase < 0;
+                    const unitLabel =
+                      product?.baseUnitAbbreviation ?? product?.baseUnitName;
+
+                    return (
+                      <TableRow key={movement._id}>
+                        <TableCell>
+                          {movementKindLabels[movement.kind]}
+                        </TableCell>
+                        <TableCell
+                          className={cn(
+                            "whitespace-nowrap",
+                            isNegativeBulk && "text-destructive",
+                          )}
+                          title={
+                            product?.baseUnitAbbreviation
+                              ? product.baseUnitName
+                              : undefined
+                          }
+                        >
+                          {movement.quantityInBase > 0 ? "+" : ""}
+                          {movement.quantityInBase} {unitLabel}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {new Date(movement.occurredAt).toLocaleString()}
+                        </TableCell>
+                        <TableCell>{movement.recordedBy}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {movement.note ?? "—"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </EmptyState>

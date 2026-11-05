@@ -47,10 +47,10 @@ export function MovementFormDialog({
         occurredAt: new Date(values.occurredAt).toISOString(),
         note: values.note.trim() || undefined,
       });
-      toast.success("Stock movement recorded");
+      toast.success("Stock change recorded");
       onOpenChange(false);
     } catch (error) {
-      toast.error("Could not record movement", {
+      toast.error("Could not record stock change", {
         description: error instanceof Error ? error.message : "Unknown error",
       });
     }
@@ -60,7 +60,7 @@ export function MovementFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90svh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Record movement</DialogTitle>
+          <DialogTitle>Record stock change</DialogTitle>
           <DialogDescription>
             {target
               ? `${target.name} — counted in ${target.baseUnitName}.`

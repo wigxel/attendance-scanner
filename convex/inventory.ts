@@ -21,6 +21,7 @@ export type StockLevel = {
   reorderLevel: number;
   baseUnitId: string;
   baseUnitName: string;
+  baseUnitAbbreviation?: string;
   quantity: number;
   status: "out" | "low" | "ok";
   lastMovementAt: string | null;
@@ -197,7 +198,7 @@ export const recordMovement = mutation({
   },
 });
 
-export const recordOpeningStock = mutation({
+export const recordBulkAdjustment = mutation({
   args: {
     rows: v.array(
       v.object({
@@ -205,12 +206,13 @@ export const recordOpeningStock = mutation({
         quantity: v.optional(v.number()),
       }),
     ),
+    note: v.optional(v.string()),
   },
-  handler: async (ctx, { rows }) => {
+  handler: async (ctx, { rows, note }) => {
     const caller = await requireCallerId(ctx);
     return await ctx.runMutation(
-      components.inventory.stockMovements.recordOpeningStock,
-      { rows, callerId: caller },
+      components.inventory.stockMovements.recordBulkAdjustment,
+      { rows, note, callerId: caller },
     );
   },
 });

@@ -11,6 +11,7 @@ export type StockRow = {
   name: string;
   sku?: string;
   baseUnitName: string;
+  baseUnitAbbreviation?: string;
   reorderLevel: number;
   quantity: number;
   status: "out" | "low" | "ok";
@@ -49,8 +50,8 @@ export function createStockColumns(actions: {
       cell: ({ row }) => row.original.sku ?? "—",
     },
     {
-      id: "on hand",
-      header: "On hand",
+      id: "in stock",
+      header: "In stock",
       accessorKey: "quantity",
       cell: ({ row }) => (
         <span className="whitespace-nowrap">
@@ -70,7 +71,7 @@ export function createStockColumns(actions: {
     },
     {
       id: "last movement",
-      header: "Last movement",
+      header: "Last stock change",
       accessorKey: "lastMovementAt",
       cell: ({ row }) =>
         row.original.lastMovementAt
@@ -90,7 +91,7 @@ export function createStockColumns(actions: {
               onClick={() => actions.onRecordMovement(stock)}
             >
               <PlusCircle className="h-4 w-4" />
-              Record movement
+              Record change
             </Button>
             <Button
               variant="ghost"

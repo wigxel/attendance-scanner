@@ -84,6 +84,7 @@ type Entry = {
   quantity: number;
   occurredAt?: string;
   note?: string;
+  source?: "bulk" | "manual";
 };
 
 async function insertMovement(ctx: MutationCtx, entry: Entry) {
@@ -120,6 +121,7 @@ async function insertMovement(ctx: MutationCtx, entry: Entry) {
     occurredAt,
     createdAt: new Date().toISOString(),
     note,
+    source: entry.source ?? "manual",
     createdBy: entry.callerId,
   });
 }
@@ -136,7 +138,7 @@ export const record = mutation({
   handler: async (ctx, args) => insertMovement(ctx, args),
 });
 
-export const recordOpeningStock = mutation({
+export const recordBulkAdjustment = mutation({
   args: {
     callerId: v.string(),
     rows: v.array(
@@ -145,10 +147,13 @@ export const recordOpeningStock = mutation({
         quantity: v.optional(v.number()),
       }),
     ),
+    note: v.optional(v.string()),
   },
-  handler: async (ctx, { callerId, rows }) => {
+  handler: async (ctx, { callerId, rows, note }) => {
     const filled = rows.filter((row) => row.quantity !== undefined);
     if (filled.length === 0) throw new Error("Nothing to save.");
+
+    const batchNote = note?.trim() || "Bulk stock adjustment";
 
     // Sequential on purpose: each adjustment derives its delta from the
     // balance left by the rows before it.
@@ -158,7 +163,8 @@ export const recordOpeningStock = mutation({
         productId: row.productId,
         kind: "adjustment",
         quantity: row.quantity as number,
-        note: "Opening stock",
+        note: batchNote,
+        source: "bulk",
       });
     }
 
@@ -193,6 +199,9 @@ export const levels = query({
     ]);
 
     const unitNames = new Map(units.map((unit) => [unit._id, unit.name]));
+    const unitAbbreviations = new Map(
+      units.map((unit) => [unit._id, unit.abbreviation]),
+    );
     const totals = summariseMovements(movements);
 
     return products
@@ -207,6 +216,7 @@ export const levels = query({
           reorderLevel: product.reorderLevel,
           baseUnitId: product.baseUnitId,
           baseUnitName: unitNames.get(product.baseUnitId) ?? "Unknown unit",
+          baseUnitAbbreviation: unitAbbreviations.get(product.baseUnitId),
           quantity: total.quantity,
           status: stockStatus(total.quantity, product.reorderLevel),
           lastMovementAt: total.last,

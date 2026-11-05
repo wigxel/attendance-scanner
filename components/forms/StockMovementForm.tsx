@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { StepperInput } from "@/components/ui/stepper-input";
 import { Textarea } from "@/components/ui/textarea";
 
 const movementKinds = ["restock", "usage", "adjustment"] as const;
@@ -150,20 +151,20 @@ export function StockMovementForm({
                   : `Amount (${baseUnitName})`}
               </FormLabel>
               <FormControl>
-                <Input
-                  type="number"
-                  min={0}
-                  step={1}
+                <StepperInput
                   {...field}
-                  onChange={(event) =>
-                    field.onChange(event.target.valueAsNumber)
+                  value={
+                    Number.isFinite(field.value) ? String(field.value) : ""
+                  }
+                  onChange={(value) =>
+                    field.onChange(value === "" ? 0 : Number(value))
                   }
                 />
               </FormControl>
               <FormDescription>
                 {currentQuantity === undefined
                   ? "Recorded in the product's base unit."
-                  : `On hand now: ${currentQuantity} ${baseUnitName}.`}
+                  : `In stock now: ${currentQuantity} ${baseUnitName}.`}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -180,7 +181,8 @@ export function StockMovementForm({
                 <Input type="datetime-local" {...field} />
               </FormControl>
               <FormDescription>
-                Defaults to now. Change it when the movement is recorded late.
+                When this happened. Defaults to now — change it if you&apos;re
+                entering it late.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -216,7 +218,7 @@ export function StockMovementForm({
           >
             {form.formState.isSubmitting || isLoading
               ? "Saving..."
-              : "Record movement"}
+              : "Save changes"}
           </Button>
         </div>
       </form>

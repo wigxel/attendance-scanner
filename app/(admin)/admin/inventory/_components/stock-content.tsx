@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/convex/_generated/api";
-import { OpeningStockDialog } from "./opening-stock-dialog";
+import { BulkAdjustmentDialog } from "./bulk-adjustment-dialog";
 import { createStockColumns, type StockRow } from "./stock-columns";
 
 export function StockContent() {
@@ -27,7 +27,7 @@ export function StockContent() {
   const [lowOnly, setLowOnly] = useState(false);
   const [movementTarget, setMovementTarget] = useState<StockRow | null>(null);
   const [historyTarget, setHistoryTarget] = useState<StockRow | null>(null);
-  const [isOpeningOpen, setIsOpeningOpen] = useState(false);
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
 
   const levels = useQuery(api.inventory.stockLevels, {});
 
@@ -70,6 +70,7 @@ export function StockContent() {
         productId: historyTarget.productId,
         name: historyTarget.name,
         baseUnitName: historyTarget.baseUnitName,
+        baseUnitAbbreviation: historyTarget.baseUnitAbbreviation,
       }
     : null;
 
@@ -87,7 +88,7 @@ export function StockContent() {
         <div>
           <h2 className="text-lg font-medium text-foreground">Stock</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Quantity on hand comes from the movement ledger, never a stored
+            Quantity in stock comes from the stock change ledger, never a stored
             column.
           </p>
         </div>
@@ -101,9 +102,9 @@ export function StockContent() {
             />
             <Label htmlFor="low-only-stock">Low and out only</Label>
           </div>
-          <Button variant="outline" onClick={() => setIsOpeningOpen(true)}>
+          <Button variant="outline" onClick={() => setIsBulkOpen(true)}>
             <ClipboardList className="h-4 w-4" />
-            Opening stock
+            Bulk adjustment
           </Button>
         </div>
       </div>
@@ -122,7 +123,7 @@ export function StockContent() {
             <EmptyStateDescription>
               {lowOnly
                 ? "Every product is above its reorder level."
-                : "Add products to the catalogue, then record their opening stock."}
+                : "Add products to the catalogue, then set their stock."}
             </EmptyStateDescription>
           </EmptyStateContent>
         }
@@ -140,9 +141,9 @@ export function StockContent() {
         product={historyDialogTarget}
       />
 
-      <OpeningStockDialog
-        open={isOpeningOpen}
-        onOpenChange={setIsOpeningOpen}
+      <BulkAdjustmentDialog
+        open={isBulkOpen}
+        onOpenChange={setIsBulkOpen}
         products={levels}
       />
     </div>

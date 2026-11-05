@@ -81,7 +81,7 @@ export function createProductColumns(actions: {
                 onClick={() => actions.onRecordMovement(product)}
               >
                 <PlusCircle className="h-4 w-4" />
-                Record movement
+                Record change
               </Button>
             )}
             <Button

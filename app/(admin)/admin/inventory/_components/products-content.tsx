@@ -102,7 +102,8 @@ export function ProductsContent() {
         <div>
           <h2 className="text-lg font-medium text-foreground">Catalogue</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Products you stock. Quantities come from movements, not this list.
+            Products you stock. Quantities come from stock changes, not this
+            list.
           </p>
         </div>
 
@@ -132,7 +133,7 @@ export function ProductsContent() {
           <EmptyStateContent>
             <EmptyStateTitle>No products yet</EmptyStateTitle>
             <EmptyStateDescription>
-              Add a product to start picking it on movements later.
+              Add a product to start picking it on stock changes later.
             </EmptyStateDescription>
           </EmptyStateContent>
         }

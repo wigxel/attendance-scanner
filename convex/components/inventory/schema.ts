@@ -43,6 +43,7 @@ const stockMovements = defineTable({
   occurredAt: v.string(),
   createdAt: v.string(),
   note: v.optional(v.string()),
+  source: v.optional(v.union(v.literal("bulk"), v.literal("manual"))),
   createdBy: v.string(),
 })
   .index("by_product", ["productId"])
