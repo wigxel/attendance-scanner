@@ -226,6 +226,7 @@ export function CustomersTable() {
         }))}
         searchTerm={debouncedSearch}
         onSearchChange={setSearchTerm}
+        searchPlaceholder="Search by name or email..."
         isLoading={isLoading}
         hasMore={hasMore}
         onLoadMore={loadMore}

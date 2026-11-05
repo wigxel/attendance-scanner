@@ -392,6 +392,7 @@ export function MonthlyReservationsTable() {
             onRowClick={handleRowClick}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
+            searchPlaceholder="Search by name or email..."
             emptyState={
               <EmptyStateContent>
                 <EmptyStateTitle>No reservations found</EmptyStateTitle>

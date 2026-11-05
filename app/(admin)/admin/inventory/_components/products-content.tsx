@@ -110,6 +110,7 @@ export function ProductsContent() {
         data={rows}
         searchTerm={search}
         onSearchChange={setSearch}
+        searchPlaceholder="Search by name or SKU..."
         emptyState={
           <EmptyStateContent>
             <EmptyStateTitle>No products yet</EmptyStateTitle>

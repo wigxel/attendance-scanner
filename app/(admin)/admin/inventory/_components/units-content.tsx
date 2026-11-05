@@ -100,6 +100,7 @@ export function UnitsContent() {
         data={units}
         searchTerm={search}
         onSearchChange={setSearch}
+        searchPlaceholder="Search by name or abbreviation..."
         emptyState={
           <EmptyStateContent>
             <EmptyStateTitle>No units yet</EmptyStateTitle>
