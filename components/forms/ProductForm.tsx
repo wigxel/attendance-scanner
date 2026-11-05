@@ -38,16 +38,9 @@ const productFormSchema = z.object({
   costPriceNaira: z.coerce
     .number()
     .min(0, { message: "Cost price cannot be negative" }),
-  sellPriceNaira: z
-    .string()
-    .trim()
-    .refine(
-      (value) =>
-        value === "" || (!Number.isNaN(Number(value)) && Number(value) >= 0),
-      {
-        message: "Sell price must be 0 or more",
-      },
-    ),
+  sellPriceNaira: z.string().trim().refine(isBlankOrNonNegative, {
+    message: "Sell price must be 0 or more",
+  }),
 });
 
 export type ProductFormValues = z.infer<typeof productFormSchema>;
