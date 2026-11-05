@@ -39,6 +39,16 @@ export const guestTypeValidator = v.union(
 
 export type GuestType = "visitor" | "student" | "event_attendee";
 
+/**
+ * How a customer handed over the money. Absent on a booking means nobody has
+ * recorded it yet — historical rows and unreconciled payments. Never guess.
+ */
+export const paymentChannelValidator = v.union(
+  v.literal("cash"),
+  v.literal("pos"),
+  v.literal("transfer"),
+);
+
 // Present only when this visit was a guest visit. The presence of this
 // field *is* the guest flag — there is no separate boolean. `hostUserId` is
 // the `profile`.`id` of the customer being visited.

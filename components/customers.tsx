@@ -61,6 +61,7 @@ import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
 import { DateParse } from "@/lib/date.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
+import type { PaymentChannel } from "@/lib/payment-channel";
 import { cn } from "@/lib/utils";
 import { CustomerSheet } from "./customer-info";
 import { DateRange } from "./DateRange";
@@ -171,7 +172,11 @@ export function CustomersTable() {
   });
 
   const handleBookingSubmit = useEvent(
-    async (values: { planKey: string; startDate: string }) => {
+    async (values: {
+      planKey: string;
+      startDate: string;
+      channel: PaymentChannel;
+    }) => {
       if (!bookingUserId) return;
       setIsBookingLoading(true);
 
@@ -180,6 +185,7 @@ export function CustomersTable() {
           userId: bookingUserId,
           planKey: values.planKey,
           startDate: values.startDate,
+          channel: values.channel,
         });
         setBookingUserId(null);
         toast.success("Booking created successfully");

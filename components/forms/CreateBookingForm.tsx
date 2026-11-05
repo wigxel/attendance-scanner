@@ -21,11 +21,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import type { Seat } from "@/hooks/useSeats";
 import { safeArray } from "@/lib/data.helpers";
+import { PAYMENT_CHANNELS, paymentChannelLabels } from "@/lib/payment-channel";
 import { calculateEndDate, formatDateToLocalISO } from "@/lib/utils";
 import { AccessPlanDropdown } from "./AccessPlanDropdown";
 import { CustomerCombobox } from "./CustomerCombobox";
@@ -34,25 +41,34 @@ const createBookingSchema = z.object({
   customerId: z.string().min(1, { message: "Customer is required" }),
   planKey: z.string().min(1, { message: "Plan is required" }),
   startDate: z.string().min(1, { message: "Start date is required" }),
+  channel: z.enum(["cash", "pos", "transfer"], {
+    required_error: "Select how the customer paid",
+    invalid_type_error: "Select how the customer paid",
+  }),
 });
 
 type CreateBookingFormValues = z.infer<typeof createBookingSchema>;
+
+type CreateBookingPayload = {
+  userId: string;
+  planKey: string;
+  startDate: string;
+  seatId: Id<"seats">;
+  channel: CreateBookingFormValues["channel"];
+};
 
 const defaultState: CreateBookingFormValues = {
   customerId: "",
   planKey: "",
   startDate: format(new Date(), "yyyy-MM-dd"),
+  // Forced choice: no default channel, the desk must pick one.
+  channel: undefined as unknown as CreateBookingFormValues["channel"],
 };
 
 interface CreateBookingFormProps {
   preselectedUserId?: string | null;
   isLoading?: boolean;
-  onSubmit: (values: {
-    userId: string;
-    planKey: string;
-    startDate: string;
-    seatId: Id<"seats">;
-  }) => Promise<void>;
+  onSubmit: (values: CreateBookingPayload) => Promise<void>;
   onCancel?: () => void;
 }
 
@@ -130,6 +146,7 @@ export function CreateBookingForm({
       planKey: values.planKey,
       startDate: values.startDate,
       seatId: selectedSeat._id,
+      channel: values.channel,
     });
   };
 
@@ -206,6 +223,35 @@ export function CreateBookingForm({
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="channel"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>How was it paid?</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value ?? ""}
+                disabled={isLoading}
+              >
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select payment channel" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {PAYMENT_CHANNELS.map((channel) => (
+                    <SelectItem key={channel} value={channel}>
+                      {paymentChannelLabels[channel]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {showSeatGrid && (
           <div className="space-y-4 border-t pt-6">

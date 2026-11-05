@@ -34,7 +34,7 @@ import {
   getAvailableSeatsForDay,
   getUnassignedTicketsForDay,
 } from "./seatOrchestrator";
-import { BookImpl } from "./shared";
+import { BookImpl, paymentChannelValidator } from "./shared";
 
 export const getBooking = query({
   args: {
@@ -1271,6 +1271,9 @@ export const createManualBooking = mutation({
     planKey: v.string(),
     startDate: v.string(),
     seatId: v.optional(v.id("seats")),
+    // Forced choice: the desk must say how the money arrived. No default,
+    // because a guessed channel corrupts per-channel reconciliation.
+    channel: paymentChannelValidator,
   },
   handler: async (ctx, args) => {
     const profileId = await readId(ctx);
@@ -1279,7 +1282,7 @@ export const createManualBooking = mutation({
 
     await requirePrivilege(ctx, "booking:create");
 
-    const { userId, planKey, startDate, seatId } = args;
+    const { userId, planKey, startDate, seatId, channel } = args;
 
     const profile = await ctx.db
       .query("profile")
@@ -1380,6 +1383,7 @@ export const createManualBooking = mutation({
       pricePerSeat,
       amount: amount_paid,
       status: "confirmed",
+      channel,
       created_by: profileId,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -1442,6 +1446,9 @@ export const list = query({
     month: v.string(),
     planKey: v.optional(v.string()),
     overflow: v.optional(v.boolean()),
+    channel: v.optional(
+      v.union(paymentChannelValidator, v.literal("unrecorded")),
+    ),
   },
   handler: async (ctx, args) => {
     const { planKey } = args;
@@ -1476,6 +1483,15 @@ export const list = query({
 
       if (filterDuration !== null && booking.duration !== filterDuration)
         return false;
+
+      if (args.channel === "unrecorded") {
+        if (booking.channel !== undefined) return false;
+      } else if (
+        args.channel !== undefined &&
+        booking.channel !== args.channel
+      ) {
+        return false;
+      }
 
       const startInMonth = isSameMonth(parseISO(booking.startDate), targetDate);
       const endInMonth = isSameMonth(parseISO(booking.endDate), targetDate);
@@ -1530,6 +1546,9 @@ export const exportList = action({
     month: v.string(),
     planKey: v.optional(v.string()),
     overflow: v.optional(v.boolean()),
+    channel: v.optional(
+      v.union(paymentChannelValidator, v.literal("unrecorded")),
+    ),
   },
   handler: async (ctx, args) => {
     const { valid } = await ctx.runQuery(api.acl.hasPrivilege, {
@@ -1546,6 +1565,7 @@ export const exportList = action({
       month: args.month,
       planKey: args.planKey,
       overflow: args.overflow,
+      channel: args.channel,
     });
 
     const headers = [
@@ -1553,6 +1573,7 @@ export const exportList = action({
       "Email",
       "Duration Type",
       "Amount",
+      "Payment Channel",
       "Created Date",
     ];
     const rows = bookings.bookings.map((b) => [
@@ -1560,6 +1581,7 @@ export const exportList = action({
       b.user.email ? `"${b.user.email}"` : "",
       b.durationType,
       (b.amount / 100).toString(),
+      b.channel ?? "unrecorded",
       new Date(b.createdAt).toISOString().split("T")[0],
     ]);
 
