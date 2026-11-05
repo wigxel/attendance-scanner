@@ -21,6 +21,7 @@ import type * as crons from "../crons.js";
 import type * as customers from "../customers.js";
 import type * as flags from "../flags.js";
 import type * as http from "../http.js";
+import type * as inventory from "../inventory.js";
 import type * as kpis from "../kpis.js";
 import type * as metrics from "../metrics.js";
 import type * as migrations from "../migrations.js";
@@ -65,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   customers: typeof customers;
   flags: typeof flags;
   http: typeof http;
+  inventory: typeof inventory;
   kpis: typeof kpis;
   metrics: typeof metrics;
   migrations: typeof migrations;
@@ -120,6 +122,7 @@ export declare const components: {
   wigxel_acl: import("../components/acl/_generated/component.js").ComponentApi<"wigxel_acl">;
   roomMetrics: import("../components/roomMetrics/_generated/component.js").ComponentApi<"roomMetrics">;
   notifications: import("../components/notifications/_generated/component.js").ComponentApi<"notifications">;
+  inventory: import("../components/inventory/_generated/component.js").ComponentApi<"inventory">;
   aggregate: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"aggregate">;
   customerStats: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"customerStats">;
 };

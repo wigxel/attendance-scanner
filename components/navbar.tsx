@@ -8,6 +8,7 @@ const navItems = [
   { name: "KPIs", href: "/admin/kpis" },
   { name: "Reservations", href: "/admin/reservations" },
   { name: "Customers", href: "/admin/customers" },
+  { name: "Inventory", href: "/admin/inventory" },
   { name: "Environment", href: "/admin/environment" },
   { name: "Settings", href: "/admin/settings" },
 ];
