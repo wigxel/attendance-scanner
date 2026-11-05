@@ -622,6 +622,7 @@ export const getAllUsers = query({
         phoneNumber: profile.phoneNumber ?? "N/A",
         visitCount,
         eligible,
+        checkInMode: profile.checkInMode ?? null,
       };
     });
 

@@ -6,6 +6,7 @@ import { CheckInCard, NotRegistered } from "@/components/CheckInCard";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
 import { RoomEnvironmentWidget } from "@/components/room-environment-widget";
 import { SelfCheckInStatus } from "@/components/self-checkin-status";
+import { SelfCheckInMessages } from "@/convex/shared";
 import { useProfile } from "@/hooks/auth";
 import { usePendingCheckIn } from "@/hooks/pending-checkin";
 import { useSelfCheckIn } from "@/hooks/self-service";
@@ -37,9 +38,17 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
     selfCheckIn,
     onSuccess: () => toast.success("Checked in"),
     onError: (err) => {
-      const msg = getErrorMessage(err).toLowerCase();
-      if (!msg.includes("already registered")) {
-        toast.error(`Auto check-in failed: ${getErrorMessage(err)}`);
+      const message = getErrorMessage(err);
+
+      // A refused check-in mode is guidance, not a failure: show the
+      // actionable copy verbatim instead of "Auto check-in failed".
+      if (Object.values(SelfCheckInMessages).includes(message)) {
+        toast.info(message);
+        return;
+      }
+
+      if (!message.toLowerCase().includes("already registered")) {
+        toast.error(`Auto check-in failed: ${message}`);
       }
     },
   });

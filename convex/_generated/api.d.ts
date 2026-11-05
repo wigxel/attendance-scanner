@@ -19,6 +19,7 @@ import type * as config from "../config.js";
 import type * as constants from "../constants.js";
 import type * as crons from "../crons.js";
 import type * as customers from "../customers.js";
+import type * as flags from "../flags.js";
 import type * as http from "../http.js";
 import type * as kpis from "../kpis.js";
 import type * as metrics from "../metrics.js";
@@ -61,6 +62,7 @@ declare const fullApi: ApiFromModules<{
   constants: typeof constants;
   crons: typeof crons;
   customers: typeof customers;
+  flags: typeof flags;
   http: typeof http;
   kpis: typeof kpis;
   metrics: typeof metrics;

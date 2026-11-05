@@ -100,29 +100,36 @@ const defaultPaginationOpts = {
 };
 
 export function useUsers(searchTerm = "") {
-  const [paginationOpts, setPaginationOpts] = React.useState(
-    defaultPaginationOpts,
-  );
+  const [pagination, setPagination] = React.useState({
+    searchTerm,
+    opts: defaultPaginationOpts,
+  });
+
+  // A cursor is an offset into the filtered list, so it is only valid for the
+  // search it was taken from. Anyone else's state is ignored, which starts the
+  // new search from the beginning without a reset effect.
+  const paginationOpts =
+    pagination.searchTerm === searchTerm
+      ? pagination.opts
+      : defaultPaginationOpts;
 
   const record = useQuery(api.myFunctions.getAllUsers, {
     paginationOpts,
     search: searchTerm,
   });
 
-  // The cursor is an offset into the filtered list, so it is only valid for the
-  // search it was taken from. Start over when the term changes.
-  React.useEffect(() => {
-    setPaginationOpts(defaultPaginationOpts);
-  }, [searchTerm]);
-
   const loadMore = React.useCallback(() => {
-    if (record && !record.isDone && record.continueCursor) {
-      setPaginationOpts((prev) => ({
-        ...prev,
-        cursor: record.continueCursor ?? null,
-      }));
-    }
-  }, [record]);
+    if (!record || record.isDone || !record.continueCursor) return;
+
+    const cursor = record.continueCursor;
+    setPagination((prev) => ({
+      searchTerm,
+      opts: {
+        ...(prev.searchTerm === searchTerm ? prev.opts : defaultPaginationOpts),
+        cursor,
+      },
+    }));
+  }, [record, searchTerm]);
 
   return {
     data: record?.page ?? [],
