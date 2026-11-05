@@ -31,7 +31,7 @@ function toNaira(kobo: number | undefined) {
 
 function toKobo(values: ProductFormValues) {
   return {
-    costPriceKobo: Math.round(values.costPriceNaira * 100),
+    costPriceKobo: Math.round(Number(values.costPriceNaira || 0) * 100),
     sellPriceKobo:
       values.sellPriceNaira === ""
         ? undefined
@@ -54,7 +54,7 @@ export function ProductFormDialog({
         sku: product.sku ?? "",
         baseUnitId: product.baseUnitId,
         reorderLevel: product.reorderLevel,
-        costPriceNaira: product.costPriceKobo / 100,
+        costPriceNaira: String(product.costPriceKobo / 100),
         sellPriceNaira: toNaira(product.sellPriceKobo),
       }
     : undefined;

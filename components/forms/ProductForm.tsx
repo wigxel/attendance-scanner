@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   Form,
   FormControl,
@@ -36,9 +37,9 @@ const productFormSchema = z.object({
     .number()
     .int({ message: "Reorder level must be a whole number" })
     .min(0, { message: "Reorder level cannot be negative" }),
-  costPriceNaira: z.coerce
-    .number()
-    .min(0, { message: "Cost price cannot be negative" }),
+  costPriceNaira: z.string().trim().refine(isBlankOrNonNegative, {
+    message: "Cost price must be 0 or more",
+  }),
   sellPriceNaira: z.string().trim().refine(isBlankOrNonNegative, {
     message: "Sell price must be 0 or more",
   }),
@@ -51,7 +52,7 @@ export const productFormDefaultState: ProductFormValues = {
   sku: "",
   baseUnitId: "",
   reorderLevel: 4,
-  costPriceNaira: 0,
+  costPriceNaira: "",
   sellPriceNaira: "",
 };
 
@@ -168,14 +169,11 @@ export function ProductForm({
               <FormItem>
                 <FormLabel>Cost price (₦)</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
+                  <CurrencyInput
                     {...field}
-                    onChange={(event) =>
-                      field.onChange(event.target.valueAsNumber || 0)
-                    }
+                    step={100}
+                    placeholder="0.00"
+                    onChange={field.onChange}
                   />
                 </FormControl>
                 <FormMessage />
@@ -190,7 +188,12 @@ export function ProductForm({
               <FormItem>
                 <FormLabel>Sell price (₦, optional)</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} step="0.01" {...field} />
+                  <CurrencyInput
+                    {...field}
+                    step={100}
+                    placeholder="0.00"
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
