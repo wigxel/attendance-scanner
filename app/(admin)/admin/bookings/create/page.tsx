@@ -10,12 +10,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getErrorMessage } from "@/lib/error.helpers";
+import type { PaymentChannel } from "@/lib/payment-channel";
 
 type FormData = {
   userId: string;
   planKey: string;
   startDate: string;
   seatId: Id<"seats">;
+  channel: PaymentChannel;
 };
 
 export default function CreateBookingPage() {
@@ -32,6 +34,7 @@ export default function CreateBookingPage() {
         planKey: values.planKey,
         startDate: values.startDate,
         seatId: values.seatId,
+        channel: values.channel,
       });
       toast.success("Booking created successfully");
       router.push("/admin/reservations");

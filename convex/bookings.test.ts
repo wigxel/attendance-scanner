@@ -2437,6 +2437,90 @@ describe("markBookingAsExpired error paths", () => {
   });
 });
 
+// ─── createManualBooking payment channel ────────────────────────────
+
+describe("createManualBooking payment channel", () => {
+  async function seedDeskBooking(t: ReturnType<typeof convexTest>) {
+    await seedAdmin(t);
+    const authed = t.withIdentity({ profile_id: "admin-user" });
+
+    const seatId = await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: "customer-1",
+        firstName: "Ada",
+        lastName: "Obi",
+        email: "ada@example.com",
+        occupation: "None",
+      });
+
+      await ctx.db.insert("accessPlans", {
+        key: "weekly",
+        name: "Weekly Pass",
+        price: 6000,
+        no_of_days: 7,
+        description: "7 days",
+        features: [],
+      });
+
+      return await ctx.db.insert("seats", {
+        seatNumber: 1,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+    });
+
+    return { authed, seatId };
+  }
+
+  it("rejects a booking with no channel", async () => {
+    const t = convexTest(schema, modules);
+    const { authed, seatId } = await seedDeskBooking(t);
+
+    await expect(
+      authed.runMutation(api.bookings.createManualBooking, {
+        userId: "customer-1",
+        planKey: "weekly",
+        startDate: todayStr(),
+        seatId,
+      } as any),
+    ).rejects.toThrow();
+  });
+
+  it("rejects a channel outside cash, pos and transfer", async () => {
+    const t = convexTest(schema, modules);
+    const { authed, seatId } = await seedDeskBooking(t);
+
+    await expect(
+      authed.runMutation(api.bookings.createManualBooking, {
+        userId: "customer-1",
+        planKey: "weekly",
+        startDate: todayStr(),
+        seatId,
+        channel: "crypto",
+      } as any),
+    ).rejects.toThrow();
+  });
+
+  it("records the chosen channel on the booking", async () => {
+    const t = convexTest(schema, modules);
+    const { authed, seatId } = await seedDeskBooking(t);
+
+    const bookingId = await authed.runMutation(
+      api.bookings.createManualBooking,
+      {
+        userId: "customer-1",
+        planKey: "weekly",
+        startDate: todayStr(),
+        seatId,
+        channel: "pos",
+      },
+    );
+
+    const booking = await t.run(async (ctx) => await ctx.db.get(bookingId));
+    expect(booking?.channel).toBe("pos");
+  });
+});
+
 // ─── list ───────────────────────────────────────────────────────────
 
 describe("list", () => {
@@ -2515,6 +2599,52 @@ describe("list", () => {
         month: format(new Date(), "yyyy-MM"),
       }),
     ).rejects.toThrow();
+  });
+
+  it("filters by channel and keeps unrecorded bookings separate", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const authed = t.withIdentity({ profile_id: "admin-user" });
+
+    await t.run(async (ctx) => {
+      const base = {
+        userId: "u",
+        seatIds: [],
+        duration: 1,
+        startDate: todayStr(),
+        endDate: todayStr(),
+        durationType: "day" as const,
+        pricePerSeat: 150000,
+        amount: 150000,
+        status: "confirmed" as const,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      await ctx.db.insert("bookings", { ...base, channel: "cash" });
+      await ctx.db.insert("bookings", { ...base, channel: "transfer" });
+      // Historical row: nobody recorded a channel.
+      await ctx.db.insert("bookings", base);
+    });
+
+    const month = format(new Date(), "yyyy-MM");
+
+    const cash = await authed.runQuery(api.bookings.list, {
+      month,
+      channel: "cash",
+    });
+    expect(cash.bookings).toHaveLength(1);
+    expect(cash.bookings[0].channel).toBe("cash");
+
+    const unrecorded = await authed.runQuery(api.bookings.list, {
+      month,
+      channel: "unrecorded",
+    });
+    expect(unrecorded.bookings).toHaveLength(1);
+    expect(unrecorded.bookings[0].channel).toBeUndefined();
+
+    const all = await authed.runQuery(api.bookings.list, { month });
+    expect(all.bookings).toHaveLength(3);
   });
 });
 

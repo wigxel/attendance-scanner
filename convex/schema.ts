@@ -7,6 +7,7 @@ import {
   durationTypeConvexSchema,
   featureRequestStatus,
   guestTypeValidator,
+  paymentChannelValidator,
 } from "./shared";
 
 const accessPlans = defineTable({
@@ -131,6 +132,7 @@ const bookings = defineTable({
     v.literal("used-up"),
   ),
   paymentReference: v.optional(v.string()),
+  channel: v.optional(paymentChannelValidator),
   created_by: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
