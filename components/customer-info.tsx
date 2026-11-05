@@ -1,7 +1,15 @@
 "use client";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { format, isSameYear } from "date-fns";
-import { CircleHelp, Globe, Pencil } from "lucide-react";
+import {
+  CircleHelp,
+  Globe,
+  type LucideIcon,
+  Mail,
+  Pencil,
+  Phone,
+  TriangleAlert,
+} from "lucide-react";
 import { useState } from "react";
 import { Area, AreaChart } from "recharts";
 import { toast } from "sonner";
@@ -10,6 +18,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import type { CheckInMode } from "@/convex/shared";
 import { useCustomer } from "@/hooks/auth";
 import { getErrorMessage } from "@/lib/error.helpers";
+import { formatPhone, isValidPhone, normalizePhone } from "@/lib/phone.helpers";
 import { cn } from "@/lib/utils";
 import { CheckInModeSelect } from "./check-in-mode-select";
 import {
@@ -36,6 +45,14 @@ type CustomerSheetProps = {
   userId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+};
+
+type CustomerDetail = {
+  label: string;
+  value?: string;
+  href?: string;
+  icon?: LucideIcon;
+  warning?: string;
 };
 
 function CustomerSheet({ userId, open, onOpenChange }: CustomerSheetProps) {
@@ -90,6 +107,38 @@ function CustomerSheet({ userId, open, onOpenChange }: CustomerSheetProps) {
     }
   };
 
+  const phone = customer?.phoneNumber?.trim();
+  const normalizedPhone = phone ? normalizePhone(phone) : null;
+  const phoneIsValid = phone ? isValidPhone(phone) : false;
+  const formattedPhone = phone ? formatPhone(phone) : undefined;
+
+  const details: CustomerDetail[] = customer
+    ? [
+      { label: "First name:", value: customer.firstName },
+      { label: "Last name:", value: customer.lastName },
+      {
+        label: "Email:",
+        value: customer.email,
+        href: customer.email ? `mailto:${customer.email}` : undefined,
+        icon: Mail,
+      },
+      {
+        label: "Phone:",
+        value: formattedPhone,
+        href:
+          phoneIsValid && normalizedPhone
+            ? `tel:${normalizedPhone}`
+            : undefined,
+        icon: Phone,
+        warning:
+          phone && !phoneIsValid
+            ? "This phone number does not look valid."
+            : undefined,
+      },
+      { label: "Occupation:", value: customer.occupation },
+    ]
+    : [];
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -130,22 +179,13 @@ function CustomerSheet({ userId, open, onOpenChange }: CustomerSheetProps) {
             <div className="p-6 flex items-start gap-4">
               <CustomerAvatar
                 userId={userId ?? ""}
-                className="w-16 h-16 shrink-0"
+                className="w-12 h-12 shrink-0"
               />
 
               <div className="flex-1">
                 <h3 className="font-semibold text-lg">
                   {customer.firstName} {customer.lastName}
                 </h3>
-                <p className="text-muted-foreground text-sm">
-                  {customer.email}
-                </p>
-                <p className="text-muted-foreground text-sm">
-                  {customer.phoneNumber}
-                </p>
-                <p className="text-muted-foreground text-sm">
-                  {customer.occupation}
-                </p>
                 {userId && <CustomerRegistration userId={userId} />}
               </div>
 
@@ -182,6 +222,52 @@ function CustomerSheet({ userId, open, onOpenChange }: CustomerSheetProps) {
                 />
               ) : null}
             </div>
+          </div>
+
+          <div className="p-6 border-t">
+            <h4 className="font-semibold mb-4">Personal details</h4>
+
+            <dl className="space-y-2 text-sm">
+              {details.map((detail) => {
+                const Icon = detail.icon;
+
+                return (
+                  <div key={detail.label} className="flex gap-2">
+                    <dt className="basis-4/12 shrink-0 text-muted-foreground">
+                      {detail.label}
+                    </dt>
+                    <dd className="basis-6/12 min-w-0 break-words">
+                      {detail.href ? (
+                        <a
+                          href={detail.href}
+                          className="text-primary underline-offset-4 hover:underline"
+                        >
+                          {Icon ? (
+                            <Icon
+                              size="1em"
+                              className="text-muted-foreground mr-1.5 inline-block"
+                            />
+                          ) : null}
+                          {detail.value}
+                        </a>
+                      ) : (
+                        detail.value || "—"
+                      )}
+
+                      {detail.warning ? (
+                        <span
+                          title={detail.warning}
+                          className="text-destructive ml-1.5 inline-flex align-[-0.125em]"
+                        >
+                          <TriangleAlert size="1em" aria-hidden />
+                          <span className="sr-only">{detail.warning}</span>
+                        </span>
+                      ) : null}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
           </div>
 
           <div className="p-6 pt-0 border-t">
