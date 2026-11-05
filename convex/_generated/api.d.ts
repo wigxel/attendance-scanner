@@ -28,6 +28,7 @@ import type * as myFunctions from "../myFunctions.js";
 import type * as notificationSender from "../notificationSender.js";
 import type * as notifications from "../notifications.js";
 import type * as permissions from "../permissions.js";
+import type * as planFeatures from "../planFeatures.js";
 import type * as push from "../push.js";
 import type * as pushSender from "../pushSender.js";
 import type * as register from "../register.js";
@@ -71,6 +72,7 @@ declare const fullApi: ApiFromModules<{
   notificationSender: typeof notificationSender;
   notifications: typeof notifications;
   permissions: typeof permissions;
+  planFeatures: typeof planFeatures;
   push: typeof push;
   pushSender: typeof pushSender;
   register: typeof register;
