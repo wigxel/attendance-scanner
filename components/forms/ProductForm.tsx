@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -113,8 +114,8 @@ export function ProductForm({
               <FormLabel>Base unit</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pick the unit you count this in" />
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choose base unit" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -125,6 +126,10 @@ export function ProductForm({
                   ))}
                 </SelectContent>
               </Select>
+              <FormDescription>
+                The unit you stock and count this product in — for example a
+                pack, bottle, or carton.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -147,6 +152,9 @@ export function ProductForm({
                   }
                 />
               </FormControl>
+              <FormDescription>
+                The stock level that should trigger a reorder.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

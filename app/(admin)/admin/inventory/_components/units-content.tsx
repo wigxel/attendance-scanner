@@ -69,7 +69,7 @@ export function UnitsContent() {
   }
 
   return (
-    <div className="space-y-4 py-6">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-medium text-foreground">Units</h2>
