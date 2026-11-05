@@ -8,7 +8,7 @@ import {
   isAmountKey,
   parseAmountInput,
   sanitizeAmountInput,
-} from "@/lib/money.helpers";
+} from "@/lib/currency.helpers";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { Input } from "./input";

@@ -3,7 +3,7 @@ import {
   isAmountKey,
   parseAmountInput,
   sanitizeAmountInput,
-} from "./money.helpers";
+} from "./currency.helpers";
 
 const key = (value: string) => ({
   key: value,
@@ -12,7 +12,7 @@ const key = (value: string) => ({
   altKey: false,
 });
 
-describe("money helpers", () => {
+describe("amount helpers", () => {
   it("allows digits, one decimal point and navigation keys", () => {
     expect(isAmountKey(key("7"))).toBe(true);
     expect(isAmountKey(key("."))).toBe(true);
