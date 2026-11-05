@@ -1,7 +1,7 @@
 "use client";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { format, isSameYear } from "date-fns";
-import { Globe, Pencil } from "lucide-react";
+import { CircleHelp, Globe, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Area, AreaChart } from "recharts";
 import { toast } from "sonner";
@@ -25,16 +25,20 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
 import { ScrollArea } from "./ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 import { Skeleton } from "./ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
-function CustomerSheet({
-  userId,
-  open,
-  onOpenChange,
-}: {
+type CustomerSheetProps = {
   userId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}) {
+};
+
+function CustomerSheet({ userId, open, onOpenChange }: CustomerSheetProps) {
   const customer = useCustomer({ userId: userId ?? "" });
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,7 +94,7 @@ function CustomerSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-md p-0 flex flex-col h-full overflow-y-auto"
+        className="w-full sm:max-w-xl p-0 flex flex-col h-full overflow-y-auto"
       >
         <SheetHeader className="p-6 border-b flex flex-row items-center justify-between">
           <SheetTitle>Customer Details</SheetTitle>
@@ -149,19 +153,35 @@ function CustomerSheet({
             </div>
           ) : null}
 
-          <div className="p-6 border-t">
-            <h4 className="font-semibold mb-1">Check-in mode</h4>
-            <p className="text-xs text-muted-foreground mb-3 text-pretty">
-              Auto uses the app-wide default. Staff can always check anyone in
-              from the attendance page.
-            </p>
-            {customer ? (
-              <CheckInModeSelect
-                value={customer.checkInMode ?? "auto"}
-                onChange={handleModeChange}
-                allowAuto
-              />
-            ) : null}
+          <div className="p-6 border-t flex flex-col md:flex-row gap-4 md:items-center">
+            <div className="flex flex-1 items-center gap-1.5">
+              <h4 className="font-semibold">Check-in mode</h4>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" className="text-muted-foreground">
+                      <CircleHelp className="h-3.5 w-3.5" />
+                      <span className="sr-only">About check-in mode</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-62.5">
+                    Auto uses the app-wide default. Staff can always check
+                    anyone in from the attendance page.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            <div className="basis-5/12">
+              {customer ? (
+                <CheckInModeSelect
+                  value={customer.checkInMode ?? "auto"}
+                  onChange={handleModeChange}
+                  allowAuto
+                  className="w-full"
+                />
+              ) : null}
+            </div>
           </div>
 
           <div className="p-6 pt-0 border-t">
@@ -239,10 +259,21 @@ function CustomerRegistration({ userId }: { userId: string }) {
   if (registeredAt === null) return null;
 
   return (
-    <p className="text-muted-foreground text-sm tabular-nums">
-      Registered {format(registeredAt, "MMM dd, yyyy")} •{" "}
-      {format(registeredAt, "h:mm a")}
-    </p>
+    <span className="text-sm">
+      <span className="text-muted-foreground">Joined:&nbsp;</span>
+
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger className="hover:underline text-foreground tabular-nums cursor-help">
+            {format(registeredAt, "MMM dd, yyyy")}
+          </TooltipTrigger>
+          <TooltipContent>
+            {format(registeredAt, "MMM dd, yyyy")} •{" "}
+            {format(registeredAt, "h:mm a")}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </span>
   );
 }
 
