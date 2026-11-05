@@ -135,7 +135,8 @@ export const update = mutation({
       price: args.price,
       no_of_days: args.no_of_days,
       description: args.description ?? "",
-      features: args.features ?? [],
+      // Omitted means "unchanged": never wipe the catalogue values by accident.
+      features: args.features ?? existing.features,
     });
 
     await ctx.scheduler.runAfter(

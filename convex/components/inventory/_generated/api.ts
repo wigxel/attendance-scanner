@@ -8,14 +8,15 @@
  * @module
  */
 
+import type * as products from "../products.js";
+import type * as units from "../units.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 import { anyApi, componentsGeneric } from "convex/server";
-import type * as products from "../products.js";
-import type * as units from "../units.js";
 
 const fullApi: ApiFromModules<{
   products: typeof products;

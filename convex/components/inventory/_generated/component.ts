@@ -15,7 +15,7 @@ import type { FunctionReference } from "convex/server";
  *
  * Useful when expecting a parameter like `components.myComponent`.
  * Usage:
- * ```js
+ * ```ts
  * async function myFunction(ctx: QueryCtx, component: ComponentApi) {
  *   return ctx.runQuery(component.someFile.someQuery, { ...args });
  * }

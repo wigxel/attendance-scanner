@@ -67,3 +67,6 @@
 {"id":"int-08fba1f49eee007ed5af98b59f50d1c4","kind":"field_change","created_at":"2026-11-05T10:01:26.940831Z","actor":"swamp-events","issue_id":"attendance-scanner-bsi","extra":{"field":"status","new_value":"in_progress","old_value":"open"}}
 {"id":"int-f72eed483cf8f1fa1f8cc607bda8dd04","kind":"field_change","created_at":"2026-11-05T10:01:26.942402Z","actor":"swamp-events","issue_id":"attendance-scanner-bsi","extra":{"field":"assignee","new_value":"swamp-events","old_value":""}}
 {"id":"int-b5e93e2647846d2848d6af6956490d8f","kind":"field_change","created_at":"2026-11-05T10:09:31.277473Z","actor":"swamp-events","issue_id":"attendance-scanner-bsi","extra":{"field":"status","new_value":"deferred","old_value":"in_progress"}}
+{"id":"int-27ce8e948dbbb1437d02e06dedab1506","kind":"field_change","created_at":"2026-11-05T08:20:09.937052Z","actor":"swamp-triage","issue_id":"attendance-scanner-tix","extra":{"field":"status","new_value":"in_progress","old_value":"open"}}
+{"id":"int-5e0143ff591254ea209301b0071604b8","kind":"field_change","created_at":"2026-11-05T08:20:09.938037Z","actor":"swamp-triage","issue_id":"attendance-scanner-tix","extra":{"field":"assignee","new_value":"swamp-triage","old_value":""}}
+
