@@ -20,7 +20,7 @@ export function AppSpinner({
       strokeWidth={1}
       className={cn(
         sizeMap[size],
-        "animate-spin text-muted-foreground",
+        "animate-spin dark:text-cyan-400 text-muted-foreground",
         className,
       )}
     />
@@ -32,5 +32,28 @@ export function AppLoader() {
     <div className="bg-(--background) aspect-square w-min rounded-full p-4">
       <AppSpinner size="xl" />
     </div>
+  );
+}
+
+type BackgroundActivityIndicatorProps = {
+  className?: string;
+  label?: string;
+};
+
+export function BackgroundActivityIndicator({
+  className,
+  label = "Saving",
+}: BackgroundActivityIndicatorProps) {
+  return (
+    <span
+      role="status"
+      className={cn(
+        className,
+        "p-2 rounded-full inline-flex items-center justify-center",
+      )}
+    >
+      <AppSpinner size="md" />
+      <span className="sr-only">{label}</span>
+    </span>
   );
 }

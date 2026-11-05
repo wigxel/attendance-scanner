@@ -21,8 +21,10 @@ import {
   mutation,
   query,
 } from "./_generated/server";
+import { requirePrivilege } from "./acl";
 import { deleteConfig, getConfig, setConfig } from "./config";
 import { DEFAULT_LIMIT } from "./constants";
+import { checkInModeValidator } from "./shared";
 
 export const updateProfile = mutation({
   args: {
@@ -49,6 +51,32 @@ export const updateProfile = mutation({
       phoneNumber: args.phoneNumber,
       email: args.email,
       occupation: args.occupation as Id<"occupations"> | "None",
+    });
+
+    return profile._id;
+  },
+});
+
+export const setCheckInMode = mutation({
+  args: {
+    userId: v.string(),
+    mode: v.union(v.literal("auto"), checkInModeValidator),
+  },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "user:update");
+
+    const profile = await ctx.db
+      .query("profile")
+      .withIndex("by_user_id", (q) => q.eq("id", args.userId))
+      .first();
+
+    if (!profile) {
+      throw new ConvexError("Profile not found");
+    }
+
+    // `auto` clears the label so the app-wide default applies again.
+    await ctx.db.patch(profile._id, {
+      checkInMode: args.mode === "auto" ? undefined : args.mode,
     });
 
     return profile._id;

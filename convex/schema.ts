@@ -3,6 +3,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
   accessPlanStruct,
+  checkInModeValidator,
   durationTypeConvexSchema,
   featureRequestStatus,
   guestTypeValidator,
@@ -17,6 +18,18 @@ const accessPlans = defineTable({
   description: v.string(),
   features: v.array(v.string()),
 }).index("plan_key", ["key"]);
+
+// Admin-editable catalogue of access-plan features. `name` is the value stored
+// in `accessPlans.features`; the rest is display metadata.
+const planFeatures = defineTable({
+  name: v.string(),
+  label: v.string(),
+  description: v.string(),
+  category: v.string(),
+  isActive: v.boolean(),
+})
+  .index("by_name", ["name"])
+  .index("by_active", ["isActive"]);
 
 const daily_register = defineTable({
   userId: v.string(), // v.id("profile"),
@@ -72,6 +85,8 @@ const profile = defineTable({
   occupation: v.union(v.id("occupations"), v.literal("None")),
   /** @deprecated No longer needed. use ACL utils */
   role: v.optional(v.string()),
+  /** Per-customer override. Falls back to `config.default_check_in_mode`. */
+  checkInMode: v.optional(checkInModeValidator),
 })
   .index("occupation", ["occupation"])
   .index("by_user_id", ["id"])
@@ -294,6 +309,7 @@ export default defineSchema({
   profile,
   featureRequest,
   accessPlans,
+  planFeatures,
   occupations,
   featureVotes,
   dailyAttendanceMetrics,

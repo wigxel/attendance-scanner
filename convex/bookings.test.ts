@@ -940,7 +940,7 @@ describe("createBooking", () => {
         price: 1500,
         no_of_days: 1,
         description: "One day access",
-        features: [],
+        features: ["booking"],
       });
 
       const seat = await ctx.db.insert("seats", {
@@ -1045,7 +1045,7 @@ describe("createBooking", () => {
         price: 1500,
         no_of_days: 1,
         description: "One day access",
-        features: [],
+        features: ["booking"],
       });
 
       await expect(
@@ -1079,7 +1079,7 @@ describe("createBooking", () => {
         price: 1500,
         no_of_days: 1,
         description: "One day access",
-        features: [],
+        features: ["booking"],
       });
 
       await expect(
@@ -1090,6 +1090,46 @@ describe("createBooking", () => {
           planKey: "daily",
         }),
       ).rejects.toThrow("No seats selected");
+    });
+  });
+
+  it("throws when the plan is not reservable", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const authed = t.withIdentity({ profile_id: "user-1" });
+
+      await ctx.db.insert("profile", {
+        id: "user-1",
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        occupation: "None",
+      });
+
+      await ctx.db.insert("accessPlans", {
+        key: "hourly",
+        name: "Hourly",
+        price: 500,
+        no_of_days: 1,
+        description: "Walk-in access",
+        features: [],
+      });
+
+      const seat = await ctx.db.insert("seats", {
+        seatNumber: 2,
+        isBooked: false,
+        createdAt: Date.now(),
+      });
+
+      await expect(
+        authed.runMutation(api.bookings.createBooking, {
+          userId: "user-1",
+          seatIds: [seat] as any,
+          startDate: futureStr(1),
+          planKey: "hourly",
+        }),
+      ).rejects.toThrow("not available for reservations");
     });
   });
 
@@ -1185,7 +1225,7 @@ describe("createBooking", () => {
         price: -1,
         no_of_days: 1,
         description: "One day access",
-        features: [],
+        features: ["booking"],
       });
 
       const seat = await ctx.db.insert("seats", {
@@ -1225,7 +1265,7 @@ describe("createBooking", () => {
         price: 1500,
         no_of_days: 0,
         description: "Zero length",
-        features: [],
+        features: ["booking"],
       });
 
       const seat = await ctx.db.insert("seats", {
@@ -1265,7 +1305,7 @@ describe("createBooking", () => {
         price: 1500,
         no_of_days: 1,
         description: "One day access",
-        features: [],
+        features: ["booking"],
       });
 
       const seat = await ctx.db.insert("seats", {
@@ -1493,6 +1533,46 @@ describe("updateBooking", () => {
     });
   });
 
+  it("refuses to move a booking onto a non-reservable plan", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const authed = t.withIdentity({ profile_id: "user-1" });
+
+      await ctx.db.insert("accessPlans", {
+        key: "hourly",
+        name: "Hourly",
+        price: 500,
+        no_of_days: 1,
+        description: "Walk-in access",
+        features: [],
+      });
+
+      const bookingId = await ctx.db.insert("bookings", {
+        userId: "user-1",
+        seatIds: [],
+        duration: 1,
+        startDate: todayStr(),
+        endDate: todayStr(),
+        durationType: "day",
+        pricePerSeat: 0,
+        amount: 0,
+        status: "pending",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      await expect(
+        authed.runMutation(api.bookings.updateBooking, {
+          bookingId,
+          startDate: futureStr(1),
+          seatIds: [],
+          planKey: "hourly",
+        }),
+      ).rejects.toThrow("not available for reservations");
+    });
+  });
+
   it("updates a pending booking with new dates and seats", async () => {
     const t = convexTest(schema, modules);
 
@@ -1505,7 +1585,7 @@ describe("updateBooking", () => {
         price: 6000,
         no_of_days: 6,
         description: "Weekly pass",
-        features: [],
+        features: ["booking"],
       });
 
       const seat = await ctx.db.insert("seats", {

@@ -306,6 +306,68 @@ describe("update", () => {
     expect(plan?.features).toEqual(["priority-check-in"]);
   });
 
+  it("keeps the feature array when the form omits it", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seedAdmin(t);
+
+    const planId = await t.run(async (ctx) =>
+      ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Daily",
+        price: 1500,
+        no_of_days: 1,
+        description: "",
+        features: ["booking", "legacy-string"],
+      }),
+    );
+
+    await authed.mutation(api.accessPlans.update, {
+      id: planId,
+      name: "Daily",
+      price: 1600,
+      no_of_days: 1,
+    });
+
+    const plan = await t.run(async (ctx) => ctx.db.get(planId));
+    expect(plan?.features).toEqual(["booking", "legacy-string"]);
+  });
+
+  it("round-trips unknown legacy strings and an explicit empty list", async () => {
+    const t = convexTest(schema, modules);
+    const authed = await seedAdmin(t);
+
+    const planId = await t.run(async (ctx) =>
+      ctx.db.insert("accessPlans", {
+        key: "daily",
+        name: "Daily",
+        price: 1500,
+        no_of_days: 1,
+        description: "",
+        features: ["booking"],
+      }),
+    );
+
+    await authed.mutation(api.accessPlans.update, {
+      id: planId,
+      name: "Daily",
+      price: 1500,
+      no_of_days: 1,
+      features: ["legacy-string"],
+    });
+    let plan = await t.run(async (ctx) => ctx.db.get(planId));
+    expect(plan?.features).toEqual(["legacy-string"]);
+
+    await authed.mutation(api.accessPlans.update, {
+      id: planId,
+      name: "Daily",
+      price: 1500,
+      no_of_days: 1,
+      features: [],
+    });
+    plan = await t.run(async (ctx) => ctx.db.get(planId));
+    expect(plan?.features).toEqual([]);
+  });
+
   it("throws when plan not found", async () => {
     const t = convexTest(schema, modules);
     const authed = await seedAdmin(t);

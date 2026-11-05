@@ -13,6 +13,7 @@ import {
 } from "date-fns";
 import { DateRangeImpl, DurationGroupImpl } from "../lib/date-range";
 import { O, pipe } from "../lib/fp.helpers";
+import { isReservable } from "../lib/plan-features";
 import { calculateEndDate, formatDateToLocalISO } from "../lib/utils";
 import type {
   AccessPlan,
@@ -191,6 +192,12 @@ export const createBooking = mutation({
       throw new ConvexError(`Access plan not found for type: ${args.planKey}`);
     }
 
+    if (!isReservable(accessPlan.features)) {
+      throw new ConvexError(
+        `Plan "${accessPlan.name}" is not available for reservations`,
+      );
+    }
+
     const planDuration: number = accessPlan.no_of_days;
     const pricePerSeat: number = accessPlan.price * 100;
 
@@ -324,6 +331,12 @@ export const updateBooking = mutation({
 
     if (!accessPlan) {
       throw new ConvexError(`Access plan not found for key: ${args.planKey}`);
+    }
+
+    if (!isReservable(accessPlan.features)) {
+      throw new ConvexError(
+        `Plan "${accessPlan.name}" is not available for reservations`,
+      );
     }
 
     const duration = accessPlan.no_of_days;

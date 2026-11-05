@@ -1,6 +1,5 @@
 "use client";
 
-import { useFlags } from "@flagsmith/flagsmith/react";
 import { useMutation } from "convex/react";
 import { isNullable } from "effect/Predicate";
 import { CheckCircle2, InfoIcon, LogOut, Star } from "lucide-react";
@@ -8,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AppSpinner } from "@/components/loader";
 import { api } from "@/convex/_generated/api";
+import { useCheckInMode } from "@/hooks/flags";
 import {
   formatDuration,
   formatTime,
@@ -18,7 +18,6 @@ import {
 } from "@/hooks/self-service";
 import { useDeviceMeta } from "@/hooks/tracking";
 import { getErrorMessage } from "@/lib/error.helpers";
-import { FlagsCustomerScan } from "@/services/flagsmith";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -323,12 +322,13 @@ function RateExperience() {
 }
 
 export function SelfCheckInStatus() {
-  const flags = useFlags(["customer_scanning"]);
+  const mode = useCheckInMode();
   const registration = useTodaysRegistration();
 
-  if (!flags?.customer_scanning?.enabled) return null;
+  // Staff-scan customers never see a self-service card.
+  if (mode === "staff_scan") return null;
 
-  if (registration === undefined) {
+  if (mode === undefined || registration === undefined) {
     return <Skeleton className="h-20 rounded-lg border" />;
   }
 
@@ -344,10 +344,8 @@ export function SelfCheckInStatus() {
     );
   }
 
-  if (FlagsCustomerScan.allow_one_tap(flags.customer_scanning)) {
-    if (isNullable(registration)) {
-      return <CheckInPrompt />;
-    }
+  if (mode === "one_tap" && isNullable(registration)) {
+    return <CheckInPrompt />;
   }
 
   if (registration) {

@@ -59,6 +59,7 @@ export function AppDataTable<T>({
   emptyState,
   hasMore,
   onLoadMore,
+  searchPlaceholder,
 }: {
   columns: ColumnDef<T>[];
   data: T[];
@@ -71,6 +72,7 @@ export function AppDataTable<T>({
   hasMore?: boolean;
   /** Fetch the next server page. Called when the last local page is reached. */
   onLoadMore?: () => void;
+  searchPlaceholder: string;
 }) {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
@@ -131,7 +133,7 @@ export function AppDataTable<T>({
         <div className="flex items-center py-4 gap-2">
           <div className="relative max-w-sm">
             <Input
-              placeholder="Search by name or email..."
+              placeholder={searchPlaceholder}
               value={searchTerm ?? ""}
               onChange={(event) => onSearchChange?.(event.target.value)}
               className="bg-white pr-10"
@@ -177,7 +179,10 @@ export function AppDataTable<T>({
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       return (
-                        <TableHead key={header.id}>
+                        <TableHead
+                          key={header.id}
+                          className="text-muted-foreground"
+                        >
                           {header.isPlaceholder
                             ? null
                             : flexRender(
