@@ -107,4 +107,44 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         Name
       >;
     };
+    stockMovements: {
+      history: FunctionReference<
+        "query",
+        "internal",
+        { limit?: number; productId: string },
+        any,
+        Name
+      >;
+      levels: FunctionReference<
+        "query",
+        "internal",
+        { includeArchived?: boolean },
+        any,
+        Name
+      >;
+      record: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          callerId: string;
+          kind: "restock" | "usage" | "adjustment";
+          note?: string;
+          occurredAt?: string;
+          productId: string;
+          quantity: number;
+        },
+        any,
+        Name
+      >;
+      recordOpeningStock: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          callerId: string;
+          rows: Array<{ productId: string; quantity?: number }>;
+        },
+        any,
+        Name
+      >;
+    };
   };

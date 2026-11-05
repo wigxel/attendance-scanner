@@ -13,6 +13,21 @@ import { readId } from "./myFunctions";
 
 const PRIVILEGE = "inventory:manage";
 
+export type StockLevel = {
+  productId: string;
+  name: string;
+  sku?: string;
+  active: boolean;
+  reorderLevel: number;
+  baseUnitId: string;
+  baseUnitName: string;
+  quantity: number;
+  status: "out" | "low" | "ok";
+  lastMovementAt: string | null;
+};
+
+export type ProductMovement = Doc<"stockMovements"> & { recordedBy: string };
+
 // The component never sees ACL or identity: the host checks the privilege and
 // passes the caller down only so rows can carry createdBy/updatedBy.
 async function requireCallerId(ctx: QueryCtx | MutationCtx) {
@@ -147,5 +162,82 @@ export const seedUnits = mutation({
     );
 
     return { dryRun, added, missing };
+  },
+});
+
+export const stockLevels = query({
+  args: { includeArchived: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, PRIVILEGE);
+    return (await ctx.runQuery(
+      components.inventory.stockMovements.levels,
+      args,
+    )) as StockLevel[];
+  },
+});
+
+export const recordMovement = mutation({
+  args: {
+    productId: v.string(),
+    kind: v.union(
+      v.literal("restock"),
+      v.literal("usage"),
+      v.literal("adjustment"),
+    ),
+    quantity: v.number(),
+    occurredAt: v.optional(v.string()),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx);
+    return await ctx.runMutation(components.inventory.stockMovements.record, {
+      ...args,
+      callerId: caller,
+    });
+  },
+});
+
+export const recordOpeningStock = mutation({
+  args: {
+    rows: v.array(
+      v.object({
+        productId: v.string(),
+        quantity: v.optional(v.number()),
+      }),
+    ),
+  },
+  handler: async (ctx, { rows }) => {
+    const caller = await requireCallerId(ctx);
+    return await ctx.runMutation(
+      components.inventory.stockMovements.recordOpeningStock,
+      { rows, callerId: caller },
+    );
+  },
+});
+
+export const productMovements = query({
+  args: { productId: v.string(), limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, PRIVILEGE);
+    const movements = (await ctx.runQuery(
+      components.inventory.stockMovements.history,
+      args,
+    )) as Doc<"stockMovements">[];
+
+    return await Promise.all(
+      movements.map(async (movement): Promise<ProductMovement> => {
+        const recorder = await ctx.db
+          .query("profile")
+          .withIndex("by_user_id", (q) => q.eq("id", movement.createdBy))
+          .first();
+
+        return {
+          ...movement,
+          recordedBy: recorder
+            ? `${recorder.firstName} ${recorder.lastName}`.trim()
+            : movement.createdBy,
+        };
+      }),
+    );
   },
 });
