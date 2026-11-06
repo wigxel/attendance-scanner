@@ -1,7 +1,11 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-const channel = v.union(v.literal("push"), v.literal("email"));
+const channel = v.union(
+  v.literal("inApp"),
+  v.literal("push"),
+  v.literal("email"),
+);
 
 const status = v.union(
   v.literal("pending"),
@@ -27,6 +31,8 @@ const deliveries = defineTable({
   nextAttemptAt: v.number(),
   dedupeKey: v.optional(v.string()),
   sentAt: v.optional(v.number()),
+  // in-app rows only: when the user opened it
+  readAt: v.optional(v.number()),
 })
   .index("by_status_and_next_attempt", ["status", "nextAttemptAt"])
   .index("by_dedupe_key", ["dedupeKey"])

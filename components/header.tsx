@@ -8,6 +8,7 @@ import {
 } from "@clerk/nextjs";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { NotificationInbox } from "@/components/notifications/notification-inbox";
 import { useProfile } from "@/hooks/auth";
 
 export function Header() {
@@ -32,6 +33,7 @@ export function Header() {
         </nav>
 
         <div className="flex gap-3 items-center">
+          <NotificationInbox />
           <span>{profile?.firstName}</span>
           <SignedOut>
             <SignInButton />

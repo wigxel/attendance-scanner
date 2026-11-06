@@ -13,14 +13,15 @@ const notification = {
 };
 
 describe("notifications queue", () => {
-  it("queues both channels and delivers them", async () => {
+  it("stores an in-app copy and delivers the transported channels", async () => {
     const t = convexTest(schema, modules);
     const { queued } = await t.mutation(api.index.enqueue, {
       ...notification,
       to: "ana@example.com",
     });
-    expect(queued).toHaveLength(2);
+    expect(queued).toHaveLength(3);
 
+    // the in-app row is already delivered, so the drain only claims the rest
     const claimed = await t.mutation(api.index.claim, { now: Date.now() });
     expect(claimed.map((row) => row.channel).sort()).toEqual(["email", "push"]);
     expect(claimed[0].status).toBe("sending");
@@ -28,7 +29,7 @@ describe("notifications queue", () => {
 
     await t.mutation(api.index.markSent, { deliveryId: claimed[0]._id });
     const sent = await t.query(api.index.listDeliveries, { status: "sent" });
-    expect(sent).toHaveLength(1);
+    expect(sent).toHaveLength(2);
     expect(sent[0].sentAt).toBeTypeOf("number");
   });
 
@@ -44,7 +45,8 @@ describe("notifications queue", () => {
       to: "ana@example.com",
     });
 
-    expect(queued).toHaveLength(1);
+    // in-app has no opt-out
+    expect(queued).toHaveLength(2);
     expect(skipped).toContain("opted out of email");
   });
 

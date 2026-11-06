@@ -12,7 +12,11 @@ import { readId } from "./myFunctions";
 // rows, retries and preferences live in the notifications component
 // (convex/components/notifications), transports in notificationSender.ts.
 
-const channel = v.union(v.literal("push"), v.literal("email"));
+const channel = v.union(
+  v.literal("inApp"),
+  v.literal("push"),
+  v.literal("email"),
+);
 const status = v.union(
   v.literal("pending"),
   v.literal("sending"),
@@ -83,6 +87,46 @@ export const myPreferences = query({
     if (!userId) return null;
 
     return await ctx.runQuery(components.notifications.index.getPreferences, {
+      recipientKey: userKey(userId),
+    });
+  },
+});
+
+// In-app inbox for the signed-in user. Null means "not signed in", which the
+// bell treats as "render nothing".
+export const mine = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const userId = await readId(ctx);
+    if (!userId) return null;
+
+    return await ctx.runQuery(components.notifications.index.listInApp, {
+      recipientKey: userKey(userId),
+      limit: args.limit,
+    });
+  },
+});
+
+export const markRead = mutation({
+  args: { deliveryId: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await readId(ctx);
+    if (!userId) throw new ConvexError("Authentication required.");
+
+    return await ctx.runMutation(components.notifications.index.markRead, {
+      deliveryId: args.deliveryId,
+      recipientKey: userKey(userId),
+    });
+  },
+});
+
+export const markAllRead = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await readId(ctx);
+    if (!userId) throw new ConvexError("Authentication required.");
+
+    return await ctx.runMutation(components.notifications.index.markAllRead, {
       recipientKey: userKey(userId),
     });
   },

@@ -1,12 +1,17 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
+import type { QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 
 // Notification queue. Transports (web-push, email) live in the app, because
 // they need VAPID keys, Node builtins and the app's push subscriptions —
 // this component owns the durable queue, preferences and the send log.
 
-const channel = v.union(v.literal("push"), v.literal("email"));
+const channel = v.union(
+  v.literal("inApp"),
+  v.literal("push"),
+  v.literal("email"),
+);
 const status = v.union(
   v.literal("pending"),
   v.literal("sending"),
@@ -24,7 +29,11 @@ const RETENTION_MS = 30 * 24 * 60 * 60_000;
 const backoff = (attempts: number) =>
   Math.min(RETRY_BASE_MS * 2 ** Math.max(attempts - 1, 0), RETRY_CAP_MS);
 
-const DEFAULT_CHANNELS: readonly ("push" | "email")[] = ["push", "email"];
+const DEFAULT_CHANNELS: readonly ("inApp" | "push" | "email")[] = [
+  "inApp",
+  "push",
+  "email",
+];
 
 type Delivery = Doc<"deliveries">;
 
@@ -63,7 +72,8 @@ export const enqueue = mutation({
     const skipped: string[] = [];
 
     for (const requested of channels) {
-      if (prefs && !prefs[requested]) {
+      // in-app has no transport and no opt-out: the row is the notification
+      if (requested !== "inApp" && prefs && !prefs[requested]) {
         skipped.push(`opted out of ${requested}`);
         continue;
       }
@@ -72,6 +82,7 @@ export const enqueue = mutation({
         continue;
       }
 
+      const inApp = requested === "inApp";
       queued.push(
         await ctx.db.insert("deliveries", {
           recipientKey: args.recipientKey,
@@ -80,10 +91,12 @@ export const enqueue = mutation({
           title: args.title,
           body: args.body,
           url: args.url,
-          status: "pending",
+          // in-app rows are already "delivered"; the drain never sees them
+          status: inApp ? "sent" : "pending",
           attempts: 0,
           nextAttemptAt: now,
           dedupeKey: args.dedupeKey,
+          sentAt: inApp ? now : undefined,
         }),
       );
     }
@@ -245,6 +258,66 @@ export const listDeliveries = query({
     }
 
     return await ctx.db.query("deliveries").order("desc").take(limit);
+  },
+});
+
+// In-app inbox: the recipient's stored notifications, newest first, plus the
+// unread count the bell badge shows.
+// ponytail: scans at most INBOX_SCAN rows per recipient (30-day retention);
+// page it if someone ever accumulates more unread than that.
+const INBOX_SCAN = 200;
+
+// shared scan: this recipient's in-app rows
+const inAppRows = (ctx: QueryCtx, recipientKey: string) =>
+  ctx.db
+    .query("deliveries")
+    .withIndex("by_recipient_key", (q) => q.eq("recipientKey", recipientKey))
+    .filter((q) => q.eq(q.field("channel"), "inApp"));
+
+export const listInApp = query({
+  args: { recipientKey: v.string(), limit: v.optional(v.number()) },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ items: Delivery[]; unread: number }> => {
+    const limit = Math.min(args.limit ?? 20, 50);
+
+    const unread = await inAppRows(ctx, args.recipientKey)
+      .filter((q) => q.eq(q.field("readAt"), undefined))
+      .take(INBOX_SCAN);
+
+    const items = await inAppRows(ctx, args.recipientKey)
+      .order("desc")
+      .take(limit);
+
+    return { items, unread: unread.length };
+  },
+});
+
+// Only the owner of the row may read it: the recipient key is checked here,
+// not trusted from the caller.
+export const markRead = mutation({
+  args: { deliveryId: v.id("deliveries"), recipientKey: v.string() },
+  handler: async (ctx, args): Promise<boolean> => {
+    const row = await ctx.db.get(args.deliveryId);
+    if (!row || row.recipientKey !== args.recipientKey) return false;
+    if (row.channel !== "inApp" || row.readAt) return true;
+
+    await ctx.db.patch(args.deliveryId, { readAt: Date.now() });
+    return true;
+  },
+});
+
+export const markAllRead = mutation({
+  args: { recipientKey: v.string() },
+  handler: async (ctx, args): Promise<number> => {
+    const unread = await inAppRows(ctx, args.recipientKey)
+      .filter((q) => q.eq(q.field("readAt"), undefined))
+      .take(INBOX_SCAN);
+
+    const now = Date.now();
+    for (const row of unread) await ctx.db.patch(row._id, { readAt: now });
+    return unread.length;
   },
 });
 

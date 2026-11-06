@@ -36,7 +36,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "internal",
         {
           body: string;
-          channels?: Array<"push" | "email">;
+          channels?: Array<"inApp" | "push" | "email">;
           dedupeKey?: string;
           recipientKey: string;
           title: string;
@@ -64,10 +64,31 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
+      listInApp: FunctionReference<
+        "query",
+        "internal",
+        { limit?: number; recipientKey: string },
+        any,
+        Name
+      >;
+      markAllRead: FunctionReference<
+        "mutation",
+        "internal",
+        { recipientKey: string },
+        any,
+        Name
+      >;
       markFailed: FunctionReference<
         "mutation",
         "internal",
         { deliveryId: string; error: string; retryable?: boolean },
+        any,
+        Name
+      >;
+      markRead: FunctionReference<
+        "mutation",
+        "internal",
+        { deliveryId: string; recipientKey: string },
         any,
         Name
       >;

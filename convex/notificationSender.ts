@@ -12,7 +12,7 @@ const BATCH = 20;
 type DeliveryRow = {
   _id: string;
   recipientKey: string;
-  channel: "push" | "email";
+  channel: "inApp" | "push" | "email";
   to?: string;
   title: string;
   body: string;
@@ -111,6 +111,8 @@ const deliverRow = async (
   push: PushSetup | null,
   subscriptionsFor: SubscriptionFor,
 ) => {
+  // in-app rows are stored, not transported
+  if (row.channel === "inApp") return;
   if (row.channel === "push") return sendPush(ctx, push, subscriptionsFor, row);
   return sendEmail(row);
 };
