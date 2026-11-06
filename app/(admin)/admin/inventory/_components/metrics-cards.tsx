@@ -33,7 +33,7 @@ export function MetricsCards() {
   const { stock, spend, revenue, margin } = metrics;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
       <MetricCard label="Stock value" value={formatKobo(stock.valueKobo)}>
         <span className="flex flex-wrap items-center gap-2">
           {stock.productCount} products
