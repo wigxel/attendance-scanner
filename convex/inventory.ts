@@ -29,6 +29,47 @@ export type StockLevel = {
 
 export type ProductMovement = Doc<"stockMovements"> & { recordedBy: string };
 
+export type Supplier = Doc<"suppliers">;
+
+export type PurchaseSummary = Doc<"purchases"> & {
+  supplierName: string | null;
+  lineCount: number;
+  outstandingKobo: number;
+};
+
+export type PurchaseLine = Doc<"purchaseLines"> & {
+  productName: string;
+  unitName: string;
+};
+
+export type PurchaseDetail = {
+  purchase: Doc<"purchases">;
+  supplier: Doc<"suppliers"> | null;
+  lines: PurchaseLine[];
+  outstandingKobo: number;
+};
+
+export type PurchaseFormUnit = {
+  unitId: string;
+  name: string;
+  abbreviation?: string;
+  factorToBase: number;
+};
+
+export type PurchaseFormProduct = {
+  productId: string;
+  name: string;
+  sku?: string;
+  costPriceKobo: number;
+  baseUnitId: string;
+  units: PurchaseFormUnit[];
+};
+
+export type PurchaseFormData = {
+  products: PurchaseFormProduct[];
+  suppliers: Supplier[];
+};
+
 // The component never sees ACL or identity: the host checks the privilege and
 // passes the caller down only so rows can carry createdBy/updatedBy.
 async function requireCallerId(ctx: QueryCtx | MutationCtx) {
@@ -241,5 +282,197 @@ export const productMovements = query({
         };
       }),
     );
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Suppliers
+// ---------------------------------------------------------------------------
+
+export const listSuppliers = query({
+  args: {
+    search: v.optional(v.string()),
+    includeArchived: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, PRIVILEGE);
+    return (await ctx.runQuery(
+      components.inventory.suppliers.list,
+      args,
+    )) as Supplier[];
+  },
+});
+
+export const createSupplier = mutation({
+  args: {
+    name: v.string(),
+    phone: v.optional(v.string()),
+    contactName: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx);
+    return await ctx.runMutation(components.inventory.suppliers.create, {
+      ...args,
+      callerId: caller,
+    });
+  },
+});
+
+export const updateSupplier = mutation({
+  args: {
+    supplierId: v.string(),
+    name: v.string(),
+    phone: v.optional(v.string()),
+    contactName: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireCallerId(ctx);
+    await ctx.runMutation(components.inventory.suppliers.update, args);
+  },
+});
+
+export const archiveSupplier = mutation({
+  args: { supplierId: v.string() },
+  handler: async (ctx, { supplierId }) => {
+    await requireCallerId(ctx);
+    await ctx.runMutation(components.inventory.suppliers.archive, {
+      supplierId,
+    });
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Product units
+// ---------------------------------------------------------------------------
+
+export const setProductUnit = mutation({
+  args: {
+    productId: v.string(),
+    unitId: v.string(),
+    factorToBase: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await requireCallerId(ctx);
+    return await ctx.runMutation(
+      components.inventory.productUnits.upsert,
+      args,
+    );
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Purchases
+// ---------------------------------------------------------------------------
+
+export const purchaseFormData = query({
+  args: {},
+  handler: async (ctx): Promise<PurchaseFormData> => {
+    await requirePrivilege(ctx, PRIVILEGE);
+
+    const [products, units, suppliers, alternates] = await Promise.all([
+      ctx.runQuery(components.inventory.products.list, {}),
+      ctx.runQuery(components.inventory.units.list, {}),
+      ctx.runQuery(components.inventory.suppliers.list, {}),
+      ctx.runQuery(components.inventory.productUnits.listAll, {}),
+    ]);
+
+    const unitById = new Map(
+      (units as Doc<"units">[]).map((unit) => [unit._id, unit]),
+    );
+
+    const toUnit = (
+      unitId: string,
+      factorToBase: number,
+    ): PurchaseFormUnit | null => {
+      const unit = unitById.get(unitId as Doc<"units">["_id"]);
+      if (!unit) return null;
+      return {
+        unitId: unit._id,
+        name: unit.name,
+        abbreviation: unit.abbreviation,
+        factorToBase,
+      };
+    };
+
+    return {
+      products: (products as Doc<"products">[]).map((product) => {
+        const base = toUnit(product.baseUnitId, 1);
+        const extra = (alternates as Doc<"productUnits">[])
+          .filter((row) => row.productId === product._id)
+          .map((row) => toUnit(row.unitId, row.factorToBase))
+          .filter((unit): unit is PurchaseFormUnit => unit !== null);
+
+        return {
+          productId: product._id,
+          name: product.name,
+          sku: product.sku,
+          costPriceKobo: product.costPriceKobo,
+          baseUnitId: product.baseUnitId,
+          units: base ? [base, ...extra] : extra,
+        };
+      }),
+      suppliers: suppliers as Supplier[],
+    };
+  },
+});
+
+export const createPurchase = mutation({
+  args: {
+    supplierId: v.optional(v.string()),
+    occurredAt: v.optional(v.string()),
+    amountPaidKobo: v.optional(v.number()),
+    freightKobo: v.optional(v.number()),
+    discountKobo: v.optional(v.number()),
+    note: v.optional(v.string()),
+    lines: v.array(
+      v.object({
+        productId: v.string(),
+        unitId: v.string(),
+        quantity: v.number(),
+        unitCostKobo: v.number(),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx);
+    return await ctx.runMutation(components.inventory.purchases.create, {
+      ...args,
+      callerId: caller,
+    });
+  },
+});
+
+export const voidPurchase = mutation({
+  args: { purchaseId: v.string() },
+  handler: async (ctx, { purchaseId }) => {
+    const caller = await requireCallerId(ctx);
+    await ctx.runMutation(components.inventory.purchases.voidPurchase, {
+      purchaseId,
+      callerId: caller,
+    });
+  },
+});
+
+export const listPurchases = query({
+  args: {},
+  handler: async (ctx) => {
+    await requirePrivilege(ctx, PRIVILEGE);
+    return (await ctx.runQuery(
+      components.inventory.purchases.list,
+      {},
+    )) as PurchaseSummary[];
+  },
+});
+
+export const purchaseDetail = query({
+  args: { purchaseId: v.string() },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, PRIVILEGE);
+    return (await ctx.runQuery(
+      components.inventory.purchases.get,
+      args,
+    )) as PurchaseDetail | null;
   },
 });
