@@ -98,7 +98,7 @@ export function ProductForm({
           name="sku"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>SKU (optional)</FormLabel>
+              <FormLabel optional>SKU</FormLabel>
               <FormControl>
                 <Input placeholder="e.g. PKM-400" {...field} />
               </FormControl>
@@ -167,7 +167,7 @@ export function ProductForm({
             name="costPriceNaira"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cost price (₦)</FormLabel>
+                <FormLabel>Cost price</FormLabel>
                 <FormControl>
                   <CurrencyInput
                     {...field}
@@ -186,7 +186,7 @@ export function ProductForm({
             name="sellPriceNaira"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Sell price (₦, optional)</FormLabel>
+                <FormLabel optional>Sell price</FormLabel>
                 <FormControl>
                   <CurrencyInput
                     {...field}

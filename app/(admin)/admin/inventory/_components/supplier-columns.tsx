@@ -1,11 +1,12 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { Archive, Pencil } from "lucide-react";
+import { Archive, Pencil, Phone, TriangleAlert } from "lucide-react";
 import { AppTableActions } from "@/components/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
+import { formatPhone, isValidPhone, normalizePhone } from "@/lib/phone.helpers";
 
 export type SupplierRow = Doc<"suppliers">;
 
@@ -29,7 +30,38 @@ export function createSupplierColumns(actions: {
       id: "phone",
       header: "Phone",
       accessorKey: "phone",
-      cell: ({ row }) => row.original.phone ?? "—",
+      cell: ({ row }) => {
+        const phone = row.original.phone?.trim();
+        if (!phone) return "—";
+
+        const normalized = normalizePhone(phone);
+        const valid = isValidPhone(phone) && normalized !== null;
+        const formatted = formatPhone(phone);
+
+        if (!valid) {
+          return (
+            <span
+              title="This phone number does not look valid."
+              className="text-destructive inline-flex items-center gap-1"
+            >
+              <Phone size="1em" className="text-muted-foreground" aria-hidden />
+              {formatted}
+              <TriangleAlert size="1em" aria-hidden />
+              <span className="sr-only">Invalid phone number</span>
+            </span>
+          );
+        }
+
+        return (
+          <a
+            href={`tel:${normalized}`}
+            className="text-primary underline-offset-4 hover:underline inline-flex items-center gap-1.5"
+          >
+            <Phone size="1em" className="text-muted-foreground" aria-hidden />
+            {formatted}
+          </a>
+        );
+      },
     },
     {
       id: "status",

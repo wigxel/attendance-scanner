@@ -89,8 +89,13 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
 
 function FormLabel({
   className,
+  optional = false,
+  children,
   ...props
-}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+}: React.ComponentProps<typeof LabelPrimitive.Root> & {
+  /** Renders a muted "Optional" hint on the far side of the label row. */
+  optional?: boolean;
+}) {
   const { error, formItemId } = useFormField();
 
   return (
@@ -100,7 +105,16 @@ function FormLabel({
       className={cn("data-[error=true]:text-destructive", className)}
       htmlFor={formItemId}
       {...props}
-    />
+    >
+      <span className="flex items-center gap-2">
+        <span>{children}</span>
+        {optional ? (
+          <span className="text-muted-foreground text-xs font-normal italic">
+            Optional
+          </span>
+        ) : null}
+      </span>
+    </Label>
   );
 }
 

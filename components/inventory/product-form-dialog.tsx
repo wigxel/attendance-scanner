@@ -19,10 +19,18 @@ import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
 
 type Product = Doc<"products">;
 
+export type CreatedProduct = {
+  productId: string;
+  name: string;
+  baseUnitId: string;
+  costPriceKobo: number;
+};
+
 type ProductFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   product?: Product | null;
+  onCreated?: (product: CreatedProduct) => void;
 };
 
 function toNaira(kobo: number | undefined) {
@@ -43,6 +51,7 @@ export function ProductFormDialog({
   open,
   onOpenChange,
   product,
+  onCreated,
 }: ProductFormDialogProps) {
   const createProduct = useMutation(api.inventory.createProduct);
   const updateProduct = useMutation(api.inventory.updateProduct);
@@ -74,12 +83,18 @@ export function ProductFormDialog({
         });
         toast.success("Product updated");
       } else {
-        await createProduct({
+        const productId = await createProduct({
           name: values.name,
           sku: values.sku,
           baseUnitId: values.baseUnitId,
           reorderLevel: values.reorderLevel,
           ...money,
+        });
+        onCreated?.({
+          productId,
+          name: values.name,
+          baseUnitId: values.baseUnitId,
+          costPriceKobo: money.costPriceKobo,
         });
         toast.success("Product created");
       }

@@ -72,7 +72,7 @@ export function SupplierForm({
             name="contactName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Contact person (optional)</FormLabel>
+                <FormLabel optional>Contact person</FormLabel>
                 <FormControl>
                   <Input placeholder="e.g. Ngozi" {...field} />
                 </FormControl>
@@ -86,7 +86,7 @@ export function SupplierForm({
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone (optional)</FormLabel>
+                <FormLabel optional>Phone</FormLabel>
                 <FormControl>
                   <Input placeholder="e.g. 0803 000 0000" {...field} />
                 </FormControl>
@@ -101,7 +101,7 @@ export function SupplierForm({
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes (optional)</FormLabel>
+              <FormLabel optional>Notes</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Anything worth remembering about this supplier"

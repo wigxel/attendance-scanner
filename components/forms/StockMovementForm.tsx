@@ -194,7 +194,7 @@ export function StockMovementForm({
           name="note"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Note{kind === "usage" ? " (optional)" : ""}</FormLabel>
+              <FormLabel optional={kind === "usage"}>Note</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="e.g. Delivery from supplier"

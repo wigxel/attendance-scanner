@@ -2,6 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { AppDataTable } from "@/components/DataTable";
@@ -10,7 +11,6 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/empty-state";
-import { PurchaseFormDialog } from "@/components/inventory/purchase-form-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
@@ -20,7 +20,6 @@ import { purchaseColumns } from "./purchase-columns";
 export function PurchasesContent() {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const purchases = useQuery(api.inventory.listPurchases, {});
 
@@ -41,14 +40,16 @@ export function PurchasesContent() {
         <div>
           <h2 className="text-lg font-medium text-foreground">Purchases</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            What you bought, from whom, and at what cost. A posted purchase can
-            be voided but never edited.
+            What you bought, from whom, and at what cost.
+            A posted purchase can be voided but never edited.
           </p>
         </div>
 
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Record purchase
+        <Button asChild>
+          <Link href="/admin/inventory/purchases/new">
+            <Plus className="h-4 w-4" />
+            Record purchase
+          </Link>
         </Button>
       </div>
 
@@ -68,8 +69,6 @@ export function PurchasesContent() {
           </EmptyStateContent>
         }
       />
-
-      <PurchaseFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} />
     </div>
   );
 }
