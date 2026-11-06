@@ -7,6 +7,7 @@ import {
   query,
 } from "./_generated/server";
 import { requirePrivilege } from "./acl";
+import { sourceRefs, upsertCashMovement } from "./cash";
 import type { Doc } from "./components/inventory/_generated/dataModel";
 import { DEFAULT_UNIT_NAMES } from "./components/inventory/defaultUnits";
 import { readId } from "./myFunctions";
@@ -437,10 +438,33 @@ export const createPurchase = mutation({
   },
   handler: async (ctx, args) => {
     const caller = await requireCallerId(ctx);
-    return await ctx.runMutation(components.inventory.purchases.create, {
-      ...args,
-      callerId: caller,
-    });
+    const purchaseId = await ctx.runMutation(
+      components.inventory.purchases.create,
+      {
+        ...args,
+        callerId: caller,
+      },
+    );
+
+    // Suppliers are paid by bank transfer, never from the till. A credit
+    // purchase moves no money today, so only the amount actually paid lands
+    // on the transfer channel.
+    const detail = (await ctx.runQuery(components.inventory.purchases.get, {
+      purchaseId,
+    })) as PurchaseDetail | null;
+
+    if (detail && detail.purchase.amountPaidKobo > 0) {
+      await upsertCashMovement(ctx, {
+        occurredAt: detail.purchase.occurredAt,
+        channel: "transfer",
+        direction: "out",
+        amountKobo: detail.purchase.amountPaidKobo,
+        sourceRef: sourceRefs.purchase(purchaseId),
+        createdBy: caller,
+      });
+    }
+
+    return purchaseId;
   },
 });
 
@@ -448,10 +472,26 @@ export const voidPurchase = mutation({
   args: { purchaseId: v.string() },
   handler: async (ctx, { purchaseId }) => {
     const caller = await requireCallerId(ctx);
+    const detail = (await ctx.runQuery(components.inventory.purchases.get, {
+      purchaseId,
+    })) as PurchaseDetail | null;
+
     await ctx.runMutation(components.inventory.purchases.voidPurchase, {
       purchaseId,
       callerId: caller,
     });
+
+    // A void hands the money back, so it reverses the same transfer outflow.
+    if (detail && detail.purchase.amountPaidKobo > 0) {
+      await upsertCashMovement(ctx, {
+        occurredAt: new Date().toISOString(),
+        channel: "transfer",
+        direction: "in",
+        amountKobo: detail.purchase.amountPaidKobo,
+        sourceRef: sourceRefs.purchaseVoid(purchaseId),
+        createdBy: caller,
+      });
+    }
   },
 });
 

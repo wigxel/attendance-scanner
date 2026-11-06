@@ -9,6 +9,7 @@ const navItems = [
   { name: "Reservations", href: "/admin/reservations" },
   { name: "Customers", href: "/admin/customers" },
   { name: "Inventory", href: "/admin/inventory" },
+  { name: "Cash book", href: "/admin/cash-book" },
   { name: "Environment", href: "/admin/environment" },
   { name: "Settings", href: "/admin/settings" },
 ];

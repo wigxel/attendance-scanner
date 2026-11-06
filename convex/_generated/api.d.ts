@@ -14,6 +14,7 @@ import type * as audit from "../audit.js";
 import type * as audits_entities from "../audits/entities.js";
 import type * as auth from "../auth.js";
 import type * as bookings from "../bookings.js";
+import type * as cash from "../cash.js";
 import type * as clerk from "../clerk.js";
 import type * as config from "../config.js";
 import type * as constants from "../constants.js";
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   "audits/entities": typeof audits_entities;
   auth: typeof auth;
   bookings: typeof bookings;
+  cash: typeof cash;
   clerk: typeof clerk;
   config: typeof config;
   constants: typeof constants;

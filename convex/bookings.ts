@@ -26,6 +26,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { bookingDeletedAudit } from "./audits/entities";
+import { sourceRefs, upsertCashMovement } from "./cash";
 import { DEFAULT_LIMIT } from "./constants";
 import { dayKeyOf, lagosDay } from "./kpis";
 import { readId } from "./myFunctions";
@@ -1406,6 +1407,17 @@ export const createManualBooking = mutation({
       bookingId,
       seatId,
       status: "confirmed",
+    });
+
+    // Record the money when it is taken, so a booking sold today for next
+    // month still shows up in today's cash book.
+    await upsertCashMovement(ctx, {
+      occurredAt: new Date().toISOString(),
+      channel,
+      direction: "in",
+      amountKobo: amount_paid,
+      sourceRef: sourceRefs.booking(bookingId as string),
+      createdBy: profileId,
     });
 
     const { ownerTicketId } = await ctx.runMutation(

@@ -1,8 +1,13 @@
 import { v } from "convex/values";
-import { format } from "date-fns";
 import { pipe } from "effect";
 import { query } from "./_generated/server";
-import { CurrencyImpl, PlanImpl, RegisterImpl } from "./shared";
+import { dayEndIso, dayStartIso, lagosDay } from "./cash";
+import {
+  type AccessStruct,
+  CurrencyImpl,
+  PlanImpl,
+  RegisterImpl,
+} from "./shared";
 
 export const metricsDailyAttendance = query({
   args: {
@@ -31,22 +36,33 @@ export const metricsDailyCashPayments = query({
     end: v.string(), // yyyy-MM-dd
   },
   handler: async (ctx, args) => {
-    const startTime = new Date(args.start);
-    const endTime = new Date(args.end);
-
-    const rows = await ctx.db
-      .query("dailyCashPayments")
-      .withIndex("by_date", (q) =>
-        q.gte("date", startTime.getTime()).lte("date", endTime.getTime()),
+    const registers = await ctx.db
+      .query("daily_register")
+      .withIndex("by_timestamp", (q) =>
+        q
+          .gte("timestamp", dayStartIso(args.start))
+          .lte("timestamp", dayEndIso(args.end)),
       )
-      .order("asc")
       .collect();
 
-    return rows.map((row) => ({
-      date: format(new Date(row.date), "yyyy-MM-dd"),
-      total: row.total,
-      count: row.count,
-    }));
+    const byDay = new Map<string, { total: number; count: number }>();
+
+    for (const register of registers) {
+      const access = register.access as AccessStruct;
+      if (!PlanImpl.type("paid")(access)) continue;
+      if (PlanImpl.paymentMethod(access) !== "cash") continue;
+
+      const date = lagosDay(register.timestamp);
+      const day = byDay.get(date) ?? { total: 0, count: 0 };
+
+      day.total += CurrencyImpl.parseFloat(PlanImpl.amount(access)) / 100;
+      day.count += 1;
+      byDay.set(date, day);
+    }
+
+    return [...byDay.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, { total, count }]) => ({ date, total, count }));
   },
 });
 

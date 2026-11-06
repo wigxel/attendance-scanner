@@ -2518,6 +2518,15 @@ describe("createManualBooking payment channel", () => {
 
     const booking = await t.run(async (ctx) => await ctx.db.get(bookingId));
     expect(booking?.channel).toBe("pos");
+
+    const movements = await t.run(async (ctx) =>
+      ctx.db.query("cashMovements").collect(),
+    );
+    expect(movements).toHaveLength(1);
+    expect(movements[0].channel).toBe("pos");
+    expect(movements[0].direction).toBe("in");
+    expect(movements[0].amountKobo).toBe(600000);
+    expect(movements[0].sourceRef).toBe(`booking:${bookingId}`);
   });
 });
 

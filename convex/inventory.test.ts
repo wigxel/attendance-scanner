@@ -121,8 +121,47 @@ describe("inventory host boundary", () => {
       }),
     ).rejects.toThrow('Access denied. Required privilege: "inventory:manage"');
   });
-});
 
+  it("books a purchase as a transfer outflow and reverses it on void", async () => {
+    const t = convexTest(schema, modules);
+    await seedAcl(t, true);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+
+    const unitId = await admin.mutation(api.inventory.createUnit, {
+      name: "carton",
+    });
+    const productId = await admin.mutation(api.inventory.createProduct, {
+      name: "Peak Milk",
+      baseUnitId: unitId,
+    });
+
+    const purchaseId = await admin.mutation(api.inventory.createPurchase, {
+      occurredAt: "2026-05-15",
+      amountPaidKobo: 600000,
+      lines: [{ productId, unitId, quantity: 2, unitCostKobo: 300000 }],
+    });
+
+    const outflows = await t.run(async (ctx) =>
+      ctx.db.query("cashMovements").collect(),
+    );
+    expect(outflows).toHaveLength(1);
+    expect(outflows[0].channel).toBe("transfer");
+    expect(outflows[0].direction).toBe("out");
+    expect(outflows[0].amountKobo).toBe(600000);
+    expect(outflows[0].sourceRef).toBe(`purchase:${purchaseId}`);
+
+    await admin.mutation(api.inventory.voidPurchase, { purchaseId });
+
+    const all = await t.run(async (ctx) =>
+      ctx.db.query("cashMovements").collect(),
+    );
+    expect(all).toHaveLength(2);
+    const reversal = all.find((row) => row.direction === "in");
+    expect(reversal?.channel).toBe("transfer");
+    expect(reversal?.amountKobo).toBe(600000);
+    expect(reversal?.sourceRef).toBe(`purchase-void:${purchaseId}`);
+  });
+});
 describe("seedUnits", () => {
   it("previews by default and seeds without auth", async () => {
     const t = convexTest(schema, modules);

@@ -892,24 +892,42 @@ describe("sumCashPayments", () => {
 });
 
 describe("metricsDailyCashPayments", () => {
-  it("returns per-day points in ascending date order within range", async () => {
+  function insertCashRegister(
+    ctx: any,
+    timestamp: string,
+    amountInKobo: number,
+    paymentMethod: "cash" | "bank_transfer" = "cash",
+  ) {
+    return ctx.db.insert("daily_register", {
+      userId: "user-1",
+      timestamp,
+      source: "web",
+      device: makeDevice(),
+      access: {
+        kind: "paid",
+        planId: "daily",
+        amountInKobo,
+        paymentMethod,
+        _v: "2",
+      },
+      admitted_by: "staff-1",
+    });
+  }
+
+  it("returns per-day cash totals in ascending date order", async () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
-      await ctx.db.insert("dailyCashPayments", {
-        date: new Date("2024-01-02").getTime(),
-        count: 2,
-        total: 1,
-      });
-      await ctx.db.insert("dailyCashPayments", {
-        date: new Date("2024-01-01").getTime(),
-        count: 1,
-        total: 0.5,
-      });
-      await ctx.db.insert("dailyCashPayments", {
-        date: new Date("2024-01-03").getTime(),
-        count: 3,
-        total: 1.5,
-      });
+      await insertCashRegister(ctx, "2024-01-02T10:00:00.000Z", 200);
+      await insertCashRegister(ctx, "2024-01-02T11:00:00.000Z", 300);
+      await insertCashRegister(ctx, "2024-01-01T10:00:00.000Z", 50);
+      await insertCashRegister(ctx, "2024-01-03T10:00:00.000Z", 100);
+      // Bank transfers are not cash payments.
+      await insertCashRegister(
+        ctx,
+        "2024-01-03T12:00:00.000Z",
+        900,
+        "bank_transfer",
+      );
     });
 
     const result = await t.query(api.metrics.metricsDailyCashPayments, {
@@ -917,36 +935,19 @@ describe("metricsDailyCashPayments", () => {
       end: "2024-01-31",
     });
 
-    expect(result.map((r) => r.date)).toEqual([
-      "2024-01-01",
-      "2024-01-02",
-      "2024-01-03",
-    ]);
     expect(result).toEqual([
       { date: "2024-01-01", count: 1, total: 0.5 },
-      { date: "2024-01-02", count: 2, total: 1 },
-      { date: "2024-01-03", count: 3, total: 1.5 },
+      { date: "2024-01-02", count: 2, total: 5 },
+      { date: "2024-01-03", count: 1, total: 1 },
     ]);
   });
 
   it("filters by date range (excludes outside)", async () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
-      await ctx.db.insert("dailyCashPayments", {
-        date: new Date("2024-01-01").getTime(),
-        count: 1,
-        total: 0.5,
-      });
-      await ctx.db.insert("dailyCashPayments", {
-        date: new Date("2024-02-01").getTime(),
-        count: 9,
-        total: 9,
-      });
-      await ctx.db.insert("dailyCashPayments", {
-        date: new Date("2024-03-01").getTime(),
-        count: 3,
-        total: 1.5,
-      });
+      await insertCashRegister(ctx, "2024-01-01T10:00:00.000Z", 50);
+      await insertCashRegister(ctx, "2024-02-01T10:00:00.000Z", 900);
+      await insertCashRegister(ctx, "2024-03-01T10:00:00.000Z", 150);
     });
 
     const result = await t.query(api.metrics.metricsDailyCashPayments, {
@@ -954,17 +955,13 @@ describe("metricsDailyCashPayments", () => {
       end: "2024-02-29",
     });
 
-    expect(result).toEqual([{ date: "2024-02-01", count: 9, total: 9 }]);
+    expect(result).toEqual([{ date: "2024-02-01", count: 1, total: 9 }]);
   });
 
   it("returns empty array when no rows in range", async () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
-      await ctx.db.insert("dailyCashPayments", {
-        date: new Date("2024-01-01").getTime(),
-        count: 1,
-        total: 0.5,
-      });
+      await insertCashRegister(ctx, "2024-01-01T10:00:00.000Z", 50);
     });
 
     const result = await t.query(api.metrics.metricsDailyCashPayments, {

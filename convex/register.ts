@@ -7,13 +7,14 @@ import {
   startOfDay,
   subDays,
 } from "date-fns";
-import { Effect, pipe } from "effect";
+import { Effect } from "effect";
 import { isNullable } from "effect/Predicate";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
 import { guestConversionAudit, guestDismissalAudit } from "./audits/entities";
+import { clearCashMovement, sourceRefs, upsertCashMovement } from "./cash";
 import { visitsAggregate } from "./customers";
 import { findOrCreateUser, readId } from "./myFunctions";
 import {
@@ -27,7 +28,6 @@ import {
   guestTypeValidator,
   PlanError,
   PlanImpl,
-  RegisterImpl,
 } from "./shared";
 
 const Timezone = {
@@ -64,7 +64,6 @@ export const saveCount = internalMutation(async ({ db }) => {
   const totalUsers = uniqueUsers.size;
 
   const date = format(yesterday, "yyyy-MM-dd");
-  const timestamp = new Date(date).getTime();
 
   // Check if a metric for this date already exists
   const existingMetric = await db
@@ -82,32 +81,14 @@ export const saveCount = internalMutation(async ({ db }) => {
       totalUsers,
     });
   }
-
-  const cash = RegisterImpl.filterCash(count);
-  const cashCount = cash.length;
-  const cashTotal = pipe(
-    RegisterImpl.sumAll(cash),
-    CurrencyImpl.koboToNaira,
-    CurrencyImpl.parseFloat,
-  );
-
-  const existingCash = await db
-    .query("dailyCashPayments")
-    .withIndex("by_date", (q) => q.eq("date", timestamp))
-    .unique();
-
-  if (existingCash) {
-    await db.patch(existingCash._id, { count: cashCount, total: cashTotal });
-  } else {
-    await db.insert("dailyCashPayments", {
-      date: timestamp,
-      count: cashCount,
-      total: cashTotal,
-    });
-  }
 });
 
-export const backfillDailyCashPayments = internalMutation({
+/**
+ * Turns the cash payments already sitting on old register rows into ledger
+ * movements. Each row maps to one movement keyed by its register id, so the
+ * backfill can run again without booking the same payment twice.
+ */
+export const backfillCashMovements = internalMutation({
   args: { startDate: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const { db } = ctx;
@@ -120,8 +101,6 @@ export const backfillDailyCashPayments = internalMutation({
       const wd = Timezone.get(day);
       const dayStart = startOfDay(wd);
       const dayEnd = endOfDay(wd);
-      const date = format(wd, "yyyy-MM-dd");
-      const timestamp = new Date(date).getTime();
 
       const rows = await db
         .query("daily_register")
@@ -132,26 +111,17 @@ export const backfillDailyCashPayments = internalMutation({
         )
         .collect();
 
-      const cash_records = pipe(rows, RegisterImpl.filterCash);
+      for (const row of rows) {
+        if (!PlanImpl.type("paid")(row.access)) continue;
+        if (PlanImpl.paymentMethod(row.access) !== "cash") continue;
 
-      const total = pipe(
-        RegisterImpl.sumAll(cash_records),
-        CurrencyImpl.koboToNaira,
-        CurrencyImpl.parseFloat,
-      );
-
-      const existing = await db
-        .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", timestamp))
-        .unique();
-
-      if (existing) {
-        await db.patch(existing._id, { count: cash_records.length, total });
-      } else {
-        await db.insert("dailyCashPayments", {
-          date: timestamp,
-          count: cash_records.length,
-          total,
+        await upsertCashMovement(ctx, {
+          occurredAt: row.timestamp,
+          channel: "cash",
+          direction: "in",
+          amountKobo: CurrencyImpl.parseFloat(PlanImpl.amount(row.access)),
+          sourceRef: sourceRefs.register(row._id),
+          createdBy: row.admitted_by,
         });
       }
 
@@ -324,12 +294,31 @@ export const updateTodaysRegisterAccess = mutation({
 
     // `toStruct` (plan change) rebuilds from scratch — re-attach the guest
     // link so a staff edit doesn't drop the badge.
-    await ctx.db.patch(record._id, {
-      access: {
-        ...updated,
-        ...(record.access.visiting ? { visiting: record.access.visiting } : {}),
-      },
-    });
+    const access = {
+      ...updated,
+      ...(record.access.visiting ? { visiting: record.access.visiting } : {}),
+    };
+
+    await ctx.db.patch(record._id, { access });
+
+    // The till sees the payment when it reaches the register, not when a
+    // booking is sold for a future date. Re-syncing by register id keeps a
+    // corrected plan or payment method from booking the money twice.
+    const sourceRef = sourceRefs.register(record._id);
+
+    if (access.kind === "paid") {
+      await upsertCashMovement(ctx, {
+        occurredAt: record.timestamp,
+        channel:
+          PlanImpl.paymentMethod(access) === "cash" ? "cash" : "transfer",
+        direction: "in",
+        amountKobo: CurrencyImpl.parseFloat(PlanImpl.amount(access)),
+        sourceRef,
+        createdBy: profile.id,
+      });
+    } else {
+      await clearCashMovement(ctx, sourceRef);
+    }
 
     return "success" as const;
   },

@@ -50,168 +50,55 @@ function insertFreeRegister(ctx: any, dateStr: string) {
   });
 }
 
-describe("saveCount cash upsert", () => {
-  it("writes a dailyCashPayments row for yesterday with cash-only totals", async () => {
-    const t = convexTest(schema, modules);
-    const date = yesterdayWATDate();
-    await t.run(async (ctx) => {
-      await insertCashRegister(ctx, date, 5000); // 50
-      await insertCashRegister(ctx, date, 12000, "cash", "weekly"); // 120
-      await insertCashRegister(ctx, date, 3000, "bank_transfer"); // excluded
-      await insertFreeRegister(ctx, date); // excluded
-    });
-    await t.run(async (ctx) => {
-      await ctx.runMutation(internal.register.saveCount, {});
-    });
-
-    const rows = await t.run(async (ctx) =>
-      ctx.db
-        .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", new Date(date).getTime()))
-        .collect(),
-    );
-    expect(rows).toHaveLength(1);
-    expect(rows[0].count).toBe(2);
-    expect(rows[0].total).toBe(170);
-  });
-
-  it("upserts (idempotent): running twice patches, not duplicates", async () => {
-    const t = convexTest(schema, modules);
-    const date = yesterdayWATDate();
-    await t.run(async (ctx) => {
-      await insertCashRegister(ctx, date, 5000);
-    });
-    await t.run(async (ctx) => {
-      await ctx.runMutation(internal.register.saveCount, {});
-    });
-    await t.run(async (ctx) => {
-      await ctx.runMutation(internal.register.saveCount, {});
-    });
-
-    const rows = await t.run(async (ctx) =>
-      ctx.db
-        .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", new Date(date).getTime()))
-        .collect(),
-    );
-    expect(rows).toHaveLength(1);
-    expect(rows[0].count).toBe(1);
-    expect(rows[0].total).toBe(50);
-  });
-
-  it("writes a zero row on a day with no cash", async () => {
-    const t = convexTest(schema, modules);
-    const date = yesterdayWATDate();
-    await t.run(async (ctx) => {
-      await insertCashRegister(ctx, date, 3000, "bank_transfer");
-    });
-    await t.run(async (ctx) => {
-      await ctx.runMutation(internal.register.saveCount, {});
-    });
-
-    const rows = await t.run(async (ctx) =>
-      ctx.db
-        .query("dailyCashPayments")
-        .withIndex("by_date", (q) => q.eq("date", new Date(date).getTime()))
-        .collect(),
-    );
-    expect(rows).toHaveLength(1);
-    expect(rows[0].count).toBe(0);
-    expect(rows[0].total).toBe(0);
-  });
-});
-
-describe("backfillDailyCashPayments", () => {
-  it("populates dailyCashPayments for days with cash across the range", async () => {
-    const t = convexTest(schema, modules);
-    await t.run(async (ctx) => {
-      await insertCashRegister(ctx, "2026-05-15", 5000); // 50
-      await insertCashRegister(ctx, "2026-06-10", 12000, "cash", "weekly"); // 120
-      await insertCashRegister(ctx, "2026-07-05", 3000); // 30
-      await insertCashRegister(ctx, "2026-07-05", 7000); // 70, same day
-    });
-    await t.run(async (ctx) => {
-      await ctx.runMutation(internal.register.backfillDailyCashPayments, {
-        startDate: "2026-05-01",
-      });
-    });
-
-    const may15 = await t.run(async (ctx) =>
-      ctx.db
-        .query("dailyCashPayments")
-        .withIndex("by_date", (q) =>
-          q.eq("date", new Date("2026-05-15").getTime()),
-        )
-        .unique(),
-    );
-    const jun10 = await t.run(async (ctx) =>
-      ctx.db
-        .query("dailyCashPayments")
-        .withIndex("by_date", (q) =>
-          q.eq("date", new Date("2026-06-10").getTime()),
-        )
-        .unique(),
-    );
-    const jul05 = await t.run(async (ctx) =>
-      ctx.db
-        .query("dailyCashPayments")
-        .withIndex("by_date", (q) =>
-          q.eq("date", new Date("2026-07-05").getTime()),
-        )
-        .unique(),
-    );
-    expect(may15?.count).toBe(1);
-    expect(may15?.total).toBe(50);
-    expect(jun10?.count).toBe(1);
-    expect(jun10?.total).toBe(120);
-    expect(jul05?.count).toBe(2);
-    expect(jul05?.total).toBe(100);
-  });
-
-  it("writes zero rows for days with no cash", async () => {
+describe("backfillCashMovements", () => {
+  it("writes one cash inflow per cash payment, skipping cards and free visits", async () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
       await insertCashRegister(ctx, "2026-05-15", 5000);
-      await insertCashRegister(ctx, "2026-05-16", 3000, "bank_transfer"); // not cash
+      await insertCashRegister(ctx, "2026-06-10", 12000, "cash", "weekly");
+      await insertCashRegister(ctx, "2026-07-05", 3000);
+      await insertCashRegister(ctx, "2026-07-05", 7000);
+      await insertCashRegister(ctx, "2026-07-06", 9000, "bank_transfer");
+      await insertFreeRegister(ctx, "2026-07-06");
     });
     await t.run(async (ctx) => {
-      await ctx.runMutation(internal.register.backfillDailyCashPayments, {
+      await ctx.runMutation(internal.register.backfillCashMovements, {
         startDate: "2026-05-01",
       });
     });
 
-    const may16 = await t.run(async (ctx) =>
-      ctx.db
-        .query("dailyCashPayments")
-        .withIndex("by_date", (q) =>
-          q.eq("date", new Date("2026-05-16").getTime()),
-        )
-        .unique(),
+    const movements = await t.run(async (ctx) =>
+      ctx.db.query("cashMovements").collect(),
     );
-    expect(may16?.count).toBe(0);
-    expect(may16?.total).toBe(0);
+
+    expect(movements).toHaveLength(4);
+    expect(movements.every((row) => row.channel === "cash")).toBe(true);
+    expect(movements.every((row) => row.direction === "in")).toBe(true);
+    expect(movements.reduce((sum, row) => sum + row.amountKobo, 0)).toBe(27000);
   });
 
-  it("is idempotent: running twice does not duplicate rows", async () => {
+  it("is idempotent: running twice does not duplicate movements", async () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
       await insertCashRegister(ctx, "2026-05-15", 5000);
     });
     await t.run(async (ctx) => {
-      await ctx.runMutation(internal.register.backfillDailyCashPayments, {
+      await ctx.runMutation(internal.register.backfillCashMovements, {
         startDate: "2026-05-01",
       });
     });
     await t.run(async (ctx) => {
-      await ctx.runMutation(internal.register.backfillDailyCashPayments, {
+      await ctx.runMutation(internal.register.backfillCashMovements, {
         startDate: "2026-05-01",
       });
     });
 
-    const all = await t.run(async (ctx) =>
-      ctx.db.query("dailyCashPayments").collect(),
+    const movements = await t.run(async (ctx) =>
+      ctx.db.query("cashMovements").collect(),
     );
-    const may15 = all.filter((r) => isSameDay(r.date, "2026-05-15"));
+    const may15 = movements.filter((row) =>
+      isSameDay(row.occurredAt, "2026-05-15"),
+    );
     expect(may15).toHaveLength(1);
   });
 
@@ -221,18 +108,42 @@ describe("backfillDailyCashPayments", () => {
       await insertCashRegister(ctx, "2026-04-15", 5000); // before May
     });
     await t.run(async (ctx) => {
-      await ctx.runMutation(internal.register.backfillDailyCashPayments, {});
+      await ctx.runMutation(internal.register.backfillCashMovements, {});
     });
 
-    const apr15 = await t.run(async (ctx) =>
+    const movements = await t.run(async (ctx) =>
+      ctx.db.query("cashMovements").collect(),
+    );
+    expect(
+      movements.filter((row) => isSameDay(row.occurredAt, "2026-04-15")),
+    ).toHaveLength(0);
+  });
+});
+
+describe("saveCount", () => {
+  it("keeps the attendance count and leaves cash to the ledger", async () => {
+    const t = convexTest(schema, modules);
+    const date = yesterdayWATDate();
+    await t.run(async (ctx) => {
+      await insertCashRegister(ctx, date, 5000);
+      await insertCashRegister(ctx, date, 12000, "cash", "weekly");
+    });
+    await t.run(async (ctx) => {
+      await ctx.runMutation(internal.register.saveCount, {});
+    });
+
+    const metrics = await t.run(async (ctx) =>
       ctx.db
-        .query("dailyCashPayments")
-        .withIndex("by_date", (q) =>
-          q.eq("date", new Date("2026-04-15").getTime()),
-        )
+        .query("dailyAttendanceMetrics")
+        .withIndex("by_date", (q) => q.eq("date", date))
         .unique(),
     );
-    expect(apr15).toBeNull();
+    expect(metrics?.totalUsers).toBe(1);
+
+    const movements = await t.run(async (ctx) =>
+      ctx.db.query("cashMovements").collect(),
+    );
+    expect(movements).toHaveLength(0);
   });
 });
 

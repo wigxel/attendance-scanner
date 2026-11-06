@@ -176,11 +176,18 @@ const dailyAttendanceMetrics = defineTable({
   totalUsers: v.number(),
 }).index("by_date", ["date"]);
 
-const dailyCashPayments = defineTable({
-  date: v.number(),
-  count: v.number(),
-  total: v.number(),
-}).index("by_date", ["date"]);
+// Every movement of money in or out of the till and the bank accounts.
+// Balances are always derived from this ledger, never stored alongside it.
+const cashMovements = defineTable({
+  occurredAt: v.string(),
+  channel: paymentChannelValidator,
+  direction: v.union(v.literal("in"), v.literal("out")),
+  amountKobo: v.number(),
+  sourceRef: v.string(),
+  createdBy: v.string(),
+})
+  .index("by_occurredAt", ["occurredAt"])
+  .index("by_sourceRef", ["sourceRef"]);
 
 const metricKinds = v.union(
   v.literal("totalCustomers"),
@@ -313,7 +320,7 @@ export default defineSchema({
   occupations,
   featureVotes,
   dailyAttendanceMetrics,
-  dailyCashPayments,
+  cashMovements,
   seats,
   bookings,
   bookedSeats,
