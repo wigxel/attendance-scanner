@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -35,6 +35,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ScrollFade } from "@/components/ui/scroll-fade";
 import {
   Select,
   SelectContent,
@@ -137,6 +138,7 @@ export function PurchaseForm() {
   const data = useQuery(api.inventory.purchaseFormData, {});
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
   const [productLineIndex, setProductLineIndex] = useState<number | null>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<PurchaseFormValues>({
     resolver: zodResolver(purchaseFormSchema),
@@ -342,8 +344,8 @@ export function PurchaseForm() {
             <hr className="mx-auto w-full max-w-lg border-t border-border my-16" />
 
             <div className="mx-auto w-full max-w-4xl space-y-3">
-              <div className="rounded-lg border">
-                <Table className="min-w-xl">
+              <div className="relative overflow-hidden rounded-lg border">
+                <Table className="min-w-xl" containerRef={tableScrollRef}>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-16">S/N</TableHead>
@@ -380,6 +382,7 @@ export function PurchaseForm() {
                     })}
                   </TableBody>
                 </Table>
+                <ScrollFade targetRef={tableScrollRef} />
               </div>
 
               <Button
