@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 import { ClerkProvider } from "@clerk/nextjs";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Suspense } from "react";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { FlagsmithProvider } from "@/components/FlagsmithProvider";
@@ -51,7 +52,9 @@ export default function RootLayout({
             >
               <QueryProvider>
                 <ConvexClientProvider>
-                  <FlagsmithProvider>{children}</FlagsmithProvider>
+                  <FlagsmithProvider>
+                    <NuqsAdapter>{children}</NuqsAdapter>
+                  </FlagsmithProvider>
                 </ConvexClientProvider>
               </QueryProvider>
             </ClerkProvider>
