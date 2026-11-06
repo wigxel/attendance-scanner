@@ -25,15 +25,20 @@ const movementKind = v.union(
   v.literal("adjustment"),
 );
 
-function signedDelta(kind: MovementKind, quantity: number, current: number) {
-  if (kind === "restock") return quantity;
-  if (kind === "usage") return -quantity;
-  // Adjustment records what is on the shelf; the delta is derived so nobody
-  // types a signed number.
+function signedDelta(
+  kind: MovementKind,
+  quantity: number,
+  current: number,
+  unitFactor: number,
+) {
+  if (kind === "restock") return quantity * unitFactor;
+  if (kind === "usage") return -quantity * unitFactor;
+  // Adjustment records what is on the shelf in the base unit; the delta is
+  // derived so nobody types a signed number.
   return quantity - current;
 }
 
-async function currentQuantity(
+export async function currentQuantity(
   ctx: QueryCtx | MutationCtx,
   productId: Id<"products">,
 ) {
@@ -85,9 +90,12 @@ type Entry = {
   occurredAt?: string;
   note?: string;
   source?: "bulk" | "manual";
+  /** Alternate unit snapshot; defaults to the product's base unit. */
+  unitId?: Id<"units">;
+  unitFactor?: number;
 };
 
-async function insertMovement(ctx: MutationCtx, entry: Entry) {
+export async function insertMovement(ctx: MutationCtx, entry: Entry) {
   const product = await ctx.db.get(entry.productId);
   if (!product) throw new Error("Product not found.");
   if (!product.active) {
@@ -99,11 +107,18 @@ async function insertMovement(ctx: MutationCtx, entry: Entry) {
   ensureQuantity(entry.kind, entry.quantity);
   const note = ensureNote(entry.kind, entry.note);
   const occurredAt = ensureOccurredAt(entry.occurredAt);
+  const unitId = entry.unitId ?? product.baseUnitId;
+  const unitFactor = entry.unitFactor ?? 1;
 
-  const unit = await ctx.db.get(product.baseUnitId);
+  const unit = await ctx.db.get(unitId);
   const unitName = unit?.name ?? "unit";
   const current = await currentQuantity(ctx, entry.productId);
-  const quantityInBase = signedDelta(entry.kind, entry.quantity, current);
+  const quantityInBase = signedDelta(
+    entry.kind,
+    entry.quantity,
+    current,
+    unitFactor,
+  );
 
   if (current + quantityInBase < 0) {
     throw new Error(
@@ -114,9 +129,9 @@ async function insertMovement(ctx: MutationCtx, entry: Entry) {
   return await ctx.db.insert("stockMovements", {
     productId: entry.productId,
     kind: entry.kind,
-    unitId: product.baseUnitId,
+    unitId,
     quantity: entry.quantity,
-    unitFactor: 1,
+    unitFactor,
     quantityInBase,
     occurredAt,
     createdAt: new Date().toISOString(),

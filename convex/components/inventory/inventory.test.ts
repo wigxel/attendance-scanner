@@ -471,3 +471,218 @@ describe("products", () => {
     ).toHaveLength(1);
   });
 });
+
+describe("purchases", () => {
+  async function seed(
+    t: ReturnType<typeof convexTest>,
+    options: { costPriceKobo?: number } = {},
+  ) {
+    const packId = await t.mutation(api.units.create, {
+      callerId: "admin",
+      name: "pack",
+    });
+    const cartonId = await t.mutation(api.units.create, {
+      callerId: "admin",
+      name: "carton",
+    });
+    const productId = await t.mutation(api.products.create, {
+      callerId: "admin",
+      name: "Peak Milk",
+      baseUnitId: packId,
+      costPriceKobo: options.costPriceKobo,
+    });
+    return { packId, cartonId, productId };
+  }
+
+  it("derives the total from the lines and defaults the amount paid", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+
+    const purchaseId = await t.mutation(api.purchases.create, {
+      callerId: "admin",
+      lines: [
+        {
+          productId,
+          unitId: packId,
+          quantity: 10,
+          unitCostKobo: 1000,
+        },
+        {
+          productId,
+          unitId: packId,
+          quantity: 5,
+          unitCostKobo: 1200,
+        },
+      ],
+    });
+
+    const purchase = await t.run(async (ctx) => ctx.db.get(purchaseId));
+    expect(purchase?.totalKobo).toBe(16000);
+    expect(purchase?.amountPaidKobo).toBe(16000);
+
+    const [summary] = await t.query(api.purchases.list, {});
+    expect(summary.outstandingKobo).toBe(0);
+    expect(summary.lineCount).toBe(2);
+  });
+
+  it("records one restock movement per line", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+
+    await t.mutation(api.purchases.create, {
+      callerId: "admin",
+      lines: [
+        { productId, unitId: packId, quantity: 4, unitCostKobo: 500 },
+        { productId, unitId: packId, quantity: 6, unitCostKobo: 500 },
+      ],
+    });
+
+    const movements = await t.run(async (ctx) =>
+      ctx.db.query("stockMovements").collect(),
+    );
+    expect(movements).toHaveLength(2);
+    expect(movements.every((movement) => movement.kind === "restock")).toBe(
+      true,
+    );
+    expect(
+      movements.every((movement) => movement.note?.includes("Purchase")),
+    ).toBe(true);
+  });
+
+  it("moves the weighted average across two sequential purchases", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+
+    await t.mutation(api.purchases.create, {
+      callerId: "admin",
+      lines: [{ productId, unitId: packId, quantity: 10, unitCostKobo: 100 }],
+    });
+    await t.mutation(api.purchases.create, {
+      callerId: "admin",
+      lines: [{ productId, unitId: packId, quantity: 10, unitCostKobo: 200 }],
+    });
+
+    const product = await t.run(async (ctx) => ctx.db.get(productId));
+    expect(product?.costPriceKobo).toBe(150);
+  });
+
+  it("applies the alternate unit factor to stock and cost", async () => {
+    const t = convexTest(schema, modules);
+    const { cartonId, productId } = await seed(t);
+
+    await t.mutation(api.productUnits.upsert, {
+      productId,
+      unitId: cartonId,
+      factorToBase: 12,
+    });
+    await t.mutation(api.purchases.create, {
+      callerId: "admin",
+      lines: [{ productId, unitId: cartonId, quantity: 2, unitCostKobo: 1200 }],
+    });
+
+    const [movement] = await t.run(async (ctx) =>
+      ctx.db.query("stockMovements").collect(),
+    );
+    expect(movement.unitFactor).toBe(12);
+    expect(movement.quantityInBase).toBe(24);
+
+    const product = await t.run(async (ctx) => ctx.db.get(productId));
+    expect(product?.costPriceKobo).toBe(100);
+  });
+
+  it("voids a purchase: restores stock and the previous average cost", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+
+    await t.mutation(api.purchases.create, {
+      callerId: "admin",
+      lines: [{ productId, unitId: packId, quantity: 10, unitCostKobo: 100 }],
+    });
+    const second = await t.mutation(api.purchases.create, {
+      callerId: "admin",
+      lines: [{ productId, unitId: packId, quantity: 10, unitCostKobo: 200 }],
+    });
+
+    await t.mutation(api.purchases.voidPurchase, {
+      callerId: "admin",
+      purchaseId: second,
+    });
+
+    const product = await t.run(async (ctx) => ctx.db.get(productId));
+    expect(product?.costPriceKobo).toBe(100);
+
+    const [level] = await t.query(api.stockMovements.levels, {});
+    expect(level.quantity).toBe(10);
+
+    const purchase = await t.run(async (ctx) => ctx.db.get(second));
+    expect(purchase?.voided).toBe(true);
+  });
+
+  it("rejects voiding a purchase twice", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+
+    const purchaseId = await t.mutation(api.purchases.create, {
+      callerId: "admin",
+      lines: [{ productId, unitId: packId, quantity: 1, unitCostKobo: 100 }],
+    });
+
+    await t.mutation(api.purchases.voidPurchase, {
+      callerId: "admin",
+      purchaseId,
+    });
+
+    await expect(
+      t.mutation(api.purchases.voidPurchase, {
+        callerId: "admin",
+        purchaseId,
+      }),
+    ).rejects.toThrow("already voided");
+  });
+
+  it("rejects a line with an unknown unit", async () => {
+    const t = convexTest(schema, modules);
+    const { productId } = await seed(t);
+    const boxId = await t.mutation(api.units.create, {
+      callerId: "admin",
+      name: "box",
+    });
+
+    await expect(
+      t.mutation(api.purchases.create, {
+        callerId: "admin",
+        lines: [{ productId, unitId: boxId, quantity: 1, unitCostKobo: 100 }],
+      }),
+    ).rejects.toThrow("not set up");
+  });
+
+  it("keeps supplier names unique regardless of case and spacing", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(api.suppliers.create, {
+      callerId: "admin",
+      name: "Mama Ngozi",
+    });
+
+    await expect(
+      t.mutation(api.suppliers.create, {
+        callerId: "admin",
+        name: "  mama ngozi ",
+      }),
+    ).rejects.toThrow("already exists");
+  });
+
+  it("derives the outstanding balance from paid against total", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+
+    await t.mutation(api.purchases.create, {
+      callerId: "admin",
+      amountPaidKobo: 2500,
+      lines: [{ productId, unitId: packId, quantity: 10, unitCostKobo: 1000 }],
+    });
+
+    const [summary] = await t.query(api.purchases.list, {});
+    expect(summary.totalKobo).toBe(10000);
+    expect(summary.outstandingKobo).toBe(7500);
+  });
+});

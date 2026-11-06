@@ -1,6 +1,6 @@
 "use client";
 
-import { Boxes, Package, Ruler } from "lucide-react";
+import { Boxes, Package, ReceiptText, Ruler, Truck } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,12 @@ import { cn } from "@/lib/utils";
 const tabs = [
   { name: "Catalogue", href: "/admin/inventory/products", icon: Package },
   { name: "Stock", href: "/admin/inventory/stock", icon: Boxes },
+  {
+    name: "Purchases",
+    href: "/admin/inventory/purchases",
+    icon: ReceiptText,
+  },
+  { name: "Suppliers", href: "/admin/inventory/suppliers", icon: Truck },
   { name: "Units", href: "/admin/inventory/units", icon: Ruler },
 ];
 

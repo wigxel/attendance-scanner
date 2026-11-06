@@ -70,6 +70,61 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         Name
       >;
     };
+    productUnits: {
+      list: FunctionReference<
+        "query",
+        "internal",
+        { productId: string },
+        any,
+        Name
+      >;
+      listAll: FunctionReference<"query", "internal", {}, any, Name>;
+      upsert: FunctionReference<
+        "mutation",
+        "internal",
+        { factorToBase: number; productId: string; unitId: string },
+        any,
+        Name
+      >;
+    };
+    purchases: {
+      create: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          amountPaidKobo?: number;
+          callerId: string;
+          discountKobo?: number;
+          freightKobo?: number;
+          lines: Array<{
+            productId: string;
+            quantity: number;
+            unitCostKobo: number;
+            unitId: string;
+          }>;
+          note?: string;
+          occurredAt?: string;
+          supplierId?: string;
+        },
+        any,
+        Name
+      >;
+      get: FunctionReference<
+        "query",
+        "internal",
+        { purchaseId: string },
+        any,
+        Name
+      >;
+      list: FunctionReference<"query", "internal", {}, any, Name>;
+      voidPurchase: FunctionReference<
+        "mutation",
+        "internal",
+        { callerId: string; purchaseId: string },
+        any,
+        Name
+      >;
+    };
     stockMovements: {
       history: FunctionReference<
         "query",
@@ -106,6 +161,48 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           callerId: string;
           note?: string;
           rows: Array<{ productId: string; quantity?: number }>;
+        },
+        any,
+        Name
+      >;
+    };
+    suppliers: {
+      archive: FunctionReference<
+        "mutation",
+        "internal",
+        { supplierId: string },
+        any,
+        Name
+      >;
+      create: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          callerId: string;
+          contactName?: string;
+          name: string;
+          notes?: string;
+          phone?: string;
+        },
+        any,
+        Name
+      >;
+      list: FunctionReference<
+        "query",
+        "internal",
+        { includeArchived?: boolean; search?: string },
+        any,
+        Name
+      >;
+      update: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          contactName?: string;
+          name: string;
+          notes?: string;
+          phone?: string;
+          supplierId: string;
         },
         any,
         Name

@@ -66,7 +66,7 @@ export function UnitForm({
           name="abbreviation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Abbreviation (optional)</FormLabel>
+              <FormLabel optional>Abbreviation</FormLabel>
               <FormControl>
                 <Input placeholder="e.g. ctn" {...field} />
               </FormControl>

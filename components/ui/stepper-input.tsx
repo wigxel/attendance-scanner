@@ -23,13 +23,26 @@ export type StepperInputProps = Omit<
   step?: number;
   /** Optional adornment shown inside the field, e.g. a currency symbol. */
   prefix?: React.ReactNode;
+  /**
+   * "buttons" renders visible +/- controls; "keyboard" nudges the value with
+   * ArrowUp/ArrowDown and omits the buttons.
+   */
+  variant?: "buttons" | "keyboard";
 };
 
 export const StepperInput = React.forwardRef<
   HTMLInputElement,
   StepperInputProps
 >(function StepperInput(
-  { value, onChange, step = 1, prefix, className, ...props },
+  {
+    value,
+    onChange,
+    step = 1,
+    prefix,
+    variant = "buttons",
+    className,
+    ...props
+  },
   ref,
 ) {
   // useEvent keeps the handler stable while reading the latest value, so a
@@ -60,30 +73,45 @@ export const StepperInput = React.forwardRef<
             onChange(sanitizeAmountInput(event.target.value))
           }
           onKeyDown={(event) => {
+            if (
+              variant === "keyboard" &&
+              (event.key === "ArrowUp" || event.key === "ArrowDown")
+            ) {
+              event.preventDefault();
+              onAdjust(
+                (current) => current + (event.key === "ArrowUp" ? step : -step),
+              );
+              return;
+            }
+
             if (!isAmountKey(event)) event.preventDefault();
           }}
-          className={cn(prefix && "pl-7", className)}
+          className={cn("min-w-[7.5rem]", prefix && "pl-7", className)}
         />
       </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        aria-label={`Decrease by ${step}`}
-        {...decrement}
-      >
-        <MinusIcon size={14} />
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        aria-label={`Increase by ${step}`}
-        {...increment}
-      >
-        <PlusIcon size={14} />
-      </Button>
+      {variant === "buttons" ? (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label={`Decrease by ${step}`}
+            {...decrement}
+          >
+            <MinusIcon size={14} />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label={`Increase by ${step}`}
+            {...increment}
+          >
+            <PlusIcon size={14} />
+          </Button>
+        </>
+      ) : null}
     </div>
   );
 });
