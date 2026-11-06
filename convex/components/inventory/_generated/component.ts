@@ -116,6 +116,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
+      linesInRange: FunctionReference<
+        "query",
+        "internal",
+        { end: string; start: string },
+        any,
+        Name
+      >;
       list: FunctionReference<"query", "internal", {}, any, Name>;
       voidPurchase: FunctionReference<
         "mutation",
@@ -137,6 +144,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         { includeArchived?: boolean },
+        any,
+        Name
+      >;
+      range: FunctionReference<
+        "query",
+        "internal",
+        { end: string; start: string },
         any,
         Name
       >;

@@ -90,6 +90,8 @@ type Entry = {
   occurredAt?: string;
   note?: string;
   source?: "bulk" | "manual";
+  /** Set when this row undoes another movement instead of real usage. */
+  reversal?: boolean;
   /** Alternate unit snapshot; defaults to the product's base unit. */
   unitId?: Id<"units">;
   unitFactor?: number;
@@ -137,6 +139,7 @@ export async function insertMovement(ctx: MutationCtx, entry: Entry) {
     createdAt: new Date().toISOString(),
     note,
     source: entry.source ?? "manual",
+    reversal: entry.reversal,
     createdBy: entry.callerId,
   });
 }
@@ -256,5 +259,19 @@ export const history = query({
           b.createdAt.localeCompare(a.createdAt),
       )
       .slice(0, limit ?? 20);
+  },
+});
+
+// Movements whose stock actually moved inside [start, end], ISO timestamps.
+// The host reads these to split purchased from used and to cost usage.
+export const range = query({
+  args: { start: v.string(), end: v.string() },
+  handler: async (ctx, { start, end }) => {
+    return await ctx.db
+      .query("stockMovements")
+      .withIndex("by_occurredAt", (q) =>
+        q.gte("occurredAt", start).lte("occurredAt", end),
+      )
+      .collect();
   },
 });
