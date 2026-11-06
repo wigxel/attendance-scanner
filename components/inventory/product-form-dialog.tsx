@@ -97,8 +97,8 @@ export function ProductFormDialog({
         <DialogHeader>
           <DialogTitle>{product ? "Edit product" : "New product"}</DialogTitle>
           <DialogDescription>
-            A product is catalogue identity only. Stock is recorded later as
-            movements.
+            A product is catalogue identity only. Stock changes are recorded
+            later.
           </DialogDescription>
         </DialogHeader>
 

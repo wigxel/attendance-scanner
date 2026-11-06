@@ -10,6 +10,7 @@
 
 import type * as defaultUnits from "../defaultUnits.js";
 import type * as products from "../products.js";
+import type * as stockMovements from "../stockMovements.js";
 import type * as units from "../units.js";
 
 import type {
@@ -22,6 +23,7 @@ import { anyApi, componentsGeneric } from "convex/server";
 const fullApi: ApiFromModules<{
   defaultUnits: typeof defaultUnits;
   products: typeof products;
+  stockMovements: typeof stockMovements;
   units: typeof units;
 }> = anyApi as any;
 

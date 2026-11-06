@@ -18,6 +18,7 @@ const naira = new Intl.NumberFormat("en-NG", {
 export function createProductColumns(actions: {
   onEdit: (product: ProductRow) => void;
   onArchive: (product: ProductRow) => void;
+  onRecordMovement: (product: ProductRow) => void;
 }): ColumnDef<ProductRow>[] {
   return [
     {
@@ -73,15 +74,16 @@ export function createProductColumns(actions: {
         const product = row.original;
         return (
           <AppTableActions>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled
-              title="Stock movements arrive in the next step"
-            >
-              <PlusCircle className="h-4 w-4" />
-              Record movement
-            </Button>
+            {product.active && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => actions.onRecordMovement(product)}
+              >
+                <PlusCircle className="h-4 w-4" />
+                Record change
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"

@@ -105,6 +105,7 @@ export function AppDataTable<T>({
       columnVisibility,
       rowSelection,
       pagination,
+      globalFilter: searchTerm ?? "",
     },
   });
 

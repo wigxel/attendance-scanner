@@ -10,6 +10,7 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/empty-state";
+import { MovementFormDialog } from "@/components/inventory/movement-form-dialog";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ export function ProductsContent() {
   const [showArchived, setShowArchived] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [movementTarget, setMovementTarget] = useState<ProductRow | null>(null);
 
   const products = useQuery(api.inventory.listProducts, {
     includeArchived: showArchived,
@@ -41,6 +43,10 @@ export function ProductsContent() {
   const openEdit = useCallback((product: ProductRow) => {
     setEditing(product);
     setIsFormOpen(true);
+  }, []);
+
+  const openMovement = useCallback((product: ProductRow) => {
+    setMovementTarget(product);
   }, []);
 
   const handleArchive = useCallback(
@@ -62,11 +68,14 @@ export function ProductsContent() {
     [archiveProduct],
   );
 
-  // Movements are the next step's job; the row action exists now so the
-  // catalogue is complete without a later layout change.
   const columns = useMemo(
-    () => createProductColumns({ onEdit: openEdit, onArchive: handleArchive }),
-    [openEdit, handleArchive],
+    () =>
+      createProductColumns({
+        onEdit: openEdit,
+        onArchive: handleArchive,
+        onRecordMovement: openMovement,
+      }),
+    [openEdit, handleArchive, openMovement],
   );
 
   if (products === undefined || units === undefined) {
@@ -79,13 +88,22 @@ export function ProductsContent() {
     baseUnitName: unitNames.get(product.baseUnitId) ?? "Unknown unit",
   }));
 
+  const movementDialogTarget = movementTarget
+    ? {
+        productId: movementTarget._id,
+        name: movementTarget.name,
+        baseUnitName: movementTarget.baseUnitName,
+      }
+    : null;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-medium text-foreground">Catalogue</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Products you stock. Quantities come from movements, not this list.
+            Products you stock. Quantities come from stock changes, not this
+            list.
           </p>
         </div>
 
@@ -115,7 +133,7 @@ export function ProductsContent() {
           <EmptyStateContent>
             <EmptyStateTitle>No products yet</EmptyStateTitle>
             <EmptyStateDescription>
-              Add a product to start picking it on movements later.
+              Add a product to start picking it on stock changes later.
             </EmptyStateDescription>
           </EmptyStateContent>
         }
@@ -125,6 +143,14 @@ export function ProductsContent() {
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         product={editing}
+      />
+
+      <MovementFormDialog
+        open={movementTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setMovementTarget(null);
+        }}
+        target={movementDialogTarget}
       />
     </div>
   );
