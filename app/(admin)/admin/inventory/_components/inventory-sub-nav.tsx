@@ -1,11 +1,23 @@
 "use client";
 
-import { Boxes, Package, ReceiptText, Ruler, Truck } from "lucide-react";
+import {
+  Boxes,
+  ChartNoAxesCombined,
+  Package,
+  ReceiptText,
+  Ruler,
+  Truck,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const tabs = [
+  {
+    name: "Metrics",
+    href: "/admin/inventory/metrics",
+    icon: ChartNoAxesCombined,
+  },
   { name: "Catalogue", href: "/admin/inventory/products", icon: Package },
   { name: "Stock", href: "/admin/inventory/stock", icon: Boxes },
   {

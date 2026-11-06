@@ -208,6 +208,7 @@ export const voidPurchase = mutation({
         unitFactor: line.unitFactor,
         occurredAt: now,
         note: label,
+        reversal: true,
       });
 
       await ctx.db.patch(line.productId, {
@@ -259,6 +260,30 @@ export const list = query({
           b.occurredAt.localeCompare(a.occurredAt) ||
           b.createdAt.localeCompare(a.createdAt),
       );
+  },
+});
+
+export const linesInRange = query({
+  args: { start: v.string(), end: v.string() },
+  handler: async (ctx, { start, end }) => {
+    const purchases = await ctx.db
+      .query("purchases")
+      .withIndex("by_occurredAt", (q) =>
+        q.gte("occurredAt", start).lte("occurredAt", end),
+      )
+      .collect();
+
+    const live = purchases.filter((purchase) => !purchase.voided);
+    const lineGroups = await Promise.all(
+      live.map((purchase) =>
+        ctx.db
+          .query("purchaseLines")
+          .withIndex("by_purchase", (q) => q.eq("purchaseId", purchase._id))
+          .collect(),
+      ),
+    );
+
+    return lineGroups.flat();
   },
 });
 

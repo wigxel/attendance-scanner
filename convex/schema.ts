@@ -289,6 +289,22 @@ const kpiInstances = defineTable({
   createdAt: v.number(),
 }).index("by_date", ["date"]);
 
+// Revenue the app cannot derive from bookings: shop sales rung up on the POS
+// terminal, which reports daily totals and no line items. One dated record per
+// channel; the pos ledger importer will write to this same shape later. Never
+// a hand-typed number inside a metric query.
+const revenueRecords = defineTable({
+  date: v.string(), // yyyy-MM-dd, Africa/Lagos
+  channel: paymentChannelValidator,
+  amountKobo: v.number(),
+  note: v.optional(v.string()),
+  createdBy: v.string(),
+  createdAt: v.string(),
+  updatedAt: v.string(),
+})
+  .index("by_date", ["date"])
+  .index("by_date_and_channel", ["date", "channel"]);
+
 // Browser web-push subscriptions (PWA). One row per browser endpoint;
 // subscribe upserts by endpoint. `recipientKey` (`user:<id>`) is absent on
 // rows stored before it existed — those still receive broadcast deliveries.
@@ -327,5 +343,6 @@ export default defineSchema({
   kpiCompletions,
   kpiInstances,
   kpiDailyScores,
+  revenueRecords,
   pushSubscriptions,
 });

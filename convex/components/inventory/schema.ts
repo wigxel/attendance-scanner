@@ -44,6 +44,8 @@ const stockMovements = defineTable({
   createdAt: v.string(),
   note: v.optional(v.string()),
   source: v.optional(v.union(v.literal("bulk"), v.literal("manual"))),
+  /** True when this row undoes another movement (a voided purchase). */
+  reversal: v.optional(v.boolean()),
   createdBy: v.string(),
 })
   .index("by_product", ["productId"])
