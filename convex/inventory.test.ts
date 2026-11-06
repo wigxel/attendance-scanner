@@ -220,22 +220,23 @@ describe("metrics", () => {
       purchaseCount: 1,
     });
     expect(metrics.revenue).toMatchObject({
-      totalKobo: 80000,
-      bookingKobo: 50000,
+      totalKobo: 30000,
       shopKobo: 30000,
+      salesCount: 1,
     });
+    expect(metrics.topSales).toEqual([{ date: day, totalKobo: 30000 }]);
     expect(
       metrics.revenue.byChannel.find((share) => share.channel === "cash")
-        ?.bookingKobo,
-    ).toBe(50000);
+        ?.totalKobo,
+    ).toBe(0);
     expect(
       metrics.revenue.byChannel.find((share) => share.channel === "pos")
         ?.shopKobo,
     ).toBe(30000);
     expect(metrics.margin).toMatchObject({
       cogsKobo: 8000,
-      grossMarginKobo: 72000,
-      grossMarginPercent: 90,
+      grossMarginKobo: 22000,
+      grossMarginPercent: 73.3,
     });
     expect(metrics.movement[0]).toMatchObject({
       name: "Peak Milk",

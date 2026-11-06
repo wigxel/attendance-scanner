@@ -78,8 +78,12 @@ export type RevenueChannel = "cash" | "pos" | "transfer" | "unrecorded";
 
 export type RevenueChannelShare = {
   channel: RevenueChannel;
-  bookingKobo: number;
   shopKobo: number;
+  totalKobo: number;
+};
+
+export type TopSalesDay = {
+  date: string;
   totalKobo: number;
 };
 
@@ -109,10 +113,11 @@ export type InventoryMetrics = {
   };
   revenue: {
     totalKobo: number;
-    bookingKobo: number;
     shopKobo: number;
+    salesCount: number;
     byChannel: RevenueChannelShare[];
   };
+  topSales: TopSalesDay[];
   margin: {
     cogsKobo: number;
     grossMarginKobo: number;
@@ -138,26 +143,12 @@ function parseDay(value: string, label: string) {
   return value;
 }
 
-type RevenueShare = { bookingKobo: number; shopKobo: number };
+type RevenueShare = { shopKobo: number };
 
-function revenueBreakdown(
-  bookings: HostDoc<"bookings">[],
-  revenueRows: HostDoc<"revenueRecords">[],
-) {
+function revenueBreakdown(revenueRows: HostDoc<"revenueRecords">[]) {
   const shares = new Map<RevenueChannel, RevenueShare>(
-    REVENUE_CHANNELS.map((channel) => [
-      channel,
-      { bookingKobo: 0, shopKobo: 0 },
-    ]),
+    REVENUE_CHANNELS.map((channel) => [channel, { shopKobo: 0 }]),
   );
-
-  for (const booking of bookings) {
-    if (booking.status !== "confirmed" && booking.status !== "used-up") {
-      continue;
-    }
-    const share = shares.get(booking.channel ?? "unrecorded");
-    if (share) share.bookingKobo += booking.amount;
-  }
 
   for (const row of revenueRows) {
     const share = shares.get(row.channel);
@@ -165,20 +156,32 @@ function revenueBreakdown(
   }
 
   const byChannel: RevenueChannelShare[] = REVENUE_CHANNELS.map((channel) => {
-    const share = shares.get(channel) ?? { bookingKobo: 0, shopKobo: 0 };
+    const share = shares.get(channel) ?? { shopKobo: 0 };
     return {
       channel,
-      bookingKobo: share.bookingKobo,
       shopKobo: share.shopKobo,
-      totalKobo: share.bookingKobo + share.shopKobo,
+      totalKobo: share.shopKobo,
     };
   });
 
   return {
     byChannel,
-    bookingKobo: byChannel.reduce((sum, share) => sum + share.bookingKobo, 0),
     shopKobo: byChannel.reduce((sum, share) => sum + share.shopKobo, 0),
+    salesCount: revenueRows.length,
   };
+}
+
+function topSalesDays(rows: HostDoc<"revenueRecords">[], limit = 5) {
+  const totals = new Map<string, number>();
+
+  for (const row of rows) {
+    totals.set(row.date, (totals.get(row.date) ?? 0) + row.amountKobo);
+  }
+
+  return [...totals.entries()]
+    .map(([date, totalKobo]) => ({ date, totalKobo }))
+    .sort((a, b) => b.totalKobo - a.totalKobo || b.date.localeCompare(a.date))
+    .slice(0, limit);
 }
 
 function stockSummary(
@@ -772,7 +775,6 @@ export const metrics = query({
       purchases,
       purchaseLines,
       movements,
-      bookingRows,
       revenueRows,
     ] = await Promise.all([
       ctx.runQuery(components.inventory.stockMovements.levels, {}) as Promise<
@@ -796,12 +798,6 @@ export const metrics = query({
         end: endIso,
       }) as Promise<Doc<"stockMovements">[]>,
       ctx.db
-        .query("bookings")
-        .withIndex("by_startDate", (q) =>
-          q.gte("startDate", start).lte("startDate", end),
-        )
-        .collect(),
-      ctx.db
         .query("revenueRecords")
         .withIndex("by_date", (q) => q.gte("date", start).lte("date", end))
         .collect(),
@@ -816,7 +812,7 @@ export const metrics = query({
 
     const stock = stockSummary(levels, productById);
     const spend = spendSummary(purchases, startIso, endIso);
-    const revenue = revenueBreakdown(bookingRows, revenueRows);
+    const revenue = revenueBreakdown(revenueRows);
     const movement = movementSummary(
       purchaseLines,
       movements,
@@ -824,7 +820,7 @@ export const metrics = query({
       unitNameById,
     );
 
-    const revenueKobo = revenue.bookingKobo + revenue.shopKobo;
+    const revenueKobo = revenue.shopKobo;
     const grossMarginKobo = revenueKobo - movement.cogsKobo;
 
     return {
@@ -833,10 +829,11 @@ export const metrics = query({
       spend,
       revenue: {
         totalKobo: revenueKobo,
-        bookingKobo: revenue.bookingKobo,
         shopKobo: revenue.shopKobo,
+        salesCount: revenue.salesCount,
         byChannel: revenue.byChannel,
       },
+      topSales: topSalesDays(revenueRows),
       margin: {
         cogsKobo: movement.cogsKobo,
         grossMarginKobo,
