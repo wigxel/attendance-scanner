@@ -1,13 +1,12 @@
 import { v } from "convex/values";
 import { components } from "./_generated/api";
-import type { Doc as HostDoc } from "./_generated/dataModel";
 import {
   type MutationCtx,
   mutation,
   type QueryCtx,
   query,
 } from "./_generated/server";
-import { requirePrivilege } from "./acl";
+import { requireAny, requirePrivilege } from "./acl";
 import type { Doc } from "./components/inventory/_generated/dataModel";
 import { DEFAULT_UNIT_NAMES } from "./components/inventory/defaultUnits";
 import { dayBounds } from "./kpis";
@@ -15,6 +14,8 @@ import { readId } from "./myFunctions";
 import { paymentChannelValidator } from "./shared";
 
 const PRIVILEGE = "inventory:manage";
+const SELL_PRIVILEGE = "inventory:sell";
+const SELL_OR_MANAGE = [SELL_PRIVILEGE, PRIVILEGE];
 
 export type StockLevel = {
   productId: string;
@@ -73,18 +74,51 @@ export type PurchaseFormData = {
   suppliers: Supplier[];
 };
 
-/** Revenue the app could not derive itself: shop sales rung up on the POS. */
-export type RevenueChannel = "cash" | "pos" | "transfer" | "unrecorded";
+/** Channel a sale was taken on. */
+export type SaleChannel = "cash" | "pos" | "transfer";
 
 export type RevenueChannelShare = {
-  channel: RevenueChannel;
-  shopKobo: number;
+  channel: SaleChannel;
   totalKobo: number;
 };
 
-export type TopSalesDay = {
-  date: string;
-  totalKobo: number;
+export type TopProduct = {
+  productId: string;
+  name: string;
+  unitName: string;
+  quantity: number;
+  revenueKobo: number;
+};
+
+export type SaleSummary = Doc<"sales"> & {
+  customerName: string | null;
+  lineCount: number;
+  productNames: string[];
+};
+
+export type SaleLine = Doc<"saleLines"> & {
+  productName: string;
+  unitName: string;
+};
+
+export type SaleDetail = {
+  sale: Doc<"sales">;
+  customerName: string | null;
+  createdByName: string;
+  lines: SaleLine[];
+};
+
+export type SaleFormProduct = {
+  productId: string;
+  name: string;
+  sku?: string;
+  sellPriceKobo?: number;
+  baseUnitId: string;
+  units: PurchaseFormUnit[];
+};
+
+export type SaleFormData = {
+  products: SaleFormProduct[];
 };
 
 export type InventoryMovementRow = {
@@ -113,11 +147,10 @@ export type InventoryMetrics = {
   };
   revenue: {
     totalKobo: number;
-    shopKobo: number;
     salesCount: number;
     byChannel: RevenueChannelShare[];
   };
-  topSales: TopSalesDay[];
+  topProducts: TopProduct[];
   margin: {
     cogsKobo: number;
     grossMarginKobo: number;
@@ -126,12 +159,7 @@ export type InventoryMetrics = {
   movement: InventoryMovementRow[];
 };
 
-const REVENUE_CHANNELS: RevenueChannel[] = [
-  "cash",
-  "pos",
-  "transfer",
-  "unrecorded",
-];
+const SALE_CHANNELS: SaleChannel[] = ["cash", "pos", "transfer"];
 
 function parseDay(value: string, label: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -143,44 +171,59 @@ function parseDay(value: string, label: string) {
   return value;
 }
 
-type RevenueShare = { shopKobo: number };
-
-function revenueBreakdown(revenueRows: HostDoc<"revenueRecords">[]) {
-  const shares = new Map<RevenueChannel, RevenueShare>(
-    REVENUE_CHANNELS.map((channel) => [channel, { shopKobo: 0 }]),
+function revenueBreakdown(sales: Doc<"sales">[]) {
+  const totals = new Map<SaleChannel, number>(
+    SALE_CHANNELS.map((channel) => [channel, 0]),
   );
 
-  for (const row of revenueRows) {
-    const share = shares.get(row.channel);
-    if (share) share.shopKobo += row.amountKobo;
+  for (const sale of sales) {
+    totals.set(sale.channel, (totals.get(sale.channel) ?? 0) + sale.totalKobo);
   }
 
-  const byChannel: RevenueChannelShare[] = REVENUE_CHANNELS.map((channel) => {
-    const share = shares.get(channel) ?? { shopKobo: 0 };
-    return {
-      channel,
-      shopKobo: share.shopKobo,
-      totalKobo: share.shopKobo,
-    };
-  });
+  const byChannel: RevenueChannelShare[] = SALE_CHANNELS.map((channel) => ({
+    channel,
+    totalKobo: totals.get(channel) ?? 0,
+  }));
 
   return {
     byChannel,
-    shopKobo: byChannel.reduce((sum, share) => sum + share.shopKobo, 0),
-    salesCount: revenueRows.length,
+    totalKobo: byChannel.reduce((sum, share) => sum + share.totalKobo, 0),
+    salesCount: sales.length,
   };
 }
 
-function topSalesDays(rows: HostDoc<"revenueRecords">[], limit = 5) {
-  const totals = new Map<string, number>();
+function topProducts(
+  lines: Doc<"saleLines">[],
+  productById: Map<string, Doc<"products">>,
+  unitNameById: Map<string, string>,
+  limit = 5,
+): TopProduct[] {
+  const grouped = new Map<string, { quantity: number; revenueKobo: number }>();
 
-  for (const row of rows) {
-    totals.set(row.date, (totals.get(row.date) ?? 0) + row.amountKobo);
+  for (const line of lines) {
+    const row = grouped.get(line.productId) ?? {
+      quantity: 0,
+      revenueKobo: 0,
+    };
+    row.quantity += line.quantityInBase;
+    row.revenueKobo += line.lineTotalKobo;
+    grouped.set(line.productId, row);
   }
 
-  return [...totals.entries()]
-    .map(([date, totalKobo]) => ({ date, totalKobo }))
-    .sort((a, b) => b.totalKobo - a.totalKobo || b.date.localeCompare(a.date))
+  return [...grouped.entries()]
+    .map(([productId, row]) => {
+      const product = productById.get(productId);
+      return {
+        productId,
+        name: product?.name ?? "Unknown product",
+        unitName: product
+          ? (unitNameById.get(product.baseUnitId) ?? "unit")
+          : "unit",
+        quantity: row.quantity,
+        revenueKobo: row.revenueKobo,
+      };
+    })
+    .sort((a, b) => b.quantity - a.quantity || b.revenueKobo - a.revenueKobo)
     .slice(0, limit);
 }
 
@@ -228,6 +271,7 @@ function movementSummary(
   movements: Doc<"stockMovements">[],
   productById: Map<string, Doc<"products">>,
   unitNameById: Map<string, string>,
+  liveSaleNotes: Set<string>,
 ) {
   const purchasedByProduct = new Map<string, number>();
   for (const line of purchaseLines) {
@@ -242,6 +286,11 @@ function movementSummary(
   for (const movement of movements) {
     // Void reversals are usage rows that undo a restock, not real usage.
     if (movement.kind !== "usage" || movement.reversal) continue;
+    // A voided sale keeps its original usage row, so only count the sales
+    // that are still live in this period.
+    if (movement.source === "sale" && !liveSaleNotes.has(movement.note ?? "")) {
+      continue;
+    }
 
     const used = -movement.quantityInBase;
     usedByProduct.set(
@@ -283,8 +332,15 @@ function movementSummary(
 
 // The component never sees ACL or identity: the host checks the privilege and
 // passes the caller down only so rows can carry createdBy/updatedBy.
-async function requireCallerId(ctx: QueryCtx | MutationCtx) {
-  await requirePrivilege(ctx, PRIVILEGE);
+async function requireCallerId(
+  ctx: QueryCtx | MutationCtx,
+  privileges: string[] = [PRIVILEGE],
+) {
+  if (privileges.length === 1) {
+    await requirePrivilege(ctx, privileges[0]);
+  } else {
+    await requireAny(ctx, privileges);
+  }
   const id = await readId(ctx);
   if (!id) throw new Error("Authentication required.");
   return id as string;
@@ -577,6 +633,42 @@ export const setProductUnit = mutation({
 // Purchases
 // ---------------------------------------------------------------------------
 
+function unitMapper(
+  units: Doc<"units">[],
+  alternates: Doc<"productUnits">[],
+): (product: Doc<"products">) => PurchaseFormUnit[] {
+  const unitById = new Map(units.map((unit) => [unit._id, unit]));
+  const alternatesByProduct = new Map<string, Doc<"productUnits">[]>();
+  for (const row of alternates) {
+    const group = alternatesByProduct.get(row.productId) ?? [];
+    group.push(row);
+    alternatesByProduct.set(row.productId, group);
+  }
+
+  const toUnit = (
+    unitId: string,
+    factorToBase: number,
+  ): PurchaseFormUnit | null => {
+    const unit = unitById.get(unitId as Doc<"units">["_id"]);
+    if (!unit) return null;
+    return {
+      unitId: unit._id,
+      name: unit.name,
+      abbreviation: unit.abbreviation,
+      factorToBase,
+    };
+  };
+
+  return (product) => {
+    const base = toUnit(product.baseUnitId, 1);
+    const extra = (alternatesByProduct.get(product._id) ?? [])
+      .map((row) => toUnit(row.unitId, row.factorToBase))
+      .filter((unit): unit is PurchaseFormUnit => unit !== null);
+
+    return base ? [base, ...extra] : extra;
+  };
+}
+
 export const purchaseFormData = query({
   args: {},
   handler: async (ctx): Promise<PurchaseFormData> => {
@@ -589,41 +681,20 @@ export const purchaseFormData = query({
       ctx.runQuery(components.inventory.productUnits.listAll, {}),
     ]);
 
-    const unitById = new Map(
-      (units as Doc<"units">[]).map((unit) => [unit._id, unit]),
+    const unitsFor = unitMapper(
+      units as Doc<"units">[],
+      alternates as Doc<"productUnits">[],
     );
 
-    const toUnit = (
-      unitId: string,
-      factorToBase: number,
-    ): PurchaseFormUnit | null => {
-      const unit = unitById.get(unitId as Doc<"units">["_id"]);
-      if (!unit) return null;
-      return {
-        unitId: unit._id,
-        name: unit.name,
-        abbreviation: unit.abbreviation,
-        factorToBase,
-      };
-    };
-
     return {
-      products: (products as Doc<"products">[]).map((product) => {
-        const base = toUnit(product.baseUnitId, 1);
-        const extra = (alternates as Doc<"productUnits">[])
-          .filter((row) => row.productId === product._id)
-          .map((row) => toUnit(row.unitId, row.factorToBase))
-          .filter((unit): unit is PurchaseFormUnit => unit !== null);
-
-        return {
-          productId: product._id,
-          name: product.name,
-          sku: product.sku,
-          costPriceKobo: product.costPriceKobo,
-          baseUnitId: product.baseUnitId,
-          units: base ? [base, ...extra] : extra,
-        };
-      }),
+      products: (products as Doc<"products">[]).map((product) => ({
+        productId: product._id,
+        name: product.name,
+        sku: product.sku,
+        costPriceKobo: product.costPriceKobo,
+        baseUnitId: product.baseUnitId,
+        units: unitsFor(product),
+      })),
       suppliers: suppliers as Supplier[],
     };
   },
@@ -689,62 +760,175 @@ export const purchaseDetail = query({
 });
 
 // ---------------------------------------------------------------------------
-// Shop revenue input
+// Sales
 // ---------------------------------------------------------------------------
 
-/**
- * Records one day's takings for one channel. The POS terminal only reports
- * daily totals, so this is the dated row an importer will write to once the
- * ledger feed lands. One row per date + channel; a zero clears the entry.
- */
-export const setRevenueTotal = mutation({
+async function customerExists(ctx: QueryCtx, customerId: string) {
+  const profile = await ctx.db
+    .query("profile")
+    .withIndex("by_user_id", (q) => q.eq("id", customerId))
+    .first();
+  return profile !== null;
+}
+
+async function profileName(ctx: QueryCtx, profileId: string) {
+  const profile = await ctx.db
+    .query("profile")
+    .withIndex("by_user_id", (q) => q.eq("id", profileId))
+    .first();
+  return profile
+    ? `${profile.firstName} ${profile.lastName}`.trim()
+    : profileId;
+}
+
+async function customerName(ctx: QueryCtx, customerId: string | undefined) {
+  if (!customerId) return null;
+  return await profileName(ctx, customerId);
+}
+
+/** One profile lookup per distinct customer, not one per sale. */
+async function customerNames(
+  ctx: QueryCtx,
+  sales: Array<{ customerId?: string }>,
+) {
+  const ids = [
+    ...new Set(
+      sales
+        .map((sale) => sale.customerId)
+        .filter((id): id is string => id !== undefined),
+    ),
+  ];
+  const entries = await Promise.all(
+    ids.map(async (id) => [id, await profileName(ctx, id)] as const),
+  );
+  return new Map(entries);
+}
+
+export const saleFormData = query({
+  args: {},
+  handler: async (ctx): Promise<SaleFormData> => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    const [products, units, alternates] = await Promise.all([
+      ctx.runQuery(components.inventory.products.list, {}),
+      ctx.runQuery(components.inventory.units.list, {}),
+      ctx.runQuery(components.inventory.productUnits.listAll, {}),
+    ]);
+
+    const unitsFor = unitMapper(
+      units as Doc<"units">[],
+      alternates as Doc<"productUnits">[],
+    );
+
+    return {
+      products: (products as Doc<"products">[]).map((product) => ({
+        productId: product._id,
+        name: product.name,
+        sku: product.sku,
+        sellPriceKobo: product.sellPriceKobo,
+        baseUnitId: product.baseUnitId,
+        units: unitsFor(product),
+      })),
+    };
+  },
+});
+
+export const recordSale = mutation({
   args: {
-    date: v.string(),
     channel: paymentChannelValidator,
-    amountKobo: v.number(),
+    customerId: v.optional(v.string()),
     note: v.optional(v.string()),
+    lines: v.array(
+      v.object({
+        productId: v.string(),
+        unitId: v.string(),
+        quantity: v.number(),
+        unitPriceKobo: v.number(),
+      }),
+    ),
   },
   handler: async (ctx, args) => {
-    const caller = await requireCallerId(ctx);
-    const date = parseDay(args.date, "Date");
+    const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
 
-    if (!Number.isInteger(args.amountKobo) || args.amountKobo < 0) {
-      throw new Error("Amount must be a whole number of kobo, 0 or more.");
+    const customerId = args.customerId?.trim() || undefined;
+    if (customerId && !(await customerExists(ctx, customerId))) {
+      throw new Error("Customer not found.");
     }
 
-    const existing = await ctx.db
-      .query("revenueRecords")
-      .withIndex("by_date_and_channel", (q) =>
-        q.eq("date", date).eq("channel", args.channel),
-      )
-      .first();
-
-    if (args.amountKobo === 0) {
-      if (existing) await ctx.db.delete(existing._id);
-      return null;
-    }
-
-    const now = new Date().toISOString();
-    const note = args.note?.trim() || undefined;
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        amountKobo: args.amountKobo,
-        note,
-        updatedAt: now,
-      });
-      return existing._id;
-    }
-
-    return await ctx.db.insert("revenueRecords", {
-      date,
-      channel: args.channel,
-      amountKobo: args.amountKobo,
-      note,
-      createdBy: caller,
-      createdAt: now,
-      updatedAt: now,
+    return await ctx.runMutation(components.inventory.sales.create, {
+      ...args,
+      customerId,
+      callerId: caller,
     });
+  },
+});
+
+export const voidSale = mutation({
+  args: { saleId: v.string() },
+  handler: async (ctx, { saleId }) => {
+    const caller = await requireCallerId(ctx);
+    await ctx.runMutation(components.inventory.sales.voidSale, {
+      saleId,
+      callerId: caller,
+    });
+  },
+});
+
+export const setSaleCustomer = mutation({
+  args: { saleId: v.string(), customerId: v.optional(v.string()) },
+  handler: async (ctx, { saleId, customerId }) => {
+    await requireCallerId(ctx);
+
+    const trimmed = customerId?.trim() || undefined;
+    if (trimmed && !(await customerExists(ctx, trimmed))) {
+      throw new Error("Customer not found.");
+    }
+
+    await ctx.runMutation(components.inventory.sales.setSaleCustomer, {
+      saleId,
+      customerId: trimmed,
+    });
+  },
+});
+
+export const listSales = query({
+  args: {},
+  handler: async (ctx): Promise<SaleSummary[]> => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    const sales = (await ctx.runQuery(
+      components.inventory.sales.list,
+      {},
+    )) as Array<Doc<"sales"> & { lineCount: number; productNames: string[] }>;
+
+    const nameById = await customerNames(ctx, sales);
+
+    return sales.map((sale) => ({
+      ...sale,
+      customerName: sale.customerId
+        ? (nameById.get(sale.customerId) ?? null)
+        : null,
+    }));
+  },
+});
+
+export const saleDetail = query({
+  args: { saleId: v.string() },
+  handler: async (ctx, args): Promise<SaleDetail | null> => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    const detail = (await ctx.runQuery(
+      components.inventory.sales.get,
+      args,
+    )) as { sale: Doc<"sales">; lines: SaleLine[] } | null;
+
+    if (!detail) return null;
+
+    return {
+      ...detail,
+      customerName: await customerName(ctx, detail.sale.customerId),
+      createdByName: await profileName(ctx, detail.sale.createdBy),
+    };
   },
 });
 
@@ -753,9 +937,9 @@ export const setRevenueTotal = mutation({
 // ---------------------------------------------------------------------------
 
 /**
- * Aggregate-only picture of the shop for a date range. Booking revenue comes
- * from confirmed bookings; shop revenue comes from the daily records above.
- * There is no per-product revenue or margin: the POS reports totals only.
+ * Picture of the shop for a date range. Revenue comes from recorded sales and
+ * cost of goods from the usage movements those sales wrote; there is no other
+ * source of money in this module.
  */
 export const metrics = query({
   args: { start: v.string(), end: v.string() },
@@ -775,7 +959,8 @@ export const metrics = query({
       purchases,
       purchaseLines,
       movements,
-      revenueRows,
+      sales,
+      saleLines,
     ] = await Promise.all([
       ctx.runQuery(components.inventory.stockMovements.levels, {}) as Promise<
         StockLevel[]
@@ -797,10 +982,14 @@ export const metrics = query({
         start: startIso,
         end: endIso,
       }) as Promise<Doc<"stockMovements">[]>,
-      ctx.db
-        .query("revenueRecords")
-        .withIndex("by_date", (q) => q.gte("date", start).lte("date", end))
-        .collect(),
+      ctx.runQuery(components.inventory.sales.range, {
+        start: startIso,
+        end: endIso,
+      }) as Promise<Doc<"sales">[]>,
+      ctx.runQuery(components.inventory.sales.linesInRange, {
+        start: startIso,
+        end: endIso,
+      }) as Promise<Doc<"saleLines">[]>,
     ]);
 
     const productById = new Map<string, Doc<"products">>(
@@ -812,28 +1001,24 @@ export const metrics = query({
 
     const stock = stockSummary(levels, productById);
     const spend = spendSummary(purchases, startIso, endIso);
-    const revenue = revenueBreakdown(revenueRows);
+    const revenue = revenueBreakdown(sales);
     const movement = movementSummary(
       purchaseLines,
       movements,
       productById,
       unitNameById,
+      new Set(sales.map((sale) => `Sale ${sale._id}`)),
     );
 
-    const revenueKobo = revenue.shopKobo;
+    const revenueKobo = revenue.totalKobo;
     const grossMarginKobo = revenueKobo - movement.cogsKobo;
 
     return {
       range: { start, end },
       stock,
       spend,
-      revenue: {
-        totalKobo: revenueKobo,
-        shopKobo: revenue.shopKobo,
-        salesCount: revenue.salesCount,
-        byChannel: revenue.byChannel,
-      },
-      topSales: topSalesDays(revenueRows),
+      revenue,
+      topProducts: topProducts(saleLines, productById, unitNameById),
       margin: {
         cogsKobo: movement.cogsKobo,
         grossMarginKobo,
