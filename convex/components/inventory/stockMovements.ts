@@ -89,7 +89,7 @@ type Entry = {
   quantity: number;
   occurredAt?: string;
   note?: string;
-  source?: "bulk" | "manual";
+  source?: "bulk" | "manual" | "sale";
   /** Set when this row undoes another movement instead of real usage. */
   reversal?: boolean;
   /** Alternate unit snapshot; defaults to the product's base unit. */

@@ -132,6 +132,62 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         Name
       >;
     };
+    sales: {
+      create: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          callerId: string;
+          channel: "cash" | "pos" | "transfer";
+          customerId?: string;
+          lines: Array<{
+            productId: string;
+            quantity: number;
+            unitId: string;
+            unitPriceKobo: number;
+          }>;
+          note?: string;
+        },
+        any,
+        Name
+      >;
+      get: FunctionReference<
+        "query",
+        "internal",
+        { saleId: string },
+        any,
+        Name
+      >;
+      linesInRange: FunctionReference<
+        "query",
+        "internal",
+        { end: string; start: string },
+        any,
+        Name
+      >;
+      list: FunctionReference<"query", "internal", {}, any, Name>;
+      range: FunctionReference<
+        "query",
+        "internal",
+        { end: string; start: string },
+        any,
+        Name
+      >;
+      setSaleCustomer: FunctionReference<
+        "mutation",
+        "internal",
+        { customerId?: string; saleId: string },
+        any,
+        Name
+      >;
+      voidSale: FunctionReference<
+        "mutation",
+        "internal",
+        { callerId: string; saleId: string },
+        any,
+        Name
+      >;
+    };
     stockMovements: {
       history: FunctionReference<
         "query",

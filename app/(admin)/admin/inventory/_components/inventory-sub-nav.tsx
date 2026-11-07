@@ -6,6 +6,7 @@ import {
   Package,
   ReceiptText,
   Ruler,
+  ShoppingCart,
   Truck,
 } from "lucide-react";
 import Link from "next/link";
@@ -13,28 +14,52 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const tabs = [
+  { name: "Sales", href: "/admin/inventory/sales", icon: ShoppingCart },
   {
     name: "Metrics",
     href: "/admin/inventory/metrics",
     icon: ChartNoAxesCombined,
+    manageOnly: true,
   },
-  { name: "Catalogue", href: "/admin/inventory/products", icon: Package },
-  { name: "Stock", href: "/admin/inventory/stock", icon: Boxes },
+  {
+    name: "Catalogue",
+    href: "/admin/inventory/products",
+    icon: Package,
+    manageOnly: true,
+  },
+  {
+    name: "Stock",
+    href: "/admin/inventory/stock",
+    icon: Boxes,
+    manageOnly: true,
+  },
   {
     name: "Purchases",
     href: "/admin/inventory/purchases",
     icon: ReceiptText,
+    manageOnly: true,
   },
-  { name: "Suppliers", href: "/admin/inventory/suppliers", icon: Truck },
-  { name: "Units", href: "/admin/inventory/units", icon: Ruler },
+  {
+    name: "Suppliers",
+    href: "/admin/inventory/suppliers",
+    icon: Truck,
+    manageOnly: true,
+  },
+  {
+    name: "Units",
+    href: "/admin/inventory/units",
+    icon: Ruler,
+    manageOnly: true,
+  },
 ];
 
-export function InventorySubNav() {
+export function InventorySubNav({ canManage }: { canManage: boolean }) {
   const pathname = usePathname();
+  const visibleTabs = canManage ? tabs : tabs.filter((tab) => !tab.manageOnly);
 
   return (
     <nav className="flex flex-col gap-2" aria-label="Inventory sections">
-      {tabs.map((tab) => {
+      {visibleTabs.map((tab) => {
         const isActive = pathname.startsWith(tab.href);
         const Icon = tab.icon;
 
