@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { InboxBell } from "@/components/notifications/inbox-bell";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -40,6 +41,9 @@ export function Navbar() {
               );
             })}
           </div>
+        </div>
+        <div className="flex items-center pr-6 md:pr-0">
+          <InboxBell />
         </div>
       </div>
     </nav>
