@@ -22,9 +22,9 @@ export function Footer() {
       </div>
 
       <p className="flex *:py-3 order-1 md:order-2 flex-col md:flex-row items-stretch text-start divide-y md:divide-y-0 md:divide-x md:*:py-0 md:*:px-4">
-        <a href="tel:+2347012007448" className="hover:underline text-start">
+        <a href="tel:+2348136943896" className="hover:underline text-start">
           Need Help?{" "}
-          <span className="whitespace-nowrap">+ (234) 701 200 7448</span>
+          <span className="whitespace-nowrap">+ (234) 813 694 3896</span>
         </a>
         <Link href="/legal/terms" className="hover:underline">
           Terms &amp; Conditions
