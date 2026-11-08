@@ -1,17 +1,18 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
-import { Archive, BellIcon, Inbox, RotateCcw } from "lucide-react";
+import { BellIcon, Inbox } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
+import { useMediaQuery } from "usehooks-ts";
+import { Drawer } from "vaul";
 import {
   EmptyState,
   EmptyStateContent,
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/empty-state";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -19,18 +20,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
+import { getErrorMessage } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
-
-type InboxRow = {
-  _id: string;
-  title: string;
-  body: string;
-  url?: string;
-  readAt?: number;
-  createdAt: number;
-};
+import {
+  type InboxRow,
+  NotificationItem,
+  NotificationItemSkeleton,
+} from "./notification-item";
 
 export function InboxBell() {
   const router = useRouter();
@@ -44,6 +42,12 @@ export function InboxBell() {
   const markAllRead = useMutation(api.notifications.markAllRead);
   const archive = useMutation(api.notifications.archive);
   const unarchive = useMutation(api.notifications.unarchive);
+  const sendTest = useMutation(api.notifications.sendTest);
+  const isDev = process.env.NODE_ENV !== "production";
+  const isMobile = useMediaQuery(
+    "(max-width: 768px) and (orientation: portrait)",
+    { defaultValue: false },
+  );
 
   const openRow = async (row: InboxRow) => {
     await markRead({ id: row._id });
@@ -52,125 +56,109 @@ export function InboxBell() {
 
   const archiveRow = (row: InboxRow) => archive({ id: row._id });
   const restoreRow = (row: InboxRow) => unarchive({ id: row._id });
-  const toggleArchived = () => setShowArchived((archived) => !archived);
+  const activeTab = showArchived ? "archived" : "inbox";
+  const selectTab = (value: string) => setShowArchived(value === "archived");
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          aria-label={
-            unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
-          }
-        >
-          <BellIcon className="size-5" />
-          {unread > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full px-1 text-[10px]"
-            >
-              {unread > 99 ? "99+" : unread}
-            </Badge>
+  const sendTestNotification = async () => {
+    try {
+      await sendTest({});
+      toast.success("Test notification sent");
+    } catch (error) {
+      toast.error("Could not send the test notification", {
+        description: getErrorMessage(error),
+      });
+    }
+  };
+
+  const hasUnread = unread > 0;
+
+  const bellButton = (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="relative border border-border gap-0 px-2 w-auto"
+      aria-label={
+        unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
+      }
+    >
+      <BellIcon
+        className={cn(
+          "size-4 shrink-0 transition-default",
+          hasUnread ? "me-4" : "",
+        )}
+      />
+      {hasUnread && (
+        <span
+          className={cn(
+            "transition-default absolute bg-red-500 size-2 self-center shrink-0 rounded-full opacity-0 translate-x-[400%]",
+            "translate-x-2 opacity-100",
           )}
-        </Button>
-      </PopoverTrigger>
+        />
+      )}
+    </Button>
+  );
 
-      <PopoverContent align="end" className="w-96 p-0">
-        <div className="border-b px-4 py-3">
-          <p className="text-sm font-medium">
-            {showArchived ? "Archived" : "Notifications"}
-          </p>
-        </div>
+  const panel = (
+    <>
+      <div className="flex items-center justify-between gap-2 border-b px-4 py-2">
+        <p className="text-sm font-medium">Notifications</p>
+        <Tabs value={activeTab} onValueChange={selectTab}>
+          <TabsList>
+            <TabsTrigger value="inbox" className="text-xs">
+              Inbox
+            </TabsTrigger>
+            <TabsTrigger value="archived" className="text-xs">
+              Archive
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
-        <ScrollArea className="h-[22rem]">
-          {rows === undefined && (
-            <div className="space-y-3 p-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          )}
+      <ScrollArea className="h-88 pt-1">
+        {rows === undefined && (
+          <ul className="divide-y">
+            <NotificationItemSkeleton className="opacity-60" />
+            <NotificationItemSkeleton className="opacity-45" />
+            <NotificationItemSkeleton className="opacity-30" />
+            <NotificationItemSkeleton className="opacity-20" />
+            <NotificationItemSkeleton className="opacity-10" />
+          </ul>
+        )}
 
-          {rows?.length === 0 && (
-            <EmptyState isEmpty>
-              <EmptyStateContent className="px-4 py-12">
-                <Inbox className="size-6 text-muted-foreground" />
-                <EmptyStateTitle>
-                  {showArchived ? "Nothing archived" : "You are all caught up"}
-                </EmptyStateTitle>
-                <EmptyStateDescription>
-                  {showArchived
-                    ? "Archived notifications show up here."
-                    : "New notifications will appear here."}
-                </EmptyStateDescription>
-              </EmptyStateContent>
-            </EmptyState>
-          )}
+        {rows?.length === 0 && (
+          <EmptyState isEmpty>
+            <EmptyStateContent className="px-4 py-12">
+              <Inbox className="size-6 text-muted-foreground" />
+              <EmptyStateTitle>
+                {showArchived ? "Nothing archived" : "You are all caught up"}
+              </EmptyStateTitle>
+              <EmptyStateDescription>
+                {showArchived
+                  ? "Archived notifications show up here."
+                  : "New notifications will appear here."}
+              </EmptyStateDescription>
+            </EmptyStateContent>
+          </EmptyState>
+        )}
 
-          {rows && rows.length > 0 && (
-            <ul className="divide-y">
-              {rows.map((row) => (
-                <li
-                  key={row._id}
-                  className={cn(
-                    "flex items-start gap-2 px-3 py-2",
-                    !row.readAt && "bg-primary/5",
-                  )}
-                >
-                  <button
-                    type="button"
-                    className="min-w-0 flex-1 text-left"
-                    onClick={() => openRow(row)}
-                  >
-                    <div className="flex items-center gap-2">
-                      {!row.readAt && (
-                        <span
-                          className="size-1.5 shrink-0 rounded-full bg-primary"
-                          aria-hidden
-                        />
-                      )}
-                      <p className="truncate text-sm font-medium">
-                        {row.title}
-                      </p>
-                    </div>
-                    <p className="line-clamp-2 text-xs text-muted-foreground">
-                      {row.body}
-                    </p>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      {formatDistanceToNow(row.createdAt, { addSuffix: true })}
-                    </p>
-                  </button>
+        {rows && rows.length > 0 && (
+          <ul className="divide-y">
+            {rows.map((row) => (
+              <NotificationItem
+                key={row._id}
+                row={row}
+                archived={showArchived}
+                onOpen={openRow}
+                onArchive={archiveRow}
+                onRestore={restoreRow}
+              />
+            ))}
+          </ul>
+        )}
+      </ScrollArea>
 
-                  {showArchived ? (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 shrink-0"
-                      aria-label={`Restore ${row.title}`}
-                      onClick={() => restoreRow(row)}
-                    >
-                      <RotateCcw className="size-3.5" />
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 shrink-0"
-                      aria-label={`Archive ${row.title}`}
-                      onClick={() => archiveRow(row)}
-                    >
-                      <Archive className="size-3.5" />
-                    </Button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </ScrollArea>
-
-        <div className="flex items-center justify-between border-t px-2 py-2">
+      {(isDev || (unread > 0 && !showArchived)) && (
+        <div className="flex items-center justify-between gap-2 border-t px-2 py-2">
           {unread > 0 && !showArchived ? (
             <Button variant="ghost" size="sm" onClick={() => markAllRead({})}>
               Mark all read
@@ -178,10 +166,39 @@ export function InboxBell() {
           ) : (
             <span />
           )}
-          <Button variant="ghost" size="sm" onClick={toggleArchived}>
-            {showArchived ? "Back to inbox" : "Show archived"}
-          </Button>
+          {isDev && (
+            <Button variant="ghost" size="sm" onClick={sendTestNotification}>
+              Test notification
+            </Button>
+          )}
         </div>
+      )}
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer.Root open={open} onOpenChange={setOpen}>
+        <Drawer.Trigger asChild>{bellButton}</Drawer.Trigger>
+
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 bg-black/40" />
+          <Drawer.Content className="fixed inset-x-0 bottom-0 rounded-t-[10px] bg-background outline-none border-border">
+            <div className="w-full">
+              <Drawer.Title className="sr-only">Notifications</Drawer.Title>
+              {panel}
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    );
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{bellButton}</PopoverTrigger>
+      <PopoverContent align="end" className="w-96 p-0">
+        {panel}
       </PopoverContent>
     </Popover>
   );

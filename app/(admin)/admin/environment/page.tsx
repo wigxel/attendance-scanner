@@ -7,8 +7,7 @@ import { LastUpdated } from "./_components/last-updated";
 export default function EnvironmentPage() {
   return (
     <div className="flex flex-col gap-4 p-4 md:p-8 [--gap:--spacing(4)]">
-
-      <header className="flex flex-wrap items-baseline justify-between gap-2 mb-8 md:mb-12">
+      <header className="flex flex-wrap items-baseline md:items-start justify-between gap-2 mb-8 md:mb-12">
         <h1 className="text-3xl font-bold">Environment</h1>
         <LastUpdated />
       </header>

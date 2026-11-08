@@ -42,7 +42,8 @@ export function Navbar() {
             })}
           </div>
         </div>
-        <div className="flex items-center pr-6 md:pr-0">
+
+        <div className="sticky border-s border-border right-0 z-10 flex items-center bg-background pl-2 pr-6 md:static md:pr-0">
           <InboxBell />
         </div>
       </div>

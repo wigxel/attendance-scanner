@@ -97,6 +97,27 @@ export const send = internalMutation({
   },
 });
 
+// Dev-only helper behind the bell's test button. The button is gated by
+// NODE_ENV in the UI, but Convex always inlines NODE_ENV as "production" in
+// the bundle, so a server-side check cannot distinguish deployments. Only the
+// caller's own inbox is written, so the blast radius is their own row.
+export const sendTest = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await readId(ctx);
+    if (!userId) throw new ConvexError("Authentication required.");
+
+    await ctx.runMutation(components.inbox.index.enqueue, {
+      recipientKey: userKey(userId),
+      title: "Test notification",
+      body: "This is a test from the development build.",
+      url: "/admin/environment",
+    });
+
+    return "success" as const;
+  },
+});
+
 export const setPreferences = mutation({
   args: { push: v.optional(v.boolean()), email: v.optional(v.boolean()) },
   handler: async (ctx, args) => {

@@ -8,13 +8,14 @@
  * @module
  */
 
+import type * as index from "../index.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 import { anyApi, componentsGeneric } from "convex/server";
-import type * as index from "../index.js";
 
 const fullApi: ApiFromModules<{
   index: typeof index;

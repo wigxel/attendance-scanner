@@ -37,6 +37,26 @@ const message = {
   url: "/?tab=booking",
 };
 
+describe("notifications.sendTest", () => {
+  it("drops a test row into the caller's inbox", async () => {
+    const t = setup().withIdentity({
+      subject: "clerk_1",
+      email: "ana@example.com",
+    });
+    const userId = await t.run(async (ctx) =>
+      ctx.db.insert("users", { email: "ana@example.com", name: "Ana" }),
+    );
+
+    await t.mutation(api.notifications.sendTest, {});
+
+    const inbox = await t.query(components.inbox.index.list, {
+      recipientKey: `user:${userId}`,
+    });
+    expect(inbox).toHaveLength(1);
+    expect(inbox[0].title).toBe("Test notification");
+  });
+});
+
 describe("notifications.send", () => {
   it("queues a push and an email row", async () => {
     const t = setup();
