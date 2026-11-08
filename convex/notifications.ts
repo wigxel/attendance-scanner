@@ -147,6 +147,21 @@ export const myPreferences = query({
   },
 });
 
+// Inbox keys for operator alerts. `settings:update` is the privilege that
+// lets someone fix the ZeptoMail account, so those are the people who need
+// to hear about it.
+export const alertRecipientKeys = internalQuery({
+  args: {},
+  handler: async (ctx): Promise<string[]> => {
+    const identities = (await ctx.runQuery(
+      components.wigxel_acl.identities.listIdentitiesByPrivilege,
+      { privilege: "settings:update" },
+    )) as Array<{ identity: string }>;
+
+    return identities.map((entry) => userKey(entry.identity));
+  },
+});
+
 // send log, newest first — failures carry the transport error message
 export const recent = internalQuery({
   args: {

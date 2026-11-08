@@ -112,7 +112,7 @@ const deliverRow = async (
   subscriptionsFor: SubscriptionFor,
 ) => {
   if (row.channel === "push") return sendPush(ctx, push, subscriptionsFor, row);
-  return sendEmail(row);
+  return sendEmail(ctx, row);
 };
 
 // a missing key is a config problem, not a crash: every push row fails once
@@ -216,7 +216,40 @@ async function sendPush(
   }
 }
 
-async function sendEmail(row: DeliveryRow) {
+// ZeptoMail answers an empty balance with HTTP 429 and code TM_5001/LE_102.
+// Retrying cannot fix it, so the operator needs to see it in the inbox.
+export const isCreditExhausted = (status: number, detail: string) =>
+  status === 429 && /TM_5001|LE_102|credit exhausted/i.test(detail);
+
+const ALERT_PREFIX = "zeptomail-out-of-credit";
+
+// One inbox row per recipient per day: the drain retries every minute, so the
+// dedupe keeps an empty balance from filling the bell. ponytail: UTC day
+// bucket, switch to an episode id if recovery-and-recurrence in one day matters.
+async function alertCreditExhausted(ctx: ActionCtx, detail: string) {
+  try {
+    const recipientKeys = (await ctx.runQuery(
+      internal.notifications.alertRecipientKeys,
+      {},
+    )) as string[];
+    const day = new Date().toISOString().slice(0, 10);
+
+    for (const recipientKey of recipientKeys) {
+      await ctx.runMutation(internal.notifications.send, {
+        recipientKey,
+        channels: ["inapp"],
+        title: "Email delivery is paused: ZeptoMail is out of credits",
+        body: `ZeptoMail rejected a send with "Credit exhausted" (${detail}). Transactional email will keep failing until the account is topped up.`,
+        dedupeKey: `${ALERT_PREFIX}:${recipientKey}:${day}`,
+      });
+    }
+  } catch (error) {
+    // alerting is best-effort: the delivery row still has to be marked failed
+    console.error(`zeptomail credit alert failed: ${errorMessage(error)}`);
+  }
+}
+
+async function sendEmail(ctx: ActionCtx, row: DeliveryRow) {
   const token = process.env.ZEPTOMAIL_TOKEN;
   const fromAddress = process.env.ZEPTOMAIL_FROM_ADDRESS;
   if (!token) throw new SendError("ZEPTOMAIL_TOKEN is not set", false);
@@ -245,6 +278,9 @@ async function sendEmail(row: DeliveryRow) {
 
   if (!response.ok) {
     const detail = (await response.text()).slice(0, 200);
+    if (isCreditExhausted(response.status, detail)) {
+      await alertCreditExhausted(ctx, detail);
+    }
     // 4xx other than 429 is a bad request — retrying will not help
     const retryable = response.status >= 500 || response.status === 429;
     throw new SendError(`zeptomail ${response.status}: ${detail}`, retryable);
