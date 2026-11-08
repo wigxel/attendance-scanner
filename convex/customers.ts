@@ -21,8 +21,10 @@ import {
   mutation,
   query,
 } from "./_generated/server";
+import { requirePrivilege } from "./acl";
 import { deleteConfig, getConfig, setConfig } from "./config";
 import { DEFAULT_LIMIT } from "./constants";
+import { checkInModeValidator } from "./shared";
 
 export const updateProfile = mutation({
   args: {
@@ -49,6 +51,32 @@ export const updateProfile = mutation({
       phoneNumber: args.phoneNumber,
       email: args.email,
       occupation: args.occupation as Id<"occupations"> | "None",
+    });
+
+    return profile._id;
+  },
+});
+
+export const setCheckInMode = mutation({
+  args: {
+    userId: v.string(),
+    mode: v.union(v.literal("auto"), checkInModeValidator),
+  },
+  handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "user:update");
+
+    const profile = await ctx.db
+      .query("profile")
+      .withIndex("by_user_id", (q) => q.eq("id", args.userId))
+      .first();
+
+    if (!profile) {
+      throw new ConvexError("Profile not found");
+    }
+
+    // `auto` clears the label so the app-wide default applies again.
+    await ctx.db.patch(profile._id, {
+      checkInMode: args.mode === "auto" ? undefined : args.mode,
     });
 
     return profile._id;
@@ -83,6 +111,22 @@ export const getVisitHistory = query({
     );
 
     return { ...visits, page: enrichedVisits };
+  },
+});
+
+// when this customer was registered: the write time of their earliest scan
+// row (the `user` index orders by userId then _creationTime, so the first
+// row returned is the first one written). No scans yet means no registration.
+export const getRegistration = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args): Promise<number | null> => {
+    const firstScan = await ctx.db
+      .query("daily_register")
+      .withIndex("user", (q) => q.eq("userId", args.userId))
+      .order("asc")
+      .first();
+
+    return firstScan?._creationTime ?? null;
   },
 });
 

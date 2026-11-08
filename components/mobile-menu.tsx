@@ -20,8 +20,8 @@ type MenuContextValue = {
 
 export const MenuContext = createContext<MenuContextValue>({
   open: true,
-  setOpen: () => {},
-  toggle: () => {},
+  setOpen: () => { },
+  toggle: () => { },
 });
 
 export function useMobileMenu() {
@@ -104,6 +104,8 @@ export function MobileMenuContent(props: MobileMenuContentProps) {
   // the first client render matches SSR instead of hydrating a portal node
   // where the server emitted the page content.
   const [mounted, setMounted] = useState(false);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   const containerRef = useRef<HTMLDivElement | null>(null);

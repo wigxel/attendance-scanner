@@ -3,9 +3,11 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
   accessPlanStruct,
+  checkInModeValidator,
   durationTypeConvexSchema,
   featureRequestStatus,
   guestTypeValidator,
+  paymentChannelValidator,
 } from "./shared";
 
 const accessPlans = defineTable({
@@ -16,6 +18,18 @@ const accessPlans = defineTable({
   description: v.string(),
   features: v.array(v.string()),
 }).index("plan_key", ["key"]);
+
+// Admin-editable catalogue of access-plan features. `name` is the value stored
+// in `accessPlans.features`; the rest is display metadata.
+const planFeatures = defineTable({
+  name: v.string(),
+  label: v.string(),
+  description: v.string(),
+  category: v.string(),
+  isActive: v.boolean(),
+})
+  .index("by_name", ["name"])
+  .index("by_active", ["isActive"]);
 
 const daily_register = defineTable({
   userId: v.string(), // v.id("profile"),
@@ -71,6 +85,8 @@ const profile = defineTable({
   occupation: v.union(v.id("occupations"), v.literal("None")),
   /** @deprecated No longer needed. use ACL utils */
   role: v.optional(v.string()),
+  /** Per-customer override. Falls back to `config.default_check_in_mode`. */
+  checkInMode: v.optional(checkInModeValidator),
 })
   .index("occupation", ["occupation"])
   .index("by_user_id", ["id"])
@@ -116,6 +132,7 @@ const bookings = defineTable({
     v.literal("used-up"),
   ),
   paymentReference: v.optional(v.string()),
+  channel: v.optional(paymentChannelValidator),
   created_by: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
@@ -272,14 +289,34 @@ const kpiInstances = defineTable({
   createdAt: v.number(),
 }).index("by_date", ["date"]);
 
+// Revenue the app cannot derive from bookings: shop sales rung up on the POS
+// terminal, which reports daily totals and no line items. One dated record per
+// channel; the pos ledger importer will write to this same shape later. Never
+// a hand-typed number inside a metric query.
+const revenueRecords = defineTable({
+  date: v.string(), // yyyy-MM-dd, Africa/Lagos
+  channel: paymentChannelValidator,
+  amountKobo: v.number(),
+  note: v.optional(v.string()),
+  createdBy: v.string(),
+  createdAt: v.string(),
+  updatedAt: v.string(),
+})
+  .index("by_date", ["date"])
+  .index("by_date_and_channel", ["date", "channel"]);
+
 // Browser web-push subscriptions (PWA). One row per browser endpoint;
-// subscribe upserts by endpoint. No user linkage — fan-out to all.
+// subscribe upserts by endpoint. `recipientKey` (`user:<id>`) is absent on
+// rows stored before it existed — those still receive broadcast deliveries.
 const pushSubscriptions = defineTable({
   endpoint: v.string(),
   p256dh: v.string(),
   auth: v.string(),
+  recipientKey: v.optional(v.string()),
   createdAt: v.number(),
-}).index("by_endpoint", ["endpoint"]);
+})
+  .index("by_endpoint", ["endpoint"])
+  .index("by_recipient_key", ["recipientKey"]);
 
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
@@ -288,6 +325,7 @@ export default defineSchema({
   profile,
   featureRequest,
   accessPlans,
+  planFeatures,
   occupations,
   featureVotes,
   dailyAttendanceMetrics,
@@ -305,5 +343,6 @@ export default defineSchema({
   kpiCompletions,
   kpiInstances,
   kpiDailyScores,
+  revenueRecords,
   pushSubscriptions,
 });

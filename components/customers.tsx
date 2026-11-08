@@ -24,6 +24,7 @@ import {
   Package2Icon,
   PackageIcon,
   ReceiptIcon,
+  UserCheck,
   UserPlus,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -33,9 +34,11 @@ import useEvent from "react-use-event-hook";
 import { toast } from "sonner";
 import { useMediaQuery } from "usehooks-ts";
 import { Drawer } from "vaul";
+import { ConvertToGuestDialog } from "@/components/admin/dialogs/ConvertToGuestDialog";
+import { ConvertToRegularDialog } from "@/components/admin/dialogs/ConvertToRegularDialog";
+import { GuestCheckInDialog } from "@/components/admin/dialogs/GuestCheckInDialog";
 import { createColumns } from "@/components/columns";
 import { AppDataTable } from "@/components/DataTable";
-import { GuestCheckInDialog } from "@/components/guests/GuestCheckInDialog";
 import { RoleHasCSR } from "@/components/RoleHasCSR";
 import {
   Sheet,
@@ -50,6 +53,7 @@ import { api } from "@/convex/_generated/api";
 import {
   type AccessDuration,
   type AccessStruct,
+  type GuestType,
   PlanImpl,
 } from "@/convex/shared";
 import { useCustomer } from "@/hooks/auth";
@@ -57,6 +61,7 @@ import { safeArray, safeNum, serialNo } from "@/lib/data.helpers";
 import { DateParse } from "@/lib/date.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { O } from "@/lib/fp.helpers";
+import type { PaymentChannel } from "@/lib/payment-channel";
 import { cn } from "@/lib/utils";
 import { CustomerSheet } from "./customer-info";
 import { DateRange } from "./DateRange";
@@ -87,6 +92,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
+import { SelectSeparator } from "./ui/select";
 import { Skeleton } from "./ui/skeleton";
 
 const defaultPaginationOpts = {
@@ -95,9 +101,18 @@ const defaultPaginationOpts = {
 };
 
 export function useUsers(searchTerm = "") {
-  const [paginationOpts, setPaginationOpts] = React.useState(
-    defaultPaginationOpts,
-  );
+  const [pagination, setPagination] = React.useState({
+    searchTerm,
+    opts: defaultPaginationOpts,
+  });
+
+  // A cursor is an offset into the filtered list, so it is only valid for the
+  // search it was taken from. Anyone else's state is ignored, which starts the
+  // new search from the beginning without a reset effect.
+  const paginationOpts =
+    pagination.searchTerm === searchTerm
+      ? pagination.opts
+      : defaultPaginationOpts;
 
   const record = useQuery(api.myFunctions.getAllUsers, {
     paginationOpts,
@@ -105,13 +120,17 @@ export function useUsers(searchTerm = "") {
   });
 
   const loadMore = React.useCallback(() => {
-    if (record && !record.isDone && record.continueCursor) {
-      setPaginationOpts((prev) => ({
-        ...prev,
-        cursor: record.continueCursor ?? null,
-      }));
-    }
-  }, [record]);
+    if (!record || record.isDone || !record.continueCursor) return;
+
+    const cursor = record.continueCursor;
+    setPagination((prev) => ({
+      searchTerm,
+      opts: {
+        ...(prev.searchTerm === searchTerm ? prev.opts : defaultPaginationOpts),
+        cursor,
+      },
+    }));
+  }, [record, searchTerm]);
 
   return {
     data: record?.page ?? [],
@@ -129,7 +148,7 @@ export function useUsers(searchTerm = "") {
 export function CustomersTable() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const debouncedSearch = React.useDeferredValue(searchTerm);
-  const { data: users, record } = useUsers(debouncedSearch);
+  const { data: users, record, hasMore, loadMore } = useUsers(debouncedSearch);
   const isLoading = record === undefined;
   const [selectedUserId, setSelectedUserId] = React.useState<string | null>(
     null,
@@ -160,7 +179,11 @@ export function CustomersTable() {
   });
 
   const handleBookingSubmit = useEvent(
-    async (values: { planKey: string; startDate: string }) => {
+    async (values: {
+      planKey: string;
+      startDate: string;
+      channel: PaymentChannel;
+    }) => {
       if (!bookingUserId) return;
       setIsBookingLoading(true);
 
@@ -169,6 +192,7 @@ export function CustomersTable() {
           userId: bookingUserId,
           planKey: values.planKey,
           startDate: values.startDate,
+          channel: values.channel,
         });
         setBookingUserId(null);
         toast.success("Booking created successfully");
@@ -208,7 +232,10 @@ export function CustomersTable() {
         }))}
         searchTerm={debouncedSearch}
         onSearchChange={setSearchTerm}
+        searchPlaceholder="Search by name or email..."
         isLoading={isLoading}
+        hasMore={hasMore}
+        onLoadMore={loadMore}
       />
 
       <CustomerSheet
@@ -416,6 +443,12 @@ type RegisterEntry = Partial<DailyRegisterEntry> & {
   timestamp: string;
 };
 
+const guestTypeLabels: Record<GuestType, string> = {
+  visitor: "Visitor",
+  student: "Student",
+  event_attendee: "Event attendee",
+};
+
 type RegisterUserEntryProps = {
   entry: RegisterEntry;
   onSelect?: (entry: RegisterEntry) => void;
@@ -529,10 +562,6 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
               {user.firstName} {user.lastName}
             </div>
 
-            <div className="text-xs text-muted-foreground">
-              Scanned {format(new Date(entry.timestamp), "do MMM yyyy, h:mm a")}
-            </div>
-
             <div className="flex gap-2 text-xs text-gray-500 font-mono">
               {intersperse(
                 [
@@ -581,7 +610,37 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
         <div className="rounded-lg border px-3 py-2 text-sm">
           <span className="text-muted-foreground">Invited by </span>
           <span className="font-semibold">{hostName}</span>
+          {entry.access?.visiting?.guestType ? (
+            <span className="text-muted-foreground">
+              {" · "}
+              {guestTypeLabels[entry.access.visiting.guestType]}
+            </span>
+          ) : null}
         </div>
+      ) : null}
+
+      {can_modify_plan ? (
+        <>
+          <ConvertToGuestDialog
+            userId={entry.userId}
+            hostUserId={entry.access?.visiting?.hostUserId}
+            guestType={entry.access?.visiting?.guestType}
+          >
+            <Button variant="secondary" size="sm" className="w-full">
+              <UserPlus className="h-4 w-4 mr-1" />
+              {isGuest ? "Change guest details" : "Mark as guest"}
+            </Button>
+          </ConvertToGuestDialog>
+
+          {isGuest ? (
+            <ConvertToRegularDialog userId={entry.userId}>
+              <Button variant="outline" size="sm" className="w-full">
+                <UserCheck className="h-4 w-4 mr-1" />
+                Mark as regular visit
+              </Button>
+            </ConvertToRegularDialog>
+          ) : null}
+        </>
       ) : null}
 
       <ul className={"flex flex-col gap-4"}>
@@ -640,6 +699,15 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
           </p>
         </div>
       </If>
+
+      <SelectSeparator />
+
+      <div className="text-xs text-muted-foreground font-mono">
+        Scanned{" "}
+        <span className="text-foreground">
+          {format(new Date(entry.timestamp), "do MMM yyyy, h:mm a")}
+        </span>
+      </div>
     </section>
   );
 

@@ -125,6 +125,68 @@ describe("getVisitHistory", () => {
   });
 });
 
+describe("getRegistration", () => {
+  const visit = {
+    userId: "user-two-visits",
+    admitted_by: "admin-1",
+    device: { name: "Chrome", visitorId: "v1", browser: "Chrome" },
+    access: { kind: "free" as const },
+    method: "one-tap" as const,
+    source: "web" as const,
+  };
+
+  it("returns when the first scan row was written", async () => {
+    const t = convexTest(schema, modules);
+
+    // a scan whose recorded timestamp disagrees with its write time: the
+    // write time is what "registered" means
+    const firstWrite = await t.run(async (ctx) => {
+      const id = await ctx.db.insert("daily_register", {
+        ...visit,
+        timestamp: "2026-04-01T10:00:00.000Z",
+      });
+      return (await ctx.db.get(id))?._creationTime;
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("daily_register", {
+        ...visit,
+        timestamp: "2026-03-10T09:15:00.000Z",
+      });
+    });
+
+    const registeredAt = await t.query(api.customers.getRegistration, {
+      userId: visit.userId,
+    });
+    expect(registeredAt).toBe(firstWrite);
+  });
+
+  it("returns null when the customer has no scan on record", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: "user-never-scanned",
+        firstName: "Ada",
+        lastName: "Lovelace",
+        occupation: "None",
+      });
+    });
+
+    const registeredAt = await t.query(api.customers.getRegistration, {
+      userId: "user-never-scanned",
+    });
+    expect(registeredAt).toBeNull();
+  });
+
+  it("returns null for an unknown customer", async () => {
+    const t = convexTest(schema, modules);
+    expect(
+      await t.query(api.customers.getRegistration, { userId: "nobody" }),
+    ).toBeNull();
+  });
+});
+
 describe("getCustomerVisitTrend", () => {
   it("returns empty array when no visits", async () => {
     const t = convexTest(schema, modules);

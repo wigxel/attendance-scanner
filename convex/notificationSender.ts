@@ -4,13 +4,14 @@ import { type ActionCtx, internalAction } from "./_generated/server";
 
 // Drains the notifications component queue. Runs on a 1-minute cron and
 // right after anything enqueues (notifications.send schedules it). Email is
-// Resend over plain fetch; push is the same web-push fan-out the temperature
-// alerts used before.
+// ZeptoMail over plain fetch; push is the same web-push fan-out the
+// temperature alerts used before.
 
 const BATCH = 20;
 
 type DeliveryRow = {
   _id: string;
+  recipientKey: string;
   channel: "push" | "email";
   to?: string;
   title: string;
@@ -19,6 +20,15 @@ type DeliveryRow = {
 };
 
 type SubscriptionRow = { endpoint: string; p256dh: string; auth: string };
+
+// Broadcast deliveries (`broadcast:<topic>`) fan out to every subscription;
+// a per-user delivery (`user:<id>`) only reaches that user's devices.
+const BROADCAST_PREFIX = "broadcast:";
+
+const isBroadcast = (recipientKey: string) =>
+  recipientKey.startsWith(BROADCAST_PREFIX);
+
+type SubscriptionFor = (recipientKey: string) => Promise<SubscriptionRow[]>;
 
 // retryable=false means retrying cannot help (bad config, no recipient),
 // so the row goes straight to "failed" with the reason logged.
@@ -45,13 +55,8 @@ export const deliver = internalAction({
     if (rows.length === 0) return null;
 
     const pushRows = rows.filter((row) => row.channel === "push");
-    const subscriptions = pushRows.length
-      ? ((await ctx.runQuery(
-          api.push.listSubscriptions,
-          {},
-        )) as SubscriptionRow[])
-      : [];
     const push = pushRows.length ? await setupPush() : null;
+    const subscriptions = subscriptionsByRecipient(ctx);
 
     for (const row of rows) {
       try {
@@ -80,13 +85,33 @@ type PushSetup =
   | { webpush: Awaited<ReturnType<typeof loadWebpush>>; failure?: undefined }
   | { webpush?: undefined; failure: SendError };
 
+// one query per distinct recipient per drain, however many rows it has
+const subscriptionsByRecipient = (ctx: ActionCtx): SubscriptionFor => {
+  const cache = new Map<string | undefined, SubscriptionRow[]>();
+
+  return async (recipientKey) => {
+    // broadcasts fan out to every device, keyed or not
+    const key = isBroadcast(recipientKey) ? undefined : recipientKey;
+    const cached = cache.get(key);
+    if (cached) return cached;
+
+    const rows = (await ctx.runQuery(
+      api.push.listSubscriptions,
+      key === undefined ? {} : { recipientKey: key },
+    )) as SubscriptionRow[];
+
+    cache.set(key, rows);
+    return rows;
+  };
+};
+
 const deliverRow = async (
   ctx: ActionCtx,
   row: DeliveryRow,
   push: PushSetup | null,
-  subscriptions: SubscriptionRow[],
+  subscriptionsFor: SubscriptionFor,
 ) => {
-  if (row.channel === "push") return sendPush(ctx, push, subscriptions, row);
+  if (row.channel === "push") return sendPush(ctx, push, subscriptionsFor, row);
   return sendEmail(row);
 };
 
@@ -129,19 +154,26 @@ async function loadWebpush() {
   return webpush;
 }
 
-// Push is a broadcast today: every stored subscription gets every push
-// delivery. Per-recipient routing needs a user key on pushSubscriptions.
+// Broadcasts go to every stored subscription. A per-user delivery goes to
+// that user's keyed subscriptions only; having no device registered is not a
+// delivery failure, so the row is marked sent rather than retried forever.
 async function sendPush(
   ctx: ActionCtx,
   push: PushSetup | null,
-  subscriptions: SubscriptionRow[],
+  subscriptionsFor: SubscriptionFor,
   row: DeliveryRow,
 ) {
   if (!push) throw new SendError("web-push is unavailable", false);
   if (push.failure) throw push.failure;
   const webpush = push.webpush;
+
+  const subscriptions = await subscriptionsFor(row.recipientKey);
   if (subscriptions.length === 0) {
-    throw new SendError("no push subscriptions", false);
+    if (isBroadcast(row.recipientKey)) {
+      throw new SendError("no push subscriptions", false);
+    }
+    console.warn(`push: no subscriptions for ${row.recipientKey}`);
+    return;
   }
 
   const payload = JSON.stringify({
@@ -185,21 +217,29 @@ async function sendPush(
 }
 
 async function sendEmail(row: DeliveryRow) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new SendError("RESEND_API_KEY is not set", false);
+  const token = process.env.ZEPTOMAIL_TOKEN;
+  const fromAddress = process.env.ZEPTOMAIL_FROM_ADDRESS;
+  if (!token) throw new SendError("ZEPTOMAIL_TOKEN is not set", false);
+  if (!fromAddress) {
+    throw new SendError("ZEPTOMAIL_FROM_ADDRESS is not set", false);
+  }
   if (!row.to) throw new SendError("delivery has no recipient email", false);
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetch(zeptoEndpoint(), {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Accept: "application/json",
       "Content-Type": "application/json",
+      Authorization: `Zoho-enczapikey ${token}`,
     },
     body: JSON.stringify({
-      from: process.env.EMAIL_FROM ?? "Attendly <onboarding@resend.dev>",
-      to: row.to,
+      from: {
+        address: fromAddress,
+        name: process.env.ZEPTOMAIL_FROM_NAME ?? "Attendly",
+      },
+      to: [{ email_address: { address: row.to, name: row.to } }],
       subject: row.title,
-      html: renderEmail(row),
+      htmlbody: renderEmail(row),
     }),
   });
 
@@ -207,9 +247,17 @@ async function sendEmail(row: DeliveryRow) {
     const detail = (await response.text()).slice(0, 200);
     // 4xx other than 429 is a bad request — retrying will not help
     const retryable = response.status >= 500 || response.status === 429;
-    throw new SendError(`resend ${response.status}: ${detail}`, retryable);
+    throw new SendError(`zeptomail ${response.status}: ${detail}`, retryable);
   }
 }
+
+// ZeptoMail takes the regional host, e.g. `api.zeptomail.com/` — scheme and
+// trailing slash are optional so the existing .env values work unchanged.
+const zeptoEndpoint = () => {
+  const base = process.env.ZEPTOMAIL_URL ?? "api.zeptomail.com/";
+  const withScheme = base.startsWith("http") ? base : `https://${base}`;
+  return `${withScheme.replace(/\/?$/, "/")}v1.1/email`;
+};
 
 function renderEmail(row: DeliveryRow) {
   const link = row.url

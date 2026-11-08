@@ -39,6 +39,53 @@ export const guestTypeValidator = v.union(
 
 export type GuestType = "visitor" | "student" | "event_attendee";
 
+/**
+ * How a customer handed over the money. Absent on a booking means nobody has
+ * recorded it yet — historical rows and unreconciled payments. Never guess.
+ */
+export const paymentChannelValidator = v.union(
+  v.literal("cash"),
+  v.literal("pos"),
+  v.literal("transfer"),
+);
+
+export const checkInModeValidator = v.union(
+  v.literal("one_tap"),
+  v.literal("self_checkin"),
+  v.literal("staff_scan"),
+);
+
+export const CHECK_IN_MODES = [
+  "one_tap",
+  "self_checkin",
+  "staff_scan",
+] as const;
+
+export type CheckInMode = (typeof CHECK_IN_MODES)[number];
+
+export const DEFAULT_CHECK_IN_MODE: CheckInMode = "staff_scan";
+
+export function isCheckInMode(value: unknown): value is CheckInMode {
+  return (
+    typeof value === "string" &&
+    (CHECK_IN_MODES as readonly string[]).includes(value)
+  );
+}
+
+/**
+ * Copy shown to a customer whose account does not allow the check-in path they
+ * attempted. Selected by the customer's resolved mode, so it names the path
+ * they can actually use.
+ */
+export const SelfCheckInMessages: Record<CheckInMode, string> = {
+  one_tap:
+    "Your account checks in with one tap. Use the Check In button on your account page.",
+  self_checkin:
+    "Your account checks in by scanning the QR code at the entrance. Open your account page to scan.",
+  staff_scan:
+    "Staff will check you in at the counter. Show your personal QR code to the staff.",
+};
+
 // Present only when this visit was a guest visit. The presence of this
 // field *is* the guest flag — there is no separate boolean. `hostUserId` is
 // the `profile`.`id` of the customer being visited.

@@ -11,6 +11,7 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/empty-state";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,6 +34,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { safeArray } from "@/lib/data.helpers";
 import { AccessPlanForm } from "./forms/AccessPlanForm";
+import { ManagePlanFeatures } from "./manage-plan-features";
 
 interface AccessPlan {
   _id: Id<"accessPlans">;
@@ -46,10 +48,12 @@ interface AccessPlan {
 
 function AccessPlanCard({
   plan,
+  featureLabels,
   onEdit,
   onDelete,
 }: {
   plan: AccessPlan;
+  featureLabels: Map<string, string>;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -58,6 +62,15 @@ function AccessPlanCard({
       <CardHeader>
         <CardTitle>{plan.name}</CardTitle>
         <CardDescription>{plan.description}</CardDescription>
+        {plan.features.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-2">
+            {plan.features.map((name) => (
+              <Badge key={name} variant="secondary">
+                {featureLabels.get(name) ?? name}
+              </Badge>
+            ))}
+          </div>
+        )}
       </CardHeader>
       <CardFooter className="flex justify-between border-t p-4">
         <div className="text-lg font-semibold">{formatPrice(plan.price)}</div>
@@ -96,6 +109,10 @@ export default function PricingManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const accessPlans = useQuery(api.accessPlans.list);
+  const planFeatures = useQuery(api.planFeatures.list);
+  const featureLabels = new Map(
+    (planFeatures ?? []).map((feature) => [feature.name, feature.label]),
+  );
   const addAccessPlan = useMutation(api.accessPlans.add);
   const updateAccessPlan = useMutation(api.accessPlans.update);
   const deleteAccessPlan = useMutation(api.accessPlans.remove);
@@ -112,7 +129,7 @@ export default function PricingManagement() {
     price: number;
     no_of_days: number;
     description?: string;
-    features?: string;
+    features: string[];
   }) => {
     setIsSubmitting(true);
     try {
@@ -122,12 +139,7 @@ export default function PricingManagement() {
         price: values.price,
         no_of_days: values.no_of_days,
         description: values.description?.trim() || undefined,
-        features: values.features
-          ? values.features
-              .split(",")
-              .map((f) => f.trim())
-              .filter(Boolean)
-          : undefined,
+        features: values.features,
       });
       toast.success("Pricing plan added successfully");
       setAddDialogOpen(false);
@@ -144,7 +156,7 @@ export default function PricingManagement() {
     price: number;
     no_of_days: number;
     description?: string;
-    features?: string;
+    features: string[];
   }) => {
     if (!currentPlanId) return;
     setIsSubmitting(true);
@@ -155,12 +167,7 @@ export default function PricingManagement() {
         price: values.price,
         no_of_days: values.no_of_days,
         description: values.description?.trim() || undefined,
-        features: values.features
-          ? values.features
-              .split(",")
-              .map((f) => f.trim())
-              .filter(Boolean)
-          : undefined,
+        features: values.features,
       });
       toast.success("Pricing plan updated successfully");
       setIsEditDialogOpen(false);
@@ -198,7 +205,8 @@ export default function PricingManagement() {
 
   return (
     <div className="flex gap-4 flex-col">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <ManagePlanFeatures />
         <Dialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => resetForm()}>
@@ -240,7 +248,7 @@ export default function PricingManagement() {
                     price: currentPlan.price,
                     no_of_days: currentPlan.no_of_days,
                     description: currentPlan.description,
-                    features: currentPlan.features.join(", "),
+                    features: currentPlan.features,
                   }
                 : undefined
             }
@@ -304,6 +312,7 @@ export default function PricingManagement() {
                 <AccessPlanCard
                   key={plan._id}
                   plan={plan}
+                  featureLabels={featureLabels}
                   onEdit={() => openEditDialog(plan)}
                   onDelete={() => openDeleteAlert(plan)}
                 />

@@ -1,27 +1,7 @@
 "use client";
-import {
-  Calendar,
-  type MonthArrowBackProps,
-  type MonthArrowNextProps,
-} from "@demark-pro/react-booking-calendar";
-import { useBookingCalendarLogic } from "@/hooks/useBookingCalendarLogic";
-import "@/app/booking.css";
-import {
-  addMonths,
-  addWeeks,
-  differenceInDays,
-  formatDate,
-  isSameDay,
-  subDays,
-} from "date-fns";
-import {
-  ArrowRight,
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  SlidersHorizontal,
-} from "lucide-react";
-import { BookingCalendarBox } from "@/app/account/active-bookings";
+import { addMonths, addWeeks, subDays } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
   SelectContent,
@@ -29,36 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { If } from "./if";
+import { useBookingCalendarLogic } from "@/hooks/useBookingCalendarLogic";
+import { RangePreviewSimple } from "./RangePreview";
 import { Button } from "./ui/button";
-
-const components = {
-  MonthArrowBack: (props: MonthArrowBackProps) => {
-    return (
-      <button
-        {...props.innerProps}
-        type="button"
-        className="w-[14.2857%] flex justify-center h-[50px] items-center"
-      >
-        <div className="flex aspect-square w-10 items-center justify-center border rounded-full">
-          <ChevronLeft strokeWidth={1} />
-        </div>
-      </button>
-    );
-  },
-  MonthArrowNext: (props: MonthArrowNextProps) => (
-    <button
-      {...props.innerProps}
-      type="button"
-      className="w-[14.2857%]  flex justify-center h-[50px] items-center"
-    >
-      <div className="flex aspect-square w-10 items-center justify-center border rounded-full">
-        <ChevronRight strokeWidth={1} />
-      </div>
-    </button>
-  ),
-};
 
 const BookingCalendar = () => {
   const {
@@ -75,58 +28,64 @@ const BookingCalendar = () => {
   return (
     <div>
       <Calendar
-        selected={selectedDate ? [selectedDate] : []}
-        reserved={reserved}
-        // @ts-expect-error set selected dates
-        onChange={handleDateChange}
-        protection={true}
-        range={false}
-        components={components}
+        mode="single"
+        selected={selectedDate ?? undefined}
+        // rdp only calls onSelect for days that its `disabled` matcher allows.
+        onSelect={(date) => handleDateChange(date ? [date] : [])}
+        disabled={reserved.map(({ startDate }) => startDate)}
+        modifiers={{ weekend: { dayOfWeek: [0] } }}
+        modifiersClassNames={{ weekend: "text-muted-foreground" }}
+        className="w-full"
       />
 
       <div className="flex gap-6 mt-4 mb-6 justify-center">
         <div className="flex items-center gap-1">
-          <div className="w-4 h-4 bg-black rounded" />
-          <span className="text-sm text-gray-600">Selected</span>
+          <div className="w-4 h-4 bg-primary rounded" />
+          <span className="text-sm text-muted-foreground">Selected</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-4 h-4 bg-gray-100 border rounded" />
-          <span className="text-sm text-gray-600">Fully Booked</span>
+          <div className="w-4 h-4 bg-muted border border-border rounded" />
+          <span className="text-sm text-muted-foreground">Fully Booked</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-4 h-4 border border-(--border) rounded" />
-          <span className="text-sm text-gray-600">Available</span>
+          <div className="w-4 h-4 border border-border rounded" />
+          <span className="text-sm text-muted-foreground">Available</span>
         </div>
       </div>
 
-      <div className="my-8 h-px bg-gradient-to-l from-transparent via-gray-300 to-transparent w-full" />
+      <div className="my-8 h-px bg-gradient-to-l from-transparent via-border to-transparent w-full" />
 
       <div className="flex flex-col gap-4">
-        <p className="font-normal text-sm text-gray-900">Reservation Period</p>
-
         {selectedDate && (
-          <Select value={planKey ?? ""} onValueChange={handleTimePeriodChange}>
-            <SelectTrigger className="w-full bg-white cursor-pointer">
-              <SelectValue placeholder="Select time period" />
-            </SelectTrigger>
-            <SelectContent>
-              {reservablePlans.map((plan) => (
-                <SelectItem key={plan.key} value={plan.key}>
-                  {plan.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+          <>
+            <p className="font-normal text-sm text-foreground">
+              Reservation Period
+            </p>
 
-        {selectedDate && (
-          <BookingPeriod date={selectedDate} period={timePeriodString} />
+            <Select
+              value={planKey ?? ""}
+              onValueChange={handleTimePeriodChange}
+            >
+              <SelectTrigger className="w-full bg-background cursor-pointer">
+                <SelectValue placeholder="Select time period" />
+              </SelectTrigger>
+              <SelectContent>
+                {reservablePlans.map((plan) => (
+                  <SelectItem key={plan.key} value={plan.key}>
+                    {plan.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <BookingPeriod date={selectedDate} period={timePeriodString} />
+          </>
         )}
 
         {!selectedDate && (
           <div className="text-center py-8">
-            <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">Select a date to continue</p>
+            <CalendarIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Select a date to continue</p>
           </div>
         )}
       </div>
@@ -144,88 +103,6 @@ const BookingCalendar = () => {
     </div>
   );
 };
-
-export function RangePreview({
-  selectedDate,
-  endDate,
-  handleChangeDate,
-}: {
-  selectedDate: Date;
-  endDate: Date;
-  handleChangeDate: () => void;
-}) {
-  const opening_hour = "09:00am";
-  const closing_hour = "05:00pm";
-
-  if (isSameDay(selectedDate, endDate)) {
-    return (
-      <div className="border-gray-200 border rounded-lg p-4 flex gap-3">
-        <div className="pt-2.5">
-          <svg
-            width="9"
-            height="110"
-            viewBox="0 0 9 110"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <circle cx="4.5" cy="4" r="4" className="fill-muted-foreground" />
-            <path
-              d="M4.5 8L4.5 102"
-              strokeDasharray="2 2"
-              className="stroke-muted-foreground"
-            />
-            <circle cx="4.5" cy="106" r="4" className="fill-muted-foreground" />
-          </svg>
-        </div>
-        <div className="flex flex-col gap-6">
-          <div>
-            <h5 className="text-base font-bold">{opening_hour}</h5>
-            <p className="opacity-70">{selectedDate.toDateString()}</p>
-          </div>
-          <div>
-            <h5 className="text-base font-bold">05:00pm</h5>
-            <p className="opacity-70">{endDate?.toDateString()}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="border-gray-200 border rounded-lg p-4 flex gap-3">
-      <div className="flex flex-col gap-6 w-full">
-        <div className="flex gap-x-3 tabular-nums items-start">
-          <BookingCalendarBox startDate={selectedDate} />
-          <div className="text-sm">
-            <h5 className="text-foreground">
-              {opening_hour} — {closing_hour}
-            </h5>
-            <p className="text-muted-foreground">Day Plan</p>
-          </div>
-        </div>
-        <div className="border-t flex justify-end items-center relative border-gray-200 w-full">
-          <Button
-            variant={"outline"}
-            className="absolute top-0 -translate-y-1/2"
-            onClick={handleChangeDate}
-          >
-            Adjust
-            <SlidersHorizontal strokeWidth={1} size="1.5em" />
-          </Button>
-        </div>
-        <div className="flex gap-x-3 tabular-nums items-start">
-          <BookingCalendarBox startDate={endDate} />
-          <div className="text-sm">
-            <h5 className="text-foreground">
-              {opening_hour} — {closing_hour}
-            </h5>
-            <p className="text-muted-foreground">Day Plan</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function BookingPeriod({
   date: selectedDate,
@@ -250,51 +127,6 @@ export function BookingPeriod({
       </div>
 
       <RangePreviewSimple startDate={start_time} endDate={end_time} />
-    </div>
-  );
-}
-
-export function RangePreviewSimple({
-  startDate,
-  variant = "default",
-  endDate,
-}: {
-  startDate: Date;
-  endDate: Date;
-  variant?: "default" | "sm";
-}) {
-  const is_same_day = isSameDay(startDate, endDate);
-
-  return (
-    <div className="flex flex-col gap-1">
-      <div
-        className={cn("font-medium text-foreground flex gap-2 items-center", {
-          "text-base ": variant === "default",
-          "text-sm": variant === "sm",
-        })}
-      >
-        <div>{formatDate(startDate, "dd MMM")}</div>
-        <If cond={!is_same_day}>
-          <ArrowRight strokeWidth={1} size={14} />
-          <div>{formatDate(endDate, "dd MMM, yyyy")}</div>
-        </If>
-      </div>
-
-      <p
-        className={cn("text-foreground", {
-          "text-sm": variant === "default",
-          "text-xs": variant === "sm",
-        })}
-      >
-        Booking for{" "}
-        <span className="text-foreground">
-          {is_same_day ? (
-            "1 day"
-          ) : (
-            <>{differenceInDays(endDate, startDate)} days</>
-          )}
-        </span>
-      </p>
     </div>
   );
 }

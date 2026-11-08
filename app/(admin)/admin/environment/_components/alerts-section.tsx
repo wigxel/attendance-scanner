@@ -2,7 +2,8 @@
 
 import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
-import { Bell } from "lucide-react";
+import { capitalize } from "effect/String";
+import { BellOffIcon, BellRingIcon, CheckIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -12,6 +13,7 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/empty-state";
+import { PulsingDot } from "@/components/pulsing-dot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
+import { cn } from "@/lib/utils";
 
 // Human labels per alert type; unknown types fall back to their raw
 // string so producers never have to register a label to surface.
@@ -118,25 +121,38 @@ export function AlertsSection() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Alerts</CardTitle>
-        <CardDescription>
-          {unacknowledgedCount === 0
-            ? "All clear"
-            : `${unacknowledgedCount} unacknowledged`}
-        </CardDescription>
-        {!pushUnavailable && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="ml-auto"
-            onClick={pushEnabled ? disablePush : enablePush}
-          >
-            <Bell className="size-4" />
-            {pushEnabled ? "Disable push alerts" : "Enable push alerts"}
-          </Button>
-        )}
+      <CardHeader className="flex flex-row items-center">
+        <div className="shrink-0 flex-1">
+          <CardTitle>Alerts</CardTitle>
+          <CardDescription>
+            {unacknowledgedCount === 0
+              ? "All clear"
+              : `${unacknowledgedCount} unacknowledged`}
+          </CardDescription>
+        </div>
+
+        <div className="flex">
+          {!pushUnavailable && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-auto"
+              title={
+                pushEnabled ? "Disable push alerts" : "Enable push notification"
+              }
+              onClick={pushEnabled ? disablePush : enablePush}
+            >
+              {pushEnabled ? (
+                <BellRingIcon className="size-4" />
+              ) : (
+                <BellOffIcon className="size-4" />
+              )}
+              {pushEnabled ? "Enable" : "Disable"}
+            </Button>
+          )}
+        </div>
       </CardHeader>
+
       <CardContent>
         <EmptyState isEmpty={alerts.length === 0}>
           <EmptyStateContent className="py-8">
@@ -145,26 +161,21 @@ export function AlertsSection() {
               No anomalies yet. You&apos;ll see them here as sensors report.
             </EmptyStateDescription>
           </EmptyStateContent>
+
           <EmptyStateConceal>
-            <ul className="flex flex-col gap-2">
+            <ul className="flex flex-col gap-2 -mx-4">
               {alerts.map((alert) => (
                 <li
                   key={alert._id}
-                  className={
-                    alert.acknowledged
-                      ? "flex items-center justify-between gap-3 opacity-70"
-                      : "flex items-center justify-between gap-3"
-                  }
+                  className={cn(
+                    "text-xs px-4 py-2 items-center hover:bg-white/5 cursor-default rounded-md",
+                    alert.acknowledged ? "flex gap-2 opacity-70" : "flex gap-2",
+                  )}
                 >
-                  <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
-                    <span className="flex items-baseline gap-2">
-                      <span
-                        className={
-                          alert.acknowledged
-                            ? "inline-block size-2 rounded-full bg-muted-foreground/30"
-                            : "inline-block size-2 motion-safe:animate-pulse rounded-full bg-amber-500"
-                        }
-                      />
+                  <div className="flex flex-col flex-1 gap-1 pl-3">
+                    <span className="flex items-center gap-2 -ml-4">
+                      <PulsingDot active={!alert.acknowledged} />
+
                       <span className="font-medium">
                         {typeLabel(alert.type)}
                       </span>
@@ -172,24 +183,30 @@ export function AlertsSection() {
                         <Badge variant="secondary">{alert.severity}</Badge>
                       )}
                     </span>
-                    <span className="text-sm text-muted-foreground">
-                      {alert.detail}
+
+                    <span className="text-muted-foreground">
+                      {capitalize(alert.detail)}
+                    </span>
+
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="text-xs text-muted-foreground/50">
+                        {format(new Date(alert._creationTime), "MMM d, HH:mm")}
+                      </span>
                     </span>
                   </div>
-                  <span className="flex shrink-0 items-center gap-3">
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(alert._creationTime), "MMM d, HH:mm")}
-                    </span>
+
+                  <div className="-me-2">
                     {!alert.acknowledged && (
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        size="icon"
+                        variant="outline-active"
+                        title="Acknowledge"
                         onClick={() => acknowledge({ alertId: alert._id })}
                       >
-                        Acknowledge
+                        <CheckIcon />
                       </Button>
                     )}
-                  </span>
+                  </div>
                 </li>
               ))}
             </ul>

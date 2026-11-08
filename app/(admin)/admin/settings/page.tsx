@@ -3,6 +3,7 @@ import {
   Grid2X2Icon,
   KeyRound,
   ListChecks,
+  QrCode,
   ScrollText,
   Shield,
   User,
@@ -14,6 +15,7 @@ import PermissionsSettingsPage from "@/app/(admin)/admin/settings/permissions/pa
 import RolesSettingsPage from "@/app/(admin)/admin/settings/roles/page";
 import TeamSettingsPage from "@/app/(admin)/admin/settings/team/page";
 import { AuditLogsTab } from "@/components/audit-logs-tab";
+import { CheckInModeSettings } from "@/components/check-in-mode-settings";
 import { KpiPresetManagement } from "@/components/manage-kpi-presets";
 import OccupationManagement from "@/components/manage-occupation";
 import PricingManagement from "@/components/manage-pricing";
@@ -45,10 +47,12 @@ export default function SettingsPage() {
                   <Wrench className="w-4 h-4 mr-2" />
                   Onboarding
                 </TabsTrigger>
-                <TabsTrigger value="pricing" className="justify-start w-full">
-                  <BadgeDollarSign className="w-4 h-4 mr-2" />
-                  Pricing
-                </TabsTrigger>
+                <RoleHas privileges={["plans:manage"]}>
+                  <TabsTrigger value="pricing" className="justify-start w-full">
+                    <BadgeDollarSign className="w-4 h-4 mr-2" />
+                    Pricing
+                  </TabsTrigger>
+                </RoleHas>
                 <TabsTrigger value="profile" className="justify-start w-full">
                   <User className="w-4 h-4 mr-2" />
                   User Profile
@@ -57,6 +61,16 @@ export default function SettingsPage() {
                   <Grid2X2Icon className="w-4 h-4 mr-2" />
                   Seat Layout
                 </TabsTrigger>
+
+                <RoleHas privileges={["settings:update"]}>
+                  <TabsTrigger
+                    value="check-in"
+                    className="justify-start w-full"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" />
+                    Check-in
+                  </TabsTrigger>
+                </RoleHas>
 
                 <RoleHas privileges={["user:assign:role"]}>
                   <TabsTrigger value="roles" className="justify-start w-full">
@@ -101,7 +115,9 @@ export default function SettingsPage() {
               </TabsContent>
 
               <TabsContent value="pricing">
-                <PricingManagement />
+                <RoleHas privileges={["plans:manage"]}>
+                  <PricingManagement />
+                </RoleHas>
               </TabsContent>
 
               <TabsContent value="profile">Work In Progress</TabsContent>
@@ -112,6 +128,12 @@ export default function SettingsPage() {
                 >
                   <SeatStructureGrid />
                 </ErrorBoundary>
+              </TabsContent>
+
+              <TabsContent value="check-in">
+                <RoleHas privileges={["settings:update"]}>
+                  <CheckInModeSettings />
+                </RoleHas>
               </TabsContent>
 
               <TabsContent value="roles">

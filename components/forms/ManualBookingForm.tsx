@@ -25,10 +25,15 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
 import { safeArray } from "@/lib/data.helpers";
+import { PAYMENT_CHANNELS, paymentChannelLabels } from "@/lib/payment-channel";
 
 const manualBookingSchema = z.object({
   planKey: z.string().min(1, { message: "Plan is required" }),
   startDate: z.string().min(1, { message: "Start date is required" }),
+  channel: z.enum(["cash", "pos", "transfer"], {
+    required_error: "Select how the customer paid",
+    invalid_type_error: "Select how the customer paid",
+  }),
 });
 
 type ManualBookingFormValues = z.infer<typeof manualBookingSchema>;
@@ -57,6 +62,8 @@ export function ManualBookingForm({
     defaultValues: {
       planKey: "",
       startDate: format(new Date(), "yyyy-MM-dd"),
+      // Forced choice: no default channel, the desk must pick one.
+      channel: undefined as unknown as ManualBookingFormValues["channel"],
     },
   });
 
@@ -91,7 +98,7 @@ export function ManualBookingForm({
 
                 <SelectContent>
                   {safeArray(accessPlans).map((plan) => {
-                    if (plan.key === "free") return;
+                    if (plan.key === "free") return null;
 
                     return (
                       <SelectItem key={plan.key} value={plan.key}>
@@ -99,6 +106,35 @@ export function ManualBookingForm({
                       </SelectItem>
                     );
                   })}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="channel"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>How was it paid?</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value ?? ""}
+                disabled={isLoading}
+              >
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select payment channel" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {PAYMENT_CHANNELS.map((channel) => (
+                    <SelectItem key={channel} value={channel}>
+                      {paymentChannelLabels[channel]}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
