@@ -1,9 +1,24 @@
 ---
 name: frontend
-description: Frontend development rules and patterns for Next.js/React projects
+description: Use for any UI change in a React/Next.js project - components, pages, layouts, forms, tables, or styles. Covers the shadcn design system in components/ui, rem-only spacing, loading/empty/success states, form and dialog patterns, and the project's TypeScript and naming conventions. Load before editing UI, then run improve-readability before finishing.
 ---
 
 # Frontend Skill
+
+## Load order
+
+1. Load this skill before you edit UI code: components, pages, layouts, forms, tables, or styles.
+2. Read the rule file for the area you touch (`ui.mdc`, `layout.mdc`, `form.mdc`, `table.mdc`, `react.mdc`, ...).
+3. Reuse the design system below instead of writing new markup.
+4. Before you finish, load `improve-readability` and apply it to the files you changed.
+
+## Design system first
+
+- Reuse components from `components/ui/` and existing feature components before writing markup.
+- Never rebuild a `components/ui/` component by hand with a `div` and utility classes. If a variant is missing, add it to the existing component.
+- Use existing tokens and variants. Do not hard-code colours, radii, shadows, or spacing values.
+- Copy the structure and naming of the nearest existing component. Do not paste in a generic template.
+- New shared primitives go in `components/ui/`. Feature-specific components go in `components/[feature]/`.
 
 ## Tech Stack
 - Next.js 15 (App Router)
@@ -55,6 +70,7 @@ description: Frontend development rules and patterns for Next.js/React projects
 > See [react.mdc](./react.mdc) for full details.
 
 ### UI Guidelines
+- Always use `rem` units for spacing, sizing, and typography — never `px`
 > See [ui.mdc](./ui.mdc) for full details.
 
 ### Layout
@@ -142,6 +158,9 @@ Prefer shadcn `Skeleton` component for loading.
 ### Hooks
 - Path: `hooks/`
 - Use for reusable state/logic
+
+### Error Handling
+> See [friendly-errors.md](./friendly-errors.md) for user-friendly error patterns.
 
 ### State Management
 - **TanStack Query**: server state, API calls

@@ -174,9 +174,9 @@ const ON_THIS_PAGE = [
 // (≤120 KB, PRD rule); until then the SVG is a neutral placeholder.
 export function BuildSection() {
   return (
-    <div className="relative h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="relative h-[calc(60vh-4rem)] overflow-hidden">
       <Image
-        src="/images/makers/build-with.svg"
+        src="/images/team-meetings.jpg"
         alt=""
         fill
         unoptimized
@@ -184,12 +184,12 @@ export function BuildSection() {
         className="object-cover"
         sizes="100vw"
       />
-      {/* black scrim — text is the only thing that lives here, so the
-          gradient is dense at the top where the H2 is, lighter below */}
+
       <div
         aria-hidden
         className="absolute inset-0 bg-linear-to-b from-black/70 via-black/30 to-transparent"
       />
+
       <h2
         className={cn(
           heading.className,
