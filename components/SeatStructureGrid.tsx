@@ -727,13 +727,13 @@ export function SLSeatItem(
         </motion.span>
       ) : (
         <span
-          className="pointer-events-none absolute inset-0 bg-[url('/images/reserved-bg.png')] rounded-lg"
+          className="pointer-events-none absolute inset-0 bg-[url('/images/reserved-bg.webp')] rounded-lg"
           style={{ backgroundSize: "60px" }}
         />
       )}
 
       <Image
-        src={"/images/chair.png"}
+        src={"/images/chair.webp"}
         alt={`chair #${index}`}
         width={32}
         height={32}
