@@ -59,6 +59,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
+      listIdentitiesByPrivilege: FunctionReference<
+        "query",
+        "internal",
+        { privilege: string },
+        any,
+        Name
+      >;
       registerIdentity: FunctionReference<
         "mutation",
         "internal",

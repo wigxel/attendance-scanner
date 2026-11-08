@@ -23,6 +23,27 @@ export const listIdentities = query({
   },
 });
 
+// App-internal lookup for operator alerts: every identity whose role carries
+// the privilege. No caller check — component functions are not exposed to
+// clients, only to the app's own internal functions.
+export const listIdentitiesByPrivilege = query({
+  args: { privilege: v.string() },
+  handler: async (ctx, { privilege }): Promise<IdentityWithRole[]> => {
+    const identities = await ctx.db.query("identities").collect();
+
+    const withRoles = await Promise.all(
+      identities.map(async (identity) => {
+        const role = await ctx.db.get(identity.role);
+        return { ...identity, role };
+      }),
+    );
+
+    return withRoles.filter((entry) =>
+      entry.role?.privileges.includes(privilege),
+    );
+  },
+});
+
 export const registerIdentity = mutation({
   args: {
     callerId: v.string(),

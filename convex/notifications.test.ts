@@ -2,8 +2,10 @@
 import { convexTest } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api, components, internal } from "./_generated/api";
+import aclSchema from "./components/acl/schema";
 import inboxSchema from "./components/inbox/schema";
 import notificationsSchema from "./components/notifications/schema";
+import { isCreditExhausted } from "./notificationSender";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -11,6 +13,7 @@ const notificationModules = import.meta.glob(
   "./components/notifications/**/*.ts",
 );
 const inboxModules = import.meta.glob("./components/inbox/**/*.ts");
+const aclModules = import.meta.glob("./components/acl/**/*.ts");
 
 // scheduled delivery is not run here: these tests cover what send() queues,
 // which is the part callers depend on
@@ -22,11 +25,24 @@ const setup = () => {
     notificationModules,
   );
   t.registerComponent("inbox", inboxSchema, inboxModules);
+  t.registerComponent("wigxel_acl", aclSchema, aclModules);
   return t;
+};
+
+const seedAcl = async (t: ReturnType<typeof setup>) => {
+  await t.run(async (ctx) => {
+    await ctx.runMutation(components.wigxel_acl.seed.seedRoles, {});
+    await ctx.runMutation(components.wigxel_acl.seed.makeSuperAdmin, {
+      identity: "admin-1",
+    });
+  });
 };
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
+  delete process.env.ZEPTOMAIL_TOKEN;
+  delete process.env.ZEPTOMAIL_FROM_ADDRESS;
 });
 
 const message = {
@@ -54,6 +70,96 @@ describe("notifications.sendTest", () => {
     });
     expect(inbox).toHaveLength(1);
     expect(inbox[0].title).toBe("Test notification");
+  });
+});
+
+describe("notifications.alertRecipientKeys", () => {
+  it("returns inbox keys for identities allowed to change settings", async () => {
+    const t = setup();
+    await seedAcl(t);
+
+    const created = await t.run(async (ctx) =>
+      ctx.runMutation(components.wigxel_acl.roles.createRole, {
+        callerId: "admin-1",
+        name: "front desk",
+        description: "Runs the desk",
+        privileges: ["attendance:checkin"],
+      }),
+    );
+    if (!created.success) throw new Error(created.error);
+
+    await t.run(async (ctx) =>
+      ctx.runMutation(components.wigxel_acl.identities.registerIdentity, {
+        callerId: "admin-1",
+        identity: "desk-1",
+        roleId: created.data.roleId,
+      }),
+    );
+
+    expect(
+      await t.query(internal.notifications.alertRecipientKeys, {}),
+    ).toEqual(["user:admin-1"]);
+  });
+});
+
+describe("isCreditExhausted", () => {
+  it("matches ZeptoMail's out-of-credit 429", () => {
+    expect(
+      isCreditExhausted(
+        429,
+        '{"error":{"code":"TM_5001","message":"Credit exhausted"}}',
+      ),
+    ).toBe(true);
+    expect(isCreditExhausted(429, '{"error":{"code":"LE_102"}}')).toBe(true);
+  });
+
+  it("ignores other failures", () => {
+    expect(isCreditExhausted(429, '{"error":{"code":"LE_999"}}')).toBe(false);
+    expect(isCreditExhausted(500, "Credit exhausted")).toBe(false);
+  });
+});
+
+describe("notificationSender.deliver", () => {
+  it("raises one inbox alert per admin when ZeptoMail is out of credit", async () => {
+    const t = setup();
+    await seedAcl(t);
+    process.env.ZEPTOMAIL_TOKEN = "token";
+    process.env.ZEPTOMAIL_FROM_ADDRESS = "no-reply@example.com";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            '{"error":{"code":"TM_5001","message":"Credit exhausted"}}',
+            { status: 429 },
+          ),
+      ),
+    );
+
+    await t.mutation(internal.notifications.send, {
+      recipientKey: "user:somebody",
+      email: "ana@example.com",
+      channels: ["email"],
+      title: "Booking confirmed",
+      body: "See you on Friday.",
+    });
+
+    await t.action(internal.notificationSender.deliver, {});
+    // the drain retries the failed row every minute; the alert must not repeat
+    await t.action(internal.notificationSender.deliver, {});
+
+    const inbox = await t.query(components.inbox.index.list, {
+      recipientKey: "user:admin-1",
+    });
+    expect(inbox).toHaveLength(1);
+    expect(inbox[0].title).toContain("out of credits");
+
+    // 429 is retryable, so the row goes back to pending with the reason kept
+    const deliveries = await t.query(internal.notifications.recent, {
+      recipientKey: "user:somebody",
+    });
+    expect(deliveries[0].status).toBe("pending");
+    expect(deliveries[0].error).toContain("TM_5001");
   });
 });
 
