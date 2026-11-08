@@ -1,7 +1,8 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { describe, expect, it } from "vitest";
-import { api, internal } from "./_generated/api";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { api, components, internal } from "./_generated/api";
+import inboxSchema from "./components/inbox/schema";
 import notificationsSchema from "./components/notifications/schema";
 import schema from "./schema";
 
@@ -9,6 +10,7 @@ const modules = import.meta.glob("./**/*.ts");
 const notificationModules = import.meta.glob(
   "./components/notifications/**/*.ts",
 );
+const inboxModules = import.meta.glob("./components/inbox/**/*.ts");
 
 // scheduled delivery is not run here: these tests cover what send() queues,
 // which is the part callers depend on
@@ -19,8 +21,13 @@ const setup = () => {
     notificationsSchema,
     notificationModules,
   );
+  t.registerComponent("inbox", inboxSchema, inboxModules);
   return t;
 };
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const message = {
   recipientKey: "user:1",
@@ -29,6 +36,26 @@ const message = {
   body: "See you on Friday.",
   url: "/?tab=booking",
 };
+
+describe("notifications.sendTest", () => {
+  it("drops a test row into the caller's inbox", async () => {
+    const t = setup().withIdentity({
+      subject: "clerk_1",
+      email: "ana@example.com",
+    });
+    const userId = await t.run(async (ctx) =>
+      ctx.db.insert("users", { email: "ana@example.com", name: "Ana" }),
+    );
+
+    await t.mutation(api.notifications.sendTest, {});
+
+    const inbox = await t.query(components.inbox.index.list, {
+      recipientKey: `user:${userId}`,
+    });
+    expect(inbox).toHaveLength(1);
+    expect(inbox[0].title).toBe("Test notification");
+  });
+});
 
 describe("notifications.send", () => {
   it("queues a push and an email row", async () => {
@@ -68,5 +95,75 @@ describe("notifications.send", () => {
 
     expect(result.queued).toHaveLength(1);
     expect(result.skipped).toContain("opted out of push");
+  });
+
+  it("stores an in-app row alongside the transport delivery", async () => {
+    const t = setup();
+    await t.mutation(internal.notifications.send, {
+      ...message,
+      channels: ["inapp", "email"],
+    });
+
+    const inbox = await t.query(components.inbox.index.list, {
+      recipientKey: "user:1",
+    });
+    expect(inbox).toHaveLength(1);
+    expect(inbox[0].title).toBe(message.title);
+
+    const deliveries = await t.query(internal.notifications.recent, {
+      recipientKey: "user:1",
+    });
+    expect(deliveries).toHaveLength(1);
+    expect(deliveries[0].channel).toBe("email");
+  });
+
+  it("keeps a broadcast out of the inbox", async () => {
+    const t = setup();
+    await t.mutation(internal.notifications.send, {
+      ...message,
+      recipientKey: "broadcast:environment-alerts",
+      channels: ["inapp"],
+    });
+
+    expect(
+      await t.query(components.inbox.index.list, {
+        recipientKey: "broadcast:environment-alerts",
+      }),
+    ).toHaveLength(0);
+  });
+
+  it("purges old deliveries but leaves inbox rows alone", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2020-01-01T00:00:00.000Z"));
+    const t = setup();
+
+    await t.mutation(internal.notifications.send, {
+      ...message,
+      channels: ["inapp", "email"],
+    });
+
+    const [delivery] = await t.query(internal.notifications.recent, {
+      recipientKey: "user:1",
+    });
+    await t.mutation(components.notifications.index.claim, {
+      now: Date.now(),
+    });
+    await t.mutation(components.notifications.index.markSent, {
+      deliveryId: delivery._id,
+    });
+
+    vi.setSystemTime(new Date("2020-02-15T00:00:00.000Z"));
+    await t.mutation(components.notifications.index.purgeOld, {});
+
+    expect(
+      await t.query(internal.notifications.recent, {
+        recipientKey: "user:1",
+      }),
+    ).toHaveLength(0);
+    expect(
+      await t.query(components.inbox.index.list, {
+        recipientKey: "user:1",
+      }),
+    ).toHaveLength(1);
   });
 });
