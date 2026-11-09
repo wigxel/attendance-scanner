@@ -31,11 +31,72 @@ export const durationTypeConvexSchema = v.union(
   v.literal("month"),
 );
 
+export const guestTypeValidator = v.union(
+  v.literal("visitor"),
+  v.literal("student"),
+  v.literal("event_attendee"),
+);
+
+export type GuestType = "visitor" | "student" | "event_attendee";
+
+/**
+ * How a customer handed over the money. Absent on a booking means nobody has
+ * recorded it yet — historical rows and unreconciled payments. Never guess.
+ */
+export const paymentChannelValidator = v.union(
+  v.literal("cash"),
+  v.literal("pos"),
+  v.literal("transfer"),
+);
+
+export const checkInModeValidator = v.union(
+  v.literal("one_tap"),
+  v.literal("self_checkin"),
+  v.literal("staff_scan"),
+);
+
+export const CHECK_IN_MODES = [
+  "one_tap",
+  "self_checkin",
+  "staff_scan",
+] as const;
+
+export type CheckInMode = (typeof CHECK_IN_MODES)[number];
+
+export const DEFAULT_CHECK_IN_MODE: CheckInMode = "staff_scan";
+
+export function isCheckInMode(value: unknown): value is CheckInMode {
+  return (
+    typeof value === "string" &&
+    (CHECK_IN_MODES as readonly string[]).includes(value)
+  );
+}
+
+/**
+ * Copy shown to a customer whose account does not allow the check-in path they
+ * attempted. Selected by the customer's resolved mode, so it names the path
+ * they can actually use.
+ */
+export const SelfCheckInMessages: Record<CheckInMode, string> = {
+  one_tap:
+    "Your account checks in with one tap. Use the Check In button on your account page.",
+  self_checkin:
+    "Your account checks in by scanning the QR code at the entrance. Open your account page to scan.",
+  staff_scan:
+    "Staff will check you in at the counter. Show your personal QR code to the staff.",
+};
+
 // Present only when this visit was a guest visit. The presence of this
 // field *is* the guest flag — there is no separate boolean. `hostUserId` is
 // the `profile`.`id` of the customer being visited.
 const visitingField = {
-  visiting: v.optional(v.object({ hostUserId: v.string() })),
+  visiting: v.optional(
+    v.object({
+      hostUserId: v.string(),
+      // Optional so the 3,776 guest rows written before this field stay valid.
+      guestType: v.optional(guestTypeValidator),
+    }),
+  ),
 };
 
 export const accessPlanStruct = v.union(
@@ -76,7 +137,12 @@ const durationSchemaValidator = z.union([
 
 // Zod strips unknown keys by default, so `visiting` must be declared here
 // too — otherwise `PlanImpl.normalize` silently drops the guest link.
-const visitingSchema = z.optional(z.object({ hostUserId: z.string() }));
+const visitingSchema = z.optional(
+  z.object({
+    hostUserId: z.string(),
+    guestType: z.optional(z.enum(["visitor", "student", "event_attendee"])),
+  }),
+);
 
 export const accessPlanSchemaValidator = z.union([
   z.object({
@@ -397,7 +463,7 @@ export const PlanImpl = {
   },
 };
 
-export type Visiting = { hostUserId: string };
+export type Visiting = { hostUserId: string; guestType?: GuestType };
 
 type AccessPaidV2 = {
   _v: "2";

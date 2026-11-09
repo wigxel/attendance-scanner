@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { InboxBell } from "@/components/notifications/inbox-bell";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -8,6 +9,7 @@ const navItems = [
   { name: "KPIs", href: "/admin/kpis" },
   { name: "Reservations", href: "/admin/reservations" },
   { name: "Customers", href: "/admin/customers" },
+  { name: "Inventory", href: "/admin/inventory" },
   { name: "Environment", href: "/admin/environment" },
   { name: "Settings", href: "/admin/settings" },
 ];
@@ -39,6 +41,10 @@ export function Navbar() {
               );
             })}
           </div>
+        </div>
+
+        <div className="sticky border-s border-border right-0 z-10 flex items-center bg-background pl-2 pr-6 md:static md:pr-0">
+          <InboxBell />
         </div>
       </div>
     </nav>

@@ -7,6 +7,7 @@ import { api, internal } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { subscriberUpdateAudit } from "./audits/entities";
 import { visitsAggregate } from "./customers";
+import type { GuestType } from "./shared";
 import { type AccessStruct, PlanImpl } from "./shared";
 
 export async function isRegisteredToday(
@@ -66,6 +67,7 @@ export async function insertGuestVisit(
     guestUserId: string;
     hostUserId: string;
     admittedBy: string;
+    guestType?: GuestType;
     visitorId?: string;
     browser?: string;
   },
@@ -87,7 +89,13 @@ export async function insertGuestVisit(
     },
     admittedBy: params.admittedBy,
     timestamp: new Date().toISOString(),
-    access: { kind: "free", visiting: { hostUserId: params.hostUserId } },
+    access: {
+      kind: "free",
+      visiting: {
+        hostUserId: params.hostUserId,
+        guestType: params.guestType ?? "visitor",
+      },
+    },
     method: "qr",
   });
 }

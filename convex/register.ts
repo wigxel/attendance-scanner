@@ -1,11 +1,19 @@
 import { ConvexError, v } from "convex/values";
-import { addDays, endOfDay, format, startOfDay, subDays } from "date-fns";
+import {
+  addDays,
+  differenceInHours,
+  endOfDay,
+  format,
+  startOfDay,
+  subDays,
+} from "date-fns";
 import { Effect, pipe } from "effect";
 import { isNullable } from "effect/Predicate";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
+import { guestConversionAudit, guestDismissalAudit } from "./audits/entities";
 import { visitsAggregate } from "./customers";
 import { findOrCreateUser, readId } from "./myFunctions";
 import {
@@ -14,11 +22,12 @@ import {
   requireHostRegisteredToday,
 } from "./register_common";
 import {
+  assertMinKobo,
   CurrencyImpl,
+  guestTypeValidator,
   PlanError,
   PlanImpl,
   RegisterImpl,
-  assertMinKobo,
 } from "./shared";
 
 const Timezone = {
@@ -326,6 +335,211 @@ export const updateTodaysRegisterAccess = mutation({
   },
 });
 
+/**
+ * Reclassifies today's guest visit as a regular visit. The plan and payment
+ * fields are kept as they are; only the `visiting` link is dropped, so the
+ * same `daily_register` row stays in the history.
+ *
+ * A staff-entered visitor can end up with no profile of their own. Passing
+ * `linkEmail` resolves them to the customer already on file — `findOrCreateUser`
+ * is idempotent on email — and moves today's row to that customer, so their
+ * visit count continues instead of starting a second history.
+ */
+export const markTodaysVisitAsRegular = mutation({
+  args: {
+    userId: v.string(),
+    linkEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const actorId = await readId(ctx);
+    if (!actorId) {
+      throw new ConvexError("User not authenticated");
+    }
+
+    await requirePrivilege(ctx, "attendance:checkin");
+
+    const today = new Date();
+    const dayStart = startOfDay(today).toISOString();
+    const dayEnd = endOfDay(today).toISOString();
+
+    const todays = await ctx.db
+      .query("daily_register")
+      .withIndex("user", (q) => q.eq("userId", args.userId))
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("timestamp"), dayStart),
+          q.lte(q.field("timestamp"), dayEnd),
+        ),
+      )
+      .first();
+
+    // Fall back to the latest row so a too-old record reports the real reason
+    // instead of looking like it was never scanned.
+    const record =
+      todays ??
+      (await ctx.db
+        .query("daily_register")
+        .withIndex("user", (q) => q.eq("userId", args.userId))
+        .order("desc")
+        .first());
+
+    if (!record) {
+      throw new ConvexError("Customer not found in today's register.");
+    }
+
+    const guest = record.access.visiting;
+    if (!guest) {
+      throw new ConvexError("This visit is not a guest visit.");
+    }
+
+    // Reservations stay read-only, same as the plan edit.
+    if (!isNullable(record.ticketId)) {
+      throw new ConvexError("Cannot modify a reserved booking.");
+    }
+
+    // Mirrors can_modify_plan in the attendance drawer.
+    if (differenceInHours(Date.now(), record.timestamp) >= 24) {
+      throw new ConvexError("Record is older than 24 hours.");
+    }
+
+    let userId = record.userId;
+    let linkedUserId: string | undefined;
+
+    if (args.linkEmail) {
+      const profile = await ctx.db
+        .query("profile")
+        .withIndex("by_user_id", (q) => q.eq("id", record.userId))
+        .unique();
+
+      // Only visitors without a profile need linking; a known customer keeps
+      // their own identity.
+      if (isNullable(profile)) {
+        const user = await ctx.db.get(record.userId as Id<"users">);
+        const [firstName, ...rest] = (user?.name ?? "").split(" ");
+        const resolvedId = await findOrCreateUser(ctx, {
+          email: args.linkEmail,
+          firstName: firstName || "Guest",
+          lastName: rest.join(" ") || "Customer",
+        });
+
+        if (resolvedId !== record.userId) {
+          if (await isRegisteredToday(ctx, resolvedId)) {
+            throw new ConvexError(
+              "That customer is already in today's scan. Merge the two rows manually.",
+            );
+          }
+
+          userId = resolvedId;
+          linkedUserId = resolvedId;
+        }
+      }
+    }
+
+    const { visiting: _guest, ...access } = record.access;
+
+    await ctx.db.patch(record._id, { userId, access });
+
+    if (userId !== record.userId) {
+      // Visit aggregates are namespaced by userId, so move the entry with it.
+      // Legacy rows predate the aggregate, hence the forgiving variants.
+      await visitsAggregate.deleteIfExists(ctx, record);
+      const updated = await ctx.db.get(record._id);
+      if (updated) await visitsAggregate.insertIfDoesNotExist(ctx, updated);
+    }
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.audit.log,
+      guestDismissalAudit({
+        actorId,
+        targetId: record._id,
+        userId: record.userId,
+        hostUserId: guest.hostUserId,
+        guestType: guest.guestType,
+        linkedUserId,
+      }),
+    );
+
+    return { success: true as const, userId };
+  },
+});
+
+/**
+ * Reclassifies today's visit as a guest visit. The access kind and plan fields
+ * are kept as they are, so payment and duration data survive; only the
+ * `visiting` link is added.
+ */
+export const markTodaysVisitAsGuest = mutation({
+  args: {
+    userId: v.string(),
+    hostUserId: v.string(),
+    guestType: v.optional(guestTypeValidator),
+  },
+  handler: async (ctx, args) => {
+    const actorId = await readId(ctx);
+    if (!actorId) {
+      throw new ConvexError("User not authenticated");
+    }
+
+    await requirePrivilege(ctx, "attendance:checkin");
+
+    if (args.userId === args.hostUserId) {
+      throw new ConvexError("A customer cannot be their own guest.");
+    }
+
+    const today = new Date();
+    const record = await ctx.db
+      .query("daily_register")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), args.userId),
+          q.gte(q.field("timestamp"), startOfDay(today).toISOString()),
+          q.lte(q.field("timestamp"), endOfDay(today).toISOString()),
+        ),
+      )
+      .first();
+
+    if (!record) {
+      throw new ConvexError("Customer not found in today's register.");
+    }
+
+    // Reservations stay read-only, same as the plan edit.
+    if (!isNullable(record.ticketId)) {
+      throw new ConvexError("Cannot modify a reserved booking.");
+    }
+
+    // Mirrors can_modify_plan in the attendance drawer.
+    if (differenceInHours(Date.now(), record.timestamp) >= 24) {
+      throw new ConvexError("Record is older than 24 hours.");
+    }
+
+    await requireHostRegisteredToday(ctx, args.hostUserId);
+
+    const guestType = args.guestType ?? "visitor";
+    const guestAccess = {
+      ...record.access,
+      visiting: { hostUserId: args.hostUserId, guestType },
+    };
+
+    await ctx.db.patch(record._id, { access: guestAccess });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.audit.log,
+      guestConversionAudit({
+        actorId,
+        targetId: record._id,
+        userId: args.userId,
+        hostUserId: args.hostUserId,
+        guestType,
+        previousKind: record.access.kind,
+      }),
+    );
+
+    return "success" as const;
+  },
+});
+
 export const deleteRegisterRecord = internalMutation({
   args: { registerId: v.id("daily_register") },
   handler: async (ctx, args) => {
@@ -446,6 +660,7 @@ export const checkInGuest = mutation({
     email: v.string(),
     phone: v.optional(v.string()),
     hostUserId: v.string(),
+    guestType: v.optional(guestTypeValidator),
     visitorId: v.optional(v.string()),
     browser: v.optional(v.string()),
   },
@@ -470,6 +685,7 @@ export const checkInGuest = mutation({
       guestUserId,
       hostUserId: args.hostUserId,
       admittedBy: scannerId,
+      guestType: args.guestType,
       visitorId: args.visitorId,
       browser: args.browser,
     });
@@ -487,6 +703,7 @@ export const checkInExistingGuest = mutation({
   args: {
     guestUserId: v.string(),
     hostUserId: v.string(),
+    guestType: v.optional(guestTypeValidator),
     visitorId: v.optional(v.string()),
     browser: v.optional(v.string()),
   },
@@ -509,6 +726,7 @@ export const checkInExistingGuest = mutation({
       guestUserId: args.guestUserId,
       hostUserId: args.hostUserId,
       admittedBy: scannerId,
+      guestType: args.guestType,
       visitorId: args.visitorId,
       browser: args.browser,
     });

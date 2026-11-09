@@ -32,8 +32,11 @@ export const seedRoles = mutation({
         "booking:create",
         "booking:update",
         "booking:delete",
+        "plans:manage",
         "feedback:update",
         "feedback:delete",
+        "inventory:manage",
+        "inventory:sell",
       ],
     });
 
@@ -147,6 +150,21 @@ const permissions = [
     name: "kpis:manage",
     description: "Create and manage KPI presets",
     category: "KPIs",
+  },
+  {
+    name: "plans:manage",
+    description: "Create, edit and delete access plans",
+    category: "Pricing",
+  },
+  {
+    name: "inventory:manage",
+    description: "Manage the product catalogue and units",
+    category: "Inventory",
+  },
+  {
+    name: "inventory:sell",
+    description: "Record sales and view the sales list",
+    category: "Inventory",
   },
 ];
 

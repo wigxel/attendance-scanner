@@ -2,6 +2,7 @@
 
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { CalendarCaption } from "./AttendanceCalendar";
 
 interface DateCalendarProps {
   days: Date[];
@@ -30,6 +31,7 @@ export function DateCalendar({
         // onSelect={setDate}
         month={month}
         onMonthChange={setMonth}
+        components={{ Caption: () => <CalendarCaption /> }}
         className="p-3 w-full"
       />
     </div>

@@ -9,8 +9,8 @@ import { DateParse } from "@/lib/date.helpers";
 import { O } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
 import type { BookingWithDetails } from "@/types";
-import { RangePreviewSimple } from "./BookingCalendar";
 import { CustomerAvatar } from "./customers";
+import { RangePreviewSimple } from "./RangePreview";
 
 export function BookingCard({
   booking,

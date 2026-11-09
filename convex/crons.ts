@@ -30,6 +30,15 @@ crons.interval(
   {},
 );
 
+// retry sweep: notifications.send also runs this immediately after queueing,
+// so this is only the safety net for failed/stuck rows
+crons.interval(
+  "drain notification queue",
+  { minutes: 1 },
+  internal.notificationSender.deliver,
+  {},
+);
+
 crons.interval(
   "cleanup expired pending bookings",
   { minutes: 5 },

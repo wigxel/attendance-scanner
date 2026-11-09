@@ -7,13 +7,14 @@ import { Check } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useState } from "react";
-import BookingCalendar, { RangePreview } from "@/components/BookingCalendar";
+import BookingCalendar from "@/components/BookingCalendar";
 import { DestroyFutureStateOnReserve } from "@/components/DestroyFutureState";
 import { DynamicSeatLayout } from "@/components/DynamicSeatLayout";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { AppLoader, AppSpinner } from "@/components/loader";
 import PendingBookingsModal from "@/components/PendingBookingsModal";
+import { RangePreview } from "@/components/RangePreview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,35 +27,38 @@ import { cn, formatTime } from "@/lib/utils";
 import { SelectedSeats } from "./components/seats";
 import { setActiveTab, useBookingStore } from "./store";
 
-function BookingStepTrigger({
-  value,
-  label,
-  stepNumber,
-  isCompleted,
-  isActive,
-  canShowCheckmark = true,
-}: {
+interface BookingStepTriggerProps {
   value: string;
   label: string;
   stepNumber: number;
   isCompleted: boolean;
   isActive: boolean;
   canShowCheckmark?: boolean;
-}) {
+}
+
+function BookingStepTrigger(props: BookingStepTriggerProps) {
+  const {
+    value,
+    label,
+    stepNumber,
+    isCompleted,
+    isActive,
+    canShowCheckmark = true,
+  } = props;
   const isCurrentlyActive = isActive;
   const showCheckmark = isCompleted && canShowCheckmark;
 
   return (
     <TabsTrigger
       value={value}
-      className="flex-1 data-[state=active]:bg-transparent !shadow-none data-[state=inactive]:bg-transparent flex flex-col items-center justify-center p-0 gap-2 relative z-10"
+      className="flex-1 data-[state=active]:bg-transparent shadow-none! border-none! bg-transparent! data-[state=inactive]:bg-transparent flex flex-col items-center justify-center p-0 gap-2 relative z-10"
     >
       <div
         className={cn(
           "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors duration-300",
           showCheckmark
             ? "text-muted-foreground border"
-            : "bg-gray-200 text-gray-500",
+            : "bg-background-lv1 text-gray-500",
           isCurrentlyActive ? "bg-[#0000FF] text-white" : "",
         )}
       >
@@ -62,7 +66,7 @@ function BookingStepTrigger({
       </div>
       <span
         className={`text-xs font-medium transition-colors duration-300
-          ${isCurrentlyActive ? "text-gray-900" : "text-gray-500"}
+          ${isCurrentlyActive ? "text-foreground" : "text-muted-foreground"}
         `}
       >
         {label}
@@ -158,7 +162,7 @@ function Content() {
             canShowCheckmark={false}
           />
           {/* progress bar */}
-          <div className="absolute bottom-[-2px] left-0 h-px w-full bg-gray-200" />
+          <div className="absolute bottom-[-2px] left-0 h-px w-full bg-background-lv1" />
 
           <div
             className={`absolute bottom-[-2px] left-0 h-px bg-[#0000FF] transition-all duration-300 ease-in-out rounded-r-full
@@ -204,7 +208,7 @@ function PickSeatTab() {
 
   if (isLoading) {
     return (
-      <div className="h-96 bg-(--background-lv1) rounded-lg flex justify-center items-center">
+      <div className="h-96 bg-background-lv1 rounded-lg flex justify-center items-center">
         <AppLoader />
       </div>
     );
@@ -215,13 +219,13 @@ function PickSeatTab() {
   if (seats.length === 0) {
     return (
       <div className="h-96 bg-gray-100 rounded-lg flex justify-center items-center">
-        <p className="text-gray-600">No seats available</p>
+        <p className="text-muted-foreground">No seats available</p>
       </div>
     );
   }
 
   return (
-    <div className="p-3 mb-3 -mx-4 bg-gray-100 min-h-[400px] rounded-lg">
+    <div className="p-3 mb-3 -mx-4 min-h-100 bg-background-lv1 rounded-lg">
       <DynamicSeatLayout
         seats={seats}
         selectedSeatNumbers={selectedSeatNumbers}
@@ -334,44 +338,44 @@ function MakePaymentTab() {
   return (
     <>
       <div className="p-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Complete payment within 10 minutes or your booking will be
           automatically canceled.
         </p>
       </div>
 
-      <div className="bg-white mb-8 flex flex-col gap-6">
+      <div className="bg-background mb-8 flex flex-col gap-6">
         {user ? (
-          <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-2">
+          <div className="border-border bg-background-lv1 border rounded-lg p-4 flex flex-col gap-2">
             {user.fullName && (
               <div>
-                <p className="text-sm text-gray-600">Full name</p>
-                <div className="font-medium text-gray-900 mt-1">
+                <p className="text-sm text-muted-foreground">Full name</p>
+                <div className="font-medium text-foreground mt-1">
                   {user.fullName}
                 </div>
               </div>
             )}
             {user.phoneNumbers.length > 0 && (
               <div>
-                <p className="text-sm text-gray-600">Phone</p>
-                <div className="font-medium text-gray-900 mt-1">
+                <p className="text-sm text-muted-foreground">Phone</p>
+                <div className="font-medium text-foreground mt-1">
                   {user.phoneNumbers[0]?.phoneNumber}
                 </div>
               </div>
             )}
             {user.emailAddresses.length > 0 && (
               <div>
-                <p className="text-sm text-gray-600">Email</p>
-                <div className="font-medium text-gray-900 mt-1">
+                <p className="text-sm text-muted-foreground">Email</p>
+                <div className="font-medium text-foreground mt-1">
                   {user.emailAddresses[0].emailAddress}
                 </div>
               </div>
             )}
           </div>
         ) : (
-          <div className="border-gray-200 border rounded-lg p-4 flex flex-col gap-6">
-            <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse mb-2" />
-            <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse" />
+          <div className="border-border bg-background-lv1 border rounded-lg p-4 flex flex-col gap-6">
+            <div className="h-6 bg-background-lv1 rounded w-1/2 animate-pulse mb-2" />
+            <div className="h-6 bg-background-lv1 rounded w-3/4 animate-pulse" />
           </div>
         )}
 
@@ -394,9 +398,9 @@ function MakePaymentTab() {
           />
         </section>
 
-        <ul className="border-gray-200 divide-y divide-(--border) border rounded-lg flex flex-col *:py-2 *:px-4">
+        <ul className="border-border bg-background divide-y divide-border border rounded-lg flex flex-col *:py-2 *:px-4">
           <li className="flex justify-between items-center">
-            <p className="text-muted-foreground">Payment Status</p>
+            <p className="text-muted-foreground">Payment status</p>
             <p>
               {paymentStatus === "pending" || paymentStatus === "failed"
                 ? "Not Paid"

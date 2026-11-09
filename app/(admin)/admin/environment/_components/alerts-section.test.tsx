@@ -65,7 +65,7 @@ describe("AlertsSection", () => {
     mockQuery([ALERT], VAPID_KEY);
     const html = renderToStaticMarkup(<AlertsSection />);
     expect(html).toContain("Temperature");
-    expect(html).toContain("avg 46.3°C (limit 45) — high breach");
+    expect(html).toContain("Avg 46.3°C (limit 45) — high breach");
     expect(html).toContain("bg-amber-500");
     expect(html).toContain("Acknowledge");
   });

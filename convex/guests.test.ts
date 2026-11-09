@@ -3,6 +3,7 @@ import aggregateTest from "@convex-dev/aggregate/test";
 import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { api, components } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import aclSchema from "./components/acl/schema";
 import { findOrCreateUser } from "./myFunctions";
 import {
@@ -280,8 +281,36 @@ describe("insertGuestVisit", () => {
         .unique(),
     );
 
-    expect(row?.access.visiting).toEqual({ hostUserId });
+    expect(row?.access.visiting).toEqual({
+      hostUserId,
+      guestType: "visitor",
+    });
     expect(row?.admitted_by).toBe("staff-1");
+  });
+
+  it("records an explicit guest type", async () => {
+    const t = convexTest(schema, modules);
+    aggregateTest.register(t, "customerStats");
+
+    const { hostUserId, guestUserId } = await seedHostAndGuest(t);
+
+    await t.run((ctx) =>
+      insertGuestVisit(ctx, {
+        guestUserId,
+        hostUserId,
+        admittedBy: "staff-1",
+        guestType: "student",
+      }),
+    );
+
+    const row = await t.run(async (ctx) =>
+      ctx.db
+        .query("daily_register")
+        .filter((q) => q.eq(q.field("userId"), guestUserId))
+        .unique(),
+    );
+
+    expect(row?.access.visiting?.guestType).toBe("student");
   });
 
   it("rejects a guest who is their own host", async () => {
@@ -327,5 +356,205 @@ describe("insertGuestVisit", () => {
         }),
       ),
     ).rejects.toThrow("This person is already registered for today.");
+  });
+});
+
+describe("markTodaysVisitAsGuest", () => {
+  const paidAccess = {
+    _v: "2",
+    kind: "paid",
+    planId: "daily",
+    planPriceInKobo: 300000,
+    amountInKobo: 300000,
+    paymentMethod: "cash",
+    duration: { type: "fullday" },
+  } as const;
+
+  type SeedOverrides = {
+    access?: unknown;
+    timestamp?: string;
+    reserved?: boolean;
+  };
+
+  async function seedVisit(
+    t: ReturnType<typeof convexTest>,
+    overrides: SeedOverrides = {},
+  ) {
+    return t.run(async (ctx) => {
+      const staffUserId = await ctx.db.insert("users", {
+        email: "staff@example.com",
+        isAnonymous: false,
+        name: "Staff Member",
+      });
+      const hostUserId = await ctx.db.insert("users", {
+        email: "florence@example.com",
+        isAnonymous: false,
+        name: "Florence Host",
+      });
+      await ctx.db.insert("profile", {
+        id: hostUserId,
+        email: "florence@example.com",
+        firstName: "Florence",
+        lastName: "Host",
+        occupation: "None",
+      });
+      await ctx.db.insert("daily_register", {
+        userId: hostUserId,
+        timestamp: new Date().toISOString(),
+        source: "web",
+        device: makeDevice(),
+        access: { kind: "free" },
+        admitted_by: staffUserId,
+      });
+
+      const customerUserId = await ctx.db.insert("users", {
+        email: "customer@example.com",
+        isAnonymous: false,
+        name: "Customer Person",
+      });
+
+      let ticketId: Id<"tickets"> | undefined;
+      if (overrides.reserved) {
+        const bookingId = await ctx.db.insert("bookings", {
+          userId: customerUserId,
+          seatIds: [],
+          duration: 1,
+          startDate: new Date().toISOString(),
+          endDate: new Date().toISOString(),
+          durationType: "day",
+          pricePerSeat: 300000,
+          amount: 300000,
+          status: "confirmed",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+        ticketId = await ctx.db.insert("tickets", {
+          bookingId,
+          seatId: "unassigned",
+          holderUserId: customerUserId,
+          status: "claimed",
+        });
+      }
+
+      await ctx.db.insert("daily_register", {
+        userId: customerUserId,
+        timestamp: overrides.timestamp ?? new Date().toISOString(),
+        source: "web",
+        device: makeDevice("visitor-2"),
+        access: (overrides.access ?? paidAccess) as never,
+        admitted_by: staffUserId,
+        ticketId,
+      });
+
+      return { staffUserId, hostUserId, customerUserId };
+    });
+  }
+
+  const authed = (t: ReturnType<typeof convexTest>) =>
+    t.withIdentity({ subject: "staff", email: "staff@example.com" });
+
+  const getCustomerAccess = (
+    t: ReturnType<typeof convexTest>,
+    userId: string,
+  ) =>
+    t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("daily_register")
+        .withIndex("user", (q) => q.eq("userId", userId))
+        .unique();
+      return row?.access;
+    });
+
+  it("keeps the plan and payment fields and stamps the guest link", async () => {
+    const t = convexTest(schema, modules);
+    const { staffUserId, hostUserId, customerUserId } = await seedVisit(t);
+    await grantStaffCheckin(t, staffUserId);
+
+    await authed(t).mutation(api.register.markTodaysVisitAsGuest, {
+      userId: customerUserId,
+      hostUserId,
+    });
+
+    expect(await getCustomerAccess(t, customerUserId)).toEqual({
+      ...paidAccess,
+      visiting: { hostUserId, guestType: "visitor" },
+    });
+  });
+
+  it("records the chosen guest type", async () => {
+    const t = convexTest(schema, modules);
+    const { staffUserId, hostUserId, customerUserId } = await seedVisit(t);
+    await grantStaffCheckin(t, staffUserId);
+
+    await authed(t).mutation(api.register.markTodaysVisitAsGuest, {
+      userId: customerUserId,
+      hostUserId,
+      guestType: "student",
+    });
+
+    expect(await getCustomerAccess(t, customerUserId)).toEqual({
+      ...paidAccess,
+      visiting: { hostUserId, guestType: "student" },
+    });
+  });
+
+  it("rejects a host who is not checked in today", async () => {
+    const t = convexTest(schema, modules);
+    const { staffUserId, customerUserId } = await seedVisit(t);
+    await grantStaffCheckin(t, staffUserId);
+
+    await expect(
+      authed(t).mutation(api.register.markTodaysVisitAsGuest, {
+        userId: customerUserId,
+        hostUserId: "not-checked-in",
+      }),
+    ).rejects.toThrow("Host customer not found.");
+
+    expect(await getCustomerAccess(t, customerUserId)).toEqual(paidAccess);
+  });
+
+  it("rejects a customer hosting themselves", async () => {
+    const t = convexTest(schema, modules);
+    const { staffUserId, customerUserId } = await seedVisit(t);
+    await grantStaffCheckin(t, staffUserId);
+
+    await expect(
+      authed(t).mutation(api.register.markTodaysVisitAsGuest, {
+        userId: customerUserId,
+        hostUserId: customerUserId,
+      }),
+    ).rejects.toThrow("A customer cannot be their own guest.");
+  });
+
+  it("leaves reservations read-only", async () => {
+    const t = convexTest(schema, modules);
+    const { staffUserId, hostUserId, customerUserId } = await seedVisit(t, {
+      reserved: true,
+    });
+    await grantStaffCheckin(t, staffUserId);
+
+    await expect(
+      authed(t).mutation(api.register.markTodaysVisitAsGuest, {
+        userId: customerUserId,
+        hostUserId,
+      }),
+    ).rejects.toThrow("Cannot modify a reserved booking.");
+
+    expect(await getCustomerAccess(t, customerUserId)).toEqual(paidAccess);
+  });
+
+  it("rejects a customer with no row in today's register", async () => {
+    const t = convexTest(schema, modules);
+    const { staffUserId, hostUserId, customerUserId } = await seedVisit(t, {
+      timestamp: "2020-01-01T09:00:00.000Z",
+    });
+    await grantStaffCheckin(t, staffUserId);
+
+    await expect(
+      authed(t).mutation(api.register.markTodaysVisitAsGuest, {
+        userId: customerUserId,
+        hostUserId,
+      }),
+    ).rejects.toThrow("Customer not found in today's register.");
   });
 });

@@ -1,11 +1,17 @@
 import aggregate from "@convex-dev/aggregate/convex.config";
 import { defineApp } from "convex/server";
 import access_control_list from "./components/acl/convex.config";
+import inbox from "./components/inbox/convex.config";
+import inventory from "./components/inventory/convex.config";
+import notifications from "./components/notifications/convex.config";
 import roomMetrics from "./components/roomMetrics/convex.config";
 
 const app = defineApp();
 app.use(access_control_list);
 app.use(roomMetrics);
+app.use(notifications);
+app.use(inbox);
+app.use(inventory);
 app.use(aggregate);
 app.use(aggregate, { name: "customerStats" });
 

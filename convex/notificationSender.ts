@@ -1,0 +1,318 @@
+"use node";
+import { api, components, internal } from "./_generated/api";
+import { type ActionCtx, internalAction } from "./_generated/server";
+
+// Drains the notifications component queue. Runs on a 1-minute cron and
+// right after anything enqueues (notifications.send schedules it). Email is
+// ZeptoMail over plain fetch; push is the same web-push fan-out the
+// temperature alerts used before.
+
+const BATCH = 20;
+
+type DeliveryRow = {
+  _id: string;
+  recipientKey: string;
+  channel: "push" | "email";
+  to?: string;
+  title: string;
+  body: string;
+  url?: string;
+};
+
+type SubscriptionRow = { endpoint: string; p256dh: string; auth: string };
+
+// Broadcast deliveries (`broadcast:<topic>`) fan out to every subscription;
+// a per-user delivery (`user:<id>`) only reaches that user's devices.
+const BROADCAST_PREFIX = "broadcast:";
+
+const isBroadcast = (recipientKey: string) =>
+  recipientKey.startsWith(BROADCAST_PREFIX);
+
+type SubscriptionFor = (recipientKey: string) => Promise<SubscriptionRow[]>;
+
+// retryable=false means retrying cannot help (bad config, no recipient),
+// so the row goes straight to "failed" with the reason logged.
+class SendError extends Error {
+  constructor(
+    message: string,
+    readonly retryable: boolean,
+  ) {
+    super(message);
+  }
+}
+
+const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
+export const deliver = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const rows = (await ctx.runMutation(components.notifications.index.claim, {
+      now: Date.now(),
+      limit: BATCH,
+    })) as DeliveryRow[];
+
+    if (rows.length === 0) return null;
+
+    const pushRows = rows.filter((row) => row.channel === "push");
+    const push = pushRows.length ? await setupPush() : null;
+    const subscriptions = subscriptionsByRecipient(ctx);
+
+    for (const row of rows) {
+      try {
+        await deliverRow(ctx, row, push, subscriptions);
+        await ctx.runMutation(components.notifications.index.markSent, {
+          deliveryId: row._id,
+        });
+      } catch (error) {
+        await ctx.runMutation(components.notifications.index.markFailed, {
+          deliveryId: row._id,
+          error: errorMessage(error),
+          retryable: error instanceof SendError ? error.retryable : true,
+        });
+      }
+    }
+
+    // more waiting rows than we drained this pass
+    if (rows.length === BATCH) {
+      await ctx.scheduler.runAfter(0, internal.notificationSender.deliver, {});
+    }
+    return null;
+  },
+});
+
+type PushSetup =
+  | { webpush: Awaited<ReturnType<typeof loadWebpush>>; failure?: undefined }
+  | { webpush?: undefined; failure: SendError };
+
+// one query per distinct recipient per drain, however many rows it has
+const subscriptionsByRecipient = (ctx: ActionCtx): SubscriptionFor => {
+  const cache = new Map<string | undefined, SubscriptionRow[]>();
+
+  return async (recipientKey) => {
+    // broadcasts fan out to every device, keyed or not
+    const key = isBroadcast(recipientKey) ? undefined : recipientKey;
+    const cached = cache.get(key);
+    if (cached) return cached;
+
+    const rows = (await ctx.runQuery(
+      api.push.listSubscriptions,
+      key === undefined ? {} : { recipientKey: key },
+    )) as SubscriptionRow[];
+
+    cache.set(key, rows);
+    return rows;
+  };
+};
+
+const deliverRow = async (
+  ctx: ActionCtx,
+  row: DeliveryRow,
+  push: PushSetup | null,
+  subscriptionsFor: SubscriptionFor,
+) => {
+  if (row.channel === "push") return sendPush(ctx, push, subscriptionsFor, row);
+  return sendEmail(ctx, row);
+};
+
+// a missing key is a config problem, not a crash: every push row fails once
+// with a readable reason instead of killing the whole drain
+async function setupPush(): Promise<PushSetup> {
+  try {
+    return { webpush: await loadWebpush() };
+  } catch (error) {
+    return { failure: asSendError(error) };
+  }
+}
+
+const asSendError = (error: unknown) =>
+  error instanceof SendError
+    ? error
+    : new SendError(errorMessage(error), false);
+
+async function loadWebpush() {
+  // dynamic import: vitest's edge-runtime can't load web-push's node builtins
+  // at import time. This file is imported by the test glob but only executed
+  // in real node actions. web-push is CommonJS, so its API may hang off the
+  // default export depending on interop.
+  const publicKey = process.env.VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  if (!publicKey || !privateKey) {
+    throw new SendError("VAPID keys are not set", false);
+  }
+
+  const webpushModule = await import("web-push");
+  const webpush = (
+    "default" in webpushModule ? webpushModule.default : webpushModule
+  ) as typeof import("web-push");
+
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT ?? "mailto:admin@example.com",
+    publicKey,
+    privateKey,
+  );
+  return webpush;
+}
+
+// Broadcasts go to every stored subscription. A per-user delivery goes to
+// that user's keyed subscriptions only; having no device registered is not a
+// delivery failure, so the row is marked sent rather than retried forever.
+async function sendPush(
+  ctx: ActionCtx,
+  push: PushSetup | null,
+  subscriptionsFor: SubscriptionFor,
+  row: DeliveryRow,
+) {
+  if (!push) throw new SendError("web-push is unavailable", false);
+  if (push.failure) throw push.failure;
+  const webpush = push.webpush;
+
+  const subscriptions = await subscriptionsFor(row.recipientKey);
+  if (subscriptions.length === 0) {
+    if (isBroadcast(row.recipientKey)) {
+      throw new SendError("no push subscriptions", false);
+    }
+    console.warn(`push: no subscriptions for ${row.recipientKey}`);
+    return;
+  }
+
+  const payload = JSON.stringify({
+    title: row.title,
+    detail: row.body,
+    url: row.url,
+  });
+
+  let delivered = 0;
+  let retryable = false;
+
+  for (const subscription of subscriptions) {
+    try {
+      await webpush.sendNotification(
+        {
+          endpoint: subscription.endpoint,
+          keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+        },
+        payload,
+      );
+      delivered++;
+    } catch (error) {
+      const statusCode = (error as { statusCode?: number }).statusCode;
+      if (statusCode === 404 || statusCode === 410) {
+        // browser subscription is gone — drop it, do not retry
+        await ctx.runMutation(api.push.unsubscribe, {
+          endpoint: subscription.endpoint,
+        });
+        continue;
+      }
+      retryable = true;
+      console.error(
+        `push send failed (${statusCode ?? "unknown"}): ${errorMessage(error).slice(0, 200)}`,
+      );
+    }
+  }
+
+  if (delivered === 0 && retryable) {
+    throw new SendError("push delivery failed for every subscription", true);
+  }
+}
+
+// ZeptoMail answers an empty balance with HTTP 429 and code TM_5001/LE_102.
+// Retrying cannot fix it, so the operator needs to see it in the inbox.
+export const isCreditExhausted = (status: number, detail: string) =>
+  status === 429 && /TM_5001|LE_102|credit exhausted/i.test(detail);
+
+const ALERT_PREFIX = "zeptomail-out-of-credit";
+
+// One inbox row per recipient per day: the drain retries every minute, so the
+// dedupe keeps an empty balance from filling the bell. ponytail: UTC day
+// bucket, switch to an episode id if recovery-and-recurrence in one day matters.
+async function alertCreditExhausted(ctx: ActionCtx, detail: string) {
+  try {
+    const recipientKeys = (await ctx.runQuery(
+      internal.notifications.alertRecipientKeys,
+      {},
+    )) as string[];
+    const day = new Date().toISOString().slice(0, 10);
+
+    for (const recipientKey of recipientKeys) {
+      await ctx.runMutation(internal.notifications.send, {
+        recipientKey,
+        channels: ["inapp"],
+        title: "Email delivery is paused: ZeptoMail is out of credits",
+        body: `ZeptoMail rejected a send with "Credit exhausted" (${detail}). Transactional email will keep failing until the account is topped up.`,
+        dedupeKey: `${ALERT_PREFIX}:${recipientKey}:${day}`,
+        severity: "critical",
+      });
+    }
+  } catch (error) {
+    // alerting is best-effort: the delivery row still has to be marked failed
+    console.error(`zeptomail credit alert failed: ${errorMessage(error)}`);
+  }
+}
+
+async function sendEmail(ctx: ActionCtx, row: DeliveryRow) {
+  const token = process.env.ZEPTOMAIL_TOKEN;
+  const fromAddress = process.env.ZEPTOMAIL_FROM_ADDRESS;
+  if (!token) throw new SendError("ZEPTOMAIL_TOKEN is not set", false);
+  if (!fromAddress) {
+    throw new SendError("ZEPTOMAIL_FROM_ADDRESS is not set", false);
+  }
+  if (!row.to) throw new SendError("delivery has no recipient email", false);
+
+  const response = await fetch(zeptoEndpoint(), {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Zoho-enczapikey ${token}`,
+    },
+    body: JSON.stringify({
+      from: {
+        address: fromAddress,
+        name: process.env.ZEPTOMAIL_FROM_NAME ?? "Attendly",
+      },
+      to: [{ email_address: { address: row.to, name: row.to } }],
+      subject: row.title,
+      htmlbody: renderEmail(row),
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = (await response.text()).slice(0, 200);
+    if (isCreditExhausted(response.status, detail)) {
+      await alertCreditExhausted(ctx, detail);
+    }
+    // 4xx other than 429 is a bad request — retrying will not help
+    const retryable = response.status >= 500 || response.status === 429;
+    throw new SendError(`zeptomail ${response.status}: ${detail}`, retryable);
+  }
+}
+
+// ZeptoMail takes the regional host, e.g. `api.zeptomail.com/` — scheme and
+// trailing slash are optional so the existing .env values work unchanged.
+const zeptoEndpoint = () => {
+  const base = process.env.ZEPTOMAIL_URL ?? "api.zeptomail.com/";
+  const withScheme = base.startsWith("http") ? base : `https://${base}`;
+  return `${withScheme.replace(/\/?$/, "/")}v1.1/email`;
+};
+
+function renderEmail(row: DeliveryRow) {
+  const link = row.url
+    ? `<p><a href="${escapeHtml(absoluteUrl(row.url))}">Open</a></p>`
+    : "";
+  const body = escapeHtml(row.body).replace(/\n/g, "<br>");
+  return `<div style="font-family:system-ui,sans-serif;line-height:1.5"><h2>${escapeHtml(row.title)}</h2><p>${body}</p>${link}</div>`;
+}
+
+const absoluteUrl = (url: string) => {
+  if (url.startsWith("http")) return url;
+  const origin = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
+  return `${origin}${url}`;
+};
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");

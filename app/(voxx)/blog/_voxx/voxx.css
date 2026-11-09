@@ -7,6 +7,7 @@
   --voxx-link: #2563eb;
   --voxx-radius: 0.5rem;
   --voxx-font-mono: var(--font-geist-mono);
+  --voxx-text-foreground: var(--foreground);
   --voxx-font-heading: var(--font-heading);
   --voxx-font: var(--font-geist-sans);
 
@@ -40,6 +41,7 @@
   --voxx-muted-fg: #a1a1aa;
   --voxx-border: #27272a;
   --voxx-link: #60a5fa;
+  --voxx-text-foreground: hsl(from var(--foreground) h s 90);
 }
 
 .voxx-prose {
@@ -94,7 +96,7 @@
 .voxx-prose p {
   margin: 0 0 1.25rem;
   font-weight: 300;
-  color: var(--muted-foreground);
+  color: var(--voxx-text-foreground);
 }
 
 .voxx-prose a {
@@ -117,7 +119,7 @@
   margin: 0.375rem 0;
   font-weight: 300;
   display: list-item;
-  color: var(--muted-foreground, var(--voxx-muted-fg));
+  color: var(--voxx-text-foreground);
 }
 
 .voxx-prose blockquote {
@@ -899,7 +901,7 @@
 
 .voxx-pager__label {
   font-size: 0.75rem;
-  color: var(--muted-foreground, var(--voxx-muted-fg));
+  color: var(--voxx-text-foreground);
 }
 
 .voxx-pager__title {
@@ -911,6 +913,10 @@
   color: var(--primary, var(--voxx-link));
 }
 
-.voxx-prose a {
+.voxx-prose a[href] {
   color: var(--foreground);
+}
+
+.voxx-prose *:is(ol) {
+  list-style: numeric;
 }

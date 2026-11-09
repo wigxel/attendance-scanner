@@ -393,7 +393,7 @@ export function VotingSection() {
     <Card className="relative">
       <Image
         alt="3d logo"
-        src="/images/3d-bubble.png"
+        src="/images/3d-bubble.webp"
         width={500}
         height={500}
         className="absolute w-[2rem] right-8 scale-[2.2] top-0 origin-bottom"
@@ -472,7 +472,7 @@ function VoteButton({
   );
 }
 
-type SuggestionItemProps = { suggestion: Suggestion }
+type SuggestionItemProps = { suggestion: Suggestion };
 
 function SuggestionItem({ suggestion }: SuggestionItemProps) {
   return (

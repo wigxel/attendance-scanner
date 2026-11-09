@@ -88,7 +88,7 @@ We can never have enough of them.
 
 A community of makers is waiting for you, and don’t worry, we have everything you need to keep your curiosity burning.
 
-Join our [Whatsapp Community](https://chat.whatsapp.com/KDQZCN58c92Fi1AGRXMrOu?mode=gi_t).
+Join our [Whatsapp Community](https://chat.whatsapp.com/ESEEtcMAKkX2vxaVU8UTkG?mode=gi_t).
 
 If anything here resonates with you, then you already understand what InSpace is about. If reading this article made you think of someone, consider sharing this link with that person. You'll be doing them a huge favour.
 

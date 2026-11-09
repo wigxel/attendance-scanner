@@ -3,8 +3,11 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
   accessPlanStruct,
+  checkInModeValidator,
   durationTypeConvexSchema,
   featureRequestStatus,
+  guestTypeValidator,
+  paymentChannelValidator,
 } from "./shared";
 
 const accessPlans = defineTable({
@@ -15,6 +18,18 @@ const accessPlans = defineTable({
   description: v.string(),
   features: v.array(v.string()),
 }).index("plan_key", ["key"]);
+
+// Admin-editable catalogue of access-plan features. `name` is the value stored
+// in `accessPlans.features`; the rest is display metadata.
+const planFeatures = defineTable({
+  name: v.string(),
+  label: v.string(),
+  description: v.string(),
+  category: v.string(),
+  isActive: v.boolean(),
+})
+  .index("by_name", ["name"])
+  .index("by_active", ["isActive"]);
 
 const daily_register = defineTable({
   userId: v.string(), // v.id("profile"),
@@ -36,7 +51,12 @@ const daily_register = defineTable({
    * sync with it. `hostUserId` is the `profile`.`id` of the customer being
    * visited.
    */
-  visiting: v.optional(v.object({ hostUserId: v.string() })),
+  visiting: v.optional(
+    v.object({
+      hostUserId: v.string(),
+      guestType: v.optional(guestTypeValidator),
+    }),
+  ),
 })
   .index("admitted_by", ["admitted_by"])
   .index("unique_visitor", ["device.visitorId"])
@@ -65,6 +85,8 @@ const profile = defineTable({
   occupation: v.union(v.id("occupations"), v.literal("None")),
   /** @deprecated No longer needed. use ACL utils */
   role: v.optional(v.string()),
+  /** Per-customer override. Falls back to `config.default_check_in_mode`. */
+  checkInMode: v.optional(checkInModeValidator),
 })
   .index("occupation", ["occupation"])
   .index("by_user_id", ["id"])
@@ -110,6 +132,7 @@ const bookings = defineTable({
     v.literal("used-up"),
   ),
   paymentReference: v.optional(v.string()),
+  channel: v.optional(paymentChannelValidator),
   created_by: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
@@ -267,13 +290,17 @@ const kpiInstances = defineTable({
 }).index("by_date", ["date"]);
 
 // Browser web-push subscriptions (PWA). One row per browser endpoint;
-// subscribe upserts by endpoint. No user linkage — fan-out to all.
+// subscribe upserts by endpoint. `recipientKey` (`user:<id>`) is absent on
+// rows stored before it existed — those still receive broadcast deliveries.
 const pushSubscriptions = defineTable({
   endpoint: v.string(),
   p256dh: v.string(),
   auth: v.string(),
+  recipientKey: v.optional(v.string()),
   createdAt: v.number(),
-}).index("by_endpoint", ["endpoint"]);
+})
+  .index("by_endpoint", ["endpoint"])
+  .index("by_recipient_key", ["recipientKey"]);
 
 export default defineSchema({
   // preserve the users table because of migration from Convex Auth -> Clerk Auth.
@@ -282,6 +309,7 @@ export default defineSchema({
   profile,
   featureRequest,
   accessPlans,
+  planFeatures,
   occupations,
   featureVotes,
   dailyAttendanceMetrics,

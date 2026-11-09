@@ -24,10 +24,15 @@ export const useSeats = () => {
   const endDateString = useBookingStore((state) => state.endDate);
   const endDate = endDateString ? new Date(endDateString) : null;
 
-  const availableSeats = useQuery(api.seats.getAllSeatsForDateRange, {
-    startDate: selectedDate ? formatDateToLocalISO(selectedDate) : "",
-    endDate: endDate ? formatDateToLocalISO(endDate) : "",
-  });
+  const availableSeats = useQuery(
+    api.seats.getAllSeatsForDateRange,
+    selectedDate && endDate
+      ? {
+          startDate: formatDateToLocalISO(selectedDate),
+          endDate: formatDateToLocalISO(endDate),
+        }
+      : "skip",
+  );
 
   const isLoading = availableSeats === undefined;
 

@@ -39,7 +39,8 @@ export function HistorySection() {
         <CardTitle>History</CardTitle>
         <CardDescription>Last {chartData.length} buckets</CardDescription>
       </CardHeader>
-      <CardContent>
+
+      <CardContent className="pt-8">
         {chartData.length === 0 ? (
           <div className="text-sm text-muted-foreground">No history yet</div>
         ) : (
@@ -48,7 +49,7 @@ export function HistorySection() {
               temperature: { label: "Temp °C", color: "#f59e0b" },
               humidity: { label: "Hum %", color: "#3b82f6" },
             }}
-            className="h-[250px] w-full"
+            className="h-full w-full"
           >
             <LineChart data={chartData}>
               <CartesianGrid vertical={false} />

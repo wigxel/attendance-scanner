@@ -1,6 +1,7 @@
 "use client";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Armchair, CalendarIcon, EyeIcon, MoreVertical } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,7 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { CheckInMode } from "@/convex/shared";
 import { safeStr, serialNo } from "@/lib/data.helpers";
+import { CHECK_IN_MODE_LABELS } from "./check-in-mode-select";
 
 export type UserRow = {
   id: string;
@@ -22,12 +25,25 @@ export type UserRow = {
   role: string;
   visitCount: number;
   eligible: boolean;
+  checkInMode: CheckInMode | null;
 };
 
 interface ColumnActionsProps {
   onViewProfile: (userId: string) => void;
   onCreateBooking: (userId: string, userName: string) => void;
   onCreateBookingWithSeat: (userId: string) => void;
+}
+
+function CheckInModeBadge({ mode }: { mode: CheckInMode | null }) {
+  const label = CHECK_IN_MODE_LABELS[mode ?? "auto"];
+  const variant =
+    mode === "one_tap"
+      ? "success"
+      : mode === "self_checkin"
+        ? "info"
+        : "secondary";
+
+  return <Badge variant={variant}>{label}</Badge>;
 }
 
 export function createColumns({
@@ -78,6 +94,11 @@ export function createColumns({
       accessorKey: "visitCount",
       header: "Visit Count",
       cell: ({ row }) => <span>{row.getValue("visitCount")}</span>,
+    },
+    {
+      accessorKey: "checkInMode",
+      header: "Check-in",
+      cell: ({ row }) => <CheckInModeBadge mode={row.original.checkInMode} />,
     },
     {
       accessorKey: "eligible",

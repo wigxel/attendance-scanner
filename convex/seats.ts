@@ -32,6 +32,13 @@ async function findOverlappingBookings(
     .collect();
 
   const overlappingBookings = conflictingBookings.filter((booking) => {
+    // ponytail: skip legacy rows with unparseable dates; one bad booking must
+    // not break seat availability for everyone. Clean the data separately.
+    const hasValidDates =
+      Option.isSome(DateParse.try(booking.startDate)) &&
+      Option.isSome(DateParse.try(booking.endDate));
+    if (!hasValidDates) return false;
+
     const cmp = DateRangeImpl.compare({
       bookingRange: booking,
       requestedRange: args,

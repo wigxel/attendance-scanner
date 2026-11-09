@@ -43,6 +43,7 @@ const guestCheckInSchema = z
     lastName: z.string().optional(),
     email: z.string().optional(),
     phone: z.string().optional(),
+    guestType: z.enum(["visitor", "student", "event_attendee"]),
   })
   .superRefine((values, ctx) => {
     const addIssue = (path: string, message: string) =>
@@ -78,6 +79,7 @@ const defaultGuestCheckInState: GuestCheckInFormValues = {
   lastName: "",
   email: "",
   phone: "",
+  guestType: "visitor",
 };
 
 interface GuestCheckInFormProps {
@@ -141,6 +143,46 @@ function HostField({ control, isLoading }: HostFieldProps) {
               </AlertDescription>
             </Alert>
           ) : null}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+export function GuestTypeField({
+  control,
+  isLoading,
+}: {
+  control: Control<GuestCheckInFormValues>;
+  isLoading: boolean;
+}) {
+  return (
+    <FormField
+      control={control}
+      name="guestType"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Guest type</FormLabel>
+          <Select
+            onValueChange={field.onChange}
+            value={field.value}
+            disabled={isLoading}
+          >
+            <FormControl>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              <SelectItem value="visitor">Visitor</SelectItem>
+              <SelectItem value="student">Student</SelectItem>
+              <SelectItem value="event_attendee">Event attendee</SelectItem>
+            </SelectContent>
+          </Select>
+          <FormDescription>
+            Trainings and events are tracked separately from walk-in visitors.
+          </FormDescription>
           <FormMessage />
         </FormItem>
       )}
@@ -293,6 +335,8 @@ export function GuestCheckInForm({
             <HostField control={form.control} isLoading={isLoading} />
           </TabsContent>
         </Tabs>
+
+        <GuestTypeField control={form.control} isLoading={isLoading} />
 
         <div className="flex justify-end gap-2 pt-4">
           {onCancel ? (

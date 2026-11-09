@@ -43,6 +43,32 @@ export const subscriberUpdateAudit = makeAudit<{
   ticketId: Id<"tickets">;
 }>({ action: "register.subscriber-updated", targetType: "daily_register" });
 
+export const guestDismissalAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"daily_register">;
+  userId: string;
+  hostUserId: string;
+  guestType?: string;
+  linkedUserId?: string;
+}>({
+  action: "register.converted-to-regular",
+  targetType: "daily_register",
+  highlights: ["hostUserId", "guestType", "linkedUserId"],
+});
+
+export const guestConversionAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"daily_register">;
+  userId: string;
+  hostUserId: string;
+  guestType: string;
+  previousKind: string;
+}>({
+  action: "register.converted-to-guest",
+  targetType: "daily_register",
+  highlights: ["hostUserId", "guestType"],
+});
+
 export const bookingDeletedAudit = makeAudit<{
   actorId: string;
   targetId: Id<"bookings">;
@@ -81,12 +107,79 @@ export const suggestionDeletedAudit = makeAudit<{
   highlights: ["title"],
 });
 
+export const planCreatedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"accessPlans">;
+  key: string;
+  name: string;
+  price: number;
+  no_of_days: number;
+}>({
+  action: "plan.created",
+  targetType: "accessPlan",
+  highlights: ["key", "name", "price"],
+});
+
+export const planUpdatedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"accessPlans">;
+  key: string;
+  name: string;
+  price: number;
+  no_of_days: number;
+  previousName: string;
+  previousPrice: number;
+  previousNoOfDays: number;
+}>({
+  action: "plan.updated",
+  targetType: "accessPlan",
+  highlights: ["name", "price", "previousPrice"],
+});
+
 export const planDeletedAudit = makeAudit<{
   actorId: string;
   targetId: Id<"accessPlans">;
   key: string;
   name: string;
 }>({ action: "plan.deleted", targetType: "accessPlan", highlights: ["name"] });
+
+export const featureCreatedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"planFeatures">;
+  name: string;
+  label: string;
+  category: string;
+}>({
+  action: "feature.created",
+  targetType: "planFeature",
+  highlights: ["name", "label", "category"],
+});
+
+export const featureUpdatedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"planFeatures">;
+  name: string;
+  label: string;
+  isActive: boolean;
+  previousName: string;
+  previousLabel: string;
+  previousIsActive: boolean;
+}>({
+  action: "feature.updated",
+  targetType: "planFeature",
+  highlights: ["name", "label", "isActive", "previousName", "previousIsActive"],
+});
+
+export const featureDeletedAudit = makeAudit<{
+  actorId: string;
+  targetId: Id<"planFeatures">;
+  name: string;
+  label: string;
+}>({
+  action: "feature.deleted",
+  targetType: "planFeature",
+  highlights: ["name", "label"],
+});
 
 export const permissionDeletedAudit = makeAudit<{
   actorId: string;

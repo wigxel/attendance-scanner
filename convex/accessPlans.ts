@@ -3,8 +3,21 @@ import type { AccessPlan } from "../types";
 import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requirePrivilege } from "./acl";
-import { planDeletedAudit } from "./audits/entities";
+import {
+  planCreatedAudit,
+  planDeletedAudit,
+  planUpdatedAudit,
+} from "./audits/entities";
 import { readId } from "./myFunctions";
+
+function validatePlanInput(price: number, noOfDays: number) {
+  if (price < 0) {
+    throw new ConvexError("Plan price cannot be negative");
+  }
+  if (noOfDays < 1) {
+    throw new ConvexError("Plan duration must be at least 1 day");
+  }
+}
 
 export const getByKey = query({
   args: { planKey: v.string() },
@@ -52,6 +65,10 @@ export const add = mutation({
     features: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "plans:manage");
+
+    validatePlanInput(args.price, args.no_of_days);
+
     const existing = await ctx.db
       .query("accessPlans")
       .withIndex("plan_key", (q) => q.eq("key", args.key))
@@ -61,7 +78,10 @@ export const add = mutation({
       throw new ConvexError(`Plan with key "${args.key}" already exists`);
     }
 
-    const planId = ctx.db.insert("accessPlans", {
+    const actorId = await readId(ctx);
+    if (!actorId) throw new ConvexError("Authentication required.");
+
+    const planId = await ctx.db.insert("accessPlans", {
       key: args.key,
       name: args.name,
       price: args.price,
@@ -69,6 +89,19 @@ export const add = mutation({
       description: args.description ?? "",
       features: args.features ?? [],
     });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.audit.log,
+      planCreatedAudit({
+        actorId,
+        targetId: planId,
+        key: args.key,
+        name: args.name,
+        price: args.price,
+        no_of_days: args.no_of_days,
+      }),
+    );
 
     return planId;
   },
@@ -84,19 +117,43 @@ export const update = mutation({
     features: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    await requirePrivilege(ctx, "plans:manage");
+
+    validatePlanInput(args.price, args.no_of_days);
+
     const existing = await ctx.db.get(args.id);
 
     if (!existing) {
       throw new ConvexError("Plan not found");
     }
 
+    const actorId = await readId(ctx);
+    if (!actorId) throw new ConvexError("Authentication required.");
+
     await ctx.db.patch(args.id, {
       name: args.name,
       price: args.price,
       no_of_days: args.no_of_days,
       description: args.description ?? "",
-      features: args.features ?? [],
+      // Omitted means "unchanged": never wipe the catalogue values by accident.
+      features: args.features ?? existing.features,
     });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.audit.log,
+      planUpdatedAudit({
+        actorId,
+        targetId: args.id,
+        key: existing.key,
+        name: args.name,
+        price: args.price,
+        no_of_days: args.no_of_days,
+        previousName: existing.name,
+        previousPrice: existing.price,
+        previousNoOfDays: existing.no_of_days,
+      }),
+    );
 
     return args.id;
   },

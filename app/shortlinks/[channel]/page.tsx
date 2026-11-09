@@ -8,11 +8,11 @@ export default async function Shortlinks({
   const contact_channel = (await params).channel;
 
   if (contact_channel === "whatsapp") {
-    return redirect("https://wa.me/+2347012007448");
+    return redirect("https://wa.me/+2348136943896");
   }
 
   if (contact_channel === "email")
     return redirect("mailto:business@inspace.ng");
 
-  return "tel:+2347012007448";
+  return "tel:+2348136943896";
 }

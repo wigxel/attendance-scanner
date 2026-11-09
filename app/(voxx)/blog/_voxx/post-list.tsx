@@ -31,8 +31,10 @@ export function PostList({
               <Image
                 src={post.image}
                 alt={`${post.title} cover`}
+                quality={100}
                 width={200}
                 height={200}
+                unoptimized
                 className="w-full mb-6 rounded"
               />
             ) : null}
@@ -50,7 +52,7 @@ export function PostList({
                 </p>
               </div>
 
-              <div className="basis-4/7 flex-shrink-0">
+              <div className="basis-4/7 shrink-0">
                 {post.excerpt ? (
                   <p className="voxx-postcard__excerpt text-xs md:text-sm max-w-[45ch]">
                     {post.excerpt}

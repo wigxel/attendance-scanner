@@ -33,6 +33,12 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { currencyFormatter } from "@/lib/currency.helpers";
 import { safeDict } from "@/lib/data.helpers";
+import {
+  PAYMENT_CHANNELS,
+  type PaymentChannel,
+  type PaymentChannelFilter,
+  paymentChannelLabels,
+} from "@/lib/payment-channel";
 import { cn } from "@/lib/utils";
 import type { DurationGroup } from "@/types";
 import { AttendanceDrawer } from "./AttendanceDrawer";
@@ -80,6 +86,7 @@ type BookingWithCustomer = {
   pricePerSeat: number;
   amount: number;
   status: "pending" | "confirmed" | "cancelled" | "expired" | "used-up";
+  channel?: PaymentChannel;
   createdAt: number;
   updatedAt: number;
   user: {
@@ -149,6 +156,16 @@ function getColumns(): ColumnDef<BookingWithCustomer>[] {
       cell: ({ row }) => formatAmount(row.original.amount),
     },
     {
+      header: "Channel",
+      id: "channel",
+      accessorFn: (row) => paymentChannelLabels[row.channel ?? "unrecorded"],
+      cell: ({ row }) => (
+        <Badge variant={row.original.channel ? "info" : "outline"}>
+          {paymentChannelLabels[row.original.channel ?? "unrecorded"]}
+        </Badge>
+      ),
+    },
+    {
       header: "Status",
       accessorKey: "status",
       id: "status",
@@ -182,6 +199,9 @@ function getColumns(): ColumnDef<BookingWithCustomer>[] {
 export function MonthlyReservationsTable() {
   const [overflow, setOverflow] = useState(false);
   const [filterPlanKey, setFilterPlanKey] = useState<string>("all");
+  const [filterChannel, setFilterChannel] = useState<
+    PaymentChannelFilter | "all"
+  >("all");
   const [searchTerm, setSearchTerm] = useState("");
   const deferredSearch = useDeferredValue(searchTerm);
   const [selectedBookingId, setSelectedBookingId] =
@@ -202,6 +222,7 @@ export function MonthlyReservationsTable() {
     month: currentMonth,
     planKey: filterPlanKey === "all" ? undefined : filterPlanKey,
     overflow: overflow,
+    channel: filterChannel === "all" ? undefined : filterChannel,
   }) as MonthlyReservationsResponse | null;
 
   const exportAction = useAction(api.bookings.exportList);
@@ -226,6 +247,7 @@ export function MonthlyReservationsTable() {
         month: currentMonth,
         planKey: filterPlanKey === "all" ? undefined : filterPlanKey,
         overflow,
+        channel: filterChannel === "all" ? undefined : filterChannel,
       });
 
       if (result?.storageUrl) {
@@ -365,6 +387,35 @@ export function MonthlyReservationsTable() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Filter className="mr-2 h-4 w-4" />
+                    {filterChannel === "all"
+                      ? "All Channels"
+                      : paymentChannelLabels[filterChannel]}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setFilterChannel("all")}>
+                    All Channels
+                  </DropdownMenuItem>
+                  {PAYMENT_CHANNELS.map((channel) => (
+                    <DropdownMenuItem
+                      key={channel}
+                      onClick={() => setFilterChannel(channel)}
+                    >
+                      {paymentChannelLabels[channel]}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuItem
+                    onClick={() => setFilterChannel("unrecorded")}
+                  >
+                    {paymentChannelLabels.unrecorded}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 variant="default"
                 size="sm"
@@ -392,6 +443,7 @@ export function MonthlyReservationsTable() {
             onRowClick={handleRowClick}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
+            searchPlaceholder="Search by name or email..."
             emptyState={
               <EmptyStateContent>
                 <EmptyStateTitle>No reservations found</EmptyStateTitle>

@@ -6,6 +6,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-background-lv1: var(--background-lv1);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -149,8 +151,11 @@
   /*--scanline-image: "";*/
 }
 
+/* clip, not hidden: hidden makes this a scroll container, which stops
+   position: sticky from pinning inside the shell (e.g. the environment
+   alerts rail). */
 .scanline-root .scanline-container {
-  @apply overflow-hidden;
+  @apply overflow-clip;
 }
 
 .scanline-root .scanline-container:after {
