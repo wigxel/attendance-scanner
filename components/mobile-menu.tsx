@@ -20,8 +20,8 @@ type MenuContextValue = {
 
 export const MenuContext = createContext<MenuContextValue>({
   open: true,
-  setOpen: () => { },
-  toggle: () => { },
+  setOpen: () => {},
+  toggle: () => {},
 });
 
 export function useMobileMenu() {

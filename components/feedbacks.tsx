@@ -472,7 +472,7 @@ function VoteButton({
   );
 }
 
-type SuggestionItemProps = { suggestion: Suggestion }
+type SuggestionItemProps = { suggestion: Suggestion };
 
 function SuggestionItem({ suggestion }: SuggestionItemProps) {
   return (

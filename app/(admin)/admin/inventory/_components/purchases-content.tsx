@@ -40,8 +40,8 @@ export function PurchasesContent() {
         <div>
           <h2 className="text-lg font-medium text-foreground">Purchases</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            What you bought, from whom, and at what cost.
-            A posted purchase can be voided but never edited.
+            What you bought, from whom, and at what cost. A posted purchase can
+            be voided but never edited.
           </p>
         </div>
 

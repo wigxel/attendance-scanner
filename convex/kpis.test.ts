@@ -656,9 +656,11 @@ describe("onDynamicEvent", () => {
       ctx.db.query("kpiInstances").collect(),
     );
     expect(rows).toHaveLength(2);
-    expect(
-      rows.find((r) => r.title.includes("free drink")),
-    ).toMatchObject({ customerId: "cust-1", date: TODAY, points: 3 });
+    expect(rows.find((r) => r.title.includes("free drink"))).toMatchObject({
+      customerId: "cust-1",
+      date: TODAY,
+      points: 3,
+    });
   });
 
   it("never spawns the free-drink task for hourly payers", async () => {
