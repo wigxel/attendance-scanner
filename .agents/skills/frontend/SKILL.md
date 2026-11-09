@@ -55,6 +55,7 @@ description: Frontend development rules and patterns for Next.js/React projects
 > See [react.mdc](./react.mdc) for full details.
 
 ### UI Guidelines
+- Always use `rem` units for spacing, sizing, and typography — never `px`
 > See [ui.mdc](./ui.mdc) for full details.
 
 ### Layout
@@ -142,6 +143,9 @@ Prefer shadcn `Skeleton` component for loading.
 ### Hooks
 - Path: `hooks/`
 - Use for reusable state/logic
+
+### Error Handling
+> See [friendly-errors.md](./friendly-errors.md) for user-friendly error patterns.
 
 ### State Management
 - **TanStack Query**: server state, API calls

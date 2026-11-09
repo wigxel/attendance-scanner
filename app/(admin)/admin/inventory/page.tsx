@@ -6,5 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function InventoryPage() {
-  redirect("/admin/inventory/products");
+  redirect("/admin/inventory/sales");
 }

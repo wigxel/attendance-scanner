@@ -686,3 +686,180 @@ describe("purchases", () => {
     expect(summary.outstandingKobo).toBe(7500);
   });
 });
+
+describe("sales", () => {
+  async function seed(
+    t: ReturnType<typeof convexTest>,
+    options: { reorderLevel?: number } = {},
+  ) {
+    const packId = await t.mutation(api.units.create, {
+      callerId: "admin",
+      name: "pack",
+    });
+    const cartonId = await t.mutation(api.units.create, {
+      callerId: "admin",
+      name: "carton",
+    });
+    const productId = await t.mutation(api.products.create, {
+      callerId: "admin",
+      name: "Peak Milk",
+      baseUnitId: packId,
+      reorderLevel: options.reorderLevel,
+    });
+    await t.mutation(api.productUnits.upsert, {
+      productId,
+      unitId: cartonId,
+      factorToBase: 12,
+    });
+    await t.mutation(api.stockMovements.record, {
+      callerId: "admin",
+      productId,
+      kind: "restock",
+      quantity: 20,
+      note: "Delivery",
+    });
+    return { packId, cartonId, productId };
+  }
+
+  async function onHand(t: ReturnType<typeof convexTest>, productId: string) {
+    const [level] = await t.query(api.stockMovements.levels, {});
+    return level.productId === productId ? level.quantity : null;
+  }
+
+  it("decrements stock and refuses to oversell", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+
+    await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "cash",
+      lines: [{ productId, unitId: packId, quantity: 3, unitPriceKobo: 1500 }],
+    });
+
+    expect(await onHand(t, productId)).toBe(17);
+
+    await expect(
+      t.mutation(api.sales.create, {
+        callerId: "admin",
+        channel: "cash",
+        lines: [
+          { productId, unitId: packId, quantity: 18, unitPriceKobo: 1500 },
+        ],
+      }),
+    ).rejects.toThrow("Cannot take 18 pack");
+
+    expect(await onHand(t, productId)).toBe(17);
+    expect(await t.query(api.sales.list, {})).toHaveLength(1);
+  });
+
+  it("writes usage movements marked as sales", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+
+    const saleId = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "pos",
+      lines: [{ productId, unitId: packId, quantity: 2, unitPriceKobo: 1500 }],
+    });
+
+    const movements = await t.query(api.stockMovements.history, { productId });
+    const saleMovement = movements.find(
+      (movement) => movement.kind === "usage",
+    );
+    expect(saleMovement?.source).toBe("sale");
+    expect(saleMovement?.note).toBe(`Sale ${saleId}`);
+  });
+
+  it("voids a sale, restores stock and drops it from the range", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+
+    const saleId = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "cash",
+      lines: [{ productId, unitId: packId, quantity: 4, unitPriceKobo: 1500 }],
+    });
+    const before = await t.run(async (ctx) => ctx.db.get(saleId));
+
+    await t.mutation(api.sales.voidSale, {
+      callerId: "admin",
+      saleId,
+    });
+
+    expect(await onHand(t, productId)).toBe(20);
+
+    const window = {
+      start: before?.occurredAt as string,
+      end: new Date(Date.now() + 1000).toISOString(),
+    };
+    expect(await t.query(api.sales.range, window)).toHaveLength(0);
+    expect(await t.query(api.sales.linesInRange, window)).toHaveLength(0);
+
+    await expect(
+      t.mutation(api.sales.voidSale, { callerId: "admin", saleId }),
+    ).rejects.toThrow("already voided");
+  });
+
+  it("prices alternate units and snapshots the unit factor", async () => {
+    const t = convexTest(schema, modules);
+    const { cartonId, productId } = await seed(t);
+
+    const saleId = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "transfer",
+      lines: [
+        { productId, unitId: cartonId, quantity: 1, unitPriceKobo: 15000 },
+      ],
+    });
+
+    const sale = await t.run(async (ctx) => ctx.db.get(saleId));
+    expect(sale?.totalKobo).toBe(15000);
+
+    const detail = await t.query(api.sales.get, { saleId });
+    expect(detail?.lines[0]).toMatchObject({
+      unitFactor: 12,
+      quantityInBase: 12,
+      unitPriceKobo: 15000,
+      lineTotalKobo: 15000,
+    });
+
+    // A later catalogue change must not rewrite the recorded line.
+    await t.mutation(api.productUnits.upsert, {
+      productId,
+      unitId: cartonId,
+      factorToBase: 24,
+    });
+    const again = await t.query(api.sales.get, { saleId });
+    expect(again?.lines[0].unitFactor).toBe(12);
+    expect(again?.lines[0].quantityInBase).toBe(12);
+  });
+
+  it("stores a customer link and can change or clear it", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+
+    const saleId = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "cash",
+      customerId: "customer-1",
+      lines: [{ productId, unitId: packId, quantity: 1, unitPriceKobo: 1500 }],
+    });
+
+    const before = await t.run(async (ctx) => ctx.db.get(saleId));
+    expect(before?.customerId).toBe("customer-1");
+
+    await t.mutation(api.sales.setSaleCustomer, {
+      saleId,
+      customerId: "customer-2",
+    });
+
+    const after = await t.run(async (ctx) => ctx.db.get(saleId));
+    expect(after?.customerId).toBe("customer-2");
+    expect(after?.totalKobo).toBe(before?.totalKobo);
+    expect(await onHand(t, productId)).toBe(19);
+
+    await t.mutation(api.sales.setSaleCustomer, { saleId });
+    const walkIn = await t.run(async (ctx) => ctx.db.get(saleId));
+    expect(walkIn?.customerId).toBeUndefined();
+  });
+});

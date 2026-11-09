@@ -43,7 +43,9 @@ const stockMovements = defineTable({
   occurredAt: v.string(),
   createdAt: v.string(),
   note: v.optional(v.string()),
-  source: v.optional(v.union(v.literal("bulk"), v.literal("manual"))),
+  source: v.optional(
+    v.union(v.literal("bulk"), v.literal("manual"), v.literal("sale")),
+  ),
   /** True when this row undoes another movement (a voided purchase). */
   reversal: v.optional(v.boolean()),
   createdBy: v.string(),
@@ -97,6 +99,39 @@ const purchaseLines = defineTable({
   .index("by_purchase", ["purchaseId"])
   .index("by_product", ["productId"]);
 
+// A sale is a receipt. Like a purchase it is immutable: a mistake is voided,
+// never edited. Totals derive from the lines.
+const sales = defineTable({
+  occurredAt: v.string(),
+  channel: v.union(v.literal("cash"), v.literal("pos"), v.literal("transfer")),
+  /** profile.id of the buyer; absent means a walk-in. */
+  customerId: v.optional(v.string()),
+  totalKobo: v.number(),
+  note: v.optional(v.string()),
+  voided: v.boolean(),
+  voidedAt: v.optional(v.string()),
+  voidedBy: v.optional(v.string()),
+  createdBy: v.string(),
+  createdAt: v.string(),
+}).index("by_occurredAt", ["occurredAt"]);
+
+// Unit, factor and price are snapshots so a later catalogue edit never
+// rewrites what a sale earned.
+const saleLines = defineTable({
+  saleId: v.id("sales"),
+  productId: v.id("products"),
+  unitId: v.id("units"),
+  quantity: v.number(),
+  unitFactor: v.number(),
+  quantityInBase: v.number(),
+  unitPriceKobo: v.number(),
+  lineTotalKobo: v.number(),
+  occurredAt: v.string(),
+})
+  .index("by_occurredAt", ["occurredAt"])
+  .index("by_sale", ["saleId"])
+  .index("by_product", ["productId"]);
+
 // Alternate units are per product: a carton of bottles is not a carton of
 // masks. The base unit lives on the product, so only alternates are stored.
 const productUnits = defineTable({
@@ -113,5 +148,7 @@ export default defineSchema({
   suppliers,
   purchases,
   purchaseLines,
+  sales,
+  saleLines,
   productUnits,
 });

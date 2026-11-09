@@ -17,7 +17,7 @@ export type MetricsRange = { start: string; end: string };
 
 const today = format(new Date(), "yyyy-MM-dd");
 
-const CHANNELS = ["cash", "pos", "transfer", "unrecorded"] as const;
+const CHANNELS = ["cash", "pos", "transfer"] as const;
 
 export const EMPTY_METRICS: InventoryMetrics = {
   range: { start: "", end: "" },
@@ -25,17 +25,12 @@ export const EMPTY_METRICS: InventoryMetrics = {
   spend: { totalKobo: 0, paidKobo: 0, outstandingKobo: 0, purchaseCount: 0 },
   revenue: {
     totalKobo: 0,
-    shopKobo: 0,
     salesCount: 0,
-    byChannel: CHANNELS.map((channel) => ({
-      channel,
-      shopKobo: 0,
-      totalKobo: 0,
-    })),
+    byChannel: CHANNELS.map((channel) => ({ channel, totalKobo: 0 })),
   },
+  topProducts: [],
   margin: { cogsKobo: 0, grossMarginKobo: 0, grossMarginPercent: null },
   movement: [],
-  topSales: [],
 };
 
 type MetricsContextValue = {
