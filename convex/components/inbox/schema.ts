@@ -9,6 +9,10 @@ const notifications = defineTable({
   body: v.string(),
   url: v.optional(v.string()),
   dedupeKey: v.optional(v.string()),
+  // absent on old rows means "info"
+  severity: v.optional(
+    v.union(v.literal("info"), v.literal("warning"), v.literal("critical")),
+  ),
   readAt: v.optional(v.number()),
   archivedAt: v.optional(v.number()),
   createdAt: v.number(),

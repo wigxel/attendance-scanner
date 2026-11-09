@@ -111,6 +111,23 @@ describe("inbox component", () => {
     expect(row.archivedAt).toBeUndefined();
   });
 
+  it("round-trips severity and defaults an omitted one to info", async () => {
+    const t = setup();
+    await t.mutation(api.index.enqueue, {
+      ...notification,
+      severity: "critical",
+    });
+    await t.mutation(api.index.enqueue, { ...notification, title: "Second" });
+
+    const rows = await t.query(api.index.list, {
+      recipientKey: notification.recipientKey,
+    });
+
+    expect(
+      Object.fromEntries(rows.map((row) => [row.title, row.severity])),
+    ).toEqual({ "Booking confirmed": "critical", Second: "info" });
+  });
+
   it("returns the existing row for a duplicate dedupe key", async () => {
     const t = setup();
     const args = { ...notification, dedupeKey: "booking-confirmed" };

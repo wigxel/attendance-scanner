@@ -241,6 +241,7 @@ async function alertCreditExhausted(ctx: ActionCtx, detail: string) {
         title: "Email delivery is paused: ZeptoMail is out of credits",
         body: `ZeptoMail rejected a send with "Credit exhausted" (${detail}). Transactional email will keep failing until the account is topped up.`,
         dedupeKey: `${ALERT_PREFIX}:${recipientKey}:${day}`,
+        severity: "critical",
       });
     }
   } catch (error) {

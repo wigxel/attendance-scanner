@@ -2,18 +2,28 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { Archive, ArchiveRestore } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+
+export type InboxSeverity = "info" | "warning" | "critical";
 
 export type InboxRow = {
   _id: string;
   title: string;
   body: string;
   url?: string;
+  severity?: InboxSeverity;
   readAt?: number;
   createdAt: number;
 };
+
+// info is the default, so it needs no badge.
+const severityBadge = {
+  warning: { variant: "warning", label: "Warning" },
+  critical: { variant: "destructive", label: "Critical" },
+} as const;
 
 type NotificationItemProps = {
   row: InboxRow;
@@ -57,6 +67,10 @@ export function NotificationItem({
   const handleOpen = () => onOpen(row);
   const handleArchive = () => (archived ? onRestore(row) : onArchive(row));
 
+  // old rows have no severity, and info needs no badge
+  const severity = row.severity ?? "info";
+  const badge = severity === "info" ? undefined : severityBadge[severity];
+
   return (
     <li
       className={cn(
@@ -76,7 +90,10 @@ export function NotificationItem({
               aria-hidden
             />
           )}
-          <p className="truncate text-sm font-medium">{row.title}</p>
+          <p className="min-w-0 flex-1 truncate text-sm font-medium">
+            {row.title}
+          </p>
+          {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
         </div>
         <div>
           <p className="line-clamp-2 text-xs text-muted-foreground">

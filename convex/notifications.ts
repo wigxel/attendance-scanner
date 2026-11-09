@@ -41,6 +41,12 @@ type InboxNotification = {
   createdAt: number;
 };
 
+const severity = v.union(
+  v.literal("info"),
+  v.literal("warning"),
+  v.literal("critical"),
+);
+
 // Call from mutations — it only queues, so it never blocks on a network call.
 // A queued notification is retried by the drain cron if the send fails.
 export const send = internalMutation({
@@ -52,6 +58,7 @@ export const send = internalMutation({
     body: v.string(),
     url: v.optional(v.string()),
     dedupeKey: v.optional(v.string()),
+    severity: v.optional(severity),
   },
   handler: async (
     ctx,
@@ -71,6 +78,7 @@ export const send = internalMutation({
         body: args.body,
         url: args.url,
         dedupeKey: args.dedupeKey,
+        severity: args.severity,
       });
     }
 

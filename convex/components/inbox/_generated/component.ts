@@ -38,6 +38,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           body: string;
           dedupeKey?: string;
           recipientKey: string;
+          severity?: "info" | "warning" | "critical";
           title: string;
           url?: string;
         },
