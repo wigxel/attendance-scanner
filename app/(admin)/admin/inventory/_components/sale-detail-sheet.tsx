@@ -38,6 +38,7 @@ const channelLabels = {
   cash: "Cash",
   pos: "POS",
   transfer: "Transfer",
+  credit: "Credit",
 } as const;
 
 const MANAGE_PRIVILEGES = ["inventory:manage"];

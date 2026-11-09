@@ -3,6 +3,7 @@
 import {
   BanknoteIcon,
   CreditCardIcon,
+  HandCoinsIcon,
   LandmarkIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const channelLabels: Record<SaleChannel, string> = {
   cash: "Cash",
   pos: "POS",
   transfer: "Transfer",
+  credit: "Credit",
 };
 
 const channelStyles: Record<
@@ -33,6 +35,10 @@ const channelStyles: Record<
   transfer: {
     Icon: LandmarkIcon,
     className: "text-violet-700 dark:text-violet-400",
+  },
+  credit: {
+    Icon: HandCoinsIcon,
+    className: "text-amber-700 dark:text-amber-400",
   },
 };
 

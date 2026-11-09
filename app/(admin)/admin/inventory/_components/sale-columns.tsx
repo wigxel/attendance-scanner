@@ -23,6 +23,7 @@ const channelLabels = {
   cash: "Cash",
   pos: "POS",
   transfer: "Transfer",
+  credit: "Credit",
 } as const;
 
 export const saleColumns: ColumnDef<SaleSummary>[] = [
