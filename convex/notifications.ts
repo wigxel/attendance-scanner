@@ -117,6 +117,7 @@ export const sendTest = mutation({
 
     await ctx.runMutation(components.inbox.index.enqueue, {
       recipientKey: userKey(userId),
+      severity: "critical",
       title: "Test notification",
       body: "This is a test from the development build.",
       url: "/admin/environment",
