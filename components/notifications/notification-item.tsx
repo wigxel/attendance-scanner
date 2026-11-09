@@ -2,12 +2,11 @@
 
 import { formatDistanceToNow } from "date-fns";
 import {
-  AlertOctagonIcon,
-  AlertTriangleIcon,
   Archive,
   ArchiveRestore,
-  BadgeInfoIcon,
-  InfoIcon,
+  Info,
+  OctagonAlert,
+  TriangleAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,11 +24,18 @@ export type InboxRow = {
   createdAt: number;
 };
 
-// info is the default, so it needs no badge.
-const severityBadge = {
-  info: { className: "text-muted-foreground", Icon: BadgeInfoIcon },
-  warning: { className: "text-yellow-400", Icon: AlertTriangleIcon },
-  critical: { className: "text-red-500", Icon: AlertOctagonIcon },
+const severityIcon = {
+  info: { label: "Info", className: "text-muted-foreground", Icon: Info },
+  warning: {
+    label: "Warning",
+    className: "text-amber-500",
+    Icon: TriangleAlert,
+  },
+  critical: {
+    label: "Critical",
+    className: "text-destructive",
+    Icon: OctagonAlert,
+  },
 } as const;
 
 type NotificationItemProps = {
@@ -49,10 +55,7 @@ export function NotificationItemSkeleton({
     <li className={cn(`py-2 px-8`, className)}>
       <div className="space-y-1.5">
         <div className="flex items-center gap-2">
-          <span
-            className="size-1.5 -ml-3.5 shrink-0 rounded-full bg-muted-foreground/30"
-            aria-hidden
-          />
+          <Skeleton className="size-4 shrink-0 rounded-full" />
           <Skeleton className="h-4 w-2/5" />
         </div>
         <div className="w-4/5 flex flex-col gap-2">
@@ -74,9 +77,12 @@ export function NotificationItem({
   const handleOpen = () => onOpen(row);
   const handleArchive = () => (archived ? onRestore(row) : onArchive(row));
 
-  // old rows have no severity, and info needs no badge
-  const severity = row.severity ?? "info";
-  const sever = severity === "info" ? undefined : severityBadge[severity];
+  // old rows have no severity, and info is the default
+  const {
+    label,
+    className: severityClassName,
+    Icon,
+  } = severityIcon[row.severity ?? "info"];
 
   return (
     <li
@@ -91,16 +97,11 @@ export function NotificationItem({
         onClick={handleOpen}
       >
         <div className="flex items-center basis-6 gap-2 mt-1 justify-center">
-          {sever ? (
-            <sever.Icon className={cn("size-4", sever.className)} />
-          ) : (
-            !row.readAt && (
-              <span
-                className="size-1.5 shrink-0 rounded-full bg-primary"
-                aria-hidden
-              />
-            )
-          )}
+          <Icon
+            className={cn("size-4 shrink-0", severityClassName)}
+            aria-hidden
+          />
+          <span className="sr-only">{label}</span>
         </div>
 
         <div className="flex-1">
