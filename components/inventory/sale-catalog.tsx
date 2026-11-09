@@ -34,7 +34,7 @@ type ProductCardProps = {
   product: SaleFormProduct;
 };
 
-function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
   const quantity = useSaleCart(
     (state) => state.quantities[product.productId] ?? 0,
   );
@@ -45,18 +45,52 @@ function ProductCard({ product }: ProductCardProps) {
   const onAdjust = useEvent((mutate: MutateFn) =>
     adjustQuantity(product.productId, mutate),
   );
+
+  return (
+    <ProductCardView
+      product={product}
+      quantity={quantity}
+      onAdjust={onAdjust}
+    />
+  );
+}
+
+type ProductCardViewProps = {
+  product: SaleFormProduct;
+  quantity: number;
+  onAdjust: (mutate: MutateFn) => void;
+};
+
+export function ProductCardView({
+  product,
+  quantity,
+  onAdjust,
+}: ProductCardViewProps) {
   const [decrement, increment] = useQuantity({ onAdjust });
+
+  // `stockQty` arrives only once the backend serves the current sale payload.
+  // Treat a missing count as unknown, never as zero.
+  const stockKnown = typeof product.stockQty === "number";
+  const outOfStock = stockKnown && product.stockQty <= 0;
+  const overStock = stockKnown && quantity > product.stockQty;
 
   return (
     <div
       className={cn(
         "flex flex-col rounded-xl border bg-background p-2",
         quantity > 0 && "border-primary/60 ring-1 ring-primary/20",
+        outOfStock && "opacity-60",
       )}
     >
       <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-muted">
         {/* Placeholder until products carry their own image. */}
-        <Package className="size-7 text-muted-foreground/40" aria-hidden />
+        <Package
+          className={cn(
+            "size-7 text-muted-foreground/40",
+            outOfStock && "grayscale",
+          )}
+          aria-hidden
+        />
       </div>
 
       <div className="mt-2 min-w-0 flex-1">
@@ -66,9 +100,26 @@ function ProductCard({ product }: ProductCardProps) {
             ? "No price set"
             : `${currencyFormatter.format(product.sellPriceKobo / 100)} / ${unitLabel(product)}`}
         </p>
+        <p
+          className={cn(
+            "text-xs tabular-nums",
+            outOfStock ? "text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {stockKnown
+            ? outOfStock
+              ? "Out of stock"
+              : `${product.stockQty} left`
+            : null}
+        </p>
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-1 rounded-lg border p-0.5">
+      <div
+        className={cn(
+          "mt-2 flex items-center justify-between gap-1 rounded-lg border p-0.5",
+          overStock && "border-destructive ring-1 ring-destructive/30",
+        )}
+      >
         <Button
           type="button"
           variant="ghost"
@@ -80,12 +131,20 @@ function ProductCard({ product }: ProductCardProps) {
         >
           <Minus className="size-3.5" />
         </Button>
-        <span className="text-sm font-medium tabular-nums">{quantity}</span>
+        <span
+          className={cn(
+            "text-sm font-medium tabular-nums",
+            overStock && "text-destructive",
+          )}
+        >
+          {quantity}
+        </span>
         <Button
           type="button"
           variant="ghost"
           size="icon"
           className="size-7"
+          disabled={outOfStock}
           aria-label={`Add one ${product.name}`}
           {...increment}
         >

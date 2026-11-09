@@ -69,6 +69,9 @@ export function SaleCart({ products }: SaleCartProps) {
     (sum, line) => sum + line.quantity * line.unitPriceKobo,
     0,
   );
+  const hasOverStock = lines.some(
+    (line) => line.quantity > line.product.stockQty,
+  );
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -129,6 +132,11 @@ export function SaleCart({ products }: SaleCartProps) {
                 <p className="text-xs text-muted-foreground tabular-nums">
                   {quantity} × {currencyFormatter.format(unitPriceKobo / 100)}
                 </p>
+                {quantity > product.stockQty ? (
+                  <p className="text-xs text-destructive">
+                    Only {product.stockQty} left
+                  </p>
+                ) : null}
               </div>
               <p className="whitespace-nowrap text-sm tabular-nums">
                 {currencyFormatter.format((quantity * unitPriceKobo) / 100)}
@@ -210,10 +218,16 @@ export function SaleCart({ products }: SaleCartProps) {
           </span>
         </div>
 
+        {hasOverStock ? (
+          <p className="text-xs text-destructive">
+            Reduce the items marked red — there is not enough stock.
+          </p>
+        ) : null}
+
         <Button
           type="submit"
           className="w-full"
-          disabled={lines.length === 0 || submitting}
+          disabled={lines.length === 0 || submitting || hasOverStock}
         >
           {submitting ? "Saving..." : "Record sale"}
         </Button>

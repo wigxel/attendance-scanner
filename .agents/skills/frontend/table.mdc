@@ -1,12 +1,12 @@
 # Table Component Rules
 
 ## Overview
-All tables must use TanStack Table via the `AppDataTable` wrapper component from `@/components/DataTable`. Column definitions must be defined at module scope, never inside a component's render function.
+All tables must be rendered through a standard, reusable wrapper built on TanStack Table. First check the codebase for an existing wrapper; if one exists (e.g. `AppDataTable` at `@/components/DataTable`), use it. If none exists, create one named `AppDataTable` using `@tanstack/react-table` and place it under `components/` (e.g. `components/data-table.tsx`, kebab-case). Column definitions must be defined at module scope, never inside a component's render function.
 
 ## Rules
 
-### 1. Use `AppDataTable` Only
-Use the `AppDataTable` component for all table rendering. Never import or use `useReactTable`, `flexRender`, `getCoreRowModel`, or raw TanStack Table components (`<Table>`, `<TableHeader>`, `<TableBody>`, `<TableRow>`, `<TableCell>`) directly. Those are internal to `AppDataTable`.
+### 1. Find or Create `AppDataTable`
+Before rendering a table, locate the existing standard table wrapper in the codebase. If present, use it for all table rendering. If absent, create `AppDataTable` (a TanStack Table wrapper) once and reuse it. Never import or use `useReactTable`, `flexRender`, `getCoreRowModel`, or raw TanStack Table components (`<Table>`, `<TableHeader>`, `<TableBody>`, `<TableRow>`, `<TableCell>`) directly — those are internal to the `AppDataTable` wrapper. Feature code imports only `AppDataTable`.
 
 ### 2. Column Definitions in Outer Scope
 Column definitions must be defined outside the component scope as module-level `const` or a `createColumns()` factory function. Never define `ColumnDef<T>[]` inside a component render.
@@ -19,6 +19,12 @@ Tables must support column visibility toggling. `AppDataTable` provides a built-
 
 ### 4. Empty State
 `AppDataTable` handles empty state implicitly via the `emptyState` prop which accepts `<EmptyStateContent>{...}</EmptyStateContent>`. When omitted, a default "No results" placeholder is shown. Callers must not add their own empty-state conditionals or inline "No results." text.
+
+### 5. Currency Columns
+Currency values must use `tabular-nums` and be aligned right. Put the currency symbol in the column header only — never in the cells.
+
+- Header: `Amount (₦)`
+- Cell: `1,250.00` (no `₦`)
 
 ## Code Snippets
 
@@ -83,6 +89,26 @@ return (
 );
 ```
 
+### Currency Columns
+
+```typescript
+const currency = (value: number) =>
+  new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2 }).format(value);
+
+{
+  id: "amount",
+  header: "Amount (₦)", // symbol lives here only
+  accessorKey: "amount",
+  meta: { headerClassName: "text-right", cellClassName: "text-right tabular-nums" },
+  cell: ({ row }) => currency(row.original.amount), // no symbol in the cell
+}
+
+// no meta support in the wrapper? use cell-level markup
+cell: ({ row }) => (
+  <span className="tabular-nums text-right">{currency(row.original.amount)}</span>
+)
+```
+
 ### Column Visibility Dropdown (built into AppDataTable)
 
 ```typescript
@@ -131,4 +157,7 @@ function MyTable() {
 
 // ❌ Caller handling empty state inline
 {data.length === 0 && <p>No results</p>} // AppDataTable handles this
+
+// ❌ Symbol repeated in every cell, proportional digits
+cell: ({ row }) => <span>₦{row.original.amount}</span> // symbol belongs in header, add tabular-nums + text-right
 ```

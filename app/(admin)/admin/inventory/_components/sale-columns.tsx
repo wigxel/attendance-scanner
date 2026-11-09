@@ -2,11 +2,21 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { SaleSummary } from "@/convex/inventory";
-import { currencyFormatter } from "@/lib/currency.helpers";
+import { serialNo } from "@/lib/data.helpers";
 
-function formatKobo(value: number) {
-  return currencyFormatter.format(value / 100);
+const amountFormatter = new Intl.NumberFormat("en-NG", {
+  minimumFractionDigits: 2,
+});
+
+function formatAmount(kobo: number) {
+  return amountFormatter.format(kobo / 100);
 }
 
 const channelLabels = {
@@ -38,16 +48,37 @@ export const saleColumns: ColumnDef<SaleSummary>[] = [
     header: "Items",
     // Product names and the note are search text, not a stored column.
     accessorFn: (sale) =>
-      `${sale.productNames.join(", ")} ${sale.note ?? ""}`.trim(),
-    cell: ({ row }) => (
-      <span className="block max-w-64 truncate">
-        {row.original.lineCount} item
-        {row.original.lineCount === 1 ? "" : "s"}
-        {row.original.productNames.length > 0
-          ? ` · ${row.original.productNames.join(", ")}`
-          : ""}
-      </span>
-    ),
+      `${sale.items.map((item) => item.name).join(", ")} ${sale.note ?? ""}`.trim(),
+    cell: ({ row }) => {
+      const { lineCount, items } = row.original;
+      const productNames = items.map((item) => item.name).join(", ");
+
+      return (
+        <span className="flex max-w-64 items-center gap-1">
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="cursor-default underline decoration-dotted underline-offset-4">
+                  {lineCount} item{lineCount === 1 ? "" : "s"}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <ul className="tabular-nums">
+                  {items.map((item) => (
+                    <li key={item.id}>
+                      {serialNo(item.quantity)} x {item.name}
+                    </li>
+                  ))}
+                </ul>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {items.length > 0 ? (
+            <span className="truncate">· {productNames}</span>
+          ) : null}
+        </span>
+      );
+    },
   },
   {
     id: "channel",
@@ -57,11 +88,11 @@ export const saleColumns: ColumnDef<SaleSummary>[] = [
   },
   {
     id: "totalKobo",
-    header: "Total",
+    header: () => <span className="block text-right">Total (₦)</span>,
     accessorKey: "totalKobo",
     cell: ({ row }) => (
-      <span className="whitespace-nowrap">
-        {formatKobo(row.original.totalKobo)}
+      <span className="block whitespace-nowrap text-right tabular-nums">
+        {formatAmount(row.original.totalKobo)}
       </span>
     ),
   },

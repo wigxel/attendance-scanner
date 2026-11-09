@@ -107,6 +107,57 @@ describe("inventory host boundary", () => {
     expect(usage?.recordedBy).toBe("admin-user");
   });
 
+  it("keeps a large stock count intact on the sale form", async () => {
+    const t = convexTest(schema, modules);
+    await seedAcl(t, true);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+
+    const unitId = await admin.mutation(api.inventory.createUnit, {
+      name: "pack",
+    });
+    const productId = await admin.mutation(api.inventory.createProduct, {
+      name: "Rice",
+      baseUnitId: unitId,
+      sellPriceKobo: 100000,
+    });
+    await admin.mutation(api.inventory.recordMovement, {
+      productId,
+      kind: "restock",
+      quantity: 100,
+      note: "Delivery",
+    });
+    await admin.mutation(api.inventory.recordSale, {
+      channel: "cash",
+      lines: [{ productId, unitId, quantity: 5, unitPriceKobo: 100000 }],
+    });
+
+    const [product] = (await admin.query(api.inventory.saleFormData, {}))
+      .products;
+    expect(product.stockQty).toBe(95);
+
+    // Both screens read the same ledger, so the inventory table must agree.
+    const [stockLevel] = await admin.query(api.inventory.stockLevels, {});
+    expect(stockLevel.quantity).toBe(95);
+  });
+
+  it("reports zero stock on the sale form for a product with no movements", async () => {
+    const t = convexTest(schema, modules);
+    await seedAcl(t, true);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+
+    const unitId = await admin.mutation(api.inventory.createUnit, {
+      name: "pack",
+    });
+    await admin.mutation(api.inventory.createProduct, {
+      name: "Malt",
+      baseUnitId: unitId,
+    });
+
+    const [product] = (await admin.query(api.inventory.saleFormData, {}))
+      .products;
+    expect(product.stockQty).toBe(0);
+  });
+
   it("rejects stock entry without inventory:manage", async () => {
     const t = convexTest(schema, modules);
     await seedAcl(t, false);
@@ -373,6 +424,7 @@ describe("metrics", () => {
 
     const [sale] = await admin.query(api.inventory.listSales, {});
     expect(sale.customerName).toBe("Ada Obi");
+    expect(sale.items).toMatchObject([{ name: "Peak Milk", quantity: 1 }]);
 
     await expect(
       admin.mutation(api.inventory.recordSale, {
@@ -449,9 +501,10 @@ describe("inventory:sell", () => {
       lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
     });
     expect(await seller.query(api.inventory.listSales, {})).toHaveLength(1);
-    expect(
-      (await seller.query(api.inventory.saleFormData, {})).products,
-    ).toHaveLength(1);
+    const formData = await seller.query(api.inventory.saleFormData, {});
+    expect(formData.products).toHaveLength(1);
+    // Seeded with 10 on the shelf, one just sold.
+    expect(formData.products[0].stockQty).toBe(9);
 
     await expect(
       seller.mutation(api.inventory.voidSale, { saleId }),

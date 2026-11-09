@@ -90,10 +90,16 @@ export type TopProduct = {
   revenueKobo: number;
 };
 
+export type SaleItem = {
+  id: string;
+  name: string;
+  quantity: number;
+};
+
 export type SaleSummary = Doc<"sales"> & {
   customerName: string | null;
   lineCount: number;
-  productNames: string[];
+  items: SaleItem[];
 };
 
 export type SaleLine = Doc<"saleLines"> & {
@@ -114,6 +120,8 @@ export type SaleFormProduct = {
   sku?: string;
   sellPriceKobo?: number;
   baseUnitId: string;
+  /** Quantity on the shelf, in base units. */
+  stockQty: number;
   units: PurchaseFormUnit[];
 };
 
@@ -809,24 +817,34 @@ export const saleFormData = query({
   handler: async (ctx): Promise<SaleFormData> => {
     await requireAny(ctx, SELL_OR_MANAGE);
 
-    const [products, units, alternates] = await Promise.all([
-      ctx.runQuery(components.inventory.products.list, {}),
-      ctx.runQuery(components.inventory.units.list, {}),
-      ctx.runQuery(components.inventory.productUnits.listAll, {}),
+    const [productDocs, unitDocs, alternates, levels] = await Promise.all([
+      ctx.runQuery(components.inventory.products.list, {}) as Promise<
+        Doc<"products">[]
+      >,
+      ctx.runQuery(components.inventory.units.list, {}) as Promise<
+        Doc<"units">[]
+      >,
+      ctx.runQuery(components.inventory.productUnits.listAll, {}) as Promise<
+        Doc<"productUnits">[]
+      >,
+      ctx.runQuery(components.inventory.stockMovements.levels, {}) as Promise<
+        StockLevel[]
+      >,
     ]);
 
-    const unitsFor = unitMapper(
-      units as Doc<"units">[],
-      alternates as Doc<"productUnits">[],
+    const unitsFor = unitMapper(unitDocs, alternates);
+    const stockQtyByProduct = new Map(
+      levels.map((level) => [level.productId, level.quantity]),
     );
 
     return {
-      products: (products as Doc<"products">[]).map((product) => ({
+      products: productDocs.map((product) => ({
         productId: product._id,
         name: product.name,
         sku: product.sku,
         sellPriceKobo: product.sellPriceKobo,
         baseUnitId: product.baseUnitId,
+        stockQty: stockQtyByProduct.get(product._id) ?? 0,
         units: unitsFor(product),
       })),
     };
@@ -899,7 +917,7 @@ export const listSales = query({
     const sales = (await ctx.runQuery(
       components.inventory.sales.list,
       {},
-    )) as Array<Doc<"sales"> & { lineCount: number; productNames: string[] }>;
+    )) as Array<Doc<"sales"> & { lineCount: number; items: SaleItem[] }>;
 
     const nameById = await customerNames(ctx, sales);
 

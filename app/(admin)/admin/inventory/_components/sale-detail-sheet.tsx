@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CustomerCombobox } from "@/components/forms/CustomerCombobox";
+import { RoleHasCSR } from "@/components/RoleHasCSR";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,7 +32,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/convex/_generated/api";
-import { usePrivilege } from "@/hooks/usePrivilege";
 import { currencyFormatter } from "@/lib/currency.helpers";
 
 const channelLabels = {
@@ -39,6 +39,8 @@ const channelLabels = {
   pos: "POS",
   transfer: "Transfer",
 } as const;
+
+const MANAGE_PRIVILEGES = ["inventory:manage"];
 
 function formatKobo(value: number) {
   return currencyFormatter.format(value / 100);
@@ -59,7 +61,6 @@ export function SaleDetailSheet({
   );
   const voidSale = useMutation(api.inventory.voidSale);
   const setSaleCustomer = useMutation(api.inventory.setSaleCustomer);
-  const { valid: canManage } = usePrivilege("inventory:manage");
 
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [customerId, setCustomerId] = useState("");
@@ -138,7 +139,7 @@ export function SaleDetailSheet({
                     {detail.sale.voided ? (
                       <Badge variant="secondary">Voided</Badge>
                     ) : null}
-                    {canManage ? (
+                    <RoleHasCSR privileges={MANAGE_PRIVILEGES}>
                       <Button
                         type="button"
                         variant="outline"
@@ -147,7 +148,7 @@ export function SaleDetailSheet({
                       >
                         Change customer
                       </Button>
-                    ) : null}
+                    </RoleHasCSR>
                   </div>
                 </div>
 
@@ -185,15 +186,17 @@ export function SaleDetailSheet({
                   </div>
                 ) : null}
 
-                {canManage && !detail.sale.voided ? (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleVoid}
-                  >
-                    Void sale
-                  </Button>
+                {!detail.sale.voided ? (
+                  <RoleHasCSR privileges={MANAGE_PRIVILEGES}>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleVoid}
+                    >
+                      Void sale
+                    </Button>
+                  </RoleHasCSR>
                 ) : null}
               </div>
             </>

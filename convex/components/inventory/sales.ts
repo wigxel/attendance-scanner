@@ -219,9 +219,11 @@ export const list = query({
         return {
           ...sale,
           lineCount: saleLines.length,
-          productNames: saleLines.map(
-            (line) => productNames.get(line.productId) ?? "Unknown product",
-          ),
+          items: saleLines.map((line) => ({
+            id: line._id,
+            name: productNames.get(line.productId) ?? "Unknown product",
+            quantity: line.quantity,
+          })),
         };
       })
       .sort(
