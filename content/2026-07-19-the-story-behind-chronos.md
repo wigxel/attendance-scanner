@@ -62,6 +62,6 @@ We cannot wait to see what you create with _Chronos_, and we hope it brings you 
 
 > Every tool we add brings someone one step closer to building what once seemed impossible.
 
-As always, we’d love to hear your thoughts. If you have ideas about the tools, infrastructure or resources that could help make our community even stronger, [Join](https://chat.whatsapp.com/KDQZCN58c92Fi1AGRXMrOu?mode=gi_t "Join InSpace Whatsapp Community") the conversation or send us an [E-mail](https://inspace.ng/shortlinks/email). Some of our best ideas begin exactly that way.
+As always, we’d love to hear your thoughts. If you have ideas about the tools, infrastructure or resources that could help make our community even stronger, [Join](https://chat.whatsapp.com/ESEEtcMAKkX2vxaVU8UTkG?mode=gi_t "Join InSpace Whatsapp Community") the conversation or send us an [E-mail](https://inspace.ng/shortlinks/email). Some of our best ideas begin exactly that way.
 
 <!--Finally, I would like to recognise and honour the people whose generosity made Chronos possible.-->
