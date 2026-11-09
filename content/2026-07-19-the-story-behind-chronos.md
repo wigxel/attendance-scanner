@@ -56,7 +56,7 @@ If you’re wondering what you can actually do with _Chronos_, let me broaden yo
 
 ### Some ideas on what you can do
 
-I learnt 3D modeling with _Blender_, but eventually lost interest because rendering took decades. Later, I tried learn _Adobe After Effects_, but my computer simply could not keep up. I am sure there is something you have always wanted to learn, build or explore, but your computer simply couldn’t keep up either. Hopefully, that is one excuse you no longer have to give.
+I learnt 3D modeling with _Blender_, but eventually lost interest because rendering took decades. Later, I tried learning _Adobe After Effects_, but my computer simply could not keep up. I am sure there is something you have always wanted to learn, build or explore, but your computer simply couldn’t keep up either. Now, that is one excuse you no longer have to give.
 
 We cannot wait to see what you create with _Chronos_, and we hope it brings you one step closer to your personal and professional goals.
 

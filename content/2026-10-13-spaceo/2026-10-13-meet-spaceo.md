@@ -12,6 +12,8 @@ author:
 image: /blog/2026-10-13-spaceo/assets/cover.webp
 ---
 
+![Figure 1: A screenshot of the dashboard](assets/spaceo-v1.webp)
+
 > From our [last article](/blog/our-first-hack), where we did a deep‑dive into the hardware and build process, we spoke about our first hack: an air quality tracking device we designed, programmed, and built from scratch.
 
 We’ve given that device a name: **SpaceO** 
