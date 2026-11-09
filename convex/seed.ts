@@ -24,8 +24,16 @@ export const seedKpiInstances = internalMutation({
       };
     }
     const tasks = [
-      { title: "Reset the front-door scanner", customerId: "test-cust-1", points: 3 },
-      { title: "Stock the guest welcome packs", customerId: "test-cust-2", points: 2 },
+      {
+        title: "Reset the front-door scanner",
+        customerId: "test-cust-1",
+        points: 3,
+      },
+      {
+        title: "Stock the guest welcome packs",
+        customerId: "test-cust-2",
+        points: 2,
+      },
     ];
     if (args.dryRun ?? true) {
       return {
@@ -36,7 +44,11 @@ export const seedKpiInstances = internalMutation({
     const ids = [];
     for (const t of tasks) {
       ids.push(
-        await ctx.db.insert("kpiInstances", { ...t, date, createdAt: Date.now() }),
+        await ctx.db.insert("kpiInstances", {
+          ...t,
+          date,
+          createdAt: Date.now(),
+        }),
       );
     }
     return { message: `Seeded ${ids.length} dynamic tasks for ${date}.`, ids };

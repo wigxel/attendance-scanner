@@ -8,6 +8,12 @@ import { mutation, query } from "./_generated/server";
 const MAX_ROWS = 100;
 const DEFAULT_PAGE = 20;
 
+const severity = v.union(
+  v.literal("info"),
+  v.literal("warning"),
+  v.literal("critical"),
+);
+
 type Notification = Doc<"notifications">;
 
 // "not archived" is a missing field, so it cannot live in an index.
@@ -20,6 +26,7 @@ export const enqueue = mutation({
     body: v.string(),
     url: v.optional(v.string()),
     dedupeKey: v.optional(v.string()),
+    severity: v.optional(severity),
   },
   handler: async (
     ctx,
@@ -41,6 +48,7 @@ export const enqueue = mutation({
       body: args.body,
       url: args.url,
       dedupeKey: args.dedupeKey,
+      severity: args.severity ?? "info",
       createdAt: Date.now(),
     });
 

@@ -142,11 +142,16 @@ export function InsightsSection() {
               </Tooltip>
             </CardDescription>
 
-            <CardTitle className="text-base">{capitalize(moldStatus)}</CardTitle>
+            <CardTitle className="text-base">
+              {capitalize(moldStatus)}
+            </CardTitle>
           </CardHeader>
 
           <CardContent className="px-4 pb-4 text-xs text-muted-foreground">
-            <abbr title="Relative humidity" className="cursor-help">RH</abbr> &gt; 60% or depression&lt;3°C
+            <abbr title="Relative humidity" className="cursor-help">
+              RH
+            </abbr>{" "}
+            &gt; 60% or depression&lt;3°C
           </CardContent>
         </Card>
 
@@ -180,14 +185,15 @@ export function InsightsSection() {
                 </TooltipContent>
               </Tooltip>
             </CardDescription>
-            <CardTitle className="text-base">{capitalize(condensationStatus)}</CardTitle>
+            <CardTitle className="text-base">
+              {capitalize(condensationStatus)}
+            </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-4 text-xs text-muted-foreground">
             depression {depression.toFixed(1)}°C · Td {dewPointValue.toFixed(1)}
             °C
           </CardContent>
         </Card>
-
       </div>
     </TooltipProvider>
   );

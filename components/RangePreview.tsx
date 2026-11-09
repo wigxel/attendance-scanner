@@ -9,7 +9,7 @@ import { Button } from "./ui/button";
 interface RangePreviewProps {
   selectedDate: Date;
   endDate: Date;
-  handleChangeDate: () => void
+  handleChangeDate: () => void;
 }
 
 export function RangePreview({
@@ -69,13 +69,8 @@ export function RangePreview({
         </div>
 
         <div className="border-t flex justify-end items-center relative border-border w-full">
-          <div
-            className="absolute top-0 -translate-y-1/2 pl-2 bg-background"
-          >
-            <Button
-              variant={"outline"}
-              onClick={handleChangeDate}
-            >
+          <div className="absolute top-0 -translate-y-1/2 pl-2 bg-background">
+            <Button variant={"outline"} onClick={handleChangeDate}>
               Adjust
               <SlidersHorizontal strokeWidth={1} size="1.5em" />
             </Button>

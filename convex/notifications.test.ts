@@ -153,6 +153,7 @@ describe("notificationSender.deliver", () => {
     });
     expect(inbox).toHaveLength(1);
     expect(inbox[0].title).toContain("out of credits");
+    expect(inbox[0].severity).toBe("critical");
 
     // 429 is retryable, so the row goes back to pending with the reason kept
     const deliveries = await t.query(internal.notifications.recent, {
@@ -221,6 +222,25 @@ describe("notifications.send", () => {
     });
     expect(deliveries).toHaveLength(1);
     expect(deliveries[0].channel).toBe("email");
+  });
+
+  it("forwards severity to the inbox row only", async () => {
+    const t = setup();
+    await t.mutation(internal.notifications.send, {
+      ...message,
+      channels: ["inapp", "email"],
+      severity: "warning",
+    });
+
+    const inbox = await t.query(components.inbox.index.list, {
+      recipientKey: "user:1",
+    });
+    expect(inbox[0].severity).toBe("warning");
+
+    const deliveries = await t.query(internal.notifications.recent, {
+      recipientKey: "user:1",
+    });
+    expect(deliveries[0]).not.toHaveProperty("severity");
   });
 
   it("keeps a broadcast out of the inbox", async () => {
