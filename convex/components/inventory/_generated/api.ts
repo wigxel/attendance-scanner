@@ -12,6 +12,7 @@ import type * as defaultUnits from "../defaultUnits.js";
 import type * as productUnits from "../productUnits.js";
 import type * as products from "../products.js";
 import type * as purchases from "../purchases.js";
+import type * as sales from "../sales.js";
 import type * as stockMovements from "../stockMovements.js";
 import type * as suppliers from "../suppliers.js";
 import type * as units from "../units.js";
@@ -28,6 +29,7 @@ const fullApi: ApiFromModules<{
   productUnits: typeof productUnits;
   products: typeof products;
   purchases: typeof purchases;
+  sales: typeof sales;
   stockMovements: typeof stockMovements;
   suppliers: typeof suppliers;
   units: typeof units;

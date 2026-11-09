@@ -27,6 +27,8 @@ interface CustomerComboboxProps {
   onChange: (userId: string) => void;
   disabled?: boolean;
   readOnly?: boolean;
+  /** Show the customer's email beside their name in the list. */
+  showEmail?: boolean;
 }
 
 export function CustomerCombobox({
@@ -34,6 +36,7 @@ export function CustomerCombobox({
   onChange,
   disabled = false,
   readOnly = false,
+  showEmail = true,
 }: CustomerComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
@@ -126,9 +129,11 @@ export function CustomerCombobox({
                       )}
                     />
                     {customer.firstName} {customer.lastName}
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {customer.email}
-                    </span>
+                    {showEmail ? (
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {customer.email}
+                      </span>
+                    ) : null}
                   </CommandItem>
                 ))}
               </CommandGroup>

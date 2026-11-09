@@ -118,7 +118,7 @@ After slicing, the generated toolpaths were transferred to the 3D printer for fa
 
 Join hundreds of creators building African's future from the heart of Rivers.
 
-- Join the [Whatsapp Community](https://chat.whatsapp.com/KDQZCN58c92Fi1AGRXMrOu?mode=gi_t "Join InSpace Whatsapp Community") to stay up to date with the latest news and announcements.
+- Join the [Whatsapp Community](https://chat.whatsapp.com/ESEEtcMAKkX2vxaVU8UTkG?mode=gi_t "Join InSpace Whatsapp Community") to stay up to date with the latest news and announcements.
 - Follow [InSpace](https://instagram.com/inspaceHQ) on Instagram
 
 As always, we’d love to hear your thoughts. If you have ideas about the tools, infrastructure or resources that could help make our community even stronger, join the group or Send us an [E-mail](https://inspace.ng/shortlinks/email). Some of our best ideas begin exactly that way.

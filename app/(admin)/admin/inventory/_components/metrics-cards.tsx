@@ -49,14 +49,14 @@ export function MetricsCards() {
       <MetricCard label="Purchase spend" value={formatKobo(spend.totalKobo)} />
 
       <MetricCard label="Gross revenue" value={formatKobo(revenue.totalKobo)}>
-        <p>Revenue from recorded shop sales</p>
+        <p>Revenue from recorded sales</p>
       </MetricCard>
 
       <MetricCard
         label="Total sales count"
         value={revenue.salesCount.toLocaleString()}
       >
-        <p>Daily channel totals recorded</p>
+        <p>Receipts recorded</p>
       </MetricCard>
 
       <MetricCard
