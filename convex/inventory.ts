@@ -75,7 +75,7 @@ export type PurchaseFormData = {
 };
 
 /** Channel a sale was taken on. */
-export type SaleChannel = "cash" | "pos" | "transfer";
+export type SaleChannel = "cash" | "pos" | "transfer" | "credit";
 
 export type RevenueChannelShare = {
   channel: SaleChannel;
@@ -167,7 +167,7 @@ export type InventoryMetrics = {
   movement: InventoryMovementRow[];
 };
 
-const SALE_CHANNELS: SaleChannel[] = ["cash", "pos", "transfer"];
+const SALE_CHANNELS: SaleChannel[] = ["cash", "pos", "transfer", "credit"];
 
 function parseDay(value: string, label: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {

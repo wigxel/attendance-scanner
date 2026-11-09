@@ -2,12 +2,14 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { resolveUnit } from "./productUnits";
+import { ledgerFor, saleBalance } from "./salePayments";
 import { insertMovement } from "./stockMovements";
 
 const channel = v.union(
   v.literal("cash"),
   v.literal("pos"),
   v.literal("transfer"),
+  v.literal("credit"),
 );
 
 const lineInput = v.object({
@@ -48,11 +50,21 @@ export const create = mutation({
     callerId: v.string(),
     channel,
     customerId: v.optional(v.string()),
+    /** ISO date the credit is due. */
+    dueDate: v.optional(v.string()),
+    /** Money taken at the till; defaults to the full total, or 0 for credit. */
+    amountPaidKobo: v.optional(v.number()),
     note: v.optional(v.string()),
     lines: v.array(lineInput),
   },
   handler: async (ctx, args) => {
     ensureLines(args.lines);
+    ensureKobo("Amount paid", args.amountPaidKobo);
+
+    const customerId = args.customerId?.trim() || undefined;
+    if (args.channel === "credit" && !customerId) {
+      throw new Error("A credit sale needs a named customer.");
+    }
 
     const now = new Date().toISOString();
 
@@ -88,10 +100,19 @@ export const create = mutation({
       0,
     );
 
+    // Cash, POS and transfer take the money at the till; credit takes a
+    // deposit the seller types in, which may be nothing.
+    const amountPaidKobo =
+      args.amountPaidKobo ?? (args.channel === "credit" ? 0 : totalKobo);
+    if (amountPaidKobo > totalKobo) {
+      throw new Error("Amount paid cannot be more than the sale total.");
+    }
+
     const saleId = await ctx.db.insert("sales", {
       occurredAt: now,
       channel: args.channel,
-      customerId: args.customerId,
+      customerId,
+      dueDate: args.dueDate?.trim() || undefined,
       totalKobo,
       note: args.note?.trim() || undefined,
       voided: false,
@@ -128,6 +149,19 @@ export const create = mutation({
       });
     }
 
+    // No row means no money moved: the ledger only records what happened.
+    if (amountPaidKobo > 0) {
+      await ctx.db.insert("salePayments", {
+        saleId,
+        amountKobo: amountPaidKobo,
+        paidAt: now,
+        channel: args.channel === "credit" ? undefined : args.channel,
+        kind: "payment",
+        createdBy: args.callerId,
+        createdAt: now,
+      });
+    }
+
     return saleId;
   },
 });
@@ -141,6 +175,11 @@ export const voidSale = mutation({
     const sale = await ctx.db.get(args.saleId);
     if (!sale) throw new Error("Sale not found.");
     if (sale.voided) throw new Error("This sale is already voided.");
+
+    const rows = await ledgerFor(ctx, args.saleId);
+    if (rows.some((row) => row.kind === "payment" || row.kind === "writeOff")) {
+      throw new Error("This sale has money against it and cannot be voided.");
+    }
 
     const lines = await ctx.db
       .query("saleLines")
@@ -180,6 +219,14 @@ export const setSaleCustomer = mutation({
   handler: async (ctx, args) => {
     const sale = await ctx.db.get(args.saleId);
     if (!sale) throw new Error("Sale not found.");
+
+    const rows = await ledgerFor(ctx, args.saleId);
+    if (rows.some((row) => row.kind === "payment" || row.kind === "writeOff")) {
+      throw new Error(
+        "This sale has money against it; the customer cannot change.",
+      );
+    }
+
     await ctx.db.patch(args.saleId, {
       customerId: args.customerId?.trim() || undefined,
     });
@@ -198,15 +245,26 @@ function groupLinesBySale(lines: Doc<"saleLines">[]) {
   return bySale;
 }
 
+// The ledger functions live in salePayments.ts and are re-exported so they
+// stay on the sales API surface alongside the receipt they belong to.
+export { recordPayment, reversePayment, writeOff } from "./salePayments";
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const [sales, lines] = await Promise.all([
+    const [sales, lines, payments] = await Promise.all([
       ctx.db.query("sales").collect(),
       ctx.db.query("saleLines").collect(),
+      ctx.db.query("salePayments").collect(),
     ]);
 
     const linesBySale = groupLinesBySale(lines);
+    const paymentsBySale = new Map<string, Doc<"salePayments">[]>();
+    for (const payment of payments) {
+      const group = paymentsBySale.get(payment.saleId) ?? [];
+      group.push(payment);
+      paymentsBySale.set(payment.saleId, group);
+    }
 
     const products = await ctx.db.query("products").collect();
     const productNames = new Map(
@@ -218,6 +276,7 @@ export const list = query({
         const saleLines = linesBySale.get(sale._id) ?? [];
         return {
           ...sale,
+          balance: saleBalance(sale, paymentsBySale.get(sale._id) ?? []),
           lineCount: saleLines.length,
           items: saleLines.map((line) => ({
             id: line._id,
@@ -259,7 +318,14 @@ export const get = query({
       }),
     );
 
-    return { sale, lines: enriched };
+    const payments = await ledgerFor(ctx, saleId);
+
+    return {
+      sale,
+      lines: enriched,
+      payments,
+      balance: saleBalance(sale, payments),
+    };
   },
 });
 

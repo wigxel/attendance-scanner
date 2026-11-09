@@ -774,9 +774,11 @@ describe("sales", () => {
     const t = convexTest(schema, modules);
     const { packId, productId } = await seed(t);
 
+    // No money has moved on this credit sale, so it can still be voided.
     const saleId = await t.mutation(api.sales.create, {
       callerId: "admin",
-      channel: "cash",
+      channel: "credit",
+      customerId: "customer-1",
       lines: [{ productId, unitId: packId, quantity: 4, unitPriceKobo: 1500 }],
     });
     const before = await t.run(async (ctx) => ctx.db.get(saleId));
@@ -840,7 +842,7 @@ describe("sales", () => {
 
     const saleId = await t.mutation(api.sales.create, {
       callerId: "admin",
-      channel: "cash",
+      channel: "credit",
       customerId: "customer-1",
       lines: [{ productId, unitId: packId, quantity: 1, unitPriceKobo: 1500 }],
     });
@@ -861,5 +863,274 @@ describe("sales", () => {
     await t.mutation(api.sales.setSaleCustomer, { saleId });
     const walkIn = await t.run(async (ctx) => ctx.db.get(saleId));
     expect(walkIn?.customerId).toBeUndefined();
+  });
+  it("requires a named customer on a credit sale", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+    const lines = [
+      { productId, unitId: packId, quantity: 1, unitPriceKobo: 1500 },
+    ];
+
+    await expect(
+      t.mutation(api.sales.create, {
+        callerId: "admin",
+        channel: "credit",
+        lines,
+      }),
+    ).rejects.toThrow("named customer");
+
+    const saleId = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "credit",
+      customerId: "customer-1",
+      dueDate: "2026-12-01",
+      lines,
+    });
+
+    const detail = await t.query(api.sales.get, { saleId });
+    expect(detail?.sale.dueDate).toBe("2026-12-01");
+    expect(detail?.balance).toMatchObject({
+      paidKobo: 0,
+      outstandingKobo: 1500,
+      status: "unpaid",
+    });
+  });
+
+  it("caps the till deposit at the sale total", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+    const lines = [
+      { productId, unitId: packId, quantity: 1, unitPriceKobo: 1500 },
+    ];
+
+    await expect(
+      t.mutation(api.sales.create, {
+        callerId: "admin",
+        channel: "credit",
+        customerId: "customer-1",
+        amountPaidKobo: 1501,
+        lines,
+      }),
+    ).rejects.toThrow("cannot be more than the sale total");
+
+    const saleId = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "credit",
+      customerId: "customer-1",
+      amountPaidKobo: 500,
+      lines,
+    });
+
+    const detail = await t.query(api.sales.get, { saleId });
+    expect(detail?.balance).toMatchObject({
+      paidKobo: 500,
+      outstandingKobo: 1000,
+      status: "part_paid",
+    });
+  });
+
+  it("refuses a payment bigger than what is outstanding", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+    const saleId = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "credit",
+      customerId: "customer-1",
+      amountPaidKobo: 500,
+      lines: [{ productId, unitId: packId, quantity: 1, unitPriceKobo: 1500 }],
+    });
+
+    await expect(
+      t.mutation(api.sales.recordPayment, {
+        callerId: "admin",
+        saleId,
+        amountKobo: 1001,
+        channel: "cash",
+      }),
+    ).rejects.toThrow("more than what is outstanding");
+
+    await t.mutation(api.sales.recordPayment, {
+      callerId: "admin",
+      saleId,
+      amountKobo: 1000,
+      channel: "transfer",
+    });
+
+    const detail = await t.query(api.sales.get, { saleId });
+    expect(detail?.balance).toMatchObject({
+      paidKobo: 1500,
+      outstandingKobo: 0,
+      status: "paid",
+    });
+    expect(detail?.payments).toHaveLength(2);
+
+    await expect(
+      t.mutation(api.sales.recordPayment, {
+        callerId: "admin",
+        saleId,
+        amountKobo: 1,
+        channel: "cash",
+      }),
+    ).rejects.toThrow("more than what is outstanding");
+  });
+
+  it("reads the status of every state from the ledger", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+    const lines = [
+      { productId, unitId: packId, quantity: 1, unitPriceKobo: 1500 },
+    ];
+    const statusOf = async (saleId: string) => {
+      const sales = await t.query(api.sales.list, {});
+      return sales.find((sale) => sale._id === saleId)?.balance.status;
+    };
+
+    const unpaid = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "credit",
+      customerId: "customer-1",
+      lines,
+    });
+    expect(await statusOf(unpaid)).toBe("unpaid");
+
+    const partPaid = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "credit",
+      customerId: "customer-1",
+      amountPaidKobo: 700,
+      lines,
+    });
+    expect(await statusOf(partPaid)).toBe("part_paid");
+
+    const cash = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "cash",
+      lines,
+    });
+    expect(await statusOf(cash)).toBe("paid");
+
+    const writtenOff = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "credit",
+      customerId: "customer-1",
+      lines,
+    });
+    await t.mutation(api.sales.writeOff, {
+      callerId: "admin",
+      saleId: writtenOff,
+      amountKobo: 1500,
+      note: "Gone quiet",
+    });
+    expect(await statusOf(writtenOff)).toBe("written_off");
+
+    const voided = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "credit",
+      customerId: "customer-1",
+      lines,
+    });
+    await t.mutation(api.sales.voidSale, { callerId: "admin", saleId: voided });
+    expect(await statusOf(voided)).toBe("voided");
+  });
+
+  it("blocks a void and a customer change once money is on the sale", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+    const saleId = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "cash",
+      customerId: "customer-1",
+      lines: [{ productId, unitId: packId, quantity: 1, unitPriceKobo: 1500 }],
+    });
+
+    await expect(
+      t.mutation(api.sales.voidSale, { callerId: "admin", saleId }),
+    ).rejects.toThrow("money against it");
+
+    await expect(
+      t.mutation(api.sales.setSaleCustomer, {
+        saleId,
+        customerId: "customer-2",
+      }),
+    ).rejects.toThrow("money against it");
+  });
+
+  it("restores the outstanding balance when a payment is reversed", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+    const saleId = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "credit",
+      customerId: "customer-1",
+      amountPaidKobo: 500,
+      lines: [{ productId, unitId: packId, quantity: 1, unitPriceKobo: 1500 }],
+    });
+
+    const paymentId = await t.mutation(api.sales.recordPayment, {
+      callerId: "admin",
+      saleId,
+      amountKobo: 400,
+      channel: "pos",
+    });
+
+    const withPayment = await t.query(api.sales.get, { saleId });
+    expect(withPayment?.balance).toMatchObject({
+      paidKobo: 900,
+      outstandingKobo: 600,
+      status: "part_paid",
+    });
+
+    await t.mutation(api.sales.reversePayment, {
+      callerId: "admin",
+      paymentId,
+      note: "Rang up twice",
+    });
+
+    const reversed = await t.query(api.sales.get, { saleId });
+    expect(reversed?.balance).toMatchObject({
+      paidKobo: 500,
+      outstandingKobo: 1000,
+      status: "part_paid",
+    });
+
+    await expect(
+      t.mutation(api.sales.reversePayment, {
+        callerId: "admin",
+        paymentId,
+      }),
+    ).rejects.toThrow("already reversed");
+
+    const reversal = reversed?.payments.find((row) => row.kind === "reversal");
+    await expect(
+      t.mutation(api.sales.reversePayment, {
+        callerId: "admin",
+        paymentId: reversal?._id as string,
+      }),
+    ).rejects.toThrow("cannot itself be reversed");
+  });
+
+  it("reads a legacy sale with no ledger rows as fully paid", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+
+    const saleId = await t.run(async (ctx) =>
+      ctx.db.insert("sales", {
+        occurredAt: new Date().toISOString(),
+        channel: "cash",
+        totalKobo: 1500,
+        voided: false,
+        createdBy: "admin",
+        createdAt: new Date().toISOString(),
+      }),
+    );
+
+    const detail = await t.query(api.sales.get, { saleId });
+    expect(detail?.balance).toMatchObject({
+      paidKobo: 1500,
+      writtenOffKobo: 0,
+      outstandingKobo: 0,
+      status: "paid",
+    });
+    expect(detail?.payments).toHaveLength(0);
   });
 });

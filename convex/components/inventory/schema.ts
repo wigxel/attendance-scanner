@@ -100,12 +100,21 @@ const purchaseLines = defineTable({
   .index("by_product", ["productId"]);
 
 // A sale is a receipt. Like a purchase it is immutable: a mistake is voided,
-// never edited. Totals derive from the lines.
+// never edited. Totals derive from the lines. Money taken against the sale is
+// never stored here: it lives in the salePayments ledger and the balance is
+// derived from those rows.
 const sales = defineTable({
   occurredAt: v.string(),
-  channel: v.union(v.literal("cash"), v.literal("pos"), v.literal("transfer")),
+  channel: v.union(
+    v.literal("cash"),
+    v.literal("pos"),
+    v.literal("transfer"),
+    v.literal("credit"),
+  ),
   /** profile.id of the buyer; absent means a walk-in. */
   customerId: v.optional(v.string()),
+  /** ISO date the credit is due; only meaningful for a credit sale. */
+  dueDate: v.optional(v.string()),
   totalKobo: v.number(),
   note: v.optional(v.string()),
   voided: v.boolean(),
@@ -113,7 +122,33 @@ const sales = defineTable({
   voidedBy: v.optional(v.string()),
   createdBy: v.string(),
   createdAt: v.string(),
-}).index("by_occurredAt", ["occurredAt"]);
+})
+  .index("by_occurredAt", ["occurredAt"])
+  .index("by_customer", ["customerId"]);
+
+// Append-only payment ledger. A row is never edited or deleted: a mistake is
+// reversed with a compensating row that points back at its target. Paid,
+// written-off and outstanding amounts are always summed from these rows.
+const salePayments = defineTable({
+  saleId: v.id("sales"),
+  amountKobo: v.number(),
+  paidAt: v.string(),
+  channel: v.optional(
+    v.union(v.literal("cash"), v.literal("pos"), v.literal("transfer")),
+  ),
+  kind: v.union(
+    v.literal("payment"),
+    v.literal("writeOff"),
+    v.literal("reversal"),
+  ),
+  /** Set on a reversal: the row this one undoes. */
+  reversesId: v.optional(v.id("salePayments")),
+  note: v.optional(v.string()),
+  createdBy: v.string(),
+  createdAt: v.string(),
+})
+  .index("by_sale", ["saleId"])
+  .index("by_paidAt", ["paidAt"]);
 
 // Unit, factor and price are snapshots so a later catalogue edit never
 // rewrites what a sale earned.
@@ -150,5 +185,6 @@ export default defineSchema({
   purchaseLines,
   sales,
   saleLines,
+  salePayments,
   productUnits,
 });
