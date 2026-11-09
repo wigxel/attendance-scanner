@@ -36,6 +36,7 @@ export const seedRoles = mutation({
         "feedback:update",
         "feedback:delete",
         "inventory:manage",
+        "inventory:sell",
       ],
     });
 
@@ -158,6 +159,11 @@ const permissions = [
   {
     name: "inventory:manage",
     description: "Manage the product catalogue and units",
+    category: "Inventory",
+  },
+  {
+    name: "inventory:sell",
+    description: "Record sales and view the sales list",
     category: "Inventory",
   },
 ];

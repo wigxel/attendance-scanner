@@ -114,29 +114,29 @@ function CustomerSheet({ userId, open, onOpenChange }: CustomerSheetProps) {
 
   const details: CustomerDetail[] = customer
     ? [
-      { label: "First name:", value: customer.firstName },
-      { label: "Last name:", value: customer.lastName },
-      {
-        label: "Email:",
-        value: customer.email,
-        href: customer.email ? `mailto:${customer.email}` : undefined,
-        icon: Mail,
-      },
-      {
-        label: "Phone:",
-        value: formattedPhone,
-        href:
-          phoneIsValid && normalizedPhone
-            ? `tel:${normalizedPhone}`
-            : undefined,
-        icon: Phone,
-        warning:
-          phone && !phoneIsValid
-            ? "This phone number does not look valid."
-            : undefined,
-      },
-      { label: "Occupation:", value: customer.occupation },
-    ]
+        { label: "First name:", value: customer.firstName },
+        { label: "Last name:", value: customer.lastName },
+        {
+          label: "Email:",
+          value: customer.email,
+          href: customer.email ? `mailto:${customer.email}` : undefined,
+          icon: Mail,
+        },
+        {
+          label: "Phone:",
+          value: formattedPhone,
+          href:
+            phoneIsValid && normalizedPhone
+              ? `tel:${normalizedPhone}`
+              : undefined,
+          icon: Phone,
+          warning:
+            phone && !phoneIsValid
+              ? "This phone number does not look valid."
+              : undefined,
+        },
+        { label: "Occupation:", value: customer.occupation },
+      ]
     : [];
 
   return (

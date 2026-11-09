@@ -2,7 +2,6 @@
 
 import {
   BanknoteIcon,
-  CircleHelpIcon,
   CreditCardIcon,
   LandmarkIcon,
   type LucideIcon,
@@ -15,19 +14,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { RevenueChannel, RevenueChannelShare } from "@/convex/inventory";
+import type { RevenueChannelShare, SaleChannel } from "@/convex/inventory";
 import { useMetrics } from "./metrics-context";
 import { formatAmount } from "./metrics-format";
 
-const channelLabels: Record<RevenueChannel, string> = {
+const channelLabels: Record<SaleChannel, string> = {
   cash: "Cash",
   pos: "POS",
   transfer: "Transfer",
-  unrecorded: "Unrecorded",
 };
 
 const channelStyles: Record<
-  RevenueChannel,
+  SaleChannel,
   { Icon: LucideIcon; className: string }
 > = {
   cash: { Icon: BanknoteIcon, className: "text-green-700 dark:text-green-400" },
@@ -35,10 +33,6 @@ const channelStyles: Record<
   transfer: {
     Icon: LandmarkIcon,
     className: "text-violet-700 dark:text-violet-400",
-  },
-  unrecorded: {
-    Icon: CircleHelpIcon,
-    className: "text-gray-500 dark:text-gray-400",
   },
 };
 
@@ -48,8 +42,7 @@ function RevenueTable({ shares }: { shares: RevenueChannelShare[] }) {
       <TableHeader>
         <TableRow>
           <TableHead>Channel</TableHead>
-          <TableHead className="text-right">Shop sales (NGN)</TableHead>
-          <TableHead className="text-right">Total (NGN)</TableHead>
+          <TableHead className="text-right">Revenue (NGN)</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -64,9 +57,6 @@ function RevenueTable({ shares }: { shares: RevenueChannelShare[] }) {
                     {channelLabels[share.channel]}
                   </span>
                 </span>
-              </TableCell>
-              <TableCell className="text-right tabular-nums">
-                {formatAmount(share.shopKobo)}
               </TableCell>
               <TableCell className="text-right font-medium tabular-nums">
                 {formatAmount(share.totalKobo)}

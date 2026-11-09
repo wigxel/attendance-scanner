@@ -11,12 +11,12 @@
   encloses business logic (mutation, loading, error handling, form state), it
   should be its own standalone component that wraps the trigger as `children`.
 - The wrapper owns all overlay state (`open`/`onOpenChange`), mutation hooks,
-  form state (e.g., `comment`)
+  form state (e.g., `comment`), loading via hooks eg (`useMutation`),
   and toast calls. Keep wrapper components in the same module as the parent
   unless reused across multiple features.
 - The parent renders only the trigger element as a child of the wrapper —
   no business logic, no loading flags, no handlers are needed in the parent.
-- When the wrapper contains form state, reset it on close in `onOpenChange`: 
+- When the wrapper contains form state, reset it on close in `onOpenChange`:
   ```tsx
   <Dialog open={open} onOpenChange={(next) => {
     setOpen(next);
@@ -73,11 +73,32 @@
   }
   ```
 
+- When the trigger lives inside another overlay's content (e.g., a
+  `DropdownMenuItem` in a `DropdownMenu`/`Select` popover), the popover will
+  close on selection by default. Keep the popover open by preventing the
+  select default on the item:
+  ```tsx
+  <DropdownMenuItem
+    asChild
+    onSelect={(evt) => evt.preventDefault()}
+  >
+    <DeleteAlert id={record._id}>
+      <span>Delete</span>
+    </DeleteAlert>
+  </DropdownMenuItem>
+  ```
+  Note: the wrapper's trigger must be the direct child of the item (no
+  intermediate wrapper), so the `onSelect` fires on the same element.
 - **When NOT to use this pattern:** If the parent needs to coordinate
   open/close state across siblings (e.g., "only one dialog open at a time",
   "close all on escape"), lift `open`/`onOpenChange` to the parent instead.
-- If the overlay has multiple independent async actions, give each its own
-  `useAsyncLoader` call or use distinct keys.
+- If the overlay is triggered by a **table row selection** (e.g., a
+  read-only preview `Sheet` opened by clicking a data row), do NOT use the
+  wrapper/trigger pattern. Keep selection state (e.g., `selectedLine`) in
+  the table/page component and drive the overlay with `open`/`onOpenChange`
+  from there. The overlay stays a plain presentation component — no business
+  logic, no owned overlay state.
+- If the overlay has multiple independent async actions, give each its own hook eg (`useMutation`) call or use distinct keys.
 
 ## React Components
 - Extract `.map()` rendering into a dedicated Item component **when the map closure exceeds 15 lines**. Simpler inline maps (e.g., basic list items, dropdown options) are acceptable.

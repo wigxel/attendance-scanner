@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RoleHas } from "@/components/RoleHas";
 import { SuppliersContent } from "../_components/suppliers-content";
 
 export const metadata: Metadata = {
@@ -6,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function InventorySuppliersPage() {
-  return <SuppliersContent />;
+  return (
+    <RoleHas privileges={["inventory:manage"]}>
+      <SuppliersContent />
+    </RoleHas>
+  );
 }

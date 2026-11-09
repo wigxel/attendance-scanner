@@ -1,19 +1,36 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { Archive, ArchiveRestore } from "lucide-react";
+import {
+  AlertOctagonIcon,
+  AlertTriangleIcon,
+  Archive,
+  ArchiveRestore,
+  BadgeInfoIcon,
+  InfoIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+
+export type InboxSeverity = "info" | "warning" | "critical";
 
 export type InboxRow = {
   _id: string;
   title: string;
   body: string;
   url?: string;
+  severity?: InboxSeverity;
   readAt?: number;
   createdAt: number;
 };
+
+// info is the default, so it needs no badge.
+const severityBadge = {
+  info: { className: "text-muted-foreground", Icon: BadgeInfoIcon },
+  warning: { className: "text-yellow-400", Icon: AlertTriangleIcon },
+  critical: { className: "text-red-500", Icon: AlertOctagonIcon },
+} as const;
 
 type NotificationItemProps = {
   row: InboxRow;
@@ -57,6 +74,10 @@ export function NotificationItem({
   const handleOpen = () => onOpen(row);
   const handleArchive = () => (archived ? onRestore(row) : onArchive(row));
 
+  // old rows have no severity, and info needs no badge
+  const severity = row.severity ?? "info";
+  const sever = severity === "info" ? undefined : severityBadge[severity];
+
   return (
     <li
       className={cn(
@@ -66,19 +87,26 @@ export function NotificationItem({
     >
       <button
         type="button"
-        className="min-w-0 flex-1 text-left pl-5"
+        className="min-w-0 flex-1 flex gap-2 items-start text-left"
         onClick={handleOpen}
       >
-        <div className="flex items-center gap-2">
-          {!row.readAt && (
-            <span
-              className="size-1.5 -ml-3.5 shrink-0 rounded-full bg-primary"
-              aria-hidden
-            />
+        <div className="flex items-center basis-6 gap-2 mt-1 justify-center">
+          {sever ? (
+            <sever.Icon className={cn("size-4", sever.className)} />
+          ) : (
+            !row.readAt && (
+              <span
+                className="size-1.5 shrink-0 rounded-full bg-primary"
+                aria-hidden
+              />
+            )
           )}
-          <p className="truncate text-sm font-medium">{row.title}</p>
         </div>
-        <div>
+
+        <div className="flex-1">
+          <p className="min-w-0 flex-1 truncate text-sm font-medium">
+            {row.title}
+          </p>
           <p className="line-clamp-2 text-xs text-muted-foreground">
             {row.body}
           </p>
