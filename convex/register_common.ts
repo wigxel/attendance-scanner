@@ -98,6 +98,14 @@ export async function insertGuestVisit(
     },
     method: "qr",
   });
+
+  // The free hour starts now; the action re-reads the row at T+60 so a
+  // payment, checkout or reclassification before then clears the alert.
+  await ctx.scheduler.runAfter(
+    60 * 60_000,
+    internal.guestAlerts.checkGuestStay,
+    { guestUserId: params.guestUserId },
+  );
 }
 
 export async function insertRegisterAndAggregate(
