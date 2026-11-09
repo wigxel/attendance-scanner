@@ -129,7 +129,7 @@ describe("guestAlerts.checkGuestStay", () => {
     expect(inbox[0].title).toBe("Guest overstayed: Matilda Doe");
     expect(inbox[0].body).toContain("Matilda Doe checked in at");
     expect(inbox[0].body).toContain("still unpaid");
-    expect(inbox[0].url).toBe("/admin/customers");
+    expect(inbox[0].url).toBe("/admin");
     expect(inbox[0].severity).toBe("warning");
 
     const deliveries = await deliveriesForDesk(t);

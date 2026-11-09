@@ -62,7 +62,7 @@ export const checkGuestStay = internalAction({
       channels: ["push", "inapp"] as Array<"push" | "inapp">,
       title: `Guest overstayed: ${overdue.name}`,
       body: `${overdue.name} checked in at ${checkedInAt} and is still unpaid after an hour.`,
-      url: "/admin/customers",
+      url: "/admin",
       severity: "warning" as const,
     };
 
