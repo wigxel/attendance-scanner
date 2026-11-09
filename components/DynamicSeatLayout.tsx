@@ -76,7 +76,7 @@ export function DynamicSeatLayout({
           <span className="text-gray-600">Selected</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-[#9A9A9A] bg-[url('/images/reserved-bg.png')] bg-contain rounded" />
+          <div className="w-3 h-3 bg-[#9A9A9A] bg-[url('/images/reserved-bg.webp')] bg-contain rounded" />
           <span className="text-gray-600">Occupied</span>
         </div>
       </div>

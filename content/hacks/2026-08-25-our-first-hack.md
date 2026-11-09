@@ -9,9 +9,9 @@ author:
   - { name: "Fidelis Saleh", url: "https://www.linkedin.com/in/fidelis-saleh-789322226" }
   - { name: "Joseph Ogbonna", url: "https://www.linkedin.com/in/joseph-ogbonna-pcb" }
   - { name: "Joseph Owonvwon", url: "https://linkedin.com/in/owonwo" }
-image: /blog/images/node-io/image6.png
+image: /blog/images/node-io/image6.webp
 ---
-![A photo of the Node.IO E1](/blog/images/node-io/image6.png)
+![A photo of the Node.IO E1](/blog/images/node-io/image6.webp)
 Meet the **Node.IO E1** — our first hardware in make. We will crafted an in-door temperature/humidity/pressure device with realtime tracking. You can learn how we built this from scratch.
 
 ## Node.IO E1 — Technical Overview
@@ -79,25 +79,25 @@ Overall, the Node.IO E1 provides a complete foundation for moving from an initia
 The enclosure was designed around the existing PCB geometry to ensure that all components could be housed securely without altering the board’s original shape or position. The PCB dimensions, corner radii, and mounting-hole locations were used as the primary reference features for developing the enclosure. Four internal mounting bosses were positioned according to the specified mounting-hole spacing, while sufficient clearance was provided around the electronic components. The enclosure was divided into two main areas: a dedicated PCB compartment and a separate battery compartment for two batteries. The lid was designed with ventilation openings to improve heat dissipation and was also modified to incorporate the Inspace logo as a visual and identifying feature.
 
 
-![PCB](/blog/images/node-io/node-eio-pcb.png) 
+![PCB](/blog/images/node-io/node-eio-pcb.webp) 
 
 > Figure 1. Dimensional layout of the PCB used as the reference for enclosure design. 
 
 One of the main challenges was achieving accurate alignment between the enclosure and the PCB, particularly at the USB connector. Since the USB port is fixed to the PCB and cannot be repositioned, the enclosure opening had to be designed around its exact location. This was overcome by using the PCB geometry and dimensional drawing as references and maintaining the original PCB position throughout the enclosure design. The mounting-hole spacing of 54.27 mm horizontally and 34.69 mm vertically was also used to accurately locate the mounting bosses. Additional challenges included fitting the battery compartment alongside the PCB while maintaining adequate separation and clearance, as well as providing enough internal space for the electronic components and fastening features.
 
-![Internal enclosure configuration — PCB mounting area, two-battery compartment, mounting bosses, divider wall, and USB-port clearance.](/blog/images/node-io/image2.png) 
+![Internal enclosure configuration — PCB mounting area, two-battery compartment, mounting bosses, divider wall, and USB-port clearance.](/blog/images/node-io/image2.webp) 
 > Figure 2: Internal enclosure configuration — PCB mounting area, two-battery compartment, mounting bosses, divider wall, and USB-port clearance.
 
 The final design was refined by separating the enclosure into a bottom section and a removable lid, making assembly and maintenance easier. The bottom section incorporates the PCB mounting bosses, battery compartment, internal walls, and connector clearance, while the lid contains the ventilation holes, screw locations, and Inspace logo. The design was then exported as separate STEP files for the lid and bottom, allowing the parts to be manufactured or further modified independently. Through the use of the PCB’s actual dimensions and mounting-hole locations, careful component clearance, and precise USB-port alignment, the resulting enclosure provides a practical fit for the electronic assembly while maintaining a compact and functional form.
 
-![Figure 3. Final enclosure design with the Inspace logo, ventilation openings, PCB compartment, and two-battery compartment.](/blog/images/node-io/image3.png)
+![Figure 3. Final enclosure design with the Inspace logo, ventilation openings, PCB compartment, and two-battery compartment.](/blog/images/node-io/image3.webp)
 > Figure 3. Final enclosure design with the Inspace logo, ventilation openings, PCB compartment, and two-battery compartment.
 
 ## 3D printing
 After completing the CAD design, the enclosure components were exported as STL files and prepared for additive manufacturing using Stereotech Slicer. The slicing process was used to generate the printing paths and determine the layer-by-layer deposition of the polymer material. Since the enclosure was manufactured without continuous carbon-fiber reinforcement, the printing strategy was based solely on conventional FDM deposition. The enclosure geometry was oriented to provide stable printing, adequate dimensional accuracy, and good surface quality while minimizing the need for support structures inside the PCB and battery compartments.
 
-![Figure 4. Slicing and generation of printing toolpaths for the enclosure components in Stereotech Slicer.](/blog/images/node-io/image4.png) 
-![Figure 4. Slicing and generation of printing toolpaths for the enclosure components in Stereotech Slicer.](/blog/images/node-io/image5.png) 
+![Figure 4. Slicing and generation of printing toolpaths for the enclosure components in Stereotech Slicer.](/blog/images/node-io/image4.webp) 
+![Figure 4. Slicing and generation of printing toolpaths for the enclosure components in Stereotech Slicer.](/blog/images/node-io/image5.webp) 
 > Figure 4. Slicing and generation of printing toolpaths for the enclosure components in Stereotech Slicer.
 
 The main printing parameters were selected according to the polymer material and the capabilities of the 3D printer.
