@@ -114,7 +114,7 @@ export function InSpaceLogoAnimation() {
     };
   }, [ref]); // Depend on ref.current implicitly, but ref itself is stable
 
-  return <div ref={ref} className="flex gap-1  justify-between overflow-clip h-40 md:h-54.75">
+  return <div ref={ref} className="flex gap-1 justify-between overflow-clip h-40 md:h-54.75">
     {/*I*/}
     <svg width="44" height="219" viewBox="0 0 44 219" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M0 0.000274658L0 218.426H43.6883L43.6883 0.000274658H0Z" fill="#EFEFEF" />

@@ -11,6 +11,7 @@ import { TrustedByMarquee } from "@/components/makers/marquee";
 //   C "the index"     — @/components/makers/tribes-variant-c (typographic index)
 import { TribesSection } from "@/components/makers/tribes-variant-b";
 import { cn } from "@/lib/utils";
+import { TestimonySection } from "./testimony";
 
 const SECTION_SHELLS: ReadonlyArray<{
   id: string;
@@ -73,7 +74,10 @@ export default function MakersPage() {
           )}
         </section>
       ))}
+
       <BlogSection />
+
+      <TestimonySection />
     </>
   );
 }
