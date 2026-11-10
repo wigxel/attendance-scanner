@@ -1,5 +1,36 @@
 @import "../globals.css";
 
-@theme {
+@theme inline {
+  /* others */
   --color-brand-maker: var(--color-orange-500);
+
+  /* font */
+  --font-heading: Safiro;
+}
+
+/* Community grid: each icon pops in while spinning, holds, then collapses at 5s. */
+@keyframes tribe-pop {
+  0% {
+    opacity: 0;
+    transform: rotate(-120deg) scale(0);
+  }
+  10%,
+  83% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(120deg) scale(0);
+  }
+}
+
+.tribe-pop {
+  animation: tribe-pop 6s cubic-bezier(0.22, 1, 0.36, 1) infinite backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tribe-pop {
+    animation: none;
+  }
 }

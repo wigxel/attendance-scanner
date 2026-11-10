@@ -2,7 +2,7 @@
 import React from "react";
 
 export function InSpaceLogoAnimation() {
-  const ref = React.useRef<HTMLElement>(null);
+  const ref = React.useRef<HTMLDivElement>(null);
 
   React.useLayoutEffect(() => {
     const container = ref.current;
@@ -26,7 +26,7 @@ export function InSpaceLogoAnimation() {
       return translate * 100; // convert 0..1 → 0..100%
 
       function easedProgress(p: number) {
-        return Math.pow(p, 2); // ease-in, so at 0.25 → 0.0625 (~6.25%)
+        return p ** 2; // ease-in, so at 0.25 → 0.0625 (~6.25%)
       }
     }
 

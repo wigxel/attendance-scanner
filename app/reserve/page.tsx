@@ -442,7 +442,7 @@ function MakePaymentTab() {
             <div
               className={cn(
                 "p-3 rounded-lg mb-4 text-center font-medium",
-                paymentStatusClassname({ paymentStatus })
+                paymentStatusClassname({ paymentStatus }),
               )}
             >
               {paymentMessage}
