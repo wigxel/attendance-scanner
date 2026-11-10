@@ -1,4 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#10b981"/>
-  <text x="32" y="43" text-anchor="middle" font-family="monospace" font-size="26" font-weight="bold" fill="#0b0b14">B</text>
+<svg width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M19.0909 0H22.9091V16.2273L34.3636 4.77273L37.2273 7.63636L25.7727 19.0909H42V22.9091H25.7727L37.2273 34.3636L34.3636 37.2273L22.9091 25.7727V42H19.0909V25.7727L7.63636 37.2273L4.77273 34.3636L16.2273 22.9091H0V19.0909H16.2273L4.77273 7.63636L7.63636 4.77273L19.0909 16.2273V0Z" fill="url(#paint0_linear_1688_359)"/>
+<defs>
+<linearGradient id="paint0_linear_1688_359" x1="-2.20372e-07" y1="6.96479" x2="37.8126" y2="42" gradientUnits="userSpaceOnUse">
+<stop stop-color="#4A83FF"/>
+<stop offset="0.927885" stop-color="#F179DD"/>
+</linearGradient>
+</defs>
 </svg>
