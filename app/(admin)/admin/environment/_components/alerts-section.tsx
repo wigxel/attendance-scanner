@@ -4,8 +4,6 @@ import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
 import { capitalize } from "effect/String";
 import { BellOffIcon, BellRingIcon, CheckIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import {
   EmptyState,
   EmptyStateConceal,
@@ -25,6 +23,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { cn } from "@/lib/utils";
 
 // Human labels per alert type; unknown types fall back to their raw
@@ -35,33 +34,11 @@ const ALERT_TYPE_LABELS: Record<string, string> = {
 
 const typeLabel = (type: string) => ALERT_TYPE_LABELS[type] ?? type;
 
-// Standard base64url -> bytes (applicationServerKey needs raw bytes).
-function urlBase64ToUint8Array(base64Url: string): Uint8Array {
-  const padding = "=".repeat((4 - (base64Url.length % 4)) % 4);
-  const base64 = `${base64Url.replaceAll("-", "+").replaceAll("_", "/")}${padding}`;
-  const raw = atob(base64);
-  return Uint8Array.from(Array.from(raw, (char) => char.charCodeAt(0)));
-}
-
-const supportsPush = () =>
-  typeof navigator !== "undefined" && "serviceWorker" in navigator;
-
 export function AlertsSection() {
   const alerts = useQuery(api.roomMetrics.recentAlerts, {});
-  const vapidPublicKey = useQuery(api.push.vapidPublicKey, {});
   const acknowledge = useMutation(api.roomMetrics.acknowledge);
-  const subscribe = useMutation(api.push.subscribe);
-  const unsubscribe = useMutation(api.push.unsubscribe);
-  const [pushEnabled, setPushEnabled] = useState(false);
-
-  useEffect(() => {
-    if (!supportsPush()) return;
-
-    navigator.serviceWorker.ready
-      .then((registration) => registration.pushManager.getSubscription())
-      .then((subscription) => setPushEnabled(Boolean(subscription)))
-      .catch(() => undefined);
-  }, []);
+  const { status, busy, available, enable } = usePushNotifications();
+  const pushEnabled = status === "subscribed";
 
   if (alerts === undefined) {
     return <Skeleton className="h-[200px]" />;
@@ -70,54 +47,6 @@ export function AlertsSection() {
   const unacknowledgedCount = alerts.filter(
     (alert) => !alert.acknowledged,
   ).length;
-  const pushUnavailable = vapidPublicKey === null || !supportsPush();
-
-  const enablePush = async () => {
-    if (!vapidPublicKey) return;
-
-    if (Notification.permission !== "granted") {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        toast.error("Allow notifications in your browser to get alerts.");
-        return;
-      }
-    }
-
-    const registration = await navigator.serviceWorker.register("/sw.js");
-    const subscription =
-      (await registration.pushManager.getSubscription()) ??
-      (await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-          vapidPublicKey,
-        ) as BufferSource,
-      }));
-
-    const keys = subscription.toJSON().keys;
-    await subscribe({
-      endpoint: subscription.endpoint,
-      p256dh: keys?.p256dh ?? "",
-      auth: keys?.auth ?? "",
-    });
-
-    setPushEnabled(true);
-    toast.success("Push alerts enabled");
-  };
-
-  const disablePush = async () => {
-    const registration = await navigator.serviceWorker.register("/sw.js");
-    const subscription = await registration.pushManager.getSubscription();
-
-    // Drop both sides, so a rotated endpoint cannot leave a stale row behind
-    // and keep delivering duplicate notifications.
-    if (subscription) {
-      await subscription.unsubscribe();
-      await unsubscribe({ endpoint: subscription.endpoint });
-    }
-
-    setPushEnabled(false);
-    toast.success("Push alerts disabled");
-  };
 
   return (
     <Card>
@@ -132,22 +61,25 @@ export function AlertsSection() {
         </div>
 
         <div className="flex">
-          {!pushUnavailable && (
+          {available && (
             <Button
               variant="outline"
               size="sm"
               className="ml-auto"
               title={
-                pushEnabled ? "Disable push alerts" : "Enable push notification"
+                pushEnabled
+                  ? "Push notifications are on"
+                  : "Enable push notifications"
               }
-              onClick={pushEnabled ? disablePush : enablePush}
+              disabled={pushEnabled || busy}
+              onClick={enable}
             >
               {pushEnabled ? (
                 <BellRingIcon className="size-4" />
               ) : (
                 <BellOffIcon className="size-4" />
               )}
-              {pushEnabled ? "Enable" : "Disable"}
+              {pushEnabled ? "Enabled" : "Enable"}
             </Button>
           )}
         </div>

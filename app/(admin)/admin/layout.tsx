@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { Navbar } from "@/components/navbar";
+import { PushGate } from "@/components/push-gate";
 import { ConvexUserImpl } from "@/lib/user.model";
 
 export default async function AdminLayout(props: {
@@ -23,6 +24,8 @@ export default async function AdminLayout(props: {
       <Header />
 
       <Navbar />
+
+      <PushGate />
 
       <main className="mx-auto container min-h-[calc(100svh_-_150px)]">
         {props.children}
