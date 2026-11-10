@@ -48,6 +48,12 @@ export function AlertsSection() {
     (alert) => !alert.acknowledged,
   ).length;
 
+  const pushTitle = pushEnabled
+    ? "Push notifications are on"
+    : "Enable push notifications";
+  const pushLabel = pushEnabled ? "Enabled" : "Enable";
+  const PushIcon = pushEnabled ? BellRingIcon : BellOffIcon;
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center">
@@ -66,20 +72,12 @@ export function AlertsSection() {
               variant="outline"
               size="sm"
               className="ml-auto"
-              title={
-                pushEnabled
-                  ? "Push notifications are on"
-                  : "Enable push notifications"
-              }
+              title={pushTitle}
               disabled={pushEnabled || busy}
               onClick={enable}
             >
-              {pushEnabled ? (
-                <BellRingIcon className="size-4" />
-              ) : (
-                <BellOffIcon className="size-4" />
-              )}
-              {pushEnabled ? "Enabled" : "Enable"}
+              <PushIcon className="size-4" />
+              {pushLabel}
             </Button>
           )}
         </div>
