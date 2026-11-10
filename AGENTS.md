@@ -49,6 +49,11 @@ Use the full bead id (`attendance-scanner-<hash>`), never the bare `bd-<hash>`
 short form — `bd show bd-92o` fails, so a branch carrying it cannot be traced
 back to its bead. PR-feedback branches use `pr-comment/<pr-number>` instead.
 
+### Before you commit
+
+Run `pnpm format` (`biome format --write .`) and include the result in the
+commit. The pre-commit hook runs `pnpm lint` only, so nothing formats for you.
+
 ### Gates before you open
 
 - `pnpm vitest run <changed test files>`

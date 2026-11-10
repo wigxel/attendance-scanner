@@ -77,7 +77,10 @@ export function TribesSection() {
               </p>
             </div>
             {/* the index column stays empty — no /06 on an open slot */}
-            <span aria-hidden className="font-mono text-xs text-muted-foreground" />
+            <span
+              aria-hidden
+              className="font-mono text-xs text-muted-foreground"
+            />
           </a>
         </li>
       </ul>

@@ -65,6 +65,7 @@
     "convex": "^1.45.0",
     "date-fns": "^4.1.0",
     "effect": "^3.21.4",
+    "gsap": "^3.15.1",
     "html5-qrcode": "^2.3.8",
     "import": "^0.0.6",
     "locomotive-scroll": "^5.0.1",

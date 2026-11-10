@@ -1,5 +1,6 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
+import { cva } from "class-variance-authority";
 import { useMutation, useQuery } from "convex/react";
 import { isNullable } from "effect/Predicate";
 import { isEmpty } from "effect/String";
@@ -253,6 +254,23 @@ function PickSeatTab() {
   );
 }
 
+const paymentStatusClassname = cva(
+  "p-3 rounded-lg mb-4 text-center font-medium",
+  {
+    variants: {
+      paymentStatus: {
+        success: "bg-green-100 text-green-800 border border-green-200",
+        failed: "bg-red-100 text-red-800 border border-red-200",
+        pending: "bg-yellow-100 text-yellow-800 border border-yellow-200",
+        default: "bg-green-100 text-green-800 border border-green-200",
+      },
+    },
+    defaultVariants: {
+      paymentStatus: "default",
+    },
+  },
+);
+
 function MakePaymentTab() {
   const router = useRouter();
   const { selectedSeatNumbers, price, bookingId } = useBookingStore();
@@ -422,12 +440,10 @@ function MakePaymentTab() {
         <div>
           {paymentMessage && (
             <div
-              className={`p-3 rounded-lg mb-4 text-center font-medium ${paymentStatus !== "pending" && paymentStatus !== "failed"
-                  ? "bg-green-100 text-green-800 border border-green-200"
-                  : paymentStatus === "failed"
-                    ? "bg-red-100 text-red-800 border border-red-200"
-                    : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                }`}
+              className={cn(
+                "p-3 rounded-lg mb-4 text-center font-medium",
+                paymentStatusClassname({ paymentStatus })
+              )}
             >
               {paymentMessage}
             </div>
@@ -435,7 +451,7 @@ function MakePaymentTab() {
         </div>
 
         {showTimer && (
-          <div className="border border-(--border) rounded-lg p-4 mb-2">
+          <div className="border border-border rounded-lg p-4 mb-2">
             <div className="flex items-center justify-between mb-3 text-sm">
               <h3 className="text-foreground">Time Remaining</h3>
               <Badge
@@ -470,7 +486,7 @@ export default function ReservePage() {
       <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />
 
       <PendingBookingsModal />
-      <div className="z-[2] relative">
+      <div className="z-2 relative">
         <Header />
 
         <main className="min-h-screen">

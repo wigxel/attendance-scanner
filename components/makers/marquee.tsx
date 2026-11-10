@@ -60,7 +60,12 @@ export function TrustedByMarquee() {
         </h2>
         <div className="min-w-0 flex-1 overflow-hidden">
           {/* ponytail: 60s linear is a guess; tune speed by feel */}
-          <div className={cn("flex w-max marquee-track", paused && "marquee-paused")}>
+          <div
+            className={cn(
+              "flex w-max marquee-track",
+              paused && "marquee-paused",
+            )}
+          >
             {track(false)}
             {track(true)}
           </div>

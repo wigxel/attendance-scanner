@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { InSpaceLogoAnimation } from "./inspace-logo-animation";
 import { Gutter } from "../layout/gutter";
 
-
 const SITEMAP = [
   {
     heading: "The community",
@@ -93,7 +92,6 @@ export function MakersFooter() {
             </span>
             <span>© {new Date().getFullYear()}</span>
           </div>
-
         </div>
 
         <div className="container mx-auto px-4">
@@ -104,7 +102,7 @@ export function MakersFooter() {
       <Gutter
         breakpoints={[
           {
-            type: 'stretch',
+            type: "stretch",
             columns: 12,
             gutter: 20,
             margin: 0,

@@ -2,10 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  MobileMenu,
-  useMobileMenu
-} from "@/components/mobile-menu";
+import { MobileMenu, useMobileMenu } from "@/components/mobile-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -20,11 +17,7 @@ export function MakersNav() {
 
   return (
     <MobileMenu>
-      <header
-        className={cn(
-          "sticky top-0 z-40 bg-background",
-        )}
-      >
+      <header className={cn("sticky top-0 z-40 bg-background")}>
         <nav
           aria-label="Inspace Makers"
           className="container mx-auto flex h-16 items-center justify-between gap-2 px-4"

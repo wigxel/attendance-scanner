@@ -26,7 +26,12 @@ const LEADERS: Partial<Record<(typeof TRIBES)[number]["id"], Leader>> = {
     name: "Fidelis Saleh",
     photo: "/images/leaders/joseph-owonvwon.webp",
     tier: "Verified",
-    proof: [{ label: "LinkedIn", href: "https://www.linkedin.com/in/fidelis-saleh-789322226" }],
+    proof: [
+      {
+        label: "LinkedIn",
+        href: "https://www.linkedin.com/in/fidelis-saleh-789322226",
+      },
+    ],
   },
   // @todo: a tribe can have multiple leaders
   // "tribe-additive-manufacturing": {
@@ -229,7 +234,7 @@ export function LeadersSection() {
           className={cn(
             "grid gap-10",
             hasPhotos &&
-            "lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-x-12",
+              "lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-x-12",
           )}
         >
           {hasPhotos && <Spotlight entries={named} activeIdx={activeIdx} />}

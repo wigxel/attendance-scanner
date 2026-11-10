@@ -1,9 +1,10 @@
 "use client";
 import { motion, useInView } from "motion/react";
 import Image from "next/image";
-import { type RefObject, useEffect, useRef, useState } from "react";
+import React, { type RefObject, useEffect, useRef, useState } from "react";
 import useEvent from "react-use-event-hook";
 import { heading } from "@/app/font";
+import { RandomText } from "@/components/creative/random-text";
 import { cn } from "@/lib/utils";
 
 const testimonies = [
@@ -91,6 +92,64 @@ const testimonies = [
   },
 ];
 
+type Testimony = (typeof testimonies)[number];
+
+type TestimonyItemProps = {
+  testimony: Testimony;
+};
+
+function TestimonyItem({ testimony }: TestimonyItemProps) {
+  const [hovering, setHovering] = React.useState(false);
+
+  return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: Accounted for
+    <div
+      className="flex-none w-[384px] border border-[#3FD6FC]/10 shadow-md snap-center flex flex-col aspect-384/492"
+      onMouseEnter={() => {
+        setHovering(true);
+      }}
+      onMouseLeave={() => {
+        setHovering(false);
+      }}
+      onFocus={() => {
+        setHovering(true);
+      }}
+      onBlur={() => {
+        setHovering(false);
+      }}
+    >
+      <p className="text-pretty mt-2 flex-1 p-4 text-base font-thin text-start">
+        {testimony.comment}
+      </p>
+
+      <figure className="flex border-t pointer-events-none border-[#3FD6FC]/10">
+        <Image
+          src={testimony.avatar}
+          width={72}
+          height={72}
+          alt={testimony.name}
+          className="w-16 h-16 shrink-0 object-cover"
+        />
+
+        <figcaption className="text-start flex border-l border-[#3FD6FC]/10 w-full flex-col px-4 justify-center relaive scanline-container">
+          <p className="font-semibold">{testimony.name}</p>
+          <div className="text-base relative overflow-y-clip font-thin">
+            <p className="invisible not-sr-only ">{testimony.title}</p>
+            <motion.div
+              initial={{ y: 0 }}
+              animate={hovering ? { y: "-50%" } : {}}
+              className="flex flex-col inset-bs-0 inset-s-0 absolute"
+            >
+              <p className="text-muted-foreground">{testimony.tribe}</p>
+              <p className="text-brand-maker">{testimony.title}</p>
+            </motion.div>
+          </div>
+        </figcaption>
+      </figure>
+    </div>
+  );
+}
+
 /** Move one card; the first two children give the card width plus gap. */
 function scrollCarousel(carousel: HTMLDivElement, direction: 1 | -1) {
   const [firstCard, secondCard] = Array.from(
@@ -144,11 +203,13 @@ function TestimonyNav({ carouselRef }: TestimonyNavProps) {
   }, [inView, carouselRef]);
 
   return (
-    <div ref={navRef} className="flex gap-12 pb-5 *:opacity-50 *:hover:opacity-100 justify-start">
+    <div
+      ref={navRef}
+      className="flex gap-12 pb-5 *:opacity-50 *:hover:opacity-100 justify-start"
+    >
       <button
         type="button"
         className="focus:outline-none focus:opacity-100 focus:scale-110 hover:scale-110 transition-default"
-
         aria-label="Previous testimony"
         onClick={handlePrevious}
       >
@@ -161,9 +222,12 @@ function TestimonyNav({ carouselRef }: TestimonyNavProps) {
           priority={true}
         />
       </button>
-      <button type="button"
+      <button
+        type="button"
         className="focus:outline-none focus:opacity-100 focus:scale-110 hover:scale-110 transition-default"
-        aria-label="Next testimony" onClick={handleNext}>
+        aria-label="Next testimony"
+        onClick={handleNext}
+      >
         <Image
           src="/images/pixel-arrow.svg"
           alt=""
@@ -212,7 +276,7 @@ export function TestimonySection() {
   }, []);
 
   return (
-    <div className="w-full overflow-x-clip">
+    <div className="w-full overflow-x-clip bg-background">
       <section className="container mx-auto px-4 flex flex-col gap-24 py-32">
         <div className="flex gap-12">
           <div className="basis-1/6" />
@@ -220,15 +284,18 @@ export function TestimonySection() {
             <h2
               className={cn(
                 heading.className,
-                "tracking-tighter text-3xl md:text-6xl",
+                "tracking-tighter text-3xl md:text-6xl font-[Safiro]! font-black",
               )}
-              style={{
-                fontFamily: "Safiro",
-                fontWeight: 900,
-                letterSpacing: 2,
-              }}
             >
-              THE TRIBES SPEAK
+              <span className="font-thin">THE TRIBES</span>&nbsp;
+              <RandomText
+                variant="scramble"
+                duration={3}
+                animate="in-view"
+                viewport={{ once: true }}
+              >
+                SPEAK
+              </RandomText>
             </h2>
 
             <svg
@@ -259,9 +326,9 @@ export function TestimonySection() {
               <span>01</span>
 
               <span className="relative flex-1 flex items-center">
-                <div className="w-full h-px bg-white min-w-40" />
+                <div className="w-full h-px bg-white/50 min-w-40" />
                 <div
-                  className="handle absolute top-1/2 h-2 -translate-y-1/2 bg-orange-500"
+                  className="handle absolute top-1/2 h-4 border bg-brand-maker/25 -translate-y-1/2 border-brand-maker"
                   style={{
                     width: `${scroll.viewportRatio * 100}%`,
                     left: `${scroll.progress * (1 - scroll.viewportRatio) * 100}%`,
@@ -275,41 +342,26 @@ export function TestimonySection() {
             <TestimonyNav carouselRef={carouselRef} />
           </div>
 
-          <div className="testimony-carousel flex-1 p-6 relative h-123">
+          <div className="testimony-carousel flex-1 relative">
+            <div className="invisible">
+              <TestimonyItem
+                testimony={{
+                  name: "Anya Sharma",
+                  tribe: "The Innovators",
+                  title: "Chief Visionary Officer",
+                  comment: "Incredible platform for growth!",
+                  avatar: "/images/makers/avatars/madonna.webp",
+                }}
+              />
+            </div>
+
             <div
               ref={carouselRef}
-              className="flex absolute inset-0 scrollbar-none grow-0 overflow-x-auto snap-x snap-start snap-proximity space-x-4"
+              className="flex absolute inset-0 scrollbar-none grow-0 overflow-y-hidden overflow-x-auto snap-x snap-start snap-proximity space-x-4"
             >
-              {testimonies.map((testimony, index) => {
-                return (
-                  <div
-                    key={index}
-                    className="flex-none w-[384px] border border-[#3FD6FC]/10 shadow-md snap-center flex flex-col aspect-384/492"
-                  >
-                    <p className="text-pretty mt-2 flex-1 p-4 text-base font-thin text-start">
-                      {testimony.comment}
-                    </p>
-
-                    <figure className="flex border-t border-[#3FD6FC]/10">
-                      <Image
-                        src={testimony.avatar}
-                        // src={null}
-                        width={72}
-                        height={72}
-                        alt={testimony.name}
-                        className="w-16 h-16 shrink-0 object-cover"
-                      />
-
-                      <figcaption className="text-start flex border-l bg-[#1B2332]/40 border-[#3FD6FC]/10 w-full flex-col px-4 justify-center">
-                        <p className="font-semibold">{testimony.name}</p>
-                        <p className="text-muted-foreground">
-                          {testimony.title}
-                        </p>
-                      </figcaption>
-                    </figure>
-                  </div>
-                );
-              })}
+              {testimonies.map((testimony) => (
+                <TestimonyItem key={testimony.name} testimony={testimony} />
+              ))}
             </div>
           </div>
         </div>

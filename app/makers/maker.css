@@ -1,0 +1,5 @@
+@import "../globals.css";
+
+@theme {
+  --color-brand-maker: var(--color-orange-500);
+}

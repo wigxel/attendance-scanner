@@ -79,7 +79,8 @@ const weekLabel = (weekStart: string) => {
   return `${format(start, "d MMM")} – ${format(addDays(start, 6), "d MMM yyyy")}`;
 };
 
-const tribeOf = (tribeId: string) => TRIBES.find((tribe) => tribe.id === tribeId);
+const tribeOf = (tribeId: string) =>
+  TRIBES.find((tribe) => tribe.id === tribeId);
 
 /*@todo: We should add pagination and log filter by tribe */
 export function LogsContent() {
@@ -91,14 +92,17 @@ export function LogsContent() {
 
   return (
     <div className="flex flex-col">
-      {[...LOGS].sort((a, b) => timestamp(b.weekStart) - timestamp(a.weekStart)).map(
-        (week) => (
+      {[...LOGS]
+        .sort((a, b) => timestamp(b.weekStart) - timestamp(a.weekStart))
+        .map((week) => (
           <section
             key={week.weekStart}
             id={`week-${week.weekStart}`}
             className="scroll-mt-16 py-8 flex items-start gap-4 border-t border-(--border)"
           >
-            <h3 className="text-xs sticky top-(--header-height) uppercase py-5 font-mono font-medium basis-[40ch]">{weekLabel(week.weekStart)}</h3>
+            <h3 className="text-xs sticky top-(--header-height) uppercase py-5 font-mono font-medium basis-[40ch]">
+              {weekLabel(week.weekStart)}
+            </h3>
             <ul className="flex-1 flex flex-col divide-y divide-(--border)">
               {week.entries.map((entry) => {
                 const tribe = tribeOf(entry.tribeId);
@@ -124,7 +128,8 @@ export function LogsContent() {
                         <span className="font-mono text-xs text-muted-foreground">
                           {entry.tribeId}
                         </span>
-                      )}</div>
+                      )}
+                    </div>
 
                     <p className="text-pretty text-muted-foreground">
                       {entry.summary}
@@ -138,8 +143,7 @@ export function LogsContent() {
               })}
             </ul>
           </section>
-        ),
-      )}
+        ))}
     </div>
   );
 }

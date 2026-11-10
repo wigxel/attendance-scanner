@@ -75,16 +75,20 @@ export async function BlogSection() {
         <div className="flex gap-12 border py-24 px-16">
           <section className="flex gap-4">
             <div className="basis-5/12 grow">
-              <h4 className={cn(heading.className, "tracking-tighter text-3xl md:text-5xl")}>
-                <Balancer>
-                  Inside the Build: Weekly logs
-                </Balancer>
+              <h4
+                className={cn(
+                  heading.className,
+                  "tracking-tighter text-3xl md:text-5xl",
+                )}
+              >
+                <Balancer>Inside the Build: Weekly logs</Balancer>
               </h4>
             </div>
 
             <div className="flex flex-col gap-8 basis-5/12">
               <p className="max-w-[45ch] text-muted-foreground">
-                Explore the real-world problems our community is solving across software, AI, hardware and games.
+                Explore the real-world problems our community is solving across
+                software, AI, hardware and games.
               </p>
 
               <Link
