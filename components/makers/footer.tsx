@@ -1,6 +1,7 @@
 import { heading } from "@/app/font";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { InSpaceLogoAnimation } from "./inspace-logo-animation";
 
 // Makers footer — PRD: housekeeping and a last call to action, with both
 // audiences' asks ("Apply to join"; "Hire a build team"). Replaces the app
@@ -96,6 +97,11 @@ export function MakersFooter() {
           </span>
           <span>© {new Date().getFullYear()}</span>
         </div>
+
+      </div>
+
+      <div className="container mx-auto">
+        <InSpaceLogoAnimation />
       </div>
     </footer>
   );
