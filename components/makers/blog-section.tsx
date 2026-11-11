@@ -39,7 +39,7 @@ async function TopArticlesSection() {
   if (latest.length === 0) return null;
 
   return (
-    <div id="blog" className="overflow-x-clip">
+    <div id="blog" className="overflow-x-clip bg-background">
       <div className="container mx-auto py-24 [--heading-height:4.12rem] px-4">
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-1" />
