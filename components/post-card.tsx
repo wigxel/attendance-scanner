@@ -122,7 +122,10 @@ function PostItem({ post }: PostItemProps) {
 
 function PostCompact({ post }: PostCardProps) {
   return (
-    <Link href={post.url} className="group block py-6 text-inherit">
+    <Link
+      href={post.url}
+      className="group py-6 text-inherit flex flex-col gap-8"
+    >
       <div className="flex flex-col">
         <div className="basis-3/7 shrink-0">
           <h2 className="mb-1.5 text-xl font-semibold tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary">
@@ -140,7 +143,7 @@ function PostCompact({ post }: PostCardProps) {
       </div>
 
       <div
-        className="border-[0.5px] [--b-color:#575771] w-full border-transparent"
+        className="group-last:hidden border-[0.5px] [--b-color:#575771] w-full border-transparent"
         style={{
           borderImage: `repeating-linear-gradient(
             to right,

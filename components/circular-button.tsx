@@ -50,7 +50,7 @@ export function CircularButton({
         "relative w-[15vw] aspect-square rounded-full flex items-center justify-center",
         {
           "text-white bg-brand-maker": variant === "default",
-          "text-brand-maker bg-transparent border-dashed border border-white/50":
+          "text-brand-maker bg-transparent border-dashed border border-white/25":
             variant === "outline",
         },
         className,
@@ -58,7 +58,7 @@ export function CircularButton({
       {...restProps}
     >
       {variant === "outline" ? (
-        <div className="border-2 border-white/50 aspect-square w-8/12 rounded-full border-dashed absolute" />
+        <div className="border border-white/25 aspect-square w-8/12 rounded-full border-dashed absolute" />
       ) : null}
 
       <Image

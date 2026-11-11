@@ -2,7 +2,6 @@ import { getPosts } from "@prudentbird/voxx-core";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Balancer from "react-wrap-balancer";
-import { heading } from "@/app/font";
 import { CircularButton } from "@/components/circular-button";
 import { PostCard } from "@/components/post-card";
 import { DateParse } from "@/lib/date.helpers";
@@ -40,21 +39,21 @@ async function TopArticlesSection() {
   if (latest.length === 0) return null;
 
   return (
-    <div id="blog" className="overflow-hidden border">
-      <div className="container mx-auto py-24 [--heading-height:4.12rem] px-4 ">
+    <div id="blog" className="overflow-x-clip">
+      <div className="container mx-auto py-24 [--heading-height:4.12rem] px-4">
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-1" />
 
           <h3 className="font-heading text-8xl font-black relative col-span-11">
             WHAT WE
-            <span className="text-cyan-500 text-8xl tracking-wider absolute inset-bs-0 inset-s-0 rotate-90 origin-top-left translate-y-32 -translate-x-4">
+            <span className="text-cyan-500 text-8xl tracking-wider absolute inset-bs-0 inset-s-0 rotate-90 origin-top-left translate-y-32 -translate-x-8">
               SHIPPED
             </span>
           </h3>
 
           <div className="col-span-1" />
 
-          <div className="grid gap-10 grid-cols-[1fr_0.6fr_0.1fr] grid-rows-1 col-span-10">
+          <div className="grid gap-10 grid-cols-[1fr_0.6fr] relative grid-rows-1 col-span-10">
             {/* full post card */}
             <div className="*:flex-1 flex *:pt-0!">
               <PostCard variant="item" post={latest[0]} />
@@ -74,59 +73,15 @@ async function TopArticlesSection() {
               })}
             </div>
 
-            <div className="relative flex justify-end">
-              <div className="absolute inset-be-0 inset-s-0">
-                <CircularButton
-                  text="SEE MORE EXPLORATION"
-                  className="-rotate-45"
-                  variant="outline"
-                />
-              </div>
+            <div className="absolute inset-e-0 inset-be-0 translate-y-1/2 translate-x-1/2">
+              <CircularButton
+                text="see more exploration"
+                className="animate-spin animation-duration-[120s] transition-default"
+                variant="outline"
+              />
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="container mx-auto flex flex-col gap-10 md:gap-14">
-        <h2
-          className={cn(
-            heading.className,
-            "tracking-tighter text-3xl md:text-5xl",
-          )}
-        >
-          What we shipped
-        </h2>
-
-        <ul className="flex flex-col divide-y divide-border">
-          {latest.map((post) => (
-            <li key={post.slug}>
-              <Link
-                href={post.url}
-                className="group grid gap-x-8 gap-y-1 py-4 md:grid-cols-[16ch_20rem_1fr] md:items-baseline"
-              >
-                <span className="font-mono text-xs text-muted-foreground">
-                  {pipe(
-                    DateParse.presets.dateOnly(post.date),
-                    O.getOrElse(() => "--"),
-                  )}
-                </span>
-                <h3 className="font-medium underline-offset-4 group-hover:underline">
-                  {post.title}
-                </h3>
-                <p className="max-w-[70ch] text-muted-foreground">
-                  {post.description}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <Link
-          href="/blog"
-          className="w-fit font-mono text-muted-foreground underline underline-offset-4 hover:text-foreground"
-        >
-          See more articles
-        </Link>
       </div>
     </div>
   );
@@ -138,6 +93,8 @@ function WeeklyLogSection() {
       <div />
 
       <section className="col-span-10 py-24 justify-between flex gap-4">
+        <CommunityAnimation />
+
         <div className="basis-1/2 flex flex-col gap-7 py-24">
           <h4
             className={cn(
@@ -162,8 +119,6 @@ function WeeklyLogSection() {
             <ArrowRight size="1em" />
           </Link>
         </div>
-
-        <CommunityAnimation />
       </section>
     </div>
   );
