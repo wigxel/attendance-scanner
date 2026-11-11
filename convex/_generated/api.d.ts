@@ -20,6 +20,7 @@ import type * as constants from "../constants.js";
 import type * as crons from "../crons.js";
 import type * as customers from "../customers.js";
 import type * as flags from "../flags.js";
+import type * as guestAlerts from "../guestAlerts.js";
 import type * as http from "../http.js";
 import type * as inventory from "../inventory.js";
 import type * as kpis from "../kpis.js";
@@ -65,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   customers: typeof customers;
   flags: typeof flags;
+  guestAlerts: typeof guestAlerts;
   http: typeof http;
   inventory: typeof inventory;
   kpis: typeof kpis;
