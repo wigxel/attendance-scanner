@@ -1,7 +1,5 @@
 import { getPosts } from "@prudentbird/voxx-core";
-import Link from "next/link";
-import { DateParse } from "@/lib/date.helpers";
-import { O } from "@/lib/fp.helpers";
+import { PostCard } from "@/components/post-card";
 import { heading } from "./font";
 
 export async function Posts() {
@@ -32,45 +30,13 @@ export async function Posts() {
           <div className="col-span-5" />
           <div className="col-span-7 mt-24 md:mt-32 relative">
             <ul className="flex flex-col gap-12">
-              {items.map((e, index) => {
-                return (
-                  <Link key={e.title} href={e.url}>
-                    <section className="group relative pt-4">
-                      <div className="grid grid-cols-12">
-                        <span className="font-bold flex pointer-events-none group-hover:opacity-25 leading-[1ex] pt-2 font-mono -tracking-[0.8svw] select-none text-[12svw] top opacity-5 col-span-3">
-                          {String(items.length - index).padStart(2, "0")}
-                        </span>
-
-                        <div className="col-span-9">
-                          <h2 className="text-lg text-foreground font-medium group-hover:underline">
-                            {e.title}
-                          </h2>
-
-                          <p className="text-base text-pretty md:text-lg mb-3 text-muted-foreground">
-                            {e.description}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-(--border) my-4" />
-
-                      <div className="grid grid-cols-12">
-                        <div className="col-span-3" />
-
-                        <p className="flex col-span-9 gap-3 text-xs mb-2 justify-start text-muted-foreground w-full">
-                          <span className="font-mono">
-                            {DateParse.presets
-                              .dateOnly(e.date)
-                              .pipe(O.getOrElse(() => "--"))}
-                          </span>
-                          <span>•</span>
-                          <span className="font-mono">{e.category}</span>
-                        </p>
-                      </div>
-                    </section>
-                  </Link>
-                );
-              })}
+              {items.map((post, index) => (
+                <PostCard
+                  key={post.title}
+                  post={post}
+                  number={items.length - index}
+                />
+              ))}
             </ul>
           </div>
         </div>

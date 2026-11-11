@@ -3,12 +3,26 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Balancer from "react-wrap-balancer";
 import { heading } from "@/app/font";
+import { CircularButton } from "@/components/circular-button";
+import { PostCard } from "@/components/post-card";
 import { DateParse } from "@/lib/date.helpers";
 import { O, pipe } from "@/lib/fp.helpers";
 import { cn } from "@/lib/utils";
 import { CommunityAnimation } from "./community-animation";
 
 export async function BlogSection() {
+  return (
+    <div>
+      <TopArticlesSection />
+
+      <section className="scroll-mt-16 border-t border-border bg-background-lv1 px-4 py-16 md:py-28">
+        <WeeklyLogSection />
+      </section>
+    </div>
+  );
+}
+
+async function TopArticlesSection() {
   const posts = await getPosts({ collection: "blog" });
 
   const timestamp = (date: (typeof posts)[number]["date"]) => {
@@ -21,15 +35,58 @@ export async function BlogSection() {
 
   const latest = [...posts]
     .sort((a, b) => timestamp(b.date) - timestamp(a.date))
-    .slice(0, 3);
+    .slice(0, 4);
 
   if (latest.length === 0) return null;
 
   return (
-    <section
-      id="blog"
-      className="scroll-mt-16 border-t border-border bg-background-lv1 px-4 py-16 md:py-28"
-    >
+    <div id="blog" className="overflow-hidden border">
+      <div className="container mx-auto py-24 [--heading-height:4.12rem] px-4 ">
+        <div className="grid grid-cols-12 gap-8">
+          <div className="col-span-1" />
+
+          <h3 className="font-heading text-8xl font-black relative col-span-11">
+            WHAT WE
+            <span className="text-cyan-500 text-8xl tracking-wider absolute inset-bs-0 inset-s-0 rotate-90 origin-top-left translate-y-32 -translate-x-4">
+              SHIPPED
+            </span>
+          </h3>
+
+          <div className="col-span-1" />
+
+          <div className="grid gap-10 grid-cols-[1fr_0.6fr_0.1fr] grid-rows-1 col-span-10">
+            {/* full post card */}
+            <div className="*:flex-1 flex *:pt-0!">
+              <PostCard variant="item" post={latest[0]} />
+            </div>
+
+            {/* compact posts */}
+            <div className="flex flex-col gap-4 *:pt-0!">
+              {latest.slice(1).map((post, index) => {
+                return (
+                  <PostCard
+                    key={post.slug}
+                    variant="compact"
+                    post={post}
+                    number={latest.length - index}
+                  />
+                );
+              })}
+            </div>
+
+            <div className="relative flex justify-end">
+              <div className="absolute inset-be-0 inset-s-0">
+                <CircularButton
+                  text="SEE MORE EXPLORATION"
+                  className="-rotate-45"
+                  variant="outline"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="container mx-auto flex flex-col gap-10 md:gap-14">
         <h2
           className={cn(
@@ -71,9 +128,7 @@ export async function BlogSection() {
           See more articles
         </Link>
       </div>
-
-      <WeeklyLogSection />
-    </section>
+    </div>
   );
 }
 

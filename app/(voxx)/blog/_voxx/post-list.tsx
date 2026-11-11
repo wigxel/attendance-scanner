@@ -1,18 +1,12 @@
-import type { Post, VoxxConfig } from "@prudentbird/voxx-core";
-import { formatDate } from "@prudentbird/voxx-core";
-import Image from "next/image";
-import Link from "next/link";
+import type { Post } from "@prudentbird/voxx-core";
+import { PostCard } from "@/components/post-card";
 
-export function PostList({
-  posts,
-  config,
-}: {
-  posts: Post[];
-  config: VoxxConfig;
-}) {
+type PostListProps = { posts: Post[] };
+
+export function PostList({ posts }: PostListProps) {
   if (posts.length === 0) {
     return (
-      <div className="voxx-empty">
+      <div className="text-muted-foreground">
         <p>No posts yet.</p>
         <p>
           Add a Markdown file to your content folder, or run{" "}
@@ -23,54 +17,10 @@ export function PostList({
   }
 
   return (
-    <ul className="">
+    <ul className="flex list-none flex-col p-0">
       {posts.map((post) => (
-        <li key={post.slug} className="voxx-postcard">
-          <Link href={post.url} className="voxx-postcard__link z-20 relative">
-            {post.image ? (
-              <Image
-                src={post.image}
-                alt={`${post.title} cover`}
-                quality={100}
-                width={200}
-                height={200}
-                unoptimized
-                className="w-full mb-6 rounded"
-              />
-            ) : null}
-
-            <div className="flex gap-4">
-              <div className="basis-3/7 shrink-0">
-                <h2 className="voxx-postcard__title mt-8">{post.title}</h2>
-                <p className="voxx-postcard__meta text-xs md:text-sm">
-                  <time dateTime={post.date}>
-                    {formatDate(post.date, config.site.locale)}
-                  </time>
-                  {config.features.readingTime ? (
-                    <span>{` · ${post.readingTimeMinutes} min read`}</span>
-                  ) : null}
-                </p>
-              </div>
-
-              <div className="basis-4/7 shrink-0">
-                {post.excerpt ? (
-                  <p className="voxx-postcard__excerpt text-xs md:text-sm max-w-[45ch]">
-                    {post.excerpt}
-                  </p>
-                ) : null}
-
-                {config.features.tags && post.tags.length > 0 ? (
-                  <ul className="voxx-tags">
-                    {post.tags.map((tag) => (
-                      <li key={tag} className="voxx-tag">
-                        {tag}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            </div>
-          </Link>
+        <li key={post.slug} className="border-t border-border first:border-t-0">
+          <PostCard post={post} variant="item" />
         </li>
       ))}
     </ul>
