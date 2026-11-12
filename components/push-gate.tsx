@@ -22,8 +22,6 @@ export function resolveGate(status: PushStatus): GateState {
     case "unsupported":
       return status;
     default:
-      // checking, subscribed and unavailable (missing VAPID keys) all stay
-      // out of the way.
       return "hidden";
   }
 }
@@ -60,11 +58,11 @@ export function PushGate() {
 
   return (
     <AlertDialog open>
-      <AlertDialogContent className="flex h-dvh w-screen max-w-none items-center justify-center rounded-none border-0 p-6 sm:max-w-none">
+      <AlertDialogContent className="flex h-dvh w-screen max-w-none items-center justify-center rounded-none border-0 p-6 sm:max-w-none bg-background/70 backdrop-blur-sm">
         <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
           <AlertDialogHeader className="items-center">
             <AlertDialogTitle>{copy.title}</AlertDialogTitle>
-            <AlertDialogDescription>{copy.body}</AlertDialogDescription>
+            <AlertDialogDescription className="mb-8 max-w-[40ch] text-center">{copy.body}</AlertDialogDescription>
           </AlertDialogHeader>
 
           {error && (

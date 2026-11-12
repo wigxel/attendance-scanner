@@ -88,6 +88,8 @@ export function usePushNotifications() {
       console.error(
         "Push gate: VAPID_PUBLIC_KEY is not configured, skipping the gate.",
       );
+
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus("unavailable");
       return;
     }
