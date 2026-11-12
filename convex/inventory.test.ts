@@ -534,3 +534,264 @@ describe("inventory:sell", () => {
     ).rejects.toThrow("money against it");
   });
 });
+
+describe("credit sales", () => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  async function seedCreditShop(t: Tester) {
+    await seedAcl(t, true);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    const unitId = await admin.mutation(api.inventory.createUnit, {
+      name: "pack",
+    });
+    const productId = await admin.mutation(api.inventory.createProduct, {
+      name: "Peak Milk",
+      baseUnitId: unitId,
+      sellPriceKobo: 4000,
+    });
+    await admin.mutation(api.inventory.recordMovement, {
+      productId,
+      kind: "restock",
+      quantity: 50,
+      note: "Delivery",
+    });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: "customer-1",
+        firstName: "Ada",
+        lastName: "Obi",
+        occupation: "None",
+      });
+      await ctx.db.insert("profile", {
+        id: "customer-2",
+        firstName: "Bola",
+        lastName: "Eze",
+        occupation: "None",
+      });
+    });
+    return { admin, unitId, productId };
+  }
+
+  function sellOnCredit(
+    admin: ReturnType<Tester["withIdentity"]>,
+    unitId: string,
+    productId: string,
+    customerId: string,
+    amountPaidKobo?: number,
+  ) {
+    return admin.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId,
+      dueDate: "2026-12-01",
+      amountPaidKobo,
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+  }
+
+  it("needs a named customer and records the deposit", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedCreditShop(t);
+
+    await expect(
+      admin.mutation(api.inventory.recordSale, {
+        channel: "credit",
+        lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+      }),
+    ).rejects.toThrow("A credit sale needs a named customer");
+
+    const saleId = await sellOnCredit(
+      admin,
+      unitId,
+      productId,
+      "customer-1",
+      1000,
+    );
+
+    const [sale] = await admin.query(api.inventory.listSales, {});
+    expect(sale).toMatchObject({
+      customerName: "Ada Obi",
+      paidKobo: 1000,
+      outstandingKobo: 3000,
+      status: "part_paid",
+    });
+
+    const detail = await admin.query(api.inventory.saleDetail, { saleId });
+    expect(detail).toMatchObject({
+      customerName: "Ada Obi",
+      createdByName: "admin-user",
+      paidKobo: 1000,
+      outstandingKobo: 3000,
+      status: "part_paid",
+    });
+    expect(detail?.sale.dueDate).toBe("2026-12-01");
+    expect(detail?.payments).toHaveLength(1);
+    expect(detail?.payments[0]).toMatchObject({
+      amountKobo: 1000,
+      kind: "payment",
+      recordedByName: "admin-user",
+    });
+  });
+
+  it("takes payments, rejects overpayment, reverses and writes off", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedCreditShop(t);
+    const saleId = await sellOnCredit(admin, unitId, productId, "customer-1");
+
+    await expect(
+      admin.mutation(api.inventory.recordSalePayment, {
+        saleId,
+        amountKobo: 5000,
+        channel: "cash",
+      }),
+    ).rejects.toThrow("more than what is outstanding");
+
+    const paymentId = await admin.mutation(api.inventory.recordSalePayment, {
+      saleId,
+      amountKobo: 1500,
+      channel: "transfer",
+    });
+    expect(
+      await admin.query(api.inventory.customerBalance, {
+        customerId: "customer-1",
+      }),
+    ).toBe(2500);
+
+    await admin.mutation(api.inventory.reverseSalePayment, { paymentId });
+    expect(
+      await admin.query(api.inventory.customerBalance, {
+        customerId: "customer-1",
+      }),
+    ).toBe(4000);
+
+    await admin.mutation(api.inventory.writeOffSale, {
+      saleId,
+      amountKobo: 4000,
+      note: "Moved away",
+    });
+    const detail = await admin.query(api.inventory.saleDetail, { saleId });
+    expect(detail).toMatchObject({
+      outstandingKobo: 0,
+      writtenOffKobo: 4000,
+      status: "written_off",
+    });
+  });
+
+  it("lists receivables and one customer's debt", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedCreditShop(t);
+
+    await sellOnCredit(admin, unitId, productId, "customer-1");
+    await sellOnCredit(admin, unitId, productId, "customer-2", 500);
+    await admin.mutation(api.inventory.recordSale, {
+      channel: "cash",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+
+    const owing = await admin.query(api.inventory.receivables, {});
+    expect(owing).toHaveLength(2);
+    const owed = new Map(owing.map((row) => [row.customerId, row]));
+    expect(owed.get("customer-1")?.totalOwedKobo).toBe(4000);
+    expect(owed.get("customer-1")?.customerName).toBe("Ada Obi");
+    expect(owed.get("customer-2")?.totalOwedKobo).toBe(3500);
+
+    const debt = await admin.query(api.inventory.customerDebt, {
+      customerId: "customer-2",
+    });
+    expect(debt).toHaveLength(1);
+    expect(debt[0]).toMatchObject({
+      customerName: "Bola Eze",
+      outstandingKobo: 3500,
+      status: "part_paid",
+    });
+  });
+
+  it("splits booked, collected and outstanding in metrics", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedCreditShop(t);
+
+    const saleId = await sellOnCredit(
+      admin,
+      unitId,
+      productId,
+      "customer-1",
+      1000,
+    );
+
+    const opened = await admin.query(api.inventory.metrics, {
+      start: today,
+      end: today,
+    });
+    expect(opened.revenue).toMatchObject({
+      totalKobo: 4000,
+      collectedKobo: 1000,
+      outstandingKobo: 3000,
+    });
+    expect(
+      opened.revenue.byChannel.find((share) => share.channel === "credit")
+        ?.totalKobo,
+    ).toBe(4000);
+    // Margin stays on the booked amount, not on the cash taken.
+    expect(opened.margin.grossMarginKobo).toBe(4000);
+
+    await admin.mutation(api.inventory.recordSalePayment, {
+      saleId,
+      amountKobo: 3000,
+      channel: "cash",
+    });
+
+    const settled = await admin.query(api.inventory.metrics, {
+      start: today,
+      end: today,
+    });
+    expect(settled.revenue).toMatchObject({
+      collectedKobo: 4000,
+      outstandingKobo: 0,
+    });
+  });
+
+  it("lets a seller take money but not reverse or write off", async () => {
+    const t = convexTest(schema, modules);
+    const { unitId, productId } = await seedCreditShop(t);
+
+    const role = await t.run(async (ctx) =>
+      ctx.runMutation(components.wigxel_acl.roles.createRole, {
+        callerId: "admin-user",
+        name: "seller",
+        description: "Till only",
+        privileges: ["inventory:sell"],
+      }),
+    );
+    if (!role.success) throw new Error(role.error);
+    await t.run(async (ctx) =>
+      ctx.runMutation(components.wigxel_acl.identities.registerIdentity, {
+        callerId: "admin-user",
+        identity: "seller-user",
+        roleId: role.data.roleId,
+      }),
+    );
+    const seller = t.withIdentity({ profile_id: "seller-user" });
+
+    const saleId = await sellOnCredit(seller, unitId, productId, "customer-1");
+    const paymentId = await seller.mutation(api.inventory.recordSalePayment, {
+      saleId,
+      amountKobo: 1000,
+      channel: "pos",
+    });
+    expect(
+      await seller.query(api.inventory.customerBalance, {
+        customerId: "customer-1",
+      }),
+    ).toBe(3000);
+    expect(await seller.query(api.inventory.receivables, {})).toHaveLength(1);
+
+    await expect(
+      seller.mutation(api.inventory.reverseSalePayment, { paymentId }),
+    ).rejects.toThrow("inventory:manage");
+    await expect(
+      seller.mutation(api.inventory.writeOffSale, {
+        saleId,
+        amountKobo: 1000,
+      }),
+    ).rejects.toThrow("inventory:manage");
+  });
+});

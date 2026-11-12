@@ -132,14 +132,53 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         Name
       >;
     };
+    salePayments: {
+      range: FunctionReference<
+        "query",
+        "internal",
+        { end: string; start: string },
+        any,
+        Name
+      >;
+      recordPayment: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          amountKobo: number;
+          callerId: string;
+          channel: "cash" | "pos" | "transfer";
+          note?: string;
+          paidAt?: string;
+          saleId: string;
+        },
+        any,
+        Name
+      >;
+      reversePayment: FunctionReference<
+        "mutation",
+        "internal",
+        { callerId: string; note?: string; paymentId: string },
+        any,
+        Name
+      >;
+      writeOff: FunctionReference<
+        "mutation",
+        "internal",
+        { amountKobo: number; callerId: string; note?: string; saleId: string },
+        any,
+        Name
+      >;
+    };
     sales: {
       create: FunctionReference<
         "mutation",
         "internal",
         {
+          amountPaidKobo?: number;
           callerId: string;
-          channel: "cash" | "pos" | "transfer";
+          channel: "cash" | "pos" | "transfer" | "credit";
           customerId?: string;
+          dueDate?: string;
           lines: Array<{
             productId: string;
             quantity: number;
@@ -173,6 +212,27 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
+      recordPayment: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          amountKobo: number;
+          callerId: string;
+          channel: "cash" | "pos" | "transfer";
+          note?: string;
+          paidAt?: string;
+          saleId: string;
+        },
+        any,
+        Name
+      >;
+      reversePayment: FunctionReference<
+        "mutation",
+        "internal",
+        { callerId: string; note?: string; paymentId: string },
+        any,
+        Name
+      >;
       setSaleCustomer: FunctionReference<
         "mutation",
         "internal",
@@ -184,6 +244,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "mutation",
         "internal",
         { callerId: string; saleId: string },
+        any,
+        Name
+      >;
+      writeOff: FunctionReference<
+        "mutation",
+        "internal",
+        { amountKobo: number; callerId: string; note?: string; saleId: string },
         any,
         Name
       >;
