@@ -312,10 +312,16 @@ describe("metrics", () => {
     const { admin, unitId, productId } = await seedShop(t);
     await restock(admin, unitId, productId);
 
-    const saleId = await admin.mutation(api.inventory.recordSale, {
-      channel: "cash",
-      lines: [{ productId, unitId, quantity: 2, unitPriceKobo: 4000 }],
-    });
+    // A till sale with nothing paid has no money against it, so it can be
+    // voided. The host always takes the money up front, so create it directly.
+    const saleId = await t.run(async (ctx) =>
+      ctx.runMutation(components.inventory.sales.create, {
+        callerId: "admin-user",
+        channel: "cash",
+        amountPaidKobo: 0,
+        lines: [{ productId, unitId, quantity: 2, unitPriceKobo: 4000 }],
+      }),
+    );
     await admin.mutation(api.inventory.voidSale, { saleId });
 
     const metrics = await admin.query(api.inventory.metrics, {
@@ -444,10 +450,13 @@ describe("metrics", () => {
     expect(walkIn?.sale.customerId).toBeUndefined();
     expect(walkIn?.customerName).toBeNull();
 
+    // This sale was paid at the till, so its customer link is locked.
     const before = await admin.query(api.inventory.saleDetail, { saleId });
-    await admin.mutation(api.inventory.setSaleCustomer, { saleId });
+    await expect(
+      admin.mutation(api.inventory.setSaleCustomer, { saleId }),
+    ).rejects.toThrow("money against it");
     const after = await admin.query(api.inventory.saleDetail, { saleId });
-    expect(after?.sale.customerId).toBeUndefined();
+    expect(after?.sale.customerId).toBe("customer-1");
     expect(after?.sale.totalKobo).toBe(before?.sale.totalKobo);
   });
 });
@@ -519,8 +528,9 @@ describe("inventory:sell", () => {
       }),
     ).rejects.toThrow("inventory:manage");
 
+    // The till took the money, so the sale cannot be voided any more.
     await expect(
       admin.mutation(api.inventory.voidSale, { saleId }),
-    ).resolves.toBeNull();
+    ).rejects.toThrow("money against it");
   });
 });
