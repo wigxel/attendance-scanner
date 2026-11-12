@@ -69,7 +69,10 @@ export function CheckInCard() {
 
   return (
     <div className="border overflow-hidden rounded-2xl bg-background">
-      <Refresh component={QRCode} intervalInSeconds={isDevelopment ? 10 : 300} />
+      <Refresh
+        component={QRCode}
+        intervalInSeconds={isDevelopment ? 10 : 300}
+      />
       <p className="p-4 text-center border-t font-mono text-xs">
         Present QR Code to Staff at Check-in Counter
       </p>
