@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import type { RevenueChannelShare, SaleChannel } from "@/convex/inventory";
 import { useMetrics } from "./metrics-context";
-import { formatAmount } from "./metrics-format";
+import { formatAmount, formatKobo } from "./metrics-format";
 
 const channelLabels: Record<SaleChannel, string> = {
   cash: "Cash",
@@ -75,6 +75,43 @@ function RevenueTable({ shares }: { shares: RevenueChannelShare[] }) {
   );
 }
 
+function RevenueStrip() {
+  const { metrics } = useMetrics();
+  const { revenue } = metrics;
+  const figures = [
+    { label: "Booked", valueKobo: revenue.totalKobo },
+    { label: "Collected (all sales)", valueKobo: revenue.collectedKobo },
+    {
+      label: "Owed on this period's sales",
+      valueKobo: revenue.outstandingKobo,
+    },
+  ];
+
+  return (
+    <div className="space-y-2">
+      <dl className="grid gap-2 sm:grid-cols-3">
+        {figures.map((figure) => (
+          <div
+            key={figure.label}
+            className="rounded-md border border-(--border) bg-(--background) p-4"
+          >
+            <dt className="text-muted-foreground text-sm">{figure.label}</dt>
+            <dd className="font-semibold text-foreground">
+              {formatKobo(figure.valueKobo)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="text-muted-foreground text-sm">
+        Booked is the sales recorded in this range, Collected is the money that
+        arrived in it whatever sale it belongs to, and Owed is the unpaid part
+        of this range&apos;s sales. They measure different things, so they do
+        not add up to each other.
+      </p>
+    </div>
+  );
+}
+
 export function MetricsRevenueSection() {
   const { metrics } = useMetrics();
 
@@ -83,6 +120,7 @@ export function MetricsRevenueSection() {
       <h3 className="text-sm font-medium text-foreground">
         Revenue by channel
       </h3>
+      <RevenueStrip />
       <div className="rounded-md border border-(--border) bg-(--background)">
         <RevenueTable shares={metrics.revenue.byChannel} />
       </div>
