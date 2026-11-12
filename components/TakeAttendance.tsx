@@ -1,6 +1,5 @@
 "use client";
 import { useMutation } from "convex/react";
-import { format, isToday, isValid } from "date-fns";
 import { Bug, InfoIcon, LucideArrowUpRight, LucideQrCode } from "lucide-react";
 import Link from "next/link";
 import posthog from "posthog-js";
@@ -14,6 +13,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useDefaultCheckInMode } from "@/hooks/flags";
 import { getErrorMessage } from "@/lib/error.helpers";
+import { type ScanMode, ScanTimeCodec } from "@/lib/scan";
 import { convex } from "./ConvexClientProvider";
 import { FlagCond } from "./flag-cond";
 import { DebugProfile } from "./forms/debug-profile";
@@ -21,23 +21,6 @@ import { If } from "./if";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Card } from "./ui/card";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
-
-type ScanMode = "walk_in" | "reservation";
-
-export const ScanTimeCodec = {
-  encode(date: Date) {
-    return format(date, "dd-MM-yyyy-hh");
-  },
-
-  decode(time_str?: string) {
-    const [d, m, y, h] = String(time_str).split("-");
-
-    const date = new Date(+y, +m - 1, +d, +h);
-    const is_valid_date = isValid(date) && isToday(date);
-
-    return { success: is_valid_date, value: date };
-  },
-};
 
 export function TakeAttendance() {
   const defaultMode = useDefaultCheckInMode();
