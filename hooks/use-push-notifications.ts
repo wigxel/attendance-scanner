@@ -29,6 +29,25 @@ function urlBase64ToUint8Array(base64Url: string): Uint8Array {
   return Uint8Array.from(Array.from(raw, (char) => char.charCodeAt(0)));
 }
 
+// Reuse the browser's existing subscription when there is one, so a second
+// call cannot create a duplicate endpoint for the same device.
+async function getOrCreateSubscription(
+  registration: ServiceWorkerRegistration,
+  vapidPublicKey: string,
+): Promise<PushSubscription> {
+  const existing = await registration.pushManager.getSubscription();
+  if (existing) return existing;
+
+  const applicationServerKey = urlBase64ToUint8Array(
+    vapidPublicKey,
+  ) as BufferSource;
+
+  return registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey,
+  });
+}
+
 export function usePushNotifications() {
   const vapidPublicKey = useQuery(api.push.vapidPublicKey, {});
   const subscribe = useMutation(api.push.subscribe);
@@ -38,7 +57,7 @@ export function usePushNotifications() {
 
   // Store the endpoint against the signed-in user. Re-stamping an existing
   // subscription repairs rows created before recipientKey existed.
-  const store = useCallback(
+  const saveSubscription = useCallback(
     async (subscription: PushSubscription) => {
       const keys = subscription.toJSON().keys;
       await subscribe({
@@ -72,43 +91,12 @@ export function usePushNotifications() {
 
       // The browser is subscribed, so delivery works even if re-stamping
       // fails (offline, transient server error).
-      await store(subscription).catch(() => undefined);
+      await saveSubscription(subscription).catch(() => undefined);
       setStatus("subscribed");
     } catch {
       setStatus("ask");
     }
-  }, [store]);
-
-  useEffect(() => {
-    if (vapidPublicKey === undefined) return;
-
-    if (vapidPublicKey === null) {
-      // No browser can satisfy the gate without keys, so this is the only
-      // fail-open path.
-      console.error(
-        "Push gate: VAPID_PUBLIC_KEY is not configured, skipping the gate.",
-      );
-
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setStatus("unavailable");
-      return;
-    }
-
-    void recheck();
-  }, [vapidPublicKey, recheck]);
-
-  useEffect(() => {
-    if (vapidPublicKey == null) return;
-
-    const onWake = () => void recheck();
-    window.addEventListener("focus", onWake);
-    document.addEventListener("visibilitychange", onWake);
-
-    return () => {
-      window.removeEventListener("focus", onWake);
-      document.removeEventListener("visibilitychange", onWake);
-    };
-  }, [vapidPublicKey, recheck]);
+  }, [saveSubscription]);
 
   const enable = useCallback(async () => {
     if (!vapidPublicKey) return;
@@ -132,17 +120,12 @@ export function usePushNotifications() {
 
     try {
       const registration = await navigator.serviceWorker.register("/sw.js");
-      const existing = await registration.pushManager.getSubscription();
-      const subscription =
-        existing ??
-        (await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(
-            vapidPublicKey,
-          ) as BufferSource,
-        }));
+      const subscription = await getOrCreateSubscription(
+        registration,
+        vapidPublicKey,
+      );
 
-      await store(subscription);
+      await saveSubscription(subscription);
       setStatus("subscribed");
     } catch {
       setStatus("ask");
@@ -152,7 +135,35 @@ export function usePushNotifications() {
     } finally {
       setBusy(false);
     }
-  }, [store, vapidPublicKey]);
+  }, [saveSubscription, vapidPublicKey]);
+
+  // Missing keys are the only fail-open path: no browser could ever satisfy
+  // the gate without them.
+  useEffect(() => {
+    if (vapidPublicKey === undefined) return;
+
+    if (vapidPublicKey === null) {
+      console.error(
+        "Push gate: VAPID_PUBLIC_KEY is not configured, skipping the gate.",
+      );
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStatus("unavailable");
+      return;
+    }
+
+    void recheck();
+
+    // Permission can change outside the app while the tab sits in the
+    // background, so re-check whenever the page wakes.
+    const onWake = () => void recheck();
+    window.addEventListener("focus", onWake);
+    document.addEventListener("visibilitychange", onWake);
+
+    return () => {
+      window.removeEventListener("focus", onWake);
+      document.removeEventListener("visibilitychange", onWake);
+    };
+  }, [vapidPublicKey, recheck]);
 
   return {
     status,

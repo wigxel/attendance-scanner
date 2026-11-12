@@ -15,21 +15,20 @@ import {
 
 export type GateState = "hidden" | "ask" | "blocked" | "unsupported";
 
-export function resolveGate(status: PushStatus): GateState {
-  switch (status) {
-    case "ask":
-    case "blocked":
-    case "unsupported":
-      return status;
-    default:
-      return "hidden";
-  }
-}
+// Checking, subscribed and unavailable (missing VAPID keys) all stay out of
+// the way, so anything not listed here hides the gate.
+const GATE_STATE_BY_STATUS: Partial<Record<PushStatus, GateState>> = {
+  ask: "ask",
+  blocked: "blocked",
+  unsupported: "unsupported",
+};
 
-const COPY: Record<
-  Exclude<GateState, "hidden">,
-  { title: string; body: string; action: string }
-> = {
+export const resolveGate = (status: PushStatus): GateState =>
+  GATE_STATE_BY_STATUS[status] ?? "hidden";
+
+type GateCopy = { title: string; body: string; action: string };
+
+const COPY: Record<Exclude<GateState, "hidden">, GateCopy> = {
   ask: {
     title: "Turn on notifications for this device",
     body: "Guest overstay and environment alerts arrive as push notifications. The staff app needs them enabled on this browser.",
