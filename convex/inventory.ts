@@ -74,8 +74,32 @@ export type PurchaseFormData = {
   suppliers: Supplier[];
 };
 
+// Bookings and convex/schema.ts use the shared validator, which has no credit
+// member: credit exists only in the inventory sale flow, so it is defined here.
+const saleChannelValidator = v.union(
+  v.literal("cash"),
+  v.literal("pos"),
+  v.literal("transfer"),
+  v.literal("credit"),
+);
+
 /** Channel a sale was taken on. */
 export type SaleChannel = "cash" | "pos" | "transfer" | "credit";
+
+export type SaleStatus =
+  | "paid"
+  | "part_paid"
+  | "unpaid"
+  | "written_off"
+  | "voided";
+
+/** Money view of one sale, always derived from its payment rows. */
+export type SaleBalance = {
+  paidKobo: number;
+  writtenOffKobo: number;
+  outstandingKobo: number;
+  status: SaleStatus;
+};
 
 export type RevenueChannelShare = {
   channel: SaleChannel;
@@ -96,22 +120,37 @@ export type SaleItem = {
   quantity: number;
 };
 
-export type SaleSummary = Doc<"sales"> & {
-  customerName: string | null;
-  lineCount: number;
-  items: SaleItem[];
-};
+export type SaleSummary = Doc<"sales"> &
+  SaleBalance & {
+    customerName: string | null;
+    lineCount: number;
+    items: SaleItem[];
+  };
 
 export type SaleLine = Doc<"saleLines"> & {
   productName: string;
   unitName: string;
 };
 
-export type SaleDetail = {
+export type SalePaymentRow = Doc<"salePayments"> & {
+  /** Profile name of whoever took or reversed the money. */
+  recordedByName: string;
+};
+
+export type SaleDetail = SaleBalance & {
   sale: Doc<"sales">;
   customerName: string | null;
   createdByName: string;
   lines: SaleLine[];
+  payments: SalePaymentRow[];
+};
+
+/** One customer who still owes money, for the receivables screen. */
+export type Receivable = {
+  customerId: string;
+  customerName: string;
+  totalOwedKobo: number;
+  oldestUnpaidAt: string;
 };
 
 export type SaleFormProduct = {
@@ -154,7 +193,12 @@ export type InventoryMetrics = {
     purchaseCount: number;
   };
   revenue: {
+    /** Booked: sales stamped in the range. */
     totalKobo: number;
+    /** Collected: money rows dated in the range, across all sales. */
+    collectedKobo: number;
+    /** Unpaid part of the sales booked in the range. */
+    outstandingKobo: number;
     salesCount: number;
     byChannel: RevenueChannelShare[];
   };
@@ -179,7 +223,15 @@ function parseDay(value: string, label: string) {
   return value;
 }
 
-function revenueBreakdown(sales: Doc<"sales">[]) {
+/**
+ * Booked money comes from the sales stamped in the range; collected money
+ * comes from the payment rows dated in the range, whichever sale they belong
+ * to. They are different questions and must not be added together.
+ */
+function revenueBreakdown(
+  sales: Array<Doc<"sales"> & SaleBalance>,
+  payments: Doc<"salePayments">[],
+) {
   const totals = new Map<SaleChannel, number>(
     SALE_CHANNELS.map((channel) => [channel, 0]),
   );
@@ -193,9 +245,19 @@ function revenueBreakdown(sales: Doc<"sales">[]) {
     totalKobo: totals.get(channel) ?? 0,
   }));
 
+  // Only money rows count as collected. A write-off is not money, and a
+  // reversal is money handed back, so it subtracts.
+  const collectedKobo = payments.reduce((sum, row) => {
+    if (row.kind === "payment") return sum + row.amountKobo;
+    if (row.kind === "reversal") return sum - row.amountKobo;
+    return sum;
+  }, 0);
+
   return {
     byChannel,
     totalKobo: byChannel.reduce((sum, share) => sum + share.totalKobo, 0),
+    collectedKobo,
+    outstandingKobo: sales.reduce((sum, sale) => sum + sale.outstandingKobo, 0),
     salesCount: sales.length,
   };
 }
@@ -794,22 +856,50 @@ async function customerName(ctx: QueryCtx, customerId: string | undefined) {
   return await profileName(ctx, customerId);
 }
 
-/** One profile lookup per distinct customer, not one per sale. */
+/** One profile lookup per distinct id, not one per row. */
+async function profileNames(ctx: QueryCtx, ids: Array<string | undefined>) {
+  const distinct = [...new Set(ids.filter((id): id is string => !!id))];
+  const entries = await Promise.all(
+    distinct.map(async (id) => [id, await profileName(ctx, id)] as const),
+  );
+  return new Map(entries);
+}
+
 async function customerNames(
   ctx: QueryCtx,
   sales: Array<{ customerId?: string }>,
 ) {
-  const ids = [
-    ...new Set(
-      sales
-        .map((sale) => sale.customerId)
-        .filter((id): id is string => id !== undefined),
-    ),
-  ];
-  const entries = await Promise.all(
-    ids.map(async (id) => [id, await profileName(ctx, id)] as const),
+  return await profileNames(
+    ctx,
+    sales.map((sale) => sale.customerId),
   );
-  return new Map(entries);
+}
+
+type SaleRow = Doc<"sales"> &
+  SaleBalance & {
+    lineCount: number;
+    items: SaleItem[];
+  };
+
+/** The component's list rows carry the derived money view with each sale. */
+async function salesWithBalance(ctx: QueryCtx) {
+  const rows = (await ctx.runQuery(
+    components.inventory.sales.list,
+    {},
+  )) as Array<
+    Doc<"sales"> & {
+      balance: SaleBalance;
+      lineCount: number;
+      items: SaleItem[];
+    }
+  >;
+
+  return rows.map(({ balance, ...sale }): SaleRow => ({ ...sale, ...balance }));
+}
+
+/** A sale still owes money: not voided and something left unpaid. */
+function owesMoney(sale: SaleRow) {
+  return !sale.voided && sale.outstandingKobo > 0;
 }
 
 export const saleFormData = query({
@@ -853,8 +943,12 @@ export const saleFormData = query({
 
 export const recordSale = mutation({
   args: {
-    channel: paymentChannelValidator,
+    channel: saleChannelValidator,
     customerId: v.optional(v.string()),
+    /** ISO date the credit is due. */
+    dueDate: v.optional(v.string()),
+    /** Money taken at the till; defaults to the full total, or 0 for credit. */
+    amountPaidKobo: v.optional(v.number()),
     note: v.optional(v.string()),
     lines: v.array(
       v.object({
@@ -869,6 +963,9 @@ export const recordSale = mutation({
     const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
 
     const customerId = args.customerId?.trim() || undefined;
+    if (args.channel === "credit" && !customerId) {
+      throw new Error("A credit sale needs a named customer.");
+    }
     if (customerId && !(await customerExists(ctx, customerId))) {
       throw new Error("Customer not found.");
     }
@@ -914,11 +1011,7 @@ export const listSales = query({
   handler: async (ctx): Promise<SaleSummary[]> => {
     await requireAny(ctx, SELL_OR_MANAGE);
 
-    const sales = (await ctx.runQuery(
-      components.inventory.sales.list,
-      {},
-    )) as Array<Doc<"sales"> & { lineCount: number; items: SaleItem[] }>;
-
+    const sales = await salesWithBalance(ctx);
     const nameById = await customerNames(ctx, sales);
 
     return sales.map((sale) => ({
@@ -938,15 +1031,137 @@ export const saleDetail = query({
     const detail = (await ctx.runQuery(
       components.inventory.sales.get,
       args,
-    )) as { sale: Doc<"sales">; lines: SaleLine[] } | null;
+    )) as {
+      sale: Doc<"sales">;
+      lines: SaleLine[];
+      payments: Doc<"salePayments">[];
+      balance: SaleBalance;
+    } | null;
 
     if (!detail) return null;
 
+    const takerById = await profileNames(
+      ctx,
+      detail.payments.map((payment) => payment.createdBy),
+    );
+
     return {
       ...detail,
+      ...detail.balance,
       customerName: await customerName(ctx, detail.sale.customerId),
       createdByName: await profileName(ctx, detail.sale.createdBy),
+      payments: detail.payments.map((payment) => ({
+        ...payment,
+        recordedByName: takerById.get(payment.createdBy) ?? payment.createdBy,
+      })),
     };
+  },
+});
+
+// A seller can take money and look at what is owed. Undoing a mistake or
+// giving up on a balance is a manager's decision.
+export const recordSalePayment = mutation({
+  args: {
+    saleId: v.string(),
+    amountKobo: v.number(),
+    paidAt: v.optional(v.string()),
+    channel: paymentChannelValidator,
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
+    return await ctx.runMutation(
+      components.inventory.salePayments.recordPayment,
+      { ...args, callerId: caller },
+    );
+  },
+});
+
+export const reverseSalePayment = mutation({
+  args: { paymentId: v.string(), note: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx);
+    return await ctx.runMutation(
+      components.inventory.salePayments.reversePayment,
+      { ...args, callerId: caller },
+    );
+  },
+});
+
+export const writeOffSale = mutation({
+  args: {
+    saleId: v.string(),
+    amountKobo: v.number(),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx);
+    return await ctx.runMutation(components.inventory.salePayments.writeOff, {
+      ...args,
+      callerId: caller,
+    });
+  },
+});
+
+/** Every customer who still owes money, oldest debt first. */
+export const receivables = query({
+  args: {},
+  handler: async (ctx): Promise<Receivable[]> => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    const sales = (await salesWithBalance(ctx)).filter(owesMoney);
+    const nameById = await customerNames(ctx, sales);
+    const byCustomer = new Map<string, Receivable>();
+
+    for (const sale of sales) {
+      const customerId = sale.customerId;
+      if (!customerId) continue;
+      const row = byCustomer.get(customerId) ?? {
+        customerId,
+        customerName: nameById.get(customerId) ?? customerId,
+        totalOwedKobo: 0,
+        oldestUnpaidAt: sale.occurredAt,
+      };
+      row.totalOwedKobo += sale.outstandingKobo;
+      if (sale.occurredAt < row.oldestUnpaidAt) {
+        row.oldestUnpaidAt = sale.occurredAt;
+      }
+      byCustomer.set(customerId, row);
+    }
+
+    return [...byCustomer.values()].sort((a, b) =>
+      a.oldestUnpaidAt.localeCompare(b.oldestUnpaidAt),
+    );
+  },
+});
+
+/** The unpaid sales of one customer, oldest first. */
+export const customerDebt = query({
+  args: { customerId: v.string() },
+  handler: async (ctx, { customerId }): Promise<SaleSummary[]> => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    const sales = (await salesWithBalance(ctx))
+      .filter((sale) => sale.customerId === customerId && owesMoney(sale))
+      .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
+    const nameById = await customerNames(ctx, sales);
+
+    return sales.map((sale) => ({
+      ...sale,
+      customerName: nameById.get(customerId) ?? null,
+    }));
+  },
+});
+
+/** One number for the till: what this customer still owes. */
+export const customerBalance = query({
+  args: { customerId: v.string() },
+  handler: async (ctx, { customerId }): Promise<number> => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    return (await salesWithBalance(ctx))
+      .filter((sale) => sale.customerId === customerId && owesMoney(sale))
+      .reduce((sum, sale) => sum + sale.outstandingKobo, 0);
   },
 });
 
@@ -977,8 +1192,9 @@ export const metrics = query({
       purchases,
       purchaseLines,
       movements,
-      sales,
+      allSales,
       saleLines,
+      payments,
     ] = await Promise.all([
       ctx.runQuery(components.inventory.stockMovements.levels, {}) as Promise<
         StockLevel[]
@@ -1000,15 +1216,23 @@ export const metrics = query({
         start: startIso,
         end: endIso,
       }) as Promise<Doc<"stockMovements">[]>,
-      ctx.runQuery(components.inventory.sales.range, {
-        start: startIso,
-        end: endIso,
-      }) as Promise<Doc<"sales">[]>,
+      salesWithBalance(ctx),
       ctx.runQuery(components.inventory.sales.linesInRange, {
         start: startIso,
         end: endIso,
       }) as Promise<Doc<"saleLines">[]>,
+      ctx.runQuery(components.inventory.salePayments.range, {
+        start: startIso,
+        end: endIso,
+      }) as Promise<Doc<"salePayments">[]>,
     ]);
+
+    const sales = allSales.filter(
+      (sale) =>
+        !sale.voided &&
+        sale.occurredAt >= startIso &&
+        sale.occurredAt <= endIso,
+    );
 
     const productById = new Map<string, Doc<"products">>(
       products.map((product) => [product._id, product]),
@@ -1019,7 +1243,7 @@ export const metrics = query({
 
     const stock = stockSummary(levels, productById);
     const spend = spendSummary(purchases, startIso, endIso);
-    const revenue = revenueBreakdown(sales);
+    const revenue = revenueBreakdown(sales, payments);
     const movement = movementSummary(
       purchaseLines,
       movements,

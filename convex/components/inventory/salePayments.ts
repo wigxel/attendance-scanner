@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 
 export const paymentChannel = v.union(
   v.literal("cash"),
@@ -87,6 +87,21 @@ export async function ledgerFor(ctx: QueryCtx, saleId: Id<"sales">) {
     .withIndex("by_sale", (q) => q.eq("saleId", saleId))
     .collect();
 }
+
+/**
+ * Money rows dated in the window, across every sale. The host needs this for
+ * the collected figure: money in the period is not the same as sales booked in
+ * the period. Reversals are included so the host can net them off.
+ */
+export const range = query({
+  args: { start: v.string(), end: v.string() },
+  handler: async (ctx, { start, end }) => {
+    return await ctx.db
+      .query("salePayments")
+      .withIndex("by_paidAt", (q) => q.gte("paidAt", start).lte("paidAt", end))
+      .collect();
+  },
+});
 
 function ensurePositiveKobo(label: string, value: number) {
   if (!Number.isInteger(value) || value <= 0) {
