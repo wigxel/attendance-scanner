@@ -12,16 +12,19 @@ type PostCardProps = {
   number?: number;
   /** `numbered` is the editorial row; `item` is the blog-index card. */
   variant?: "numbered" | "item" | "compact";
+
+  isLast?: boolean;
 };
 
 export function PostCard({
   post,
   number = 0,
   variant = "numbered",
+  isLast = false,
 }: PostCardProps) {
   if (variant === "item") return <PostItem post={post} />;
 
-  if (variant === "compact") return <PostCompact post={post} />;
+  if (variant === "compact") return <PostCompact post={post} isLast={isLast} />;
 
   return (
     <Link href={post.url}>
@@ -42,7 +45,7 @@ export function PostCard({
           </div>
         </div>
 
-        <div className="border-t border-(--border) my-4" />
+        <div className="border-t border-border my-4" />
 
         <div className="grid grid-cols-12">
           <div className="col-span-3" />
@@ -120,7 +123,7 @@ function PostItem({ post }: PostItemProps) {
   );
 }
 
-function PostCompact({ post }: PostCardProps) {
+function PostCompact({ post, isLast }: PostCardProps) {
   return (
     <Link
       href={post.url}
@@ -128,7 +131,7 @@ function PostCompact({ post }: PostCardProps) {
     >
       <div className="flex flex-col">
         <div className="basis-3/7 shrink-0">
-          <h2 className="mb-1.5 text-xl font-semibold tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary">
+          <h2 className="mb-1.5 font-medium tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary">
             {post.title}
           </h2>
         </div>
@@ -140,12 +143,22 @@ function PostCompact({ post }: PostCardProps) {
             </p>
           ) : null}
         </div>
+
+        <p className="mb-2 text-xs text-muted-foreground/50 md:text-sm">
+          <time dateTime={post.date}>
+            {DateParse.presets
+              .dateOnly(post.date)
+              .pipe(O.getOrElse(() => "--"))}
+          </time>
+          {` · ${post.readingTimeMinutes} min read`}
+        </p>
       </div>
 
-      <div
-        className="group-last:hidden border-[0.5px] [--b-color:#575771] w-full border-transparent"
-        style={{
-          borderImage: `repeating-linear-gradient(
+      {!isLast ? (
+        <div
+          className="border-[0.5px] [--b-color:#575771] w-full border-transparent"
+          style={{
+            borderImage: `repeating-linear-gradient(
             to right,
             var(--b-color) 0,
             var(--b-color) 13px,
@@ -153,8 +166,9 @@ function PostCompact({ post }: PostCardProps) {
             transparent calc(13px + 7px)
           )
           1`,
-        }}
-      />
+          }}
+        />
+      ) : null}
     </Link>
   );
 }

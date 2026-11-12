@@ -287,14 +287,14 @@ export function TestimonySection() {
                 "tracking-tighter text-3xl md:text-6xl font-[Safiro]! font-black",
               )}
             >
-              <span className="font-thin">THE TRIBES</span>&nbsp;
+              <span className="font-thin">The Tribes</span>&nbsp;
               <RandomText
                 variant="scramble"
                 duration={3}
                 animate="in-view"
                 viewport={{ once: true }}
               >
-                SPEAK
+                Speak
               </RandomText>
             </h2>
 

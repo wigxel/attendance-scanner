@@ -47,10 +47,10 @@ export function CircularButton({
       type="button"
       aria-label={text}
       className={cn(
-        "relative w-[15vw] aspect-square rounded-full flex items-center justify-center",
+        "relative w-[15vw] cursor-pointer aspect-square rounded-full flex items-center justify-center",
         {
           "text-white bg-brand-maker": variant === "default",
-          "text-brand-maker bg-transparent border-dashed border border-white/25":
+          "text-brand-maker bg-transparent hover:bg-white/5 border-dashed border border-white/25":
             variant === "outline",
         },
         className,
@@ -64,8 +64,8 @@ export function CircularButton({
       <Image
         src="/images/pixel-arrow.svg"
         width={200}
-        alt=""
         height={200}
+        alt=""
         className={cn({
           "w-5/12": variant === "default",
           "w-3/12": variant === "outline",
