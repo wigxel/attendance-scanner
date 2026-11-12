@@ -10,8 +10,8 @@ import { useProfile } from "@/hooks/auth";
 import { useCheckInMode } from "@/hooks/flags";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
 import { safeStr } from "@/lib/data.helpers";
-import { ScanTimeCodec } from "@/lib/scan";
 import { cn } from "@/lib/utils";
+import { ScanTimeCodec } from "./TakeAttendance";
 
 export function useGetProfileHash(profile?: { id: string } | null) {
   const device_meta = useDeviceMeta();
