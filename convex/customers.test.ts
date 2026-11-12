@@ -689,6 +689,53 @@ describe("getTopCustomers", () => {
     expect(result).toHaveLength(1);
     expect(result[0].userId).toBe("active-user");
   });
+
+  it("classifies a customer by their most recent visit", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: "switching-user",
+        firstName: "Ada",
+        lastName: "User",
+        occupation: "None",
+      });
+
+      // Paid two days ago, free yesterday: the customer is free now.
+      await ctx.db.insert("daily_register", {
+        userId: "switching-user",
+        timestamp: subDays(new Date(), 2).toISOString(),
+        admitted_by: "admin-1",
+        device: { name: "Chrome", visitorId: "switch-paid", browser: "Chrome" },
+        access: { kind: "paid", planId: "daily", amount: 1000 },
+        method: "one-tap",
+        source: "web",
+      });
+      await ctx.db.insert("daily_register", {
+        userId: "switching-user",
+        timestamp: subDays(new Date(), 1).toISOString(),
+        admitted_by: "admin-1",
+        device: { name: "Chrome", visitorId: "switch-free", browser: "Chrome" },
+        access: { kind: "free" },
+        method: "one-tap",
+        source: "web",
+      });
+    });
+
+    const free = await t.query(api.customers.getTopCustomers, {
+      start: daysAgoStr(3),
+      end: todayStr(),
+      filter: "free",
+    });
+    expect(free).toHaveLength(1);
+
+    const paid = await t.query(api.customers.getTopCustomers, {
+      start: daysAgoStr(3),
+      end: todayStr(),
+      filter: "paid",
+    });
+    expect(paid).toHaveLength(0);
+  });
 });
 
 describe("getBackfillStatus", () => {
@@ -728,7 +775,7 @@ describe("computeMetrics", () => {
     const t = convexTest(schema, modules);
     registerAggregate(t);
 
-    const targetDate = daysAgoStr(1);
+    const targetDate = todayStr();
 
     // Create 3 profiles via production mutation (maintains aggregate)
     await createProfile(t, "u1", "Alice");
@@ -739,7 +786,7 @@ describe("computeMetrics", () => {
     await t.run(async (ctx) => {
       await ctx.db.insert("daily_register", {
         userId: "u1",
-        timestamp: daysAgo(1),
+        timestamp: daysAgo(0),
         source: "web",
         device: { browser: "Chrome", name: "Test", visitorId: "v1" },
         access: { kind: "free" },
@@ -747,7 +794,7 @@ describe("computeMetrics", () => {
       });
       await ctx.db.insert("daily_register", {
         userId: "u1",
-        timestamp: daysAgo(1),
+        timestamp: daysAgo(0),
         source: "web",
         device: { browser: "Chrome", name: "Test", visitorId: "v1b" },
         access: { kind: "free" },
@@ -755,7 +802,7 @@ describe("computeMetrics", () => {
       });
       await ctx.db.insert("daily_register", {
         userId: "u2",
-        timestamp: daysAgo(1),
+        timestamp: daysAgo(0),
         source: "web",
         device: { browser: "Chrome", name: "Test", visitorId: "v2" },
         access: { kind: "free" },
@@ -784,10 +831,10 @@ describe("computeMetrics", () => {
 
     expect(byKind.totalCustomers).toBe(3);
     expect(byKind.newCustomers).toBe(3); // all created within this month
-    expect(byKind.activeCustomers).toBe(3); // all created within 30 days
+    expect(byKind.activeCustomers).toBe(2); // u1 and u2 checked in
     expect(byKind.repeatCustomerRate).toBe(50); // 1 of 2 visitors visited >=2 times
     expect(byKind.avgVisitsPerCustomer).toBe(1.5); // 3 visits / 2 unique visitors
-    expect(byKind.lapsedCustomers).toBe(0); // 3 total - 3 active = 0
+    expect(byKind.lapsedCustomers).toBe(1); // 3 registered - 2 who visited
   });
 
   it("returns all zeros when no profiles or visits exist", async () => {
@@ -881,8 +928,84 @@ describe("computeMetrics", () => {
     expect(byKind.repeatCustomerRate).toBe(67);
     // 6 total visits / 3 visitors = 2.0
     expect(byKind.avgVisitsPerCustomer).toBe(2);
-    // All profiles created during test are within 30d, so lapsed = 0
-    expect(byKind.lapsedCustomers).toBe(0);
+    // d registered but never checked in, so lapsed = 1
+    expect(byKind.lapsedCustomers).toBe(1);
+  });
+
+  it("ignores visits recorded after the target day", async () => {
+    const t = convexTest(schema, modules);
+    registerAggregate(t);
+
+    const targetDate = daysAgoStr(5);
+
+    await createProfile(t, "early", "Early");
+    await createProfile(t, "late", "Late");
+
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 2; i++) {
+        await ctx.db.insert("daily_register", {
+          userId: "early",
+          timestamp: daysAgo(5),
+          source: "web",
+          device: { browser: "Chrome", name: "Test", visitorId: `early${i}` },
+          access: { kind: "free" },
+          admitted_by: "admin",
+        });
+      }
+      // Today's visit is after the target day and must not leak into it.
+      await ctx.db.insert("daily_register", {
+        userId: "late",
+        timestamp: daysAgo(0),
+        source: "web",
+        device: { browser: "Chrome", name: "Test", visitorId: "late" },
+        access: { kind: "free" },
+        admitted_by: "admin",
+      });
+
+      await ctx.runMutation(internal.customers.computeMetrics, {
+        day: targetDate,
+      });
+    });
+
+    const metrics = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("app_metrics")
+        .withIndex("by_date_category_kind", (q) =>
+          q.eq("date", targetDate).eq("category", "customer"),
+        )
+        .collect();
+    });
+
+    const byKind = Object.fromEntries(metrics.map((m) => [m.kind, m.value]));
+    expect(byKind.repeatCustomerRate).toBe(100); // only "early" visited: 2 of 1
+    expect(byKind.avgVisitsPerCustomer).toBe(2); // 2 visits / 1 visitor
+    expect(byKind.activeCustomers).toBe(1);
+  });
+
+  it("ignores profiles created after the target day", async () => {
+    const t = convexTest(schema, modules);
+    registerAggregate(t);
+
+    const targetDate = daysAgoStr(5);
+    await createProfile(t, "registered-today", "Today");
+
+    await t.run(async (ctx) => {
+      await ctx.runMutation(internal.customers.computeMetrics, {
+        day: targetDate,
+      });
+    });
+
+    const metrics = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("app_metrics")
+        .withIndex("by_date_category_kind", (q) =>
+          q.eq("date", targetDate).eq("category", "customer"),
+        )
+        .collect();
+    });
+
+    const byKind = Object.fromEntries(metrics.map((m) => [m.kind, m.value]));
+    expect(byKind.newCustomers).toBe(0);
   });
 
   it("upserts on re-run (no duplicate rows)", async () => {
