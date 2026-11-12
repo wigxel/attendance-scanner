@@ -42,3 +42,8 @@ export function parseAmountInput(input: string): number {
   if (!Number.isFinite(value)) return 0;
   return Math.round(value * 100) / 100;
 }
+
+/** Money taken at the till, in kobo, never more than the sale is worth. */
+export function depositKobo(naira: string, totalKobo: number): number {
+  return Math.min(Math.round(parseAmountInput(naira) * 100), totalKobo);
+}
