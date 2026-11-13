@@ -39,6 +39,15 @@ crons.interval(
   {},
 );
 
+// hourly sweep: sends each inventory staff one low-stock digest per local
+// day (dedupeKey inside), so mid-day drops appear in the next morning's digest
+crons.interval(
+  "send low-stock digest",
+  { minutes: 60 },
+  internal.lowStockDigest.sweep,
+  {},
+);
+
 crons.interval(
   "cleanup expired pending bookings",
   { minutes: 5 },

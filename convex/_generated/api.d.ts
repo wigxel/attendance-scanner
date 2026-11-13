@@ -24,6 +24,7 @@ import type * as guestAlerts from "../guestAlerts.js";
 import type * as http from "../http.js";
 import type * as inventory from "../inventory.js";
 import type * as kpis from "../kpis.js";
+import type * as lowStockDigest from "../lowStockDigest.js";
 import type * as metrics from "../metrics.js";
 import type * as migrations from "../migrations.js";
 import type * as myFunctions from "../myFunctions.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   inventory: typeof inventory;
   kpis: typeof kpis;
+  lowStockDigest: typeof lowStockDigest;
   metrics: typeof metrics;
   migrations: typeof migrations;
   myFunctions: typeof myFunctions;
