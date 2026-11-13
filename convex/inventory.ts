@@ -148,7 +148,8 @@ export type SaleDetail = SaleBalance & {
 /** One customer who still owes money, for the receivables screen. */
 export type Receivable = {
   customerId: string;
-  customerName: string;
+  /** Null when the profile is gone; the UI says "Deleted customer". */
+  customerName: string | null;
   totalOwedKobo: number;
   oldestUnpaidAt: string;
 };
@@ -875,6 +876,27 @@ async function customerNames(
   );
 }
 
+/** Customer display names, or null where the profile no longer exists. */
+async function customerNamesOrMissing(
+  ctx: QueryCtx,
+  customerIds: Array<string | undefined>,
+) {
+  const distinct = [...new Set(customerIds.filter((id): id is string => !!id))];
+  const entries = await Promise.all(
+    distinct.map(async (id) => {
+      const profile = await ctx.db
+        .query("profile")
+        .withIndex("by_user_id", (q) => q.eq("id", id))
+        .first();
+      return [
+        id,
+        profile ? `${profile.firstName} ${profile.lastName}`.trim() : null,
+      ] as const;
+    }),
+  );
+  return new Map(entries);
+}
+
 type SaleRow = Doc<"sales"> &
   SaleBalance & {
     lineCount: number;
@@ -1110,7 +1132,10 @@ export const receivables = query({
     await requireAny(ctx, SELL_OR_MANAGE);
 
     const sales = (await salesWithBalance(ctx)).filter(owesMoney);
-    const nameById = await customerNames(ctx, sales);
+    const nameById = await customerNamesOrMissing(
+      ctx,
+      sales.map((sale) => sale.customerId),
+    );
     const byCustomer = new Map<string, Receivable>();
 
     for (const sale of sales) {
@@ -1118,7 +1143,7 @@ export const receivables = query({
       if (!customerId) continue;
       const row = byCustomer.get(customerId) ?? {
         customerId,
-        customerName: nameById.get(customerId) ?? customerId,
+        customerName: nameById.get(customerId) ?? null,
         totalOwedKobo: 0,
         oldestUnpaidAt: sale.occurredAt,
       };
