@@ -30,14 +30,14 @@ describe("CommunityLinks", () => {
       "Stay up to date with the latest updates in the inSpace community.",
     );
     expect(html).toContain(
-      "Get to know more about InSpace and the change we want to introduce.",
+      "Get to know InSpace and the shift we’re bringing to your craft.",
     );
   });
 
-  it("links each card to its shortlink in a new tab", () => {
-    for (const channel of ["makers", "lounge", "instagram"]) {
-      expect(html).toContain(`href="/shortlinks/${channel}"`);
-    }
+  it("links each card out in a new tab", () => {
+    expect(html).toContain('href="/makers"');
+    expect(html).toContain('href="/shortlinks/lounge"');
+    expect(html).toContain('href="/shortlinks/instagram"');
     expect(html.match(/target="_blank"/g)).toHaveLength(3);
   });
 });
