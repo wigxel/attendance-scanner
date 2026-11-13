@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { serialNo } from "@/lib/data.helpers";
 import { useMetrics } from "./metrics-context";
 import { formatAmount } from "./metrics-format";
 
@@ -21,6 +22,7 @@ export function MetricsTopProductsSection() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>S/N</TableHead>
               <TableHead>Product</TableHead>
               <TableHead className="text-right">Sold</TableHead>
               <TableHead className="text-right">Revenue (NGN)</TableHead>
@@ -30,15 +32,18 @@ export function MetricsTopProductsSection() {
             {metrics.topProducts.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={3}
+                  colSpan={4}
                   className="text-sm text-muted-foreground"
                 >
                   No sales in this period.
                 </TableCell>
               </TableRow>
             ) : (
-              metrics.topProducts.map((product) => (
+              metrics.topProducts.map((product, index) => (
                 <TableRow key={product.productId}>
+                  <TableCell className="w-[5ch] tabular-nums">
+                    {serialNo(index + 1)}
+                  </TableCell>
                   <TableCell>{product.name}</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {product.quantity} {product.unitName}
