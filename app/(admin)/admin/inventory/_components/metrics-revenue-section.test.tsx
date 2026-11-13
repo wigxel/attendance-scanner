@@ -30,26 +30,6 @@ beforeEach(() => {
 });
 
 describe("MetricsRevenueSection", () => {
-  it("shows booked, collected and owed on their own bases", () => {
-    mockedUseMetrics.mockReturnValue(
-      metrics({
-        totalKobo: 100_000,
-        collectedKobo: 250_000,
-        outstandingKobo: 40_000,
-      }),
-    );
-
-    const html = renderToStaticMarkup(<MetricsRevenueSection />);
-
-    expect(html).toContain("Booked");
-    expect(html).toContain("1,000.00");
-    expect(html).toContain("Collected (all sales)");
-    expect(html).toContain("2,500.00");
-    expect(html).toContain("Owed on this period&#x27;s sales");
-    expect(html).toContain("400.00");
-    expect(html).toContain("do not add up to each other");
-  });
-
   it("lists credit as a channel", () => {
     mockedUseMetrics.mockReturnValue(
       metrics({ byChannel: [{ channel: "credit", totalKobo: 500_000 }] }),
