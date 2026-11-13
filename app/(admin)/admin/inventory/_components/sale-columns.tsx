@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { SaleSummary } from "@/convex/inventory";
+import type { SaleStatus, SaleSummary } from "@/convex/inventory";
 import { serialNo } from "@/lib/data.helpers";
 
 const amountFormatter = new Intl.NumberFormat("en-NG", {
@@ -25,6 +25,42 @@ const channelLabels = {
   transfer: "Transfer",
   credit: "Credit",
 } as const;
+
+type SaleStatusChip = {
+  label: string;
+  variant: "success" | "warning" | "destructive" | "outline" | "secondary";
+};
+
+const statusChips: Record<SaleStatus, SaleStatusChip> = {
+  paid: { label: "Paid", variant: "success" },
+  part_paid: { label: "Part-paid", variant: "warning" },
+  unpaid: { label: "Unpaid", variant: "destructive" },
+  written_off: { label: "Written off", variant: "outline" },
+  voided: { label: "Voided", variant: "secondary" },
+};
+
+export type SaleStatusBadgeProps = { status: SaleStatus };
+
+export function SaleStatusBadge({ status }: SaleStatusBadgeProps) {
+  const chip = statusChips[status];
+
+  return <Badge variant={chip.variant}>{chip.label}</Badge>;
+}
+
+export type SaleTotalCellProps = { sale: SaleSummary };
+
+export function SaleTotalCell({ sale }: SaleTotalCellProps) {
+  return (
+    <span className="block whitespace-nowrap text-right tabular-nums">
+      {formatAmount(sale.totalKobo)}
+      {sale.outstandingKobo > 0 ? (
+        <span className="block text-xs font-normal text-muted-foreground">
+          {formatAmount(sale.outstandingKobo)} due
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 export const saleColumns: ColumnDef<SaleSummary>[] = [
   {
@@ -96,23 +132,15 @@ export const saleColumns: ColumnDef<SaleSummary>[] = [
     ),
   },
   {
+    id: "status",
+    header: "Status",
+    accessorKey: "status",
+    cell: ({ row }) => <SaleStatusBadge status={row.original.status} />,
+  },
+  {
     id: "totalKobo",
     header: () => <span className="block text-right">Total (₦)</span>,
     accessorKey: "totalKobo",
-    cell: ({ row }) => (
-      <span className="block whitespace-nowrap text-right tabular-nums">
-        {formatAmount(row.original.totalKobo)}
-      </span>
-    ),
-  },
-  {
-    id: "status",
-    header: "Status",
-    accessorKey: "voided",
-    cell: ({ row }) => (
-      <Badge variant={row.original.voided ? "secondary" : "default"}>
-        {row.original.voided ? "Voided" : "Completed"}
-      </Badge>
-    ),
+    cell: ({ row }) => <SaleTotalCell sale={row.original} />,
   },
 ];
