@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  depositKobo,
   isAmountKey,
   parseAmountInput,
   sanitizeAmountInput,
@@ -41,5 +42,11 @@ describe("amount helpers", () => {
     expect(sanitizeAmountInput("12.")).toBe("12.");
     expect(sanitizeAmountInput("1,2.3.4")).toBe("12.34");
     expect(sanitizeAmountInput("abc")).toBe("");
+  });
+
+  it("caps the till deposit at the sale total", () => {
+    expect(depositKobo("250.55", 100_000)).toBe(25_055);
+    expect(depositKobo("5000", 100_000)).toBe(100_000);
+    expect(depositKobo("", 100_000)).toBe(0);
   });
 });
