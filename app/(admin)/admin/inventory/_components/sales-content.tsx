@@ -12,7 +12,7 @@ import {
   EmptyStateTitle,
 } from "@/components/empty-state";
 import type { MetricsRange } from "@/components/inventory/metrics-date-range";
-import { StdTable } from "@/components/StdTable";
+import { StdTable } from "@/components/std-table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
