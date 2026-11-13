@@ -794,4 +794,29 @@ describe("credit sales", () => {
       }),
     ).rejects.toThrow("inventory:manage");
   });
+
+  it("refuses a payment dated before the sale or in the future", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedCreditShop(t);
+    // recordSale dates the sale at now, so any earlier year is out of window.
+    const saleId = await sellOnCredit(admin, unitId, productId, "customer-1");
+
+    await expect(
+      admin.mutation(api.inventory.recordSalePayment, {
+        saleId,
+        amountKobo: 1000,
+        channel: "cash",
+        paidAt: "2020-01-01T00:00:00.000Z",
+      }),
+    ).rejects.toThrow("before the sale was recorded");
+
+    await expect(
+      admin.mutation(api.inventory.recordSalePayment, {
+        saleId,
+        amountKobo: 1000,
+        channel: "cash",
+        paidAt: "2099-01-01T00:00:00.000Z",
+      }),
+    ).rejects.toThrow("in the future");
+  });
 });

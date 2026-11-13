@@ -1,13 +1,11 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
+import { Undo2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CustomerCombobox } from "@/components/forms/CustomerCombobox";
-import {
-  paymentChannelLabels,
-  RecordPaymentDialog,
-} from "@/components/inventory/record-payment-dialog";
+import { RecordPaymentDialog } from "@/components/inventory/record-payment-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,6 +35,7 @@ import { api } from "@/convex/_generated/api";
 import type { SalePaymentRow } from "@/convex/inventory";
 import { usePrivilege } from "@/hooks/usePrivilege";
 import { currencyFormatter } from "@/lib/currency.helpers";
+import { paymentChannelLabels } from "@/lib/payment-channel";
 import { SaleStatusBadge } from "./sale-columns";
 
 const channelLabels = {
@@ -129,10 +128,12 @@ function PaymentLedger({
                       <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
+                        size="icon"
+                        className="size-8"
+                        aria-label="Reverse payment"
                         onClick={() => onReverse(payment._id)}
                       >
-                        Reverse
+                        <Undo2 className="size-3.5" />
                       </Button>
                     ) : null}
                   </TableCell>
@@ -428,6 +429,7 @@ export function SaleDetailSheet({
           onOpenChange={setPaymentDialogOpen}
           saleId={detail.sale._id}
           outstandingKobo={detail.outstandingKobo}
+          saleOccurredAt={detail.sale.occurredAt}
         />
       ) : null}
 

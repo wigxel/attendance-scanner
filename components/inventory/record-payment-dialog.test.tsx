@@ -1,11 +1,11 @@
 // @vitest-environment node
 
-import { describe, expect, it, vi } from "vitest";
-import { paymentAmountError, paymentKobo } from "./record-payment-dialog";
-
-vi.mock("convex/react", () => ({
-  useMutation: vi.fn(),
-}));
+import { describe, expect, it } from "vitest";
+import {
+  paymentAmountError,
+  paymentDateError,
+  paymentKobo,
+} from "@/components/forms/RecordPaymentForm";
 
 describe("paymentKobo", () => {
   it("reads naira as whole kobo", () => {
@@ -40,6 +40,30 @@ describe("paymentAmountError", () => {
     );
     expect(paymentAmountError("0", outstanding)).toBe(
       "Enter an amount more than zero.",
+    );
+  });
+});
+
+describe("paymentDateError", () => {
+  // Midday UTC, so the sale's local day reads the same across timezones.
+  const occurredAt = "2026-11-01T12:00:00.000Z";
+
+  it("accepts a date on or after the sale's day, up to today", () => {
+    expect(paymentDateError("2026-11-05", occurredAt)).toBeNull();
+    expect(
+      paymentDateError(new Date().toLocaleDateString("en-CA"), occurredAt),
+    ).toBeNull();
+  });
+
+  it("refuses a date before the sale was recorded", () => {
+    expect(paymentDateError("2026-10-15", occurredAt)).toBe(
+      "That date is before the sale was recorded.",
+    );
+  });
+
+  it("refuses a date in the future", () => {
+    expect(paymentDateError("2099-01-01", occurredAt)).toBe(
+      "That date is in the future.",
     );
   });
 });
