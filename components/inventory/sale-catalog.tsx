@@ -78,15 +78,15 @@ export function ProductCardView({
     <div
       className={cn(
         "flex flex-col rounded-xl border bg-background p-2",
-        quantity > 0 && "border-primary/60 ring-1 ring-primary/20",
+        quantity > 0 && "border-cyan-400",
         outOfStock && "opacity-60",
       )}
     >
-      <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-muted">
+      <div className="flex aspect-4/3 items-center justify-center rounded-lg bg-muted">
         {/* Placeholder until products carry their own image. */}
         <Package
           className={cn(
-            "size-7 text-muted-foreground/40",
+            "size-7 text-muted-foreground",
             outOfStock && "grayscale",
           )}
           aria-hidden

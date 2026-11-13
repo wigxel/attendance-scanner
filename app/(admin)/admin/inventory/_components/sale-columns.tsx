@@ -85,7 +85,15 @@ export const saleColumns: ColumnDef<SaleSummary>[] = [
     id: "channel",
     header: "Channel",
     accessorKey: "channel",
-    cell: ({ row }) => channelLabels[row.original.channel],
+    cell: ({ row }) => (
+      <span
+        className={
+          row.original.channel === "credit" ? "text-destructive" : undefined
+        }
+      >
+        {channelLabels[row.original.channel]}
+      </span>
+    ),
   },
   {
     id: "totalKobo",
