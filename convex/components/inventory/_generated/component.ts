@@ -133,6 +133,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       >;
     };
     salePayments: {
+      range: FunctionReference<
+        "query",
+        "internal",
+        { end: string; start: string },
+        any,
+        Name
+      >;
       recordPayment: FunctionReference<
         "mutation",
         "internal",
@@ -197,7 +204,31 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
-      list: FunctionReference<"query", "internal", {}, any, Name>;
+      list: FunctionReference<
+        "query",
+        "internal",
+        { end?: string; start?: string },
+        any,
+        Name
+      >;
+      listPage: FunctionReference<
+        "query",
+        "internal",
+        {
+          end?: string;
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+          start?: string;
+        },
+        any,
+        Name
+      >;
       range: FunctionReference<
         "query",
         "internal",

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 
 export const paymentChannel = v.union(
   v.literal("cash"),
@@ -88,6 +88,21 @@ export async function ledgerFor(ctx: QueryCtx, saleId: Id<"sales">) {
     .collect();
 }
 
+/**
+ * Money rows dated in the window, across every sale. The host needs this for
+ * the collected figure: money in the period is not the same as sales booked in
+ * the period. Reversals are included so the host can net them off.
+ */
+export const range = query({
+  args: { start: v.string(), end: v.string() },
+  handler: async (ctx, { start, end }) => {
+    return await ctx.db
+      .query("salePayments")
+      .withIndex("by_paidAt", (q) => q.gte("paidAt", start).lte("paidAt", end))
+      .collect();
+  },
+});
+
 function ensurePositiveKobo(label: string, value: number) {
   if (!Number.isInteger(value) || value <= 0) {
     throw new Error(`${label} must be a whole number of kobo, more than 0.`);
@@ -100,6 +115,27 @@ function ensurePaidAt(value: string | undefined) {
     throw new Error("paidAt must be a valid date.");
   }
   return value;
+}
+
+function paidDay(iso: string) {
+  return new Date(iso).toISOString().slice(0, 10);
+}
+
+/** Money cannot arrive before the sale happened or after today. */
+function ensurePaidAtInWindow(
+  paidAt: string,
+  saleOccurredAt: string,
+  now: string,
+) {
+  // ponytail: day-granular UTC compare to match the date picker; a shop
+  // timezone far enough east of UTC can hit a one-hour window after local
+  // midnight where its "today" is still yesterday in UTC — the toast explains.
+  if (paidDay(paidAt) < paidDay(saleOccurredAt)) {
+    throw new Error("A payment cannot be dated before the sale was recorded.");
+  }
+  if (paidDay(paidAt) > paidDay(now)) {
+    throw new Error("A payment cannot be dated in the future.");
+  }
 }
 
 async function loadSale(
@@ -134,10 +170,13 @@ export const recordPayment = mutation({
     }
 
     const now = new Date().toISOString();
+    const paidAt = ensurePaidAt(args.paidAt);
+    ensurePaidAtInWindow(paidAt, sale.occurredAt, now);
+
     return await ctx.db.insert("salePayments", {
       saleId: args.saleId,
       amountKobo: args.amountKobo,
-      paidAt: ensurePaidAt(args.paidAt),
+      paidAt,
       channel: args.channel,
       kind: "payment",
       note: args.note?.trim() || undefined,

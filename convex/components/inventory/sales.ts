@@ -1,6 +1,8 @@
+import type { IndexRange, IndexRangeBuilder } from "convex/server";
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { mutation, type QueryCtx, query } from "./_generated/server";
 import { resolveUnit } from "./productUnits";
 import { ledgerFor, saleBalance } from "./salePayments";
 import { insertMovement } from "./stockMovements";
@@ -233,16 +235,71 @@ export const setSaleCustomer = mutation({
   },
 });
 
-function groupLinesBySale(lines: Doc<"saleLines">[]) {
-  const bySale = new Map<string, Doc<"saleLines">[]>();
+async function enrichSales(ctx: QueryCtx, sales: Doc<"sales">[]) {
+  const [lineGroups, paymentGroups, products] = await Promise.all([
+    Promise.all(
+      sales.map((sale) =>
+        ctx.db
+          .query("saleLines")
+          .withIndex("by_sale", (q) => q.eq("saleId", sale._id))
+          .collect(),
+      ),
+    ),
+    Promise.all(
+      sales.map((sale) =>
+        ctx.db
+          .query("salePayments")
+          .withIndex("by_sale", (q) => q.eq("saleId", sale._id))
+          .collect(),
+      ),
+    ),
+    ctx.db.query("products").collect(),
+  ]);
 
-  for (const line of lines) {
-    const group = bySale.get(line.saleId) ?? [];
-    group.push(line);
-    bySale.set(line.saleId, group);
+  const productNames = new Map(
+    products.map((product) => [product._id, product.name]),
+  );
+
+  return sales.map((sale, index) => {
+    const lines = lineGroups[index];
+    return {
+      ...sale,
+      balance: saleBalance(sale, paymentGroups[index]),
+      lineCount: lines.length,
+      items: lines.map((line) => ({
+        id: line._id,
+        name: productNames.get(line.productId) ?? "Unknown product",
+        quantity: line.quantity,
+      })),
+    };
+  });
+}
+
+/** Bounds on the by_occurredAt index; undefined means unbounded on that side. */
+function occurredAtBounds(
+  q: IndexRangeBuilder<Doc<"sales">, ["occurredAt", "_creationTime"]>,
+  start: string | undefined,
+  end: string | undefined,
+): IndexRange {
+  if (start !== undefined && end !== undefined) {
+    return q.gte("occurredAt", start).lte("occurredAt", end);
   }
+  if (start !== undefined) return q.gte("occurredAt", start);
+  if (end !== undefined) return q.lte("occurredAt", end);
+  return q;
+}
 
-  return bySale;
+/** Sales newest first, optionally bounded by occurredAt (inclusive). */
+async function salesIn(
+  ctx: QueryCtx,
+  start: string | undefined,
+  end: string | undefined,
+) {
+  return await ctx.db
+    .query("sales")
+    .withIndex("by_occurredAt", (q) => occurredAtBounds(q, start, end))
+    .order("desc")
+    .collect();
 }
 
 // The ledger functions live in salePayments.ts and are re-exported so they
@@ -250,46 +307,32 @@ function groupLinesBySale(lines: Doc<"saleLines">[]) {
 export { recordPayment, reversePayment, writeOff } from "./salePayments";
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const [sales, lines, payments] = await Promise.all([
-      ctx.db.query("sales").collect(),
-      ctx.db.query("saleLines").collect(),
-      ctx.db.query("salePayments").collect(),
-    ]);
+  args: {
+    start: v.optional(v.string()),
+    end: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return await enrichSales(ctx, await salesIn(ctx, args.start, args.end));
+  },
+});
 
-    const linesBySale = groupLinesBySale(lines);
-    const paymentsBySale = new Map<string, Doc<"salePayments">[]>();
-    for (const payment of payments) {
-      const group = paymentsBySale.get(payment.saleId) ?? [];
-      group.push(payment);
-      paymentsBySale.set(payment.saleId, group);
-    }
+/** One page of the history, newest first, date bounds applied server-side. */
+export const listPage = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    start: v.optional(v.string()),
+    end: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const page = await ctx.db
+      .query("sales")
+      .withIndex("by_occurredAt", (q) =>
+        occurredAtBounds(q, args.start, args.end),
+      )
+      .order("desc")
+      .paginate(args.paginationOpts);
 
-    const products = await ctx.db.query("products").collect();
-    const productNames = new Map(
-      products.map((product) => [product._id, product.name]),
-    );
-
-    return sales
-      .map((sale) => {
-        const saleLines = linesBySale.get(sale._id) ?? [];
-        return {
-          ...sale,
-          balance: saleBalance(sale, paymentsBySale.get(sale._id) ?? []),
-          lineCount: saleLines.length,
-          items: saleLines.map((line) => ({
-            id: line._id,
-            name: productNames.get(line.productId) ?? "Unknown product",
-            quantity: line.quantity,
-          })),
-        };
-      })
-      .sort(
-        (a, b) =>
-          b.occurredAt.localeCompare(a.occurredAt) ||
-          b.createdAt.localeCompare(a.createdAt),
-      );
+    return { ...page, page: await enrichSales(ctx, page.page) };
   },
 });
 

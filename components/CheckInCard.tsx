@@ -4,14 +4,14 @@ import { XIcon } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import React from "react";
 import { AppLoader } from "@/components/loader";
-import { APP_URL } from "@/config/constants";
+import { APP_URL, isDevelopment } from "@/config/constants";
 import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";
 import { useCheckInMode } from "@/hooks/flags";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
 import { safeStr } from "@/lib/data.helpers";
+import { ScanTimeCodec } from "@/lib/scan";
 import { cn } from "@/lib/utils";
-import { ScanTimeCodec } from "./TakeAttendance";
 
 export function useGetProfileHash(profile?: { id: string } | null) {
   const device_meta = useDeviceMeta();
@@ -48,7 +48,7 @@ function QRCode() {
   return (
     <div className={"relative overflow-hidden"}>
       {isLoading ? (
-        <div className="absolute inset-0 bg-white/[0.3] z-20 backdrop-blur-lg flex justify-center items-center">
+        <div className="absolute inset-0 bg-white/30 z-20 backdrop-blur-lg flex justify-center items-center">
           <AppLoader />
         </div>
       ) : null}
@@ -69,7 +69,10 @@ export function CheckInCard() {
 
   return (
     <div className="border overflow-hidden rounded-2xl bg-background">
-      <Refresh component={QRCode} intervalInSeconds={10} />
+      <Refresh
+        component={QRCode}
+        intervalInSeconds={isDevelopment ? 10 : 300}
+      />
       <p className="p-4 text-center border-t font-mono text-xs">
         Present QR Code to Staff at Check-in Counter
       </p>
@@ -169,7 +172,11 @@ export function ResizeableQRCode({ hash, className }: ResizableQRCodeProps) {
   );
 }
 
-export function NotRegistered({ children }: { children: React.ReactNode }) {
+type NotRegisterdProps = {
+  children: React.ReactNode;
+};
+
+export function NotRegistered({ children }: NotRegisterdProps) {
   const is_registered = useQuery(api.myFunctions.isRegisteredForToday);
 
   if (is_registered === undefined) return null;

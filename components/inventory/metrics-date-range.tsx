@@ -21,8 +21,11 @@ import {
 export type MetricsRange = { start: string; end: string };
 
 type MetricsDateRangeProps = {
-  value: MetricsRange;
-  onChange: (value: MetricsRange) => void;
+  /** Null means all time: no filter applied. */
+  value: MetricsRange | null;
+  onChange: (value: MetricsRange | null) => void;
+  /** Hide the "All time" preset, for tables whose null value means something else. */
+  allowAllTime?: boolean;
 };
 
 function labelFor(value: MetricsRange): string {
@@ -44,7 +47,11 @@ function labelFor(value: MetricsRange): string {
   )}`;
 }
 
-export function MetricsDateRange({ value, onChange }: MetricsDateRangeProps) {
+export function MetricsDateRange({
+  value,
+  onChange,
+  allowAllTime = true,
+}: MetricsDateRangeProps) {
   const [open, setOpen] = useState(false);
 
   const showToday = () => {
@@ -79,7 +86,7 @@ export function MetricsDateRange({ value, onChange }: MetricsDateRangeProps) {
     if (next.to) setOpen(false);
   };
 
-  const label = labelFor(value);
+  const label = value ? labelFor(value) : "All time";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -92,6 +99,16 @@ export function MetricsDateRange({ value, onChange }: MetricsDateRangeProps) {
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto p-0">
         <div className="flex items-center gap-1 border-b p-2">
+          {allowAllTime && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onChange(null)}
+              aria-pressed={value === null}
+            >
+              All time
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={showToday}>
             Today
           </Button>
@@ -104,7 +121,11 @@ export function MetricsDateRange({ value, onChange }: MetricsDateRangeProps) {
         </div>
         <Calendar
           mode="range"
-          selected={{ from: parseISO(value.start), to: parseISO(value.end) }}
+          selected={
+            value
+              ? { from: parseISO(value.start), to: parseISO(value.end) }
+              : undefined
+          }
           onSelect={handleSelect}
           numberOfMonths={1}
         />

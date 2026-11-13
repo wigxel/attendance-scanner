@@ -12,6 +12,7 @@ import { usePendingCheckIn } from "@/hooks/pending-checkin";
 import { useSelfCheckIn } from "@/hooks/self-service";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { ActiveBookings } from "./active-bookings";
+import { CommunityLinks } from "./community-links";
 import { ExpiryWarning } from "./expiry-warning";
 
 function greet_time(): string {
@@ -86,6 +87,8 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
         <AttendanceCalendar />
 
         <RoomEnvironmentWidget />
+
+        <CommunityLinks />
 
         <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-background0">
           <span />
