@@ -7,7 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CustomerCombobox } from "@/components/forms/CustomerCombobox";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -98,6 +98,20 @@ export function SaleCart({ products }: SaleCartProps) {
     setPaidNaira(typedKobo > cappedKobo ? String(cappedKobo / 100) : value);
   };
 
+  // Enter must not submit the sale: the cart has free-text inputs (customer
+  // search, amount paid) where Enter means "confirm the field", not "record".
+  // Buttons keep their native Enter activation.
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    const target = event.target;
+    if (
+      event.key === "Enter" &&
+      !(target instanceof HTMLButtonElement) &&
+      !(target instanceof HTMLTextAreaElement)
+    ) {
+      event.preventDefault();
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (lines.length === 0) return;
@@ -132,6 +146,7 @@ export function SaleCart({ products }: SaleCartProps) {
   return (
     <form
       onSubmit={handleSubmit}
+      onKeyDown={handleKeyDown}
       className="flex h-full w-full flex-col rounded-xl border bg-background"
     >
       <div className="flex items-center justify-between border-b px-4 py-3">
@@ -184,7 +199,9 @@ export function SaleCart({ products }: SaleCartProps) {
 
       <div className="mt-auto space-y-5 border-t px-4 py-5">
         <div className="space-y-1.5">
-          <Label>Channel</Label>
+          <Label className="text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
+            Channel
+          </Label>
           <RadioGroup
             value={channel}
             onValueChange={(value) => setChannel(value as SaleChannel)}
@@ -196,15 +213,17 @@ export function SaleCart({ products }: SaleCartProps) {
                 key={option.value}
                 htmlFor={`sale-channel-${option.value}`}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg border px-2 py-1.5 text-sm font-normal transition-colors",
-                  channel === option.value
-                    ? "border-primary bg-accent"
-                    : "border-border",
+                  buttonVariants({
+                    variant: channel === option.value ? "default" : "outline",
+                    size: "sm",
+                  }),
+                  "w-full justify-center font-normal",
                 )}
               >
                 <RadioGroupItem
                   id={`sale-channel-${option.value}`}
                   value={option.value}
+                  className="sr-only"
                 />
                 {option.label}
               </Label>
@@ -214,7 +233,9 @@ export function SaleCart({ products }: SaleCartProps) {
 
         <div className="space-y-1.5">
           <div className="flex items-baseline justify-between gap-2">
-            <Label>Customer</Label>
+            <Label className="text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
+              Customer
+            </Label>
             {customerId ? (
               <Button
                 type="button"
