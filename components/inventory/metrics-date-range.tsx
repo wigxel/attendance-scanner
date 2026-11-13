@@ -24,6 +24,8 @@ type MetricsDateRangeProps = {
   /** Null means all time: no filter applied. */
   value: MetricsRange | null;
   onChange: (value: MetricsRange | null) => void;
+  /** Hide the "All time" preset, for tables whose null value means something else. */
+  allowAllTime?: boolean;
 };
 
 function labelFor(value: MetricsRange): string {
@@ -45,7 +47,11 @@ function labelFor(value: MetricsRange): string {
   )}`;
 }
 
-export function MetricsDateRange({ value, onChange }: MetricsDateRangeProps) {
+export function MetricsDateRange({
+  value,
+  onChange,
+  allowAllTime = true,
+}: MetricsDateRangeProps) {
   const [open, setOpen] = useState(false);
 
   const showToday = () => {
@@ -93,14 +99,16 @@ export function MetricsDateRange({ value, onChange }: MetricsDateRangeProps) {
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto p-0">
         <div className="flex items-center gap-1 border-b p-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onChange(null)}
-            aria-pressed={value === null}
-          >
-            All time
-          </Button>
+          {allowAllTime && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onChange(null)}
+              aria-pressed={value === null}
+            >
+              All time
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={showToday}>
             Today
           </Button>
