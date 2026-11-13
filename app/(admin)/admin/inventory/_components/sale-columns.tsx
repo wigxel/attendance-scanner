@@ -124,15 +124,15 @@ export const saleColumns: ColumnDef<SaleSummary>[] = [
     cell: ({ row }) => channelLabels[row.original.channel],
   },
   {
-    id: "totalKobo",
-    header: () => <span className="block text-right">Total (₦)</span>,
-    accessorKey: "totalKobo",
-    cell: ({ row }) => <SaleTotalCell sale={row.original} />,
-  },
-  {
     id: "status",
     header: "Status",
     accessorKey: "status",
     cell: ({ row }) => <SaleStatusBadge status={row.original.status} />,
+  },
+  {
+    id: "totalKobo",
+    header: () => <span className="block text-right">Total (₦)</span>,
+    accessorKey: "totalKobo",
+    cell: ({ row }) => <SaleTotalCell sale={row.original} />,
   },
 ];
