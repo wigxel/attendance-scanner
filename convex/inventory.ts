@@ -1,3 +1,4 @@
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
 import {
@@ -1006,20 +1007,91 @@ export const setSaleCustomer = mutation({
   },
 });
 
+/** A day filter sent by the client becomes precise ISO bounds in Lagos time. */
+function dayToIso(value: string | undefined, bound: "from" | "to") {
+  if (value === undefined) return undefined;
+  const day = parseDay(value, bound === "from" ? "Start" : "End");
+  const ms = bound === "from" ? dayBounds(day).fromMs : dayBounds(day).toMs;
+  return new Date(ms).toISOString();
+}
+
+/** The component's sale rows carry the derived money view under `balance`. */
+type ComponentSaleRow = Doc<"sales"> & {
+  balance: SaleBalance;
+  lineCount: number;
+  items: SaleItem[];
+};
+
+function withCustomerName(
+  nameById: Map<string, string>,
+): (sale: ComponentSaleRow) => SaleSummary {
+  return ({ balance, ...sale }) => ({
+    ...sale,
+    ...balance,
+    customerName: sale.customerId
+      ? (nameById.get(sale.customerId) ?? null)
+      : null,
+  });
+}
+
 export const listSales = query({
-  args: {},
-  handler: async (ctx): Promise<SaleSummary[]> => {
+  args: {
+    paginationOpts: paginationOptsValidator,
+    start: v.optional(v.string()),
+    end: v.optional(v.string()),
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
     await requireAny(ctx, SELL_OR_MANAGE);
 
-    const sales = await salesWithBalance(ctx);
-    const nameById = await customerNames(ctx, sales);
+    const start = dayToIso(args.start, "from");
+    const end = dayToIso(args.end, "to");
 
-    return sales.map((sale) => ({
-      ...sale,
-      customerName: sale.customerId
-        ? (nameById.get(sale.customerId) ?? null)
-        : null,
-    }));
+    // Searching scans the bounded range and pages the matches in memory:
+    // customer and item names are resolved data, so they cannot ride the
+    // index. ponytail: full in-bounds collect per search; a searchIndex on
+    // sales (with a denormalised text field + backfill) when the shop's
+    // history gets big enough to feel it.
+    if (args.search?.trim()) {
+      const term = args.search.trim().toLowerCase();
+      const rows = (await ctx.runQuery(components.inventory.sales.list, {
+        start,
+        end,
+      })) as ComponentSaleRow[];
+
+      const nameById = await customerNames(ctx, rows);
+      const matches = rows.filter(
+        (sale) =>
+          (sale.customerId ? (nameById.get(sale.customerId) ?? "") : "")
+            .toLowerCase()
+            .includes(term) ||
+          sale.items.some((item) => item.name.toLowerCase().includes(term)) ||
+          (sale.note ?? "").toLowerCase().includes(term),
+      );
+
+      const from = Number.parseInt(args.paginationOpts.cursor ?? "0", 10) || 0;
+      const page = matches.slice(from, from + args.paginationOpts.numItems);
+      const next = from + page.length;
+
+      return {
+        page: page.map(withCustomerName(nameById)),
+        isDone: next >= matches.length,
+        continueCursor: String(next),
+      };
+    }
+
+    const result = (await ctx.runQuery(components.inventory.sales.listPage, {
+      paginationOpts: args.paginationOpts,
+      start,
+      end,
+    })) as {
+      page: ComponentSaleRow[];
+      isDone: boolean;
+      continueCursor: string;
+    };
+
+    const nameById = await customerNames(ctx, result.page);
+    return { ...result, page: result.page.map(withCustomerName(nameById)) };
   },
 });
 
