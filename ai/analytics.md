@@ -3,6 +3,7 @@
 ## Overview
 
 The app tracks attendance, customer engagement, and revenue through three systems:
+
 1. **Pre-computed metrics** (cron-written, query-read)
 2. **Read-time computed metrics** (live aggregation on query)
 3. **B-tree aggregates** (O(log n) counts maintained on write)
@@ -33,14 +34,14 @@ The app tracks attendance, customer engagement, and revenue through three system
 
 **Metric kinds:**
 
-| Kind | Calculation |
-|------|-------------|
-| `totalCustomers` | `profileAggregate.count()` — all profiles |
-| `newCustomers` | `profileAggregate.count()` with lower bound at month start |
-| `activeCustomers` | `profileAggregate.count()` with lower bound at 30 days ago |
-| `repeatCustomerRate` | `round((users with >=2 visits / total visitors in month) * 100)` |
-| `avgVisitsPerCustomer` | `round((total visits / unique visitors) * 10) / 10` |
-| `lapsedCustomers` | `max(0, totalCustomers - activeCustomers)` |
+| Kind                   | Calculation                                                      |
+| ---------------------- | ---------------------------------------------------------------- |
+| `totalCustomers`       | `profileAggregate.count()` — all profiles                        |
+| `newCustomers`         | `profileAggregate.count()` with lower bound at month start       |
+| `activeCustomers`      | `profileAggregate.count()` with lower bound at 30 days ago       |
+| `repeatCustomerRate`   | `round((users with >=2 visits / total visitors in month) * 100)` |
+| `avgVisitsPerCustomer` | `round((total visits / unique visitors) * 10) / 10`              |
+| `lapsedCustomers`      | `max(0, totalCustomers - activeCustomers)`                       |
 
 ### `app_metrics_top_customers` — Top 50 Customers
 
@@ -56,13 +57,13 @@ The app tracks attendance, customer engagement, and revenue through three system
 
 These scan `daily_register` on every query — no pre-computation.
 
-| Function | What it computes |
-|----------|-----------------|
-| `metrics.sumPaidAccess` | Total revenue from paid registers (filters `access.kind === "paid"`) |
-| `reports.getDaily` | Full daily report: unique customers, paid/free/subscribed counts, sales by payment method, staff admissions |
-| `myFunctions.countAttendance` | Total registers in a time range |
-| `myFunctions.registrationCount` | Register count for a specific user |
-| `customers.getCustomerVisitTrend` | Weekly visit buckets for a user |
+| Function                          | What it computes                                                                                            |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `metrics.sumPaidAccess`           | Total revenue from paid registers (filters `access.kind === "paid"`)                                        |
+| `reports.getDaily`                | Full daily report: unique customers, paid/free/subscribed counts, sales by payment method, staff admissions |
+| `myFunctions.countAttendance`     | Total registers in a time range                                                                             |
+| `myFunctions.registrationCount`   | Register count for a specific user                                                                          |
+| `customers.getCustomerVisitTrend` | Weekly visit buckets for a user                                                                             |
 
 ---
 
@@ -101,34 +102,34 @@ Registered in `convex.config.ts` as two instances of the `aggregate` component:
 
 ## Cron Jobs
 
-| Name | Schedule | Target | Purpose |
-|------|----------|--------|---------|
-| `take daily visit metrics` | Daily 00:00 UTC | `internal.register.saveCount` | Write `dailyAttendanceMetrics` |
-| `compute customer metrics` | Daily 00:00 UTC | `internal.customers.computeMetrics` | Write `app_metrics` + `app_metrics_top_customers` |
-| `cleanup expired pending bookings` | Every 5 min | `api.bookings.markExpiredPendingBookings` | Booking lifecycle |
-| `mark completed bookings as used-up` | Every 5 min | `api.bookings.markCompletedBookingsAsUsedUp` | Booking lifecycle |
+| Name                                 | Schedule        | Target                                       | Purpose                                           |
+| ------------------------------------ | --------------- | -------------------------------------------- | ------------------------------------------------- |
+| `take daily visit metrics`           | Daily 00:00 UTC | `internal.register.saveCount`                | Write `dailyAttendanceMetrics`                    |
+| `compute customer metrics`           | Daily 00:00 UTC | `internal.customers.computeMetrics`          | Write `app_metrics` + `app_metrics_top_customers` |
+| `cleanup expired pending bookings`   | Every 5 min     | `api.bookings.markExpiredPendingBookings`    | Booking lifecycle                                 |
+| `mark completed bookings as used-up` | Every 5 min     | `api.bookings.markCompletedBookingsAsUsedUp` | Booking lifecycle                                 |
 
 ---
 
 ## Dead/Legacy Items
 
-| Item | Issue |
-|------|-------|
-| `stats` table | Nothing writes to it; `getUserStats` reads stale data |
-| `roomMetrics` table | IoT data flows in via HTTP, no query reads it |
-| `visitsAggregate` B-tree | Maintained on every check-in, never queried |
+| Item                        | Issue                                                           |
+| --------------------------- | --------------------------------------------------------------- |
+| `stats` table               | Nothing writes to it; `getUserStats` reads stale data           |
+| `roomMetrics` table         | IoT data flows in via HTTP, no query reads it                   |
+| `visitsAggregate` B-tree    | Maintained on every check-in, never queried                     |
 | `app_metrics_top_customers` | Written by cron, but `getTopCustomers` recomputes from raw data |
 
 ---
 
 ## Key Files
 
-| File | Role |
-|------|------|
-| `convex/schema.ts` | Table definitions for all metrics tables |
-| `convex/metrics.ts` | `metricsDailyAttendance`, `sumPaidAccess` queries |
-| `convex/customers.ts` | `computeMetricsForDate`, `getCustomerMetrics`, `getTopCustomers`, aggregate definitions |
-| `convex/register.ts` | `saveCount` (daily visitor cron), `insertRegisterAndAggregate` |
-| `convex/reports.ts` | `getDaily` (live daily report) |
-| `convex/crons.ts` | Cron job definitions |
-| `convex/convex.config.ts` | Component registration (`customerStats`, `aggregate`) |
+| File                      | Role                                                                                    |
+| ------------------------- | --------------------------------------------------------------------------------------- |
+| `convex/schema.ts`        | Table definitions for all metrics tables                                                |
+| `convex/metrics.ts`       | `metricsDailyAttendance`, `sumPaidAccess` queries                                       |
+| `convex/customers.ts`     | `computeMetricsForDate`, `getCustomerMetrics`, `getTopCustomers`, aggregate definitions |
+| `convex/register.ts`      | `saveCount` (daily visitor cron), `insertRegisterAndAggregate`                          |
+| `convex/reports.ts`       | `getDaily` (live daily report)                                                          |
+| `convex/crons.ts`         | Cron job definitions                                                                    |
+| `convex/convex.config.ts` | Component registration (`customerStats`, `aggregate`)                                   |

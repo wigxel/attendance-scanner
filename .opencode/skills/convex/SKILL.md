@@ -6,11 +6,13 @@ description: Convex backend-as-a-service development rules and patterns
 # Convex Skill
 
 ## Project Structure
+
 - Backend functions: `convex/`
 - Schema: `convex/schema.ts`
 - Generated types: `convex/_generated/`
 
 ## Function Syntax
+
 Use the new function syntax:
 
 ```typescript
@@ -27,12 +29,14 @@ export const myQuery = query({
 ```
 
 ## Function Types
+
 - **query**: Public read operations - use for fetching data
 - **mutation**: Public write operations - use for creating/updating/deleting
 - **action**: Side effects, external APIs - no direct database access
 - **internalQuery/internalMutation/internalAction**: Private functions, callable only from other Convex functions
 
 ## Database
+
 ```typescript
 // Insert
 const id = await ctx.db.insert("table", { field: "value" });
@@ -51,6 +55,7 @@ await ctx.db.delete(id);
 ```
 
 ## Pagination
+
 ```typescript
 import { paginationOptsValidator } from "convex/server";
 
@@ -63,6 +68,7 @@ export const list = query({
 ```
 
 ## Validators
+
 - `v.string()`, `v.number()`, `v.boolean()`
 - `v.id("table")` - Reference to document
 - `v.array(T)` - Array of type T
@@ -73,6 +79,7 @@ export const list = query({
 - `v.record(k, v)` - Key-value record
 
 ## Schema
+
 ```typescript
 import { defineSchema, defineTable } from "convex/server";
 
@@ -84,11 +91,13 @@ export default defineSchema({
 ```
 
 ## File Organization
+
 - Group related functions in the same file
 - Use `api.filename.functionName` to call public functions
 - Use `internal.filename.functionName` to call internal functions
 
 ## HTTP Actions
+
 ```typescript
 import { httpRouter, httpAction } from "convex/server";
 
@@ -106,6 +115,7 @@ export default http;
 ```
 
 ## Scheduled Jobs
+
 ```typescript
 import { cronJobs } from "convex/server";
 

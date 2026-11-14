@@ -26,12 +26,12 @@ The page has two jobs, in this order: membership applications from builders, the
 
 Developers and makers are the primary audience and get the primary button everywhere. Clients are secondary and get their own section.
 
-| Audience | Who they are | What they need to see | Action we want | Where the page serves them |
-|---|---|---|---|---|
-| Builders (primary) | Nigerian developers and makers in ML/AI, additive manufacturing, web, games or blockchain | What the community is, which tribe fits, how verification works, that joining is free, who leads their tribe | Apply to join | Hero, section 4, section 7 |
-| Clients (secondary) | Fintechs, startups, SMEs, NGOs, agencies and institutions that need capability without hiring an agency | Verified talent, a named Build Lead, managed delivery, real work | Send a build-team enquiry | Trusted by, Hero, section 5, section 6 |
-| Partners and sponsors | Hubs, accelerators, universities, grant makers | Proof of delivery and a route to talk | Send a partnership enquiry | Section 2, section 5, section 6 |
-| Curious guests | Non-members invited by a member or leader | When the next meeting is and how to visit | Request a guest visit | Section 4 |
+| Audience              | Who they are                                                                                            | What they need to see                                                                                        | Action we want             | Where the page serves them             |
+| --------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------- | -------------------------------------- |
+| Builders (primary)    | Nigerian developers and makers in ML/AI, additive manufacturing, web, games or blockchain               | What the community is, which tribe fits, how verification works, that joining is free, who leads their tribe | Apply to join              | Hero, section 4, section 7             |
+| Clients (secondary)   | Fintechs, startups, SMEs, NGOs, agencies and institutions that need capability without hiring an agency | Verified talent, a named Build Lead, managed delivery, real work                                             | Send a build-team enquiry  | Trusted by, Hero, section 5, section 6 |
+| Partners and sponsors | Hubs, accelerators, universities, grant makers                                                          | Proof of delivery and a route to talk                                                                        | Send a partnership enquiry | Section 2, section 5, section 6        |
+| Curious guests        | Non-members invited by a member or leader                                                               | When the next meeting is and how to visit                                                                    | Request a guest visit      | Section 4                              |
 
 ## Positioning, naming and voice
 
@@ -60,15 +60,15 @@ The identity the page sells: "I am a Nigerian builder who works to international
 
 ### Naming rules
 
-| Term | Use | Do not use |
-|---|---|---|
-| Inspace Makers | The brand, every time | Inspace, Inspace community, ISM |
-| Tribe | One of the five disciplines | Track, chapter, guild |
-| Tribe Leader | The role of each of the five leaders | Tribe head, lead |
-| Community Leaders | The nav label and section title for the five Tribe Leaders | Team, staff, founders |
-| Build team | The group that delivers a project | Squad, crew |
-| Build Lead | The named person accountable to the client | Project manager |
-| Builders | Members in general copy, so that makers are included | Devs, talent |
+| Term              | Use                                                        | Do not use                      |
+| ----------------- | ---------------------------------------------------------- | ------------------------------- |
+| Inspace Makers    | The brand, every time                                      | Inspace, Inspace community, ISM |
+| Tribe             | One of the five disciplines                                | Track, chapter, guild           |
+| Tribe Leader      | The role of each of the five leaders                       | Tribe head, lead                |
+| Community Leaders | The nav label and section title for the five Tribe Leaders | Team, staff, founders           |
+| Build team        | The group that delivers a project                          | Squad, crew                     |
+| Build Lead        | The named person accountable to the client                 | Project manager                 |
+| Builders          | Members in general copy, so that makers are included       | Devs, talent                    |
 
 ### Voice
 
@@ -78,16 +78,16 @@ Plain, direct, confident. Short sentences. British spelling. Sentence case for h
 
 The page is one scroll: a sticky nav bar, a trusted-by marquee, five content sections and a footer. The four nav links map one-to-one to sections 4 to 7.
 
-| # | Section | Anchor | Nav label | Audience | Job | Primary button |
-|---|---|---|---|---|---|---|
-| 1 | Nav bar | n/a | n/a | All | Navigation and a persistent way to apply | Apply to join |
-| 2 | Trusted by | n/a | n/a | Clients | Show the organisations that have shipped with build teams | n/a |
-| 3 | Hero | #top | Logo | All | State the identity and split the two audiences | Apply to join; Hire a build team |
-| 4 | About the community and tribes | #tribes | Tribes | Builders | Explain what Inspace Makers is, help a builder pick a tribe, show the path to verification | Apply to join |
-| 5 | Build with Inspace Makers | #build | Build with Inspace Makers | Clients, partners | Sell the verified build team | Hire a build team |
-| 6 | Resources | #resources | Resources | Both | Prove the standard with real artefacts | View (per card) |
-| 7 | Community Leaders | #leaders | Community Leaders | Builders | Put faces to the tribes | Join this tribe |
-| Footer | n/a | n/a | n/a | All | Housekeeping and a last call to action | Apply to join; Hire a build team |
+| #      | Section                        | Anchor     | Nav label                 | Audience          | Job                                                                                        | Primary button                   |
+| ------ | ------------------------------ | ---------- | ------------------------- | ----------------- | ------------------------------------------------------------------------------------------ | -------------------------------- |
+| 1      | Nav bar                        | n/a        | n/a                       | All               | Navigation and a persistent way to apply                                                   | Apply to join                    |
+| 2      | Trusted by                     | n/a        | n/a                       | Clients           | Show the organisations that have shipped with build teams                                  | n/a                              |
+| 3      | Hero                           | #top       | Logo                      | All               | State the identity and split the two audiences                                             | Apply to join; Hire a build team |
+| 4      | About the community and tribes | #tribes    | Tribes                    | Builders          | Explain what Inspace Makers is, help a builder pick a tribe, show the path to verification | Apply to join                    |
+| 5      | Build with Inspace Makers      | #build     | Build with Inspace Makers | Clients, partners | Sell the verified build team                                                               | Hire a build team                |
+| 6      | Resources                      | #resources | Resources                 | Both              | Prove the standard with real artefacts                                                     | View (per card)                  |
+| 7      | Community Leaders              | #leaders   | Community Leaders         | Builders          | Put faces to the tribes                                                                    | Join this tribe                  |
+| Footer | n/a                            | n/a        | n/a                       | All               | Housekeeping and a last call to action                                                     | Apply to join; Hire a build team |
 
 **Sub-blocks inside section 4, in order:** 4.1 What Inspace Makers is, 4.2 The five tribes, 4.3 How it works, 4.4 Verification tiers, 4.5 Membership, 4.6 Visit first, 4.7 Questions builders ask.
 
@@ -115,16 +115,16 @@ The nav bar is sticky, holds four anchor links in a fixed order, and keeps "Appl
 
 ### Copy
 
-| Element | Copy | Behaviour |
-|---|---|---|
-| Logo | Inspace Makers | Scrolls to top |
-| Link 1 | Tribes | Scrolls to #tribes |
-| Link 2 | Build with Inspace Makers | Scrolls to #build |
-| Link 3 | Resources | Scrolls to #resources |
-| Link 4 | Community Leaders | Scrolls to #leaders |
-| Button | Apply to join | Opens the membership application form |
-| Mobile menu button (accessible name) | Menu | Opens the link list |
-| Skip link | Skip to content | First focusable element; jumps past the nav |
+| Element                              | Copy                      | Behaviour                                   |
+| ------------------------------------ | ------------------------- | ------------------------------------------- |
+| Logo                                 | Inspace Makers            | Scrolls to top                              |
+| Link 1                               | Tribes                    | Scrolls to #tribes                          |
+| Link 2                               | Build with Inspace Makers | Scrolls to #build                           |
+| Link 3                               | Resources                 | Scrolls to #resources                       |
+| Link 4                               | Community Leaders         | Scrolls to #leaders                         |
+| Button                               | Apply to join             | Opens the membership application form       |
+| Mobile menu button (accessible name) | Menu                      | Opens the link list                         |
+| Skip link                            | Skip to content           | First focusable element; jumps past the nav |
 
 ### Behaviour
 
@@ -148,9 +148,9 @@ A thin marquee of organisations that have shipped with Inspace Makers build team
 
 ### Copy
 
-| Element | Copy |
-|---|---|
-| Heading (H2) | Trusted by |
+| Element         | Copy                                          |
+| --------------- | --------------------------------------------- |
+| Heading (H2)    | Trusted by                                    |
 | Marquee entries | Client names and logos, in alphabetical order |
 
 ### Behaviour
@@ -172,16 +172,16 @@ The hero states the identity in one headline and offers both audiences a button 
 
 ### Copy
 
-| Element | Copy |
-|---|---|
-| Eyebrow | A community of verified Nigerian builders |
-| Headline (H1) | Build to international standards, on Nigerian problems. |
-| Description | Inspace Makers brings Nigerian developers and makers together in five tribes. We verify our work against a shared standard and ship real projects for the organisations that need them. |
-| Primary button | Apply to join |
-| Secondary button | Hire a build team |
-| Line under the buttons | Free to join. Verified to build. |
-| Tribe strip | ML/AI · Additive Manufacturing · Web Dev · Gaming · Blockchain |
-| Meeting line (conditional) | Next general meeting: [day, date], [venue]. Request a guest visit |
+| Element                    | Copy                                                                                                                                                                                    |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Eyebrow                    | A community of verified Nigerian builders                                                                                                                                               |
+| Headline (H1)              | Build to international standards, on Nigerian problems.                                                                                                                                 |
+| Description                | Inspace Makers brings Nigerian developers and makers together in five tribes. We verify our work against a shared standard and ship real projects for the organisations that need them. |
+| Primary button             | Apply to join                                                                                                                                                                           |
+| Secondary button           | Hire a build team                                                                                                                                                                       |
+| Line under the buttons     | Free to join. Verified to build.                                                                                                                                                        |
+| Tribe strip                | ML/AI · Additive Manufacturing · Web Dev · Gaming · Blockchain                                                                                                                          |
+| Meeting line (conditional) | Next general meeting: [day, date], [venue]. Request a guest visit                                                                                                                       |
 
 ### Behaviour
 
@@ -219,13 +219,13 @@ type labels, not client names.
 
 #### Copy
 
-| Element | Copy |
-|---|---|
-| Heading (H3) | Clients we have worked with |
-| Intro line | Fintechs, startups, SMEs, NGOs, agencies and institutions have shipped with Inspace Makers build teams. |
-| Client card | [Client name or type label], [sector], [one line on what the build team delivered] |
-| Fallback line (no permissions yet) | Build teams have delivered for organisations across fintech, health, education and the public sector. |
-| End-of-section button | Hire a build team |
+| Element                            | Copy                                                                                                    |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Heading (H3)                       | Clients we have worked with                                                                             |
+| Intro line                         | Fintechs, startups, SMEs, NGOs, agencies and institutions have shipped with Inspace Makers build teams. |
+| Client card                        | [Client name or type label], [sector], [one line on what the build team delivered]                      |
+| Fallback line (no permissions yet) | Build teams have delivered for organisations across fintech, health, education and the public sector.   |
+| End-of-section button              | Hire a build team                                                                                       |
 
 #### Behaviour
 
@@ -244,13 +244,13 @@ type labels, not client names.
 
 #### Copy
 
-| Element | Copy |
-|---|---|
-| Heading (H3) | Projects and metrics |
-| Intro line | What build teams have shipped, and the numbers behind them. |
-| Metric strip | [X] projects shipped · [X] verified builders · [X] organisations served |
-| Project card | [Project name], [tribe], [client type], [one-line outcome] |
-| End-of-section button | Hire a build team |
+| Element               | Copy                                                                    |
+| --------------------- | ----------------------------------------------------------------------- |
+| Heading (H3)          | Projects and metrics                                                    |
+| Intro line            | What build teams have shipped, and the numbers behind them.             |
+| Metric strip          | [X] projects shipped · [X] verified builders · [X] organisations served |
+| Project card          | [Project name], [tribe], [client type], [one-line outcome]              |
+| End-of-section button | Hire a build team                                                       |
 
 #### Behaviour
 
