@@ -3,6 +3,7 @@
 import {
   Boxes,
   ChartNoAxesCombined,
+  HandCoins,
   Package,
   ReceiptText,
   Ruler,
@@ -15,6 +16,11 @@ import { cn } from "@/lib/utils";
 
 const tabs = [
   { name: "Sales", href: "/admin/inventory/sales", icon: ShoppingCart },
+  {
+    name: "Receivables",
+    href: "/admin/inventory/receivables",
+    icon: HandCoins,
+  },
   {
     name: "Metrics",
     href: "/admin/inventory/metrics",
