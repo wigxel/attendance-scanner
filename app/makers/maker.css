@@ -6,6 +6,9 @@
 
   /* font */
   --font-heading: Safiro;
+
+  /* heading sizes ship with the display tracking baked in */
+  --text-6xl--letter-spacing: -0.04em;
 }
 
 /* Community grid: each icon pops in while spinning, holds, then collapses at 5s. */
@@ -14,11 +17,13 @@
     opacity: 0;
     transform: rotate(-120deg) scale(0);
   }
+
   10%,
   83% {
     opacity: 1;
     transform: rotate(0deg) scale(1);
   }
+
   100% {
     opacity: 0;
     transform: rotate(120deg) scale(0);

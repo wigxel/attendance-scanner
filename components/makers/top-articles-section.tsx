@@ -2,12 +2,12 @@
 
 import { motion } from "motion/react";
 import Link from "next/link";
+import Balancer from "react-wrap-balancer";
 import { CircularButton } from "@/components/circular-button";
 import type { Post } from "@/components/post-card";
 import { PostCard } from "@/components/post-card";
 
 type TopArticlesSectionProps = {
-  /** Newest first; only the first four are shown. */
   posts: Post[];
 };
 
@@ -21,15 +21,11 @@ export function TopArticlesSection({ posts }: TopArticlesSectionProps) {
           <div className="col-span-1" />
 
           <h3 className="font-heading text-6xl font-black relative col-span-11">
-            <span>Stories For The</span>
-            <motion.div
-              initial={{ opacity: 0, x: "-15%" }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1, ease: "easeOut", delay: 1 }}
-              className="text-cyan-500 absolute inset-bs-0 inset-s-0 rotate-90 origin-top-left translate-y-24 -translate-x-8"
-            >
-              Builders
-            </motion.div>
+            <Balancer>
+              <span>Stories For The&nbsp;</span>
+              <br />
+              <span className="text-cyan-500">Real Builders</span>
+            </Balancer>
           </h3>
 
           <div className="col-span-1" />
@@ -40,6 +36,7 @@ export function TopArticlesSection({ posts }: TopArticlesSectionProps) {
               initial={{ opacity: 0, y: "12.5%" }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: 2, duration: 1 }}
+              viewport={{ once: true }}
             >
               <PostCard variant="item" post={posts[0]} />
             </motion.div>
@@ -48,6 +45,7 @@ export function TopArticlesSection({ posts }: TopArticlesSectionProps) {
               className="flex flex-col gap-4 [&>li>*]:pt-0!"
               initial="hidden"
               whileInView="visible"
+              viewport={{ once: true }}
               variants={{
                 visible: {
                   transition: { staggerChildren: 0.15, delayChildren: 3 },

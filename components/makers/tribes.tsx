@@ -3,29 +3,27 @@ import { heading } from "@/app/font";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// Section 3 splits in two: this file carries both the landing teaser
-// (TribesSection) and the detail page content (TribesDetail, rendered at
-// /makers/tribes). Copy is a DRAFT written from the PRD's rules — owner
-// review pending (no fake numbers, no income promises, "paid" only in FAQ).
-
 export const TRIBES = [
   {
     id: "tribe-ml-ai",
     name: "ML/AI",
+    fullname: "Machine learning & Artificial Intelligence",
     color: "#f59e0b",
     description:
       "Models, agents and AI features — built inside other tribes' projects as well as on their own.",
   },
   {
     id: "tribe-additive-manufacturing",
-    name: "Additive Manufacturing",
+    name: "Add. Manufacturing",
+    fullname: "Additive Manufacturing ",
     color: "#8b5cf6",
     description:
       "Printed parts, enclosures and hardware prototypes, made for real use rather than for display.",
   },
   {
     id: "tribe-web-dev",
-    name: "Web Dev",
+    name: "Software",
+    fullname: "Software Development",
     color: "#0ea5e9",
     description:
       "The websites and tools the community runs on, and the client work that pays for them.",
@@ -33,6 +31,7 @@ export const TRIBES = [
   {
     id: "tribe-gaming",
     name: "Gaming",
+    fullname: "Game development",
     color: "#ec4899",
     description:
       "Small finished games from jams and build nights, shipped rather than shelved.",
@@ -40,13 +39,33 @@ export const TRIBES = [
   {
     id: "tribe-blockchain",
     name: "Blockchain",
+    fullname: "Web3/Blockchain",
     color: "#10b981",
     description:
       "Contracts and integrations, introduced where a ledger genuinely earns its place.",
   },
+  {
+    id: "tribe-design",
+    name: "Design",
+    fullname: "Visual Design",
+    color: "#ef4444",
+    description:
+      "Identity, interface and print — the craft that makes the community's work legible.",
+  },
+  {
+    id: "tribe-qa",
+    name: "Quality",
+    fullname: "Quality Assurance",
+    color: "#ff44f4",
+    description: "",
+  },
 ] as const;
 
-function SubHeading({ children }: { children: string }) {
+type SubHeadingProps = {
+  children: string;
+};
+
+function SubHeadingProps({ children }: SubHeadingProps) {
   return (
     <h3
       className={cn(
@@ -228,7 +247,7 @@ export function TribesDetail() {
 
       {/* 3.3 How it works */}
       <div className="flex flex-col gap-6">
-        <SubHeading>How it works</SubHeading>
+        <SubHeadingProps>How it works</SubHeadingProps>
         <ol className="flex flex-col gap-4">
           {STEPS.map(([title, body], i) => (
             <li key={title} className="flex items-baseline gap-4">
@@ -249,7 +268,7 @@ export function TribesDetail() {
 
       {/* 3.4 Verification tiers — public and they follow you */}
       <div className="flex flex-col gap-6">
-        <SubHeading>Verification tiers</SubHeading>
+        <SubHeadingProps>Verification tiers</SubHeadingProps>
         <p className="text-muted-foreground">
           Your tier is public and follows you. It moves on proof of work, not on
           time served.
@@ -285,7 +304,7 @@ export function TribesDetail() {
 
       {/* 3.5 Membership — "free" is always paired with verification */}
       <div className="flex flex-col gap-6">
-        <SubHeading>Membership</SubHeading>
+        <SubHeadingProps>Membership</SubHeadingProps>
         <p className="text-muted-foreground">
           Membership is free. What you pay in is attendance — a first meeting,
           then the meetings after that — and verification when you are ready for
@@ -295,7 +314,7 @@ export function TribesDetail() {
 
       {/* 3.6 Visit first */}
       <div className="flex flex-col gap-4">
-        <SubHeading>Visit first</SubHeading>
+        <SubHeadingProps>Visit first</SubHeadingProps>
         <p className="text-muted-foreground">
           Apply only after a first look. Come to a meeting as a visitor, see the
           work up close and meet the tribe you would join — a member can invite
@@ -306,7 +325,7 @@ export function TribesDetail() {
 
       {/* 3.7 Questions builders ask */}
       <div className="flex flex-col gap-6">
-        <SubHeading>Questions builders ask</SubHeading>
+        <SubHeadingProps>Questions builders ask</SubHeadingProps>
         <dl className="flex flex-col divide-y divide-(--border) border-y border-(--border)">
           {FAQ.map(([question, answer]) => (
             <div key={question} className="flex flex-col gap-1 py-5">

@@ -24,7 +24,7 @@ const allTribes = [
   { imageUrl: "/images/tribes/tribe-blockchain.svg", label: "Blockchain" },
   {
     imageUrl: "/images/tribes/tribe-web-dev.svg",
-    label: "Web Development",
+    label: "Software Engineering",
     className: "scale-[1.2]",
   },
 ];

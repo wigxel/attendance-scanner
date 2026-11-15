@@ -19,12 +19,12 @@ import { api } from "@/convex/_generated/api";
 
 type RecordPaymentDialogProps = {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
   saleId: string;
   /** The most this payment may be; the host refuses anything above it. */
   outstandingKobo: number;
   /** When the sale happened; the form refuses an earlier payment date. */
   saleOccurredAt: string;
+  onOpenChange: (open: boolean) => void;
 };
 
 export function RecordPaymentDialog({

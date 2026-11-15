@@ -39,7 +39,7 @@ export function PostCard({
               {post.title}
             </h2>
 
-            <p className="text-base text-pretty md:text-lg mb-3 text-muted-foreground">
+            <p className="text-base text-pretty font-thin md:text-lg mb-3 text-muted-foreground">
               {post.description}
             </p>
           </div>
@@ -138,7 +138,7 @@ function PostCompact({ post, isLast }: PostCardProps) {
 
         <div className="basis-4/7 shrink-0">
           {post.excerpt ? (
-            <p className="mb-3 max-w-[45ch] text-xs leading-relaxed text-muted-foreground md:text-sm line-clamp-2">
+            <p className="mb-3 max-w-[45ch] font-thin text-xs leading-relaxed text-muted-foreground md:text-sm line-clamp-2">
               {post.excerpt}
             </p>
           ) : null}

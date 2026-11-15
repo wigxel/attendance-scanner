@@ -2,30 +2,90 @@
 
 import { PlusIcon } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
-import { heading } from "@/app/font";
+import { type ReactNode, type RefObject, useLayoutEffect, useRef } from "react";
+import { CountValue } from "@/components/creative/counter-value";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+// Calibration knobs and the imperative spotlight controller live in
+// ./spotlight-controller; this file renders the shell they drive.
+import {
+  clipFor,
+  createSpotlightController,
+  SPOTLIGHT_BOUNDARY_RANGE_PX,
+  SPOTLIGHT_DEBUG,
+} from "./spotlight-controller";
 import { TRIBES } from "./tribes";
 
+type TribeId = (typeof TRIBES)[number]["id"];
+
 type Leader = {
+  tribeName: string; // display name, mirrors TRIBES[i].name
+  bio: string; // one-sentence draft; owner edits per person
+  shortBio?: ReactNode; // longer bio (JSX), owner-supplied
   name: string;
   photo?: string; // real headshot only, path under /public
+  tribeImage?: string; // tribe logo, under /images/tribes — shown when no headshot
   tier?: "Member" | "Verified"; // a Visitor cannot lead; default Verified
   proof?: ReadonlyArray<{ label: string; href: string }>; // ≤2 real links
 };
 
-const LEADERS: Partial<Record<(typeof TRIBES)[number]["id"], Leader>> = {
-  "tribe-web-dev": {
-    name: "Joseph Owonvwon",
+// A tribe can have several leaders; order here is the display order.
+const LEADERS: Array<Leader & { tribe: TribeId }> = [
+  {
+    tribe: "tribe-web-dev",
+    tribeName: "Software Engineering",
+    name: "Joseph Julius Owonvwon",
+    bio: "Builds and reviews the community's websites and internal tools, and signs off client work before it ships.",
     photo: "/images/leaders/joseph-owonvwon.webp",
+    tribeImage: "/images/tribes/tribe-web-dev.svg",
     tier: "Verified",
     proof: [{ label: "Github", href: "https://github.com/…" }],
   },
-  "tribe-additive-manufacturing": {
-    name: "Fidelis Saleh",
-    photo: "/images/leaders/joseph-owonvwon.webp",
+  {
+    tribe: "tribe-design",
+    tribeName: "Design",
+    name: "Henry Ephriam",
+    bio: "Designs the community's identity and interfaces; keeps every maker project looking considered, from event posters to product screens.",
+    photo: "/images/leaders/henry__.webp",
+    tribeImage: "/images/tribes/tribe-design.svg",
     tier: "Verified",
+    proof: [{ label: "Github", href: "https://github.com/…" }],
+  },
+  {
+    tribe: "tribe-design",
+    tribeName: "Design",
+    name: "Divine Igiran",
+    bio: "Works across interface and print; turns rough maker ideas into clear layouts, screens and brand materials people can use.",
+    photo: "/images/leaders/divine.webp",
+    tribeImage: "/images/tribes/tribe-design.svg",
+    tier: "Verified",
+    proof: [{ label: "Github", href: "https://github.com/…" }],
+  },
+  {
+    tribe: "tribe-additive-manufacturing",
+    tribeName: "Additive Manufacturing",
+    name: "Dr. Fidelis Saleh",
+    bio: "Leads the Additive Manufacturing tribe; reviews printed parts against one question — made for real use, or for display.",
+    photo: "/images/leaders/fidelis-live.webp",
+    tribeImage: "/images/tribes/tribe-additive-manufacturing.svg",
+    tier: "Verified",
+    shortBio: (
+      <span>
+        I am a Mechanical Engineer and PhD researcher at Volgograd State
+        Technical University (VolgSTU), Russia, specializing in the automation
+        of production processes and advanced manufacturing technologies. I hold
+        Bachelor&apos;s and Master&apos;s degrees in Automation of Production
+        Processes and am currently pursuing doctoral research on the development
+        and optimization of 3D-printed polymer gears reinforced with continuous
+        carbon fibre. My professional experience includes production management,
+        quality control, polymer processing, and industrial automation. I have
+        worked in the manufacturing of woven polypropylene products and quality
+        testing of PVC, HDPE, and LDPE materials. My research and professional
+        interests include additive manufacturing, composite materials,
+        mechanical engineering, production automation, and innovative
+        manufacturing technologies.
+      </span>
+    ),
     proof: [
       {
         label: "LinkedIn",
@@ -33,46 +93,65 @@ const LEADERS: Partial<Record<(typeof TRIBES)[number]["id"], Leader>> = {
       },
     ],
   },
-  // @todo: a tribe can have multiple leaders
-  // "tribe-additive-manufacturing": {
-  //   name: "Joseph Ogbonna",
-  //   photo: "/images/leaders/joseph-owonvwon.webp",
-  //   tier: "Verified",
-  //   proof: [{ label: "LinkedIn", href: "https://www.linkedin.com/in/joseph-ogbonna-pcb" }],
-  // },
-  "tribe-ml-ai": {
+  {
+    tribe: "tribe-additive-manufacturing",
+    tribeName: "Additive Manufacturing",
+    name: "Joseph Ogbonna",
+    bio: "Prototypes enclosures and hardware alongside the tribe; iterates prints until they survive real handling, not just the print bed.",
+    tribeImage: "/images/tribes/tribe-additive-manufacturing.svg",
+    tier: "Verified",
+    proof: [
+      {
+        label: "LinkedIn",
+        href: "https://www.linkedin.com/in/joseph-ogbonna-pcb",
+      },
+    ],
+  },
+  {
+    tribe: "tribe-ml-ai",
+    tribeName: "ML/AI",
     name: "Mark Odike",
+    bio: "Runs AI project nights and reviews model work; what ships is measured against a baseline, not against a demo.",
     photo: "/images/leaders/joseph-owonvwon.webp",
+    tribeImage: "/images/tribes/tribe-ml-ai.svg",
     tier: "Verified",
     proof: [{ label: "github.com/…", href: "https://github.com/" }],
   },
-  "tribe-blockchain": {
+  {
+    tribe: "tribe-blockchain",
+    tribeName: "Blockchain",
     name: "Dominion Ekpuk",
+    bio: "Builds with chains where a ledger genuinely earns its place; keeps the tribe honest about complexity for its own sake.",
     photo: "/images/leaders/joseph-owonvwon.webp",
+    tribeImage: "/images/tribes/tribe-blockchain.svg",
     tier: "Verified",
     proof: [{ label: "Github", href: "https://github.com/dominion77" }],
   },
-};
-
-// What each leader does in the role, per tribe (4): one sentence, grounded
-// in the tribe descriptions on the page. DRAFT — owner edits per person as
-// they like; keyed by tribe so a leader entry never retypes it.
-const TRIBE_DUTIES: Record<(typeof TRIBES)[number]["id"], string> = {
-  "tribe-ml-ai":
-    "Runs the AI project nights and signs off model work — what ships is measured against a baseline, not against a demo.",
-  "tribe-additive-manufacturing":
-    "Reviews printed parts against one question: was this made for use, or for display.",
-  "tribe-web-dev":
-    "Signs off the sites and tools the community runs on, and reviews the client builds before they ship.",
-  "tribe-gaming":
-    "Keeps build nights moving toward finished games — a jam that ships counts, a demo that stalls does not.",
-  "tribe-blockchain":
-    "Approves chain work only where a ledger genuinely earns its place.",
-};
+  {
+    tribe: "tribe-qa",
+    tribeName: "Quality Assurance",
+    name: "Chisaneme Aloni",
+    bio: "I ensure all product User Experience makes sense across the community",
+    shortBio: (
+      <p>
+        Technical writer with experience in API and developer documentation for
+        SaaS, fintech, and AI products. Skilled in OpenAPI, Docs-as-Code
+        workflows, and building interactive API references from real tested
+        requests. Active open source documentation contributor with an
+        engineering background, focused on making complex systems accessible to
+        developers.
+      </p>
+    ),
+    photo: "/images/leaders/chisaneme.webp",
+    tribeImage: "/images/tribes/tribe-blockchain.svg",
+    tier: "Verified",
+    proof: [{ label: "Github", href: "https://github.com/alachi77" }],
+  },
+];
 
 type Entry = {
   tribe: (typeof TRIBES)[number];
-  leader: Leader;
+  leader: Leader & { tribe: TribeId };
 };
 
 function JoinLink({ tribeName }: { tribeName: string }) {
@@ -86,175 +165,193 @@ function JoinLink({ tribeName }: { tribeName: string }) {
           `Apply to join the ${tribeName} tribe`,
         )}`}
       >
-        <PlusIcon className="size-[2rem]" strokeWidth={1} />
+        <PlusIcon className="size-8" strokeWidth={1} />
       </a>
     </Button>
   );
 }
 
-// One ledger row: photo slot / name / dot + tribe + tier / proof / duty.
-// Handlers on the row drive the spotlight — hover, keyboard focus and tap
-// all land on the same state.
-function LeaderRow({
-  tribe,
-  leader,
-  onActivate,
-}: {
-  tribe: Entry["tribe"];
-  leader: Leader;
-  onActivate: () => void;
-}) {
-  return (
-    <li
-      onMouseEnter={onActivate}
-      onFocus={onActivate}
-      onClick={onActivate}
-      className="grid grid-cols-[auto_1fr] items-start gap-x-6 border-t border-(--border) py-6 hover:bg-(--background-lv1) md:grid-cols-[1fr_auto] md:px-2"
-    >
-      <div className="flex flex-col gap-1.5 flex-1">
-        <p
-          className={cn(
-            heading.className,
-            "text-2xl tracking-tight text-pretty md:text-3xl",
-          )}
-        >
-          {leader.name}
-        </p>
-
-        <p className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
-          <span
-            aria-hidden
-            className="size-2.5 rounded-full"
-            style={{ backgroundColor: tribe.color }}
-          />
-          {tribe.name} · {leader.tier ?? "Verified"}
-        </p>
-
-        <p className="max-w-[52ch] text-sm text-pretty text-muted-foreground">
-          {TRIBE_DUTIES[tribe.id]}
-        </p>
-      </div>
-
-      <div className="max-md:col-span-2 md:pt-1">
-        <div className="max-md:flex max-md:justify-start">
-          <JoinLink tribeName={tribe.name} />
-        </div>
-      </div>
-    </li>
-  );
-}
-
-// The fixed frame in the 2:1 grid (desktop only): shows ONE leader at a
-// time, never changes size. All leaders render stacked in the frame and
-// crossfade via opacity — no library. Caption under the frame follows the
-// active row: dot + tribe + tier, then that leader's proof links.
-function Spotlight({
-  entries,
-  activeIdx,
-}: {
+type SpotlightProps = {
   entries: ReadonlyArray<Entry>;
-  activeIdx: number;
-}) {
-  const active = entries[activeIdx];
+  clips: RefObject<(HTMLDivElement | null)[]>;
+  frameRef: RefObject<HTMLDivElement | null>;
+};
 
+// Renders the static shell once; every dynamic change (active index, clip
+// paths, debug line) is written straight to the DOM by the controller in
+// ./spotlight-controller — scroll never touches React state, so no
+// reconciliation runs.
+function Spotlight({ entries, clips, frameRef }: SpotlightProps) {
   return (
     <div className="flex flex-col gap-4 max-lg:hidden sticky top-(--header-height)">
-      <div className="relative aspect-[4/5] overflow-hidden border border-(--border)">
+      <div
+        ref={(el) => {
+          frameRef.current = el;
+        }}
+        className={cn(
+          "relative aspect-4/5 overflow-hidden bg-back",
+          SPOTLIGHT_DEBUG && "outline outline-green-500",
+        )}
+      >
         {entries.map(({ tribe, leader }, i) => (
           <div
-            key={tribe.id}
-            aria-hidden={i !== activeIdx}
-            className={cn(
-              "absolute inset-0 flex items-center justify-center transition-opacity duration-300",
-              i === activeIdx ? "opacity-100" : "opacity-0",
-            )}
+            key={`${tribe.id}:${leader.name}`}
+            ref={(el) => {
+              clips.current[i] = el;
+            }}
+            aria-hidden={i !== 0}
+            className="absolute inset-0 scale-[1.1] transform overflow-hidden transition-[clip-path] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+            style={{
+              clipPath: clipFor(i, 0),
+              zIndex: entries.length - i,
+            }}
           >
-            {leader.photo ? (
-              <Image
-                src={leader.photo}
-                alt={`Portrait of ${leader.name}`}
-                fill
-                sizes="(min-width: 1024px) 33vw, 100vw"
-                className="object-cover"
-              />
-            ) : (
-              <span
-                className="font-mono text-3xl text-muted-foreground"
-                aria-hidden
-              >
-                {leader.name
-                  .split(" ")
-                  .map((part) => part[0])
-                  .join("")}
-              </span>
-            )}
+            <Image
+              src={leader.photo ?? ""}
+              alt={`Portrait of ${leader.name}`}
+              fill
+              loading="eager"
+              fetchPriority="high"
+              sizes="(min-width: 1024px) 33vw, 100vw"
+              className="object-cover"
+            />
           </div>
         ))}
       </div>
+    </div>
+  );
+}
 
-      <p className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
-        <span
-          aria-hidden
-          className="size-2.5 rounded-full"
-          style={{ backgroundColor: active.tribe.color }}
-        />
-        {active.tribe.name} · {active.leader.tier ?? "Verified"}
-      </p>
-      {active.leader.proof && active.leader.proof.length > 0 && (
-        <p className="flex flex-wrap gap-x-4 font-mono text-xs text-muted-foreground">
-          {active.leader.proof.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="underline underline-offset-4 hover:text-foreground"
-            >
-              {item.label}
-            </a>
-          ))}
-        </p>
-      )}
+function tribeById(id: TribeId) {
+  return TRIBES.find((candidate) => candidate.id === id);
+}
+
+/** One leader in the stacked list: tribe label in its colour, name, bio. */
+function LeaderCard({ leader }: { leader: Leader & { tribe: TribeId } }) {
+  return (
+    <div className="flex flex-col gap-4 text-[1em]">
+      <h4 className="font-thin leading-[1em]">{leader.name}</h4>
+      <p className="font-thin">{leader.bio}</p>
     </div>
   );
 }
 
 export function LeadersSection() {
-  const named: Entry[] = TRIBES.flatMap((tribe) => {
-    const leader = LEADERS[tribe.id] as Leader | undefined;
-    return leader ? [{ tribe, leader }] : [];
+  const named: Entry[] = LEADERS.flatMap((leader) => {
+    const tribe = tribeById(leader.tribe);
+    return tribe ? [{ tribe, leader }] : [];
   });
 
-  const [hovered, setHovered] = useState<number | null>(null);
-  const activeIdx = Math.min(hovered ?? 0, named.length - 1);
   const hasPhotos = named.some(({ leader }) => Boolean(leader.photo));
 
+  // Activation: a card is active while its box overlaps the boundary band —
+  // the sticky spotlight frame's top edge, extended SPOTLIGHT_BOUNDARY_RANGE_PX
+  // down. When a card's box leaves the band it goes inactive — wipes up (past)
+  // or stays hidden (not yet arrived) — and the next one takes over. All of
+  // it lives in the imperative controller — scroll never re-renders React.
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const clipRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const frameRef = useRef<HTMLDivElement | null>(null);
+  const counterRef = useRef<HTMLDivElement | null>(null);
+  const activeNameRef = useRef<HTMLDivElement | null>(null);
+  const debugLineRef = useRef<HTMLDivElement | null>(null);
+
+  // Minimal per-index data the controller needs to paint the active name.
+  const meta = named.map(({ leader, tribe }) => ({
+    label: leader.tribeName,
+    color: tribe.color,
+  }));
+
+  useLayoutEffect(() => {
+    const controller = createSpotlightController({
+      clips: clipRefs,
+      cards: cardRefs,
+      frame: frameRef,
+      counter: counterRef,
+      activeName: activeNameRef,
+      meta,
+      debugLine: debugLineRef,
+      count: named.length,
+      debug: SPOTLIGHT_DEBUG,
+    });
+    return () => controller.destroy();
+  }, [named.length]);
+
   return (
-    <div className="flex flex-col gap-10">
-      {named.length > 0 ? (
+    <div className="bg-background py-24 text-2xl">
+      {SPOTLIGHT_DEBUG && (
         <div
+          ref={debugLineRef}
+          aria-hidden
+          className="pointer-events-none fixed inset-x-0 top-0 z-50"
+        >
+          <div
+            className="bg-red-500/20 outline outline-red-500"
+            style={{ height: SPOTLIGHT_BOUNDARY_RANGE_PX }}
+          />
+          <span
+            data-boundary-label
+            className="absolute right-4 top-1 rounded bg-red-500 px-1.5 py-0.5 font-mono text-[10px] leading-none text-white"
+          />
+        </div>
+      )}
+
+      <div className="container flex flex-col mx-auto sticky top-0 px-4 gap-12 py-24">
+        <h2
           className={cn(
-            "grid gap-10",
-            hasPhotos &&
-              "lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-x-12",
+            "font-heading font-black text-3xl md:text-6xl h-[40vh]",
           )}
         >
-          {hasPhotos && <Spotlight entries={named} activeIdx={activeIdx} />}
-          <ul className="flex flex-col border-b border-(--border)">
-            {named.map(({ tribe, leader }, i) => (
-              <LeaderRow
-                key={tribe.id}
-                tribe={tribe}
-                leader={leader}
-                onActivate={() => setHovered(i)}
-              />
-            ))}
-          </ul>
+          Tribe leaders
+        </h2>
+      </div>
+
+      <div
+        className={
+          "flex container relative mx-auto [--tribe-l-gap:--spacing(5)] gap-(--tribe-l-gap) items-start px-4 min-h-screen"
+        }
+      >
+        <div className="flex basis-7/12 self-end gap-(--tribe-l-gap) sticky bottom-8">
+          <div className="basis-5/12">
+            {hasPhotos && (
+              <Spotlight entries={named} clips={clipRefs} frameRef={frameRef} />
+            )}
+          </div>
+
+          <span className="flex flex-1 justify-between flex-col leading-4">
+            <span className="inline-flex item-start h-[1em] self-end font-thin overflow-hidden">
+              <CountValue index={0} />
+              <CountValue ref={counterRef} index={1} />
+            </span>
+
+            <div
+              ref={activeNameRef}
+              className="text-lg text-(--active-tribe-color) transition-colors duration-700"
+              style={
+                {
+                  "--active-tribe-color": meta[0].color,
+                } as React.CSSProperties
+              }
+            >
+              {meta[0].label}
+            </div>
+          </span>
         </div>
-      ) : (
-        <p className="max-w-[60ch] text-pretty text-muted-foreground">
-          Every tribe is led by one of its members. Leaders are named here as
-          they take the role.
-        </p>
-      )}
+
+        <div className="basis-5/12 flex flex-col gap-32">
+          {named.map((entry, i) => (
+            <div
+              key={`${entry.tribe.id}:${entry.leader.name}`}
+              ref={(el) => {
+                cardRefs.current[i] = el;
+              }}
+              className="transition-opacity duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+            >
+              <LeaderCard leader={entry.leader} />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
