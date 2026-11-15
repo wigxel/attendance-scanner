@@ -230,8 +230,8 @@ function tribeById(id: TribeId) {
 function LeaderCard({ leader }: { leader: Leader & { tribe: TribeId } }) {
   return (
     <div className="flex flex-col gap-4 text-[1em]">
-      <h4 className="font-thin leading-[1em]">{leader.name}</h4>
-      <p className="font-thin">{leader.bio}</p>
+      <h4 className="leading-[1em]">{leader.name}</h4>
+      <p className="">{leader.bio}</p>
     </div>
   );
 }
@@ -278,7 +278,7 @@ export function LeadersSection() {
   }, [named.length]);
 
   return (
-    <div className="bg-background py-24 text-2xl">
+    <div className="bg-background py-24 text-2xl font-thin">
       {SPOTLIGHT_DEBUG && (
         <div
           ref={debugLineRef}
@@ -324,15 +324,7 @@ export function LeadersSection() {
               <CountValue ref={counterRef} index={1} />
             </span>
 
-            <div
-              ref={activeNameRef}
-              className="text-lg text-(--active-tribe-color) transition-colors duration-700"
-              style={
-                {
-                  "--active-tribe-color": meta[0].color,
-                } as React.CSSProperties
-              }
-            >
+            <div ref={activeNameRef}>
               {meta[0].label}
             </div>
           </span>

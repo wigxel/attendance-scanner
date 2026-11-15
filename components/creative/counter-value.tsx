@@ -9,7 +9,7 @@ export function CountValue(props: CountValueProps) {
   return (
     <div
       ref={ref}
-      className="flex items-start tabular-nums translate-y-(--y) flex-col transition duration-200 *:inline-block"
+      className="flex items-start translate-y-(--y) flex-col transition duration-200 *:inline-block"
       style={{
         // The consumer only ever writes --counter-index; the offset is
         // derived here, in CSS, from the inherited font-size.
