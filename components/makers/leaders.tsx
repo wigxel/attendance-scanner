@@ -324,9 +324,7 @@ export function LeadersSection() {
               <CountValue ref={counterRef} index={1} />
             </span>
 
-            <div ref={activeNameRef}>
-              {meta[0].label}
-            </div>
+            <div ref={activeNameRef}>{meta[0].label}</div>
           </span>
         </div>
 

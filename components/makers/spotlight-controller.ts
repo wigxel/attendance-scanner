@@ -280,38 +280,17 @@ export function createSpotlightController(refs: SpotlightRefs) {
     pending = { timer, snapshot };
   };
 
-  // Scroll snap: once scrolling settles, glide the active (or nearest) card
-  // so its top edge sits on the band's top edge. Visuals keep updating while
-  // the glide runs; only further snaps are suppressed, and any user input
-  // cancels it immediately.
-  const snapToActive = () => {
-    if (snapping || !inScope()) return;
-    const { active } = computeTarget();
-    const cards = refs.cards.current ?? [];
-
-    // Band in a gap: the nearest card takes the glide so the pile is never
-    // left empty at a resting position.
-    let index = active;
-    if (index === -1) {
-      const line = computeLine();
-      let bestDistance = Number.POSITIVE_INFINITY;
-      for (let i = 0; i < cards.length; i++) {
-        const card = cards[i];
-        if (!card) continue;
-        const distance = Math.abs(card.getBoundingClientRect().top - line);
-        if (distance < bestDistance) {
-          bestDistance = distance;
-          index = i;
-        }
-      }
-    }
-
-    const card = index === -1 ? undefined : cards[index];
-    if (!card) return;
+  // Glide so card `index`'s top edge sits on the boundary line. Returns
+  // false only when there is no such card; true includes "already seated".
+  // Visuals keep updating while the glide runs; only further snaps are
+  // suppressed, and any user input cancels it immediately.
+  const glideTo = (index: number): boolean => {
+    const card = (refs.cards.current ?? [])[index];
+    if (!card) return false;
 
     const line = computeLine();
     const delta = card.getBoundingClientRect().top - line;
-    if (Math.abs(delta) < SPOTLIGHT_SNAP_MIN_PX) return;
+    if (Math.abs(delta) < SPOTLIGHT_SNAP_MIN_PX) return true;
 
     const maxScroll = Math.max(
       0,
@@ -319,7 +298,7 @@ export function createSpotlightController(refs: SpotlightRefs) {
     );
     const from = window.scrollY;
     const to = Math.min(Math.max(from + delta, 0), maxScroll);
-    if (to === from) return;
+    if (to === from) return true;
 
     snapping = true;
     snapControls = animate(from, to, {
@@ -331,6 +310,34 @@ export function createSpotlightController(refs: SpotlightRefs) {
         snapControls = null;
       },
     });
+    return true;
+  };
+
+  // Card whose top edge sits nearest to the boundary line, for when the band
+  // rests in a gap: the nearest card takes the glide so the pile is never
+  // left empty at a resting position.
+  const nearestIndex = () => {
+    const line = computeLine();
+    const cards = refs.cards.current ?? [];
+    let index = -1;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      if (!card) continue;
+      const distance = Math.abs(card.getBoundingClientRect().top - line);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        index = i;
+      }
+    }
+    return index;
+  };
+
+  const snapToActive = () => {
+    if (snapping || !inScope()) return;
+    const active = computeTarget().active;
+    const index = active !== -1 ? active : nearestIndex();
+    glideTo(index);
   };
 
   const scheduleSettle = () => {
@@ -366,6 +373,27 @@ export function createSpotlightController(refs: SpotlightRefs) {
     snapControls = null;
   };
 
+  // Keyboard stepping, owner-specified mapping: Down and Space advance to
+  // the next leader, Up goes back one. Only while the spotlight owns the
+  // page; outside the section the keys keep their native scroll behaviour.
+  const KEY_STEPS: Record<string, number> = {
+    ArrowDown: 1,
+    ArrowUp: -1,
+    " ": 1,
+  };
+
+  const onKeyDown = (event: KeyboardEvent) => {
+    const step = KEY_STEPS[event.key];
+    if (step === undefined) {
+      cancelSnap(event);
+      return;
+    }
+    // Held keys self-throttle: repeats land while a glide runs and are
+    // dropped, so one keypress = one card, holding = card by card.
+    if (event.repeat || snapping || !inScope()) return;
+    if (glideTo(computeTarget().active + step)) event.preventDefault();
+  };
+
   const onScroll = () => {
     if (raf) return;
     raf = requestAnimationFrame(() => {
@@ -389,7 +417,7 @@ export function createSpotlightController(refs: SpotlightRefs) {
   window.addEventListener("resize", onResize, { passive: true });
   window.addEventListener("wheel", cancelSnap, { passive: true });
   window.addEventListener("touchstart", cancelSnap, { passive: true });
-  window.addEventListener("keydown", cancelSnap);
+  window.addEventListener("keydown", onKeyDown);
 
   return {
     destroy() {
@@ -397,7 +425,7 @@ export function createSpotlightController(refs: SpotlightRefs) {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("wheel", cancelSnap);
       window.removeEventListener("touchstart", cancelSnap);
-      window.removeEventListener("keydown", cancelSnap);
+      window.removeEventListener("keydown", onKeyDown);
       if (raf) cancelAnimationFrame(raf);
       if (pending) clearTimeout(pending.timer);
       if (settleTimer) clearTimeout(settleTimer);
