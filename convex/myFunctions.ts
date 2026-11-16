@@ -406,6 +406,7 @@ export const updateUser = action({
     lastName: v.string(),
     phoneNumber: v.string(),
     occupation: v.union(v.id("occupations"), v.literal("None")),
+    birthday: v.optional(v.string()),
     // email: v.string(),
   },
   handler: async (ctx, args) => {
@@ -432,6 +433,7 @@ export const updateUser = action({
       email: identity.email,
       phoneNumber: args.phoneNumber,
       occupation: args.occupation,
+      birthday: args.birthday,
     });
   },
 });

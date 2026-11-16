@@ -1,0 +1,60 @@
+import confetti from "canvas-confetti";
+
+/** Birthday as an "MM-DD" string on the profile (e.g. "02-29"). */
+export const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+].map((label, i) => ({ label, value: String(i + 1).padStart(2, "0") }));
+
+/**
+ * Maximum days offered per month. February offers 1-29 (so "02-29" is
+ * selectable; the day list never offers the 30th or 31st for February).
+ */
+const MONTH_LENGTHS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+export const daysInMonth = (month: string) =>
+  MONTH_LENGTHS[Number(month) - 1] ?? 0;
+
+export const buildBirthday = (month: string, day: string) => `${month}-${day}`;
+
+/** Device-local date vs the stored "MM-DD" string; "02-29" only matches leap years. */
+export const isBirthdayToday = (
+  birthday: string | undefined | null,
+  date = new Date(),
+) => {
+  if (!birthday) return false;
+
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+
+  return `${mm}-${dd}` === birthday;
+};
+
+/**
+ * Per-trigger, per-day guard so a trigger fires at most once a day. Login and
+ * check-in use separate triggers, so both can celebrate on the same day.
+ */
+export const shouldCelebrate = (trigger: string, date = new Date()) => {
+  const store = globalThis.localStorage;
+  if (!store) return false;
+
+  const key = `birthday-confetti:${trigger}:${date.toISOString().slice(0, 10)}`;
+  if (store.getItem(key)) return false;
+
+  store.setItem(key, "1");
+  return true;
+};
+
+export const fireBirthdayConfetti = () => {
+  confetti({ particleCount: 160, spread: 80, origin: { y: 0.7 } });
+};

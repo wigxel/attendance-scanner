@@ -87,6 +87,8 @@ const profile = defineTable({
   role: v.optional(v.string()),
   /** Per-customer override. Falls back to `config.default_check_in_mode`. */
   checkInMode: v.optional(checkInModeValidator),
+  /** Birthday as an "MM-DD" string; "02-29" is stored directly. */
+  birthday: v.optional(v.string()),
 })
   .index("occupation", ["occupation"])
   .index("by_user_id", ["id"])

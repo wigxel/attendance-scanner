@@ -1,8 +1,13 @@
 "use client";
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
-import { CheckInCard, NotRegistered } from "@/components/CheckInCard";
+import {
+  BirthdayCheckInConfetti,
+  CheckInCard,
+  NotRegistered,
+} from "@/components/CheckInCard";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
 import { RoomEnvironmentWidget } from "@/components/room-environment-widget";
 import { SelfCheckInStatus } from "@/components/self-checkin-status";
@@ -10,6 +15,11 @@ import { SelfCheckInMessages } from "@/convex/shared";
 import { useProfile } from "@/hooks/auth";
 import { usePendingCheckIn } from "@/hooks/pending-checkin";
 import { useSelfCheckIn } from "@/hooks/self-service";
+import {
+  fireBirthdayConfetti,
+  isBirthdayToday,
+  shouldCelebrate,
+} from "@/lib/birthday";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { ActiveBookings } from "./active-bookings";
 import { CommunityLinks } from "./community-links";
@@ -32,7 +42,15 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
   // Only process a pending QR check-in once the profile is fully set up
   // (onboarding complete). This prevents the check-in from firing and
   // failing before the user has finished onboarding.
-  const isProfileReady = !!profile && profile.occupation !== "None";
+  const isProfileReady =
+    !!profile && profile.occupation !== "None" && !!profile.birthday;
+
+  // Birthday celebration on login: once a day, on the account screen.
+  const birthday = profile?.birthday;
+  useEffect(() => {
+    if (!isBirthdayToday(birthday)) return;
+    if (shouldCelebrate("login")) fireBirthdayConfetti();
+  }, [birthday]);
 
   usePendingCheckIn({
     isSignedIn: !!isSignedIn && isProfileReady,
@@ -81,6 +99,9 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
         <NotRegistered>
           <CheckInCard />
         </NotRegistered>
+
+        {/* Lives outside NotRegistered: it must observe the registration flip. */}
+        <BirthdayCheckInConfetti />
 
         <ActiveBookings />
 
