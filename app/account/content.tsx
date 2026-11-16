@@ -2,7 +2,11 @@
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
-import { CheckInCard, NotRegistered } from "@/components/CheckInCard";
+import {
+  CheckedInConfirmation,
+  CheckInCard,
+  NotRegistered,
+} from "@/components/CheckInCard";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
 import { RoomEnvironmentWidget } from "@/components/room-environment-widget";
 import { SelfCheckInStatus } from "@/components/self-checkin-status";
@@ -77,6 +81,8 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
         <ExpiryWarning />
 
         <SelfCheckInStatus />
+
+        <CheckedInConfirmation />
 
         <NotRegistered>
           <CheckInCard />
