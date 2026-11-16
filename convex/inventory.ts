@@ -154,6 +154,21 @@ export type Receivable = {
   oldestUnpaidAt: string;
 };
 
+/** One ledger row in the withdrawal history. */
+export type CashWithdrawalRow = Doc<"cashWithdrawals"> & {
+  /** Profile name of whoever recorded or reversed it. */
+  recordedByName: string;
+  /** True for a reversal row, or a withdrawal that one already undoes. */
+  reversed: boolean;
+};
+
+/** The Cash tab header and chart: drawer figure plus range figures. */
+export type CashOverview = {
+  cashInHandKobo: number;
+  withdrawnInRangeKobo: number;
+  daily: Array<{ day: string; totalKobo: number }>;
+};
+
 export type SaleFormProduct = {
   productId: string;
   name: string;
@@ -1172,6 +1187,98 @@ export const writeOffSale = mutation({
       ...args,
       callerId: caller,
     });
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Cash withdrawals
+// ---------------------------------------------------------------------------
+
+// Taking money out of the drawer is an everyday till act, so sellers may
+// record it; undoing a recorded withdrawal is a manager's decision.
+export const recordCashWithdrawal = mutation({
+  args: {
+    amountKobo: v.number(),
+    withdrawnAt: v.optional(v.string()),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
+    return await ctx.runMutation(
+      components.inventory.cashWithdrawals.recordWithdrawal,
+      { ...args, callerId: caller },
+    );
+  },
+});
+
+export const reverseCashWithdrawal = mutation({
+  args: { withdrawalId: v.string(), note: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx);
+    return await ctx.runMutation(
+      components.inventory.cashWithdrawals.reverseWithdrawal,
+      { ...args, callerId: caller },
+    );
+  },
+});
+
+/** Header figures and the daily chart for the Cash tab. */
+export const cashOverview = query({
+  args: { start: v.string(), end: v.string() },
+  handler: async (ctx, args): Promise<CashOverview> => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    // dayToIso returns string | undefined only when its input is; both are
+    // required strings here.
+    const start = dayToIso(args.start, "from") as string;
+    const end = dayToIso(args.end, "to") as string;
+    return (await ctx.runQuery(components.inventory.cashWithdrawals.summary, {
+      start,
+      end,
+    })) as CashOverview;
+  },
+});
+
+/** One page of the withdrawal history, newest first, with names attached. */
+export const listCashWithdrawals = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    start: v.optional(v.string()),
+    end: v.optional(v.string()),
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    const start = dayToIso(args.start, "from");
+    const end = dayToIso(args.end, "to");
+
+    const result = (await ctx.runQuery(
+      components.inventory.cashWithdrawals.listPage,
+      { paginationOpts: args.paginationOpts, start, end, search: args.search },
+    )) as {
+      page: Doc<"cashWithdrawals">[];
+      reversedIds: string[];
+      isDone: boolean;
+      continueCursor: string;
+    };
+
+    const nameById = await profileNames(
+      ctx,
+      result.page.map((row) => row.createdBy),
+    );
+
+    return {
+      ...result,
+      page: result.page.map(
+        (row): CashWithdrawalRow => ({
+          ...row,
+          reversed:
+            result.reversedIds.includes(row._id) || row.kind === "reversal",
+          recordedByName: nameById.get(row.createdBy) ?? row.createdBy,
+        }),
+      ),
+    };
   },
 });
 

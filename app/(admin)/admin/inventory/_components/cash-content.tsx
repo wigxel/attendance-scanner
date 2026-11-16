@@ -1,0 +1,216 @@
+"use client";
+
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { format, parseISO } from "date-fns";
+import { Plus } from "lucide-react";
+import { parseAsIsoDate, useQueryStates } from "nuqs";
+import { useDeferredValue, useState } from "react";
+import { Bar, BarChart, XAxis } from "recharts";
+import { toast } from "sonner";
+import {
+  EmptyStateContent,
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/empty-state";
+import type { MetricsRange } from "@/components/inventory/metrics-date-range";
+import { RecordWithdrawalDialog } from "@/components/inventory/record-withdrawal-dialog";
+import { StdTable } from "@/components/std-table";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription } from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/convex/_generated/api";
+import { cashColumns } from "./cash-columns";
+
+const PAGE_SIZE = 100;
+
+function formatKobo(value: number) {
+  return new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2 }).format(
+    value / 100,
+  );
+}
+
+export function CashContent() {
+  const [query, setQuery] = useQueryStates({
+    cash_from: parseAsIsoDate,
+    cash_to: parseAsIsoDate,
+  });
+
+  // No dates in the URL defaults to today, like the sales history.
+  const today = format(new Date(), "yyyy-MM-dd");
+  const range: MetricsRange | null =
+    query.cash_from && query.cash_to
+      ? {
+          start: format(query.cash_from, "yyyy-MM-dd"),
+          end: format(query.cash_to, "yyyy-MM-dd"),
+        }
+      : { start: today, end: today };
+
+  const setRange = (next: MetricsRange | null) =>
+    setQuery(
+      next
+        ? { cash_from: parseISO(next.start), cash_to: parseISO(next.end) }
+        : { cash_from: null, cash_to: null },
+    );
+
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDeferredValue(search);
+
+  const overview = useQuery(api.inventory.cashOverview, {
+    start: range.start,
+    end: range.end,
+  });
+
+  const { results, status, loadMore } = usePaginatedQuery(
+    api.inventory.listCashWithdrawals,
+    {
+      search: debouncedSearch.trim() || undefined,
+      start: range.start,
+      end: range.end,
+    },
+    { initialNumItems: PAGE_SIZE },
+  );
+
+  const reverseWithdrawal = useMutation(api.inventory.reverseCashWithdrawal);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleReverse = async (withdrawalId: string) => {
+    const ok = window.confirm(
+      "Reverse this withdrawal? It stays in the history and the money counts back in.",
+    );
+    if (!ok) return;
+
+    try {
+      await reverseWithdrawal({ withdrawalId });
+      toast.success("Withdrawal reversed");
+    } catch (error) {
+      toast.error("Could not reverse withdrawal", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  if (overview === undefined || results === undefined) {
+    return <Skeleton className="h-[60svh] w-full" />;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-medium text-foreground">Cash</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Money taken out of the drawer, with what the drawer holds.
+          </p>
+        </div>
+
+        <Button onClick={() => setDialogOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Record withdrawal
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent className="flex flex-col gap-4 pt-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <CardDescription>Cash in-hand</CardDescription>
+              <p className="text-3xl font-semibold tabular-nums">
+                {formatKobo(overview.cashInHandKobo)}
+              </p>
+            </div>
+            <div className="text-right">
+              <CardDescription>Withdrawn in selected range</CardDescription>
+              <p className="text-sm tabular-nums">
+                {formatKobo(overview.withdrawnInRangeKobo)}
+              </p>
+            </div>
+          </div>
+
+          {overview.daily.length > 0 ? (
+            <div className="h-24">
+              <ChartContainer
+                config={{
+                  withdrawn: { label: "Withdrawn", color: "#f59e0b" },
+                }}
+              >
+                <BarChart
+                  data={overview.daily}
+                  margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
+                >
+                  <XAxis dataKey="day" hide />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        labelFormatter={(value) =>
+                          format(
+                            new Date(`${value as string}T00:00:00`),
+                            "d MMM, yy",
+                          )
+                        }
+                        formatter={(value) => `₦${formatKobo(value as number)}`}
+                      />
+                    }
+                    cursor={false}
+                  />
+                  <Bar
+                    dataKey="totalKobo"
+                    fill="var(--color-withdrawn)"
+                    radius={2}
+                  />
+                </BarChart>
+              </ChartContainer>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <StdTable.Root
+        columns={cashColumns(handleReverse)}
+        data={results}
+        searchTerm={debouncedSearch}
+        onSearchChange={setSearch}
+        isLoading={status === "LoadingMore"}
+        hasMore={status === "CanLoadMore" || status === "LoadingMore"}
+        onLoadMore={() => loadMore(PAGE_SIZE)}
+      >
+        <StdTable.Card>
+          <StdTable.Header>
+            <StdTable.SearchInput placeholder="Search by note..." />
+            <StdTable.DateRange
+              value={range}
+              onChange={setRange}
+              allowAllTime={false}
+            />
+            <StdTable.ColumnSelector />
+          </StdTable.Header>
+
+          <StdTable.CardBody
+            emptyState={
+              <EmptyStateContent>
+                <EmptyStateTitle>No withdrawals yet</EmptyStateTitle>
+                <EmptyStateDescription>
+                  Record a withdrawal and it will show up here.
+                </EmptyStateDescription>
+              </EmptyStateContent>
+            }
+          />
+
+          <StdTable.Footer>
+            <StdTable.LoadMore />
+          </StdTable.Footer>
+        </StdTable.Card>
+      </StdTable.Root>
+
+      <RecordWithdrawalDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        cashInHandKobo={overview.cashInHandKobo}
+      />
+    </div>
+  );
+}

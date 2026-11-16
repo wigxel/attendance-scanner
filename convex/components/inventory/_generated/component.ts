@@ -23,6 +23,60 @@ import type { FunctionReference } from "convex/server";
  */
 export type ComponentApi<Name extends string | undefined = string | undefined> =
   {
+    cashWithdrawals: {
+      listPage: FunctionReference<
+        "query",
+        "internal",
+        {
+          end?: string;
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+          search?: string;
+          start?: string;
+        },
+        any,
+        Name
+      >;
+      range: FunctionReference<
+        "query",
+        "internal",
+        { end: string; start: string },
+        any,
+        Name
+      >;
+      recordWithdrawal: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          amountKobo: number;
+          callerId: string;
+          note?: string;
+          withdrawnAt?: string;
+        },
+        any,
+        Name
+      >;
+      reverseWithdrawal: FunctionReference<
+        "mutation",
+        "internal",
+        { callerId: string; note?: string; withdrawalId: string },
+        any,
+        Name
+      >;
+      summary: FunctionReference<
+        "query",
+        "internal",
+        { end: string; start: string },
+        any,
+        Name
+      >;
+    };
     products: {
       archive: FunctionReference<
         "mutation",
