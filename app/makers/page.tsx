@@ -33,7 +33,7 @@ export default function MakersPage() {
 
   return (
     <>
-      {/*<MakersHero />*/}
+      <MakersHero />
 
       {/*<TrustedByMarquee />*/}
 

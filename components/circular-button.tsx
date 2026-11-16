@@ -49,7 +49,7 @@ export function CircularButton({
       className={cn(
         "relative w-[15vw] cursor-pointer aspect-square rounded-full flex items-center justify-center",
         {
-          "text-white bg-brand-maker": variant === "default",
+          "bg-brand-maker text-black/60": variant === "default",
           "text-brand-maker bg-transparent hover:bg-white/5 border-dashed border border-white/25":
             variant === "outline",
         },
@@ -73,7 +73,7 @@ export function CircularButton({
       />
 
       {text ? (
-        <div>
+        <div className="*:animate-spin *:animation-duration-[30s]">
           <svg
             viewBox="0 0 100 100"
             aria-hidden

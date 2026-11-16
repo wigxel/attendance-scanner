@@ -63,3 +63,8 @@
     animation-timing-function: cubic-bezier(0.55, 0.085, 0.68, 0.53);
   }
 }
+
+.text-stroke {
+  -webkit-text-stroke: 1px var(--text-outline-color, orangered);
+  color: transparent;
+}

@@ -20,7 +20,7 @@ export function TopArticlesSection({ posts }: TopArticlesSectionProps) {
         <div className="grid grid-cols-12 gap-5">
           <div className="col-span-6">
             <div className="grid grid-cols-6 bottom-0 items-end sticky top-0 w-full h-screen">
-              <h3 className="col-span-3 self-start sticky top-[calc(var(--header-height)+(--spacing(12)))] font-heading z-20 text-6xl font-black">
+              <h3 className="col-span-3 self-start sticky top-[calc(var(--header-height)+--spacing(12))] font-heading z-20 text-6xl font-black">
                 <Balancer>
                   <span>Stories For&nbsp;</span>
                   <br />
