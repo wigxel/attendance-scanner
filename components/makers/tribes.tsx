@@ -164,9 +164,6 @@ export function TribesCloser() {
   );
 }
 
-// Variant A — "the cadastre": full-width squares, hairline border, mono
-// index; the logo carries the colour, nothing else decorates. No hard
-// counts in copy anywhere (owner rule: counts go stale with every tribe).
 export function TribesSection() {
   return (
     <div className="flex flex-col gap-16">

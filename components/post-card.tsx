@@ -12,7 +12,7 @@ type PostCardProps = {
   number?: number;
   /** `numbered` is the editorial row; `item` is the blog-index card. */
   variant?: "numbered" | "item" | "compact";
-
+  showImage?: boolean;
   isLast?: boolean;
 };
 
@@ -21,16 +21,18 @@ export function PostCard({
   number = 0,
   variant = "numbered",
   isLast = false,
+  showImage = false,
 }: PostCardProps) {
   if (variant === "item") return <PostItem post={post} />;
 
-  if (variant === "compact") return <PostCompact post={post} isLast={isLast} />;
+  if (variant === "compact")
+    return <PostCompact post={post} showImage={showImage} isLast={isLast} />;
 
   return (
     <Link href={post.url}>
       <section className="group relative pt-4">
         <div className="grid grid-cols-12">
-          <span className="font-bold flex pointer-events-none group-hover:opacity-25 leading-[1ex] pt-2 font-mono -tracking-[0.8svw] select-none text-[12svw] top opacity-5 col-span-3">
+          <span className="font-bold flex pointer-events-none group-hover:opacity-25 leading-[1ex] pt-2 font-mono tracking-[-0.8svw] select-none text-[12svw] top opacity-5 col-span-3">
             {String(number).padStart(2, "0")}
           </span>
 
@@ -78,12 +80,12 @@ function PostItem({ post }: PostItemProps) {
           width={200}
           height={200}
           unoptimized
-          className="mb-6 w-full rounded"
+          className="mb-6 w-full"
         />
       ) : null}
 
       <div className="flex gap-4">
-        <div className="basis-3/7 shrink-0">
+        <div className="basis-6/12 shrink-0">
           <h2 className="mb-1.5 text-xl font-semibold tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary">
             {post.title}
           </h2>
@@ -98,9 +100,9 @@ function PostItem({ post }: PostItemProps) {
           </p>
         </div>
 
-        <div className="basis-4/7 shrink-0">
+        <div className="basis-6/12 shrink-0">
           {post.excerpt ? (
-            <p className="mb-3 max-w-[45ch] text-xs leading-relaxed text-muted-foreground md:text-sm">
+            <p className="mb-3 leading-relaxed text-muted-foreground md:text-sm">
               {post.excerpt}
             </p>
           ) : null}
@@ -123,38 +125,56 @@ function PostItem({ post }: PostItemProps) {
   );
 }
 
-function PostCompact({ post, isLast }: PostCardProps) {
+function PostCompact({ post, isLast, showImage = false }: PostCardProps) {
   return (
     <Link
       href={post.url}
       className="group py-6 text-inherit flex flex-col gap-8"
     >
-      <div className="flex flex-col">
-        <div className="basis-3/7 shrink-0">
-          <h2 className="mb-1.5 font-medium tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary">
-            {post.title}
-          </h2>
+      <div className="grid grid-cols-12 gap-5">
+        <div className="shrink-0 aspect-3/2 scanline-root overflow-clip relative col-span-6 flex-1">
+          {showImage && post.image ? (
+            <Image
+              src={post.image}
+              alt={`${post.title} cover`}
+              quality={100}
+              width={200}
+              height={200}
+              unoptimized
+              className="w-full group-hover:scale-110 transition-default group-hover:rotate-[4deg]"
+            />
+          ) : (
+            <div className="scanline-container after:z-10! inset-0 absolute" />
+          )}
         </div>
 
-        <div className="basis-4/7 shrink-0">
-          {post.excerpt ? (
-            <p className="mb-3 max-w-[45ch] font-thin text-xs leading-relaxed text-muted-foreground md:text-sm line-clamp-2">
-              {post.excerpt}
-            </p>
-          ) : null}
-        </div>
+        <div className="flex flex-col gap-2 col-span-6 py-2">
+          <div className="shrink-0">
+            <h2 className="mb-1.5 text-xl font-medium tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary">
+              {post.title}
+            </h2>
+          </div>
 
-        <p className="mb-2 text-xs text-muted-foreground/50 md:text-sm">
-          <time dateTime={post.date}>
-            {DateParse.presets
-              .dateOnly(post.date)
-              .pipe(O.getOrElse(() => "--"))}
-          </time>
-          {` · ${post.readingTimeMinutes} min read`}
-        </p>
+          <div className="shrink-0 flex-1">
+            {post.excerpt ? (
+              <p className="mb-3 max-w-[45ch] font-thin leading-relaxed text-muted-foreground line-clamp-2">
+                {post.excerpt}
+              </p>
+            ) : null}
+          </div>
+
+          <p className="text-muted-foreground md:text-sm">
+            <time dateTime={post.date}>
+              {DateParse.presets
+                .dateOnly(post.date)
+                .pipe(O.getOrElse(() => "--"))}
+            </time>
+            {` · ${post.readingTimeMinutes} min read`}
+          </p>
+        </div>
       </div>
 
-      {!isLast ? (
+      {isLast ? (
         <div
           className="border-[0.5px] [--b-color:#575771] w-full border-transparent"
           style={{

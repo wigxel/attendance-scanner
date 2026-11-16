@@ -39,3 +39,27 @@
     animation: none;
   }
 }
+
+/* InSpace footer logo: letters rise while the logo scrolls into view.
+   Scroll-driven so it runs on the compositor; each letter carries --rise.
+   Wrapped in @supports so browsers without scroll timelines keep the
+   static logo instead of playing the animation once on load. */
+@keyframes inspace-rise {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(var(--rise, 70%));
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .inspace-rise {
+    animation: inspace-rise both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry 100%;
+    /* matches the old quad ease-in (p^2) */
+    animation-timing-function: cubic-bezier(0.55, 0.085, 0.68, 0.53);
+  }
+}

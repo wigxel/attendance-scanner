@@ -205,7 +205,7 @@ function TestimonyNav({ carouselRef }: TestimonyNavProps) {
   return (
     <div
       ref={navRef}
-      className="flex gap-12 pb-5 *:opacity-50 *:hover:opacity-100 justify-start"
+      className="flex gap-12 pb-2 *:opacity-50 *:hover:opacity-100 justify-start w-full"
     >
       <button
         type="button"
@@ -278,19 +278,14 @@ export function TestimonySection() {
   return (
     <div className="w-full overflow-x-clip bg-background">
       <section className="container mx-auto px-4 flex flex-col gap-24 py-32">
-        <div className="flex gap-12">
-          <div className="basis-1/6" />
-          <div className="flex-1 basis-3/4 gap-12 flex flex-col">
-            <h2
-              className={cn(
-                heading.className,
-                "tracking-tighter text-3xl md:text-6xl font-[Safiro]! font-black",
-              )}
-            >
-              <span className="font-thin">The Tribes</span>&nbsp;
+        <div className="grid grid-cols-12 gap-12">
+          <div className="col-span-2" />
+          <div className="col-span-10 flex-1 basis-5/6 gap-12 flex flex-col">
+            <h2 className={"font-heading text-3xl md:text-6xl font-bold"}>
+              <span>The Tribes</span>&nbsp;
               <RandomText
                 variant="scramble"
-                duration={3}
+                duration={1}
                 animate="in-view"
                 viewport={{ once: true }}
               >
@@ -320,9 +315,9 @@ export function TestimonySection() {
           </div>
         </div>
 
-        <div className="flex gap-12">
-          <div className="basis-1/6 shrink-0 flex gap-48 flex-col justify-between self-stretch">
-            <div className="flex gap-2 tabular-nums text-sm items-center">
+        <div className="grid grid-cols-12 gap-5">
+          <div className="col-span-2 shrink-0 flex gap-32 flex-col justify-between self-stretch">
+            <div className="flex gap-2 text-sm items-center">
               <span>01</span>
 
               <span className="relative flex-1 flex items-center">
@@ -342,7 +337,7 @@ export function TestimonySection() {
             <TestimonyNav carouselRef={carouselRef} />
           </div>
 
-          <div className="testimony-carousel flex-1 relative">
+          <div className="col-span-10 testimony-carousel flex-1 relative">
             <div className="invisible">
               <TestimonyItem
                 testimony={{

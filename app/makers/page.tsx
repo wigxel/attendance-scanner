@@ -39,9 +39,9 @@ export default function MakersPage() {
 
       <LeadersSection />
 
-      {/*<BlogSection />*/}
+      <BlogSection />
 
-      {/*<TestimonySection />*/}
+      <TestimonySection />
     </>
   );
 }

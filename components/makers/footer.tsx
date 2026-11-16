@@ -1,8 +1,8 @@
 import { heading } from "@/app/font";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { InSpaceLogoAnimation } from "./inspace-logo-animation";
 import { Gutter } from "../layout/gutter";
+import { InSpaceLogoAnimation } from "./inspace-logo-animation";
 
 const SITEMAP = [
   {

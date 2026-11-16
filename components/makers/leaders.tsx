@@ -97,6 +97,7 @@ const LEADERS: Array<Leader & { tribe: TribeId }> = [
     tribe: "tribe-additive-manufacturing",
     tribeName: "Additive Manufacturing",
     name: "Joseph Ogbonna",
+    photo: "/images/leaders/joseph-ogbonna.webp",
     bio: "Prototypes enclosures and hardware alongside the tribe; iterates prints until they survive real handling, not just the print bed.",
     tribeImage: "/images/tribes/tribe-additive-manufacturing.svg",
     tier: "Verified",

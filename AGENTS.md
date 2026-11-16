@@ -149,6 +149,12 @@ someone has reviewed. Reply on the PR with what changed and the commit sha.
 merge, deploy, push to `main`, close someone else's PR, or rewrite a shared
 branch's history.
 
+## Beads convention
+
+Label every newly created bead `waiting-on-user` by default (it means the task
+is planned and waiting on the owner to green-light it). Remove the label when
+work on it starts.
+
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->
 
 ## Beads Issue Tracker

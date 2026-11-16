@@ -58,12 +58,12 @@ function WeeklyLogSection() {
 
           <Link
             href="/makers/logs"
-            className="group w-fit text-base underline-none inline-flex gap-4 items-center font-mono text-foreground"
+            className="group w-fit text-lg underline-none inline-flex gap-4 items-center text-foreground"
           >
             <span>View weekly logs</span>
             <ArrowRight
               size="1em"
-              className="-translate-x-4 opacity-0 group-hover:opacity-100 transition-default text-brand-maker group-hover:translate-x-0"
+              className="-translate-x-4 opacity-0 group-hover:opacity-100 transition-default group-hover:translate-x-0"
             />
           </Link>
         </div>
