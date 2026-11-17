@@ -768,6 +768,7 @@ describe("sales", () => {
     );
     expect(saleMovement?.source).toBe("sale");
     expect(saleMovement?.note).toBe(`Sale ${saleId}`);
+    expect(saleMovement?.saleId).toBe(saleId);
   });
 
   it("voids a sale, restores stock and drops it from the range", async () => {
@@ -789,6 +790,16 @@ describe("sales", () => {
     });
 
     expect(await onHand(t, productId)).toBe(20);
+
+    const movements = await t.query(api.stockMovements.history, { productId });
+    const voidMovement = movements.find(
+      (movement) => movement.reversal === true,
+    );
+    expect(voidMovement).toMatchObject({
+      saleId,
+      reversal: true,
+      note: `Void sale ${saleId}`,
+    });
 
     const window = {
       start: before?.occurredAt as string,
