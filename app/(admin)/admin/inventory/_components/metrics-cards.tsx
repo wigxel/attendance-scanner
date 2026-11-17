@@ -10,8 +10,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatKobo } from "@/lib/currency.helpers";
 import { useMetrics } from "./metrics-context";
-import { formatKobo } from "./metrics-format";
 
 type MetricCardProps = {
   label: string;

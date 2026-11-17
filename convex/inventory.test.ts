@@ -3,8 +3,10 @@ import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { api, components } from "./_generated/api";
 import aclSchema from "./components/acl/schema";
+import type { Doc } from "./components/inventory/_generated/dataModel";
 import { DEFAULT_UNIT_NAMES } from "./components/inventory/defaultUnits";
 import inventorySchema from "./components/inventory/schema";
+import { saleIdFromNote } from "./inventory";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -834,6 +836,94 @@ describe("credit sales", () => {
         paidAt: "2099-01-01T00:00:00.000Z",
       }),
     ).rejects.toThrow("in the future");
+  });
+});
+
+describe("sale movements in product history", () => {
+  async function seedSaleHistory(t: Tester) {
+    await seedAcl(t, true);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    const unitId = await admin.mutation(api.inventory.createUnit, {
+      name: "pack",
+    });
+    const productId = await admin.mutation(api.inventory.createProduct, {
+      name: "Peak Milk",
+      baseUnitId: unitId,
+      sellPriceKobo: 4000,
+    });
+    await admin.mutation(api.inventory.recordMovement, {
+      productId,
+      kind: "restock",
+      quantity: 50,
+      note: "Delivery",
+    });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: "customer-1",
+        firstName: "Ada",
+        lastName: "Obi",
+        occupation: "None",
+      });
+    });
+    return { admin, productId, unitId };
+  }
+
+  it("names the customer on sale and void movements", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, productId, unitId } = await seedSaleHistory(t);
+
+    const saleId = await admin.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    await admin.mutation(api.inventory.voidSale, { saleId });
+
+    const movements = await admin.query(api.inventory.productMovements, {
+      productId,
+    });
+    const saleRow = movements.find((movement) => movement.kind === "usage");
+    const voidRow = movements.find((movement) => movement.reversal);
+    expect(saleRow).toMatchObject({
+      linkedSaleId: saleId,
+      saleCustomerName: "Ada Obi",
+    });
+    expect(voidRow).toMatchObject({
+      linkedSaleId: saleId,
+      reversal: true,
+      saleCustomerName: "Ada Obi",
+    });
+  });
+
+  it("parses the sale id out of legacy notes only", () => {
+    expect(
+      saleIdFromNote({
+        source: "sale",
+        note: "Sale abc123",
+      } as Doc<"stockMovements">),
+    ).toBe("abc123");
+    expect(
+      saleIdFromNote({
+        reversal: true,
+        note: "Void sale abc123",
+      } as Doc<"stockMovements">),
+    ).toBe("abc123");
+    // A manual note that happens to mention a sale is not a sale movement.
+    expect(
+      saleIdFromNote({ note: "Sale abc123" } as Doc<"stockMovements">),
+    ).toBeNull();
+    expect(
+      saleIdFromNote({
+        reversal: true,
+        note: "Void purchase abc123",
+      } as Doc<"stockMovements">),
+    ).toBeNull();
+    expect(
+      saleIdFromNote({
+        source: "sale",
+        note: "Stocktake fix",
+      } as Doc<"stockMovements">),
+    ).toBeNull();
   });
 });
 

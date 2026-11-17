@@ -9,15 +9,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { SaleStatus, SaleSummary } from "@/convex/inventory";
+import { formatKoboPlain } from "@/lib/currency.helpers";
 import { serialNo } from "@/lib/data.helpers";
-
-const amountFormatter = new Intl.NumberFormat("en-NG", {
-  minimumFractionDigits: 2,
-});
-
-function formatAmount(kobo: number) {
-  return amountFormatter.format(kobo / 100);
-}
 
 const channelLabels = {
   cash: "Cash",
@@ -52,10 +45,10 @@ export type SaleTotalCellProps = { sale: SaleSummary };
 export function SaleTotalCell({ sale }: SaleTotalCellProps) {
   return (
     <span className="block whitespace-nowrap text-right tabular-nums">
-      {formatAmount(sale.totalKobo)}
+      {formatKoboPlain(sale.totalKobo)}
       {sale.outstandingKobo > 0 ? (
         <span className="block text-xs font-normal text-muted-foreground">
-          {formatAmount(sale.outstandingKobo)} due
+          {formatKoboPlain(sale.outstandingKobo)} due
         </span>
       ) : null}
     </span>

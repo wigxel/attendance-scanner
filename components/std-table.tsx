@@ -16,6 +16,7 @@ import {
   type MetricsRange,
 } from "@/components/inventory/metrics-date-range";
 import { AppSpinner } from "@/components/loader";
+import { columnLabel } from "@/components/DataTable";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -412,7 +413,7 @@ function ColumnSelector() {
               checked={column.getIsVisible()}
               onCheckedChange={(value) => column.toggleVisibility(!!value)}
             >
-              {column.id}
+              {columnLabel(column)}
             </DropdownMenuCheckboxItem>
           ))}
       </DropdownMenuContent>

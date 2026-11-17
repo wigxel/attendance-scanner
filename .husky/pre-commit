@@ -1,1 +1,9 @@
 pnpm lint
+
+# Format the staged files with Biome, then re-stage them so the commit is
+# clean. Deleted files are skipped; untracked-but-staged files are included.
+files=$(git diff --cached --name-only --diff-filter=d | grep -E '\.(ts|tsx|js|jsx|mjs|cjs|json|jsonc|css)$' || true)
+if [ -n "$files" ]; then
+  pnpm exec biome format --write $files
+  git add $files
+fi

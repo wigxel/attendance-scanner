@@ -66,6 +66,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
+      listIdentitiesByRole: FunctionReference<
+        "query",
+        "internal",
+        { roleName: string },
+        any,
+        Name
+      >;
       registerIdentity: FunctionReference<
         "mutation",
         "internal",

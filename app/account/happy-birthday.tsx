@@ -32,8 +32,8 @@ export function HappyBirthday() {
           Happy birthday, {profile?.firstName}! 🎉
         </p>
         <p className="text-sm text-muted-foreground">
-          Thank you for spending your birthday with us. A gift is waiting —
-          you don&apos;t need to lift a finger.
+          Thank you for spending your birthday with us. A gift is waiting — you
+          don&apos;t need to lift a finger.
         </p>
       </div>
     </section>

@@ -1,8 +1,22 @@
-export const currencyFormatter = new Intl.NumberFormat("en-US", {
+export const currencyFormatter = new Intl.NumberFormat("en-NG", {
   style: "currency",
   currency: "NGN",
   minimumFractionDigits: 2,
 });
+
+const koboFormatter = new Intl.NumberFormat("en-NG", {
+  minimumFractionDigits: 2,
+});
+
+/** Naira string from kobo — "₦1,500.00" — the Cash tab's amount format. */
+export function formatKobo(kobo: number): string {
+  return `₦${koboFormatter.format(kobo / 100)}`;
+}
+
+/** Grouped naira digits, no symbol — table cells put "₦" in the header. */
+export function formatKoboPlain(kobo: number): string {
+  return koboFormatter.format(kobo / 100);
+}
 
 const ALLOWED_KEYS = new Set([
   "Backspace",

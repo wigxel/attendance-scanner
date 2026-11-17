@@ -61,7 +61,9 @@ export function PushGate() {
         <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
           <AlertDialogHeader className="items-center">
             <AlertDialogTitle>{copy.title}</AlertDialogTitle>
-            <AlertDialogDescription className="mb-8 max-w-[40ch] text-center">{copy.body}</AlertDialogDescription>
+            <AlertDialogDescription className="mb-8 max-w-[40ch] text-center">
+              {copy.body}
+            </AlertDialogDescription>
           </AlertDialogHeader>
 
           {error && (

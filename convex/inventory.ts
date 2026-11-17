@@ -1,6 +1,7 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import { components } from "./_generated/api";
+import { formatKobo } from "../lib/currency.helpers";
+import { components, internal } from "./_generated/api";
 import {
   type MutationCtx,
   mutation,
@@ -32,7 +33,13 @@ export type StockLevel = {
   lastMovementAt: string | null;
 };
 
-export type ProductMovement = Doc<"stockMovements"> & { recordedBy: string };
+export type ProductMovement = Doc<"stockMovements"> & {
+  recordedBy: string;
+  /** The sale this row moved stock for; parsed from the note on legacy rows. */
+  linkedSaleId: string | null;
+  /** Customer on that sale; null when the sale or profile is gone. */
+  saleCustomerName: string | null;
+};
 
 export type Supplier = Doc<"suppliers">;
 
@@ -153,6 +160,20 @@ export type Receivable = {
   customerName: string | null;
   totalOwedKobo: number;
   oldestUnpaidAt: string;
+};
+
+/** One ledger row in the withdrawal history. */
+export type CashWithdrawalRow = Doc<"cashWithdrawals"> & {
+  /** Profile name of whoever recorded or reversed it. */
+  recordedByName: string;
+  /** True for a reversal row, or a withdrawal that one already undoes. */
+  reversed: boolean;
+};
+
+/** The Cash tab header: drawer figure plus range figures. */
+export type CashOverview = {
+  cashInHandKobo: number;
+  withdrawnInRangeKobo: number;
 };
 
 export type SaleFormProduct = {
@@ -597,6 +618,21 @@ export const recordBulkAdjustment = mutation({
   },
 });
 
+/**
+ * Legacy rows carry the sale id only inside the note. Only sale-sourced usage
+ * and void reversals are parsed, so a user-typed note cannot fake one.
+ */
+export function saleIdFromNote(movement: Doc<"stockMovements">) {
+  const note = movement.note ?? "";
+  if (movement.source === "sale") {
+    return /^Sale ([a-z0-9]+)$/.exec(note)?.[1] ?? null;
+  }
+  if (movement.reversal) {
+    return /^Void sale ([a-z0-9]+)$/.exec(note)?.[1] ?? null;
+  }
+  return null;
+}
+
 export const productMovements = query({
   args: { productId: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
@@ -606,6 +642,29 @@ export const productMovements = query({
       args,
     )) as Doc<"stockMovements">[];
 
+    const saleIds = [
+      ...new Set(
+        movements
+          .map((movement) => movement.saleId ?? saleIdFromNote(movement))
+          .filter((saleId): saleId is string => saleId !== null),
+      ),
+    ];
+    // One lookup per distinct sale, not one per movement row.
+    const customerBySale = new Map(
+      await Promise.all(
+        saleIds.map(async (saleId) => {
+          const detail = (await ctx.runQuery(components.inventory.sales.get, {
+            saleId,
+          })) as { sale: Doc<"sales"> } | null;
+          const customerId = detail?.sale.customerId;
+          return [
+            saleId,
+            customerId ? await profileName(ctx, customerId) : null,
+          ] as const;
+        }),
+      ),
+    );
+
     return await Promise.all(
       movements.map(async (movement): Promise<ProductMovement> => {
         const recorder = await ctx.db
@@ -613,11 +672,16 @@ export const productMovements = query({
           .withIndex("by_user_id", (q) => q.eq("id", movement.createdBy))
           .first();
 
+        const linkedSaleId = movement.saleId ?? saleIdFromNote(movement);
         return {
           ...movement,
           recordedBy: recorder
             ? `${recorder.firstName} ${recorder.lastName}`.trim()
             : movement.createdBy,
+          linkedSaleId: linkedSaleId ?? null,
+          saleCustomerName: linkedSaleId
+            ? (customerBySale.get(linkedSaleId) ?? null)
+            : null,
         };
       }),
     );
@@ -1194,6 +1258,162 @@ export const writeOffSale = mutation({
       ...args,
       callerId: caller,
     });
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Cash withdrawals
+// ---------------------------------------------------------------------------
+
+// Taking money out of the drawer is an everyday till act, so sellers may
+// record it; undoing a recorded withdrawal is a manager's decision.
+export const recordCashWithdrawal = mutation({
+  args: {
+    amountKobo: v.number(),
+    withdrawnAt: v.optional(v.string()),
+    note: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
+    if (!args.note.trim()) throw new Error("A note is required.");
+    const withdrawalId = await ctx.runMutation(
+      components.inventory.cashWithdrawals.recordWithdrawal,
+      { ...args, callerId: caller },
+    );
+    await notifyCashWithdrawal(ctx, { withdrawalId, callerId: caller });
+    return withdrawalId;
+  },
+});
+
+export const reverseCashWithdrawal = mutation({
+  args: { withdrawalId: v.string(), note: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx);
+    const reversalId = await ctx.runMutation(
+      components.inventory.cashWithdrawals.reverseWithdrawal,
+      { ...args, callerId: caller },
+    );
+    await notifyCashWithdrawal(ctx, {
+      withdrawalId: reversalId,
+      callerId: caller,
+    });
+    return reversalId;
+  },
+});
+
+/**
+ * Tell every admin about a cash drawer event, minus the person who did it.
+ * Runs inline but only queues (send never blocks on a network call), and a
+ * failing fan-out must not fail a withdrawal that already hit the ledger.
+ */
+type CashWithdrawalEvent = { withdrawalId: string; callerId: string };
+
+async function notifyCashWithdrawal(
+  ctx: MutationCtx,
+  args: CashWithdrawalEvent,
+) {
+  try {
+    const row = (await ctx.runQuery(
+      components.inventory.cashWithdrawals.getById,
+      // The component returns its row as `any`; this is its shape.
+      { id: args.withdrawalId },
+    )) as { amountKobo: number; kind: "withdrawal" | "reversal" } | null;
+    if (!row) return;
+
+    const recipients = await ctx.runQuery(
+      internal.notifications.recipientsByRole,
+      { roleName: "admin" },
+    );
+    const callerKey = `user:${args.callerId}`;
+    const amount = formatKobo(row.amountKobo);
+    const name = await profileName(ctx, args.callerId);
+    const [title, body] =
+      row.kind === "reversal"
+        ? ["Withdrawal reversed", `${name} put ${amount} back in the drawer.`]
+        : ["Cash withdrawal", `${name} took ${amount} from the drawer.`];
+
+    for (const recipientKey of recipients) {
+      if (recipientKey === callerKey) continue;
+      try {
+        await ctx.runMutation(internal.notifications.send, {
+          recipientKey,
+          channels: ["inapp", "push"],
+          title,
+          body,
+          url: "/admin/inventory/cash",
+          // Dedupe is global by key, so the key must be per recipient —
+          // otherwise only the first admin in the fan-out hears about it.
+          dedupeKey: `${args.withdrawalId}:${recipientKey}`,
+          severity: "info",
+        });
+      } catch (error) {
+        // One bad recipient must not swallow the rest of the fan-out.
+        console.error("cash withdrawal alert failed", recipientKey, error);
+      }
+    }
+  } catch (error) {
+    // The ledger row is already written; the alert is best-effort.
+    console.error("cash withdrawal fan-out failed", error);
+  }
+}
+
+/** Header figures and the daily chart for the Cash tab. */
+export const cashOverview = query({
+  args: { start: v.string(), end: v.string() },
+  handler: async (ctx, args): Promise<CashOverview> => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    // dayToIso returns string | undefined only when its input is; both are
+    // required strings here.
+    const start = dayToIso(args.start, "from") as string;
+    const end = dayToIso(args.end, "to") as string;
+    return (await ctx.runQuery(components.inventory.cashWithdrawals.summary, {
+      start,
+      end,
+    })) as CashOverview;
+  },
+});
+
+/** One page of the withdrawal history, newest first, with names attached. */
+export const listCashWithdrawals = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    start: v.optional(v.string()),
+    end: v.optional(v.string()),
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    const start = dayToIso(args.start, "from");
+    const end = dayToIso(args.end, "to");
+
+    const result = (await ctx.runQuery(
+      components.inventory.cashWithdrawals.listPage,
+      { paginationOpts: args.paginationOpts, start, end, search: args.search },
+    )) as {
+      page: Doc<"cashWithdrawals">[];
+      reversedIds: string[];
+      isDone: boolean;
+      continueCursor: string;
+    };
+
+    const nameById = await profileNames(
+      ctx,
+      result.page.map((row) => row.createdBy),
+    );
+
+    return {
+      ...result,
+      page: result.page.map(
+        (row): CashWithdrawalRow => ({
+          ...row,
+          reversed:
+            result.reversedIds.includes(row._id) || row.kind === "reversal",
+          recordedByName: nameById.get(row.createdBy) ?? row.createdBy,
+        }),
+      ),
+    };
   },
 });
 

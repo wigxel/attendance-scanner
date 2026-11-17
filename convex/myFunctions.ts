@@ -185,9 +185,7 @@ export const setMyBirthday = mutation({
           .first()
       : await ctx.db
           .query("profile")
-          .withIndex("by_email", (q) =>
-            q.eq("email", identity.email ?? "--"),
-          )
+          .withIndex("by_email", (q) => q.eq("email", identity.email ?? "--"))
           .first();
 
     if (!profile) throw new ConvexError("Profile not found.");

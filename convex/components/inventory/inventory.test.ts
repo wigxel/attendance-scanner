@@ -768,6 +768,7 @@ describe("sales", () => {
     );
     expect(saleMovement?.source).toBe("sale");
     expect(saleMovement?.note).toBe(`Sale ${saleId}`);
+    expect(saleMovement?.saleId).toBe(saleId);
   });
 
   it("voids a sale, restores stock and drops it from the range", async () => {
@@ -789,6 +790,16 @@ describe("sales", () => {
     });
 
     expect(await onHand(t, productId)).toBe(20);
+
+    const movements = await t.query(api.stockMovements.history, { productId });
+    const voidMovement = movements.find(
+      (movement) => movement.reversal === true,
+    );
+    expect(voidMovement).toMatchObject({
+      saleId,
+      reversal: true,
+      note: `Void sale ${saleId}`,
+    });
 
     const window = {
       start: before?.occurredAt as string,
@@ -1132,5 +1143,173 @@ describe("sales", () => {
       status: "paid",
     });
     expect(detail?.payments).toHaveLength(0);
+  });
+});
+
+describe("cash withdrawals", () => {
+  const window = { start: "2020-01-01", end: "2099-12-31" };
+
+  /** One cash sale puts ₦2,000 over the drawer. */
+  async function seedCashSale(t: ReturnType<typeof convexTest>) {
+    const unitId = await t.mutation(api.units.create, {
+      callerId: "admin",
+      name: "pack",
+    });
+    const productId = await t.mutation(api.products.create, {
+      callerId: "admin",
+      name: "Peak Milk",
+      baseUnitId: unitId,
+    });
+    await t.mutation(api.stockMovements.record, {
+      callerId: "admin",
+      productId,
+      kind: "restock",
+      quantity: 10,
+      note: "Delivery",
+    });
+    return await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "cash",
+      lines: [{ productId, unitId, quantity: 2, unitPriceKobo: 100000 }],
+    });
+  }
+
+  it("records a withdrawal and subtracts it from derived cash in-hand", async () => {
+    const t = convexTest(schema, modules);
+    await seedCashSale(t);
+
+    const before = await t.query(api.cashWithdrawals.summary, window);
+    expect(before.cashInHandKobo).toBe(200000);
+    expect(before.withdrawnInRangeKobo).toBe(0);
+
+    await t.mutation(api.cashWithdrawals.recordWithdrawal, {
+      callerId: "admin",
+      amountKobo: 150000,
+      note: "Market run",
+    });
+
+    const after = await t.query(api.cashWithdrawals.summary, window);
+    expect(after.cashInHandKobo).toBe(50000);
+    expect(after.withdrawnInRangeKobo).toBe(150000);
+  });
+
+  it("refuses a withdrawal bigger than the cash in-hand", async () => {
+    const t = convexTest(schema, modules);
+    await seedCashSale(t);
+
+    await expect(
+      t.mutation(api.cashWithdrawals.recordWithdrawal, {
+        callerId: "admin",
+        amountKobo: 200001,
+      }),
+    ).rejects.toThrow("more than the cash in hand");
+  });
+
+  it("refuses a zero amount and a future date", async () => {
+    const t = convexTest(schema, modules);
+
+    await expect(
+      t.mutation(api.cashWithdrawals.recordWithdrawal, {
+        callerId: "admin",
+        amountKobo: 0,
+      }),
+    ).rejects.toThrow("whole number of kobo");
+
+    await expect(
+      t.mutation(api.cashWithdrawals.recordWithdrawal, {
+        callerId: "admin",
+        amountKobo: 500,
+        withdrawnAt: new Date(Date.parse("2099-01-01")).toISOString(),
+      }),
+    ).rejects.toThrow("future");
+  });
+
+  it("allows a withdrawal dated yesterday but not older", async () => {
+    const t = convexTest(schema, modules);
+    await seedCashSale(t);
+
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    await expect(
+      t.mutation(api.cashWithdrawals.recordWithdrawal, {
+        callerId: "admin",
+        amountKobo: 500,
+        withdrawnAt: yesterday,
+      }),
+    ).resolves.toBeDefined();
+
+    const threeDaysAgo = new Date(
+      Date.now() - 3 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    await expect(
+      t.mutation(api.cashWithdrawals.recordWithdrawal, {
+        callerId: "admin",
+        amountKobo: 500,
+        withdrawnAt: threeDaysAgo,
+      }),
+    ).rejects.toThrow("back one day");
+  });
+
+  it("reverses a withdrawal exactly once and pays it back", async () => {
+    const t = convexTest(schema, modules);
+    await seedCashSale(t);
+
+    const withdrawalId = await t.mutation(
+      api.cashWithdrawals.recordWithdrawal,
+      {
+        callerId: "admin",
+        amountKobo: 50000,
+      },
+    );
+
+    const reversalId = await t.mutation(api.cashWithdrawals.reverseWithdrawal, {
+      callerId: "admin",
+      withdrawalId,
+    });
+    expect(await t.query(api.cashWithdrawals.range, window)).toHaveLength(2);
+
+    await expect(
+      t.mutation(api.cashWithdrawals.reverseWithdrawal, {
+        callerId: "admin",
+        withdrawalId,
+      }),
+    ).rejects.toThrow("already reversed");
+    await expect(
+      t.mutation(api.cashWithdrawals.reverseWithdrawal, {
+        callerId: "admin",
+        withdrawalId: reversalId as string,
+      }),
+    ).rejects.toThrow("cannot itself be reversed");
+
+    const summary = await t.query(api.cashWithdrawals.summary, window);
+    expect(summary.cashInHandKobo).toBe(200000);
+  });
+
+  it("pages the history newest first with search over notes", async () => {
+    const t = convexTest(schema, modules);
+    await seedCashSale(t);
+    await t.mutation(api.cashWithdrawals.recordWithdrawal, {
+      callerId: "admin",
+      amountKobo: 50000,
+      note: "Fuel",
+    });
+    await t.mutation(api.cashWithdrawals.recordWithdrawal, {
+      callerId: "admin",
+      amountKobo: 30000,
+      note: "Market run",
+    });
+
+    const page = await t.query(api.cashWithdrawals.listPage, {
+      paginationOpts: { numItems: 1, cursor: null },
+    });
+    expect(page.page).toHaveLength(1);
+    expect(page.page[0]?.amountKobo).toBe(30000);
+    expect(page.isDone).toBe(false);
+
+    const fuel = await t.query(api.cashWithdrawals.listPage, {
+      paginationOpts: { numItems: 10, cursor: null },
+      search: "fuel",
+    });
+    expect(fuel.page).toHaveLength(1);
+    expect(fuel.page[0]?.note).toBe("Fuel");
   });
 });
