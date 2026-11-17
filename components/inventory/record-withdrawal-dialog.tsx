@@ -50,7 +50,7 @@ const withdrawalFormSchema = (cashInHandKobo: number) =>
     .object({
       amount: z.string(),
       withdrawnAt: z.string().min(1, { message: "When was this taken?" }),
-      note: z.string(),
+      note: z.string().trim().min(1, { message: "A note is required." }),
     })
     .superRefine((values, ctx) => {
       const kobo = paymentKobo(values.amount);
@@ -110,7 +110,7 @@ export function RecordWithdrawalDialog({
       await recordWithdrawal({
         amountKobo: paymentKobo(values.amount),
         withdrawnAt: new Date(values.withdrawnAt).toISOString(),
-        note: values.note.trim() || undefined,
+        note: values.note.trim(),
       });
       toast.success("Withdrawal recorded");
       form.reset({ amount: "", withdrawnAt: todayInputValue(), note: "" });
@@ -128,9 +128,8 @@ export function RecordWithdrawalDialog({
         <DialogHeader>
           <DialogTitle>Record withdrawal</DialogTitle>
           <DialogDescription>
-            Money taken out of the drawer. Stock, sales and purchases are not
-            touched.
-            <br /> A mistake is reversed, never edited.
+            Money taken out of the drawer. Stock, sales, and purchases are
+            unaffected. Mistakes are reversed, not edited.
           </DialogDescription>
         </DialogHeader>
 
@@ -185,7 +184,7 @@ export function RecordWithdrawalDialog({
               name="note"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel optional>Note</FormLabel>
+                  <FormLabel>Note</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="e.g. Restock run to the market"

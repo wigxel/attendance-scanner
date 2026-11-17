@@ -1222,10 +1222,11 @@ export const recordCashWithdrawal = mutation({
   args: {
     amountKobo: v.number(),
     withdrawnAt: v.optional(v.string()),
-    note: v.optional(v.string()),
+    note: v.string(),
   },
   handler: async (ctx, args) => {
     const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
+    if (!args.note.trim()) throw new Error("A note is required.");
     const withdrawalId = await ctx.runMutation(
       components.inventory.cashWithdrawals.recordWithdrawal,
       { ...args, callerId: caller },

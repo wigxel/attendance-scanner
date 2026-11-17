@@ -96,7 +96,7 @@ describe("cash withdrawal alerts", () => {
     const seller = t.withIdentity({ profile_id: "seller-1" });
     const withdrawalId = await seller.mutation(
       api.inventory.recordCashWithdrawal,
-      { amountKobo: 50000 },
+      { amountKobo: 50000, note: "Market run" },
     );
 
     for (const admin of ["admin-1", "admin-2"]) {
@@ -123,7 +123,7 @@ describe("cash withdrawal alerts", () => {
     const seller = t.withIdentity({ profile_id: "seller-1" });
     const withdrawalId = await seller.mutation(
       api.inventory.recordCashWithdrawal,
-      { amountKobo: 50000 },
+      { amountKobo: 50000, note: "Market run" },
     );
 
     const admin = t.withIdentity({ profile_id: "admin-2" });

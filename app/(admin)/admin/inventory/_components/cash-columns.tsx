@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import type { CashWithdrawalRow } from "@/convex/inventory";
@@ -110,7 +111,7 @@ export function cashColumns(): ColumnDef<CashWithdrawalRow>[] {
       header: "Date",
       accessorKey: "withdrawnAt",
       cell: ({ row }) => (
-        <span className="whitespace-nowrap uppercase">
+        <span className="whitespace-nowrap">
           {formatDate(row.original.withdrawnAt)}
         </span>
       ),
@@ -161,9 +162,15 @@ export function cashColumns(): ColumnDef<CashWithdrawalRow>[] {
     {
       id: "actions",
       header: "",
-      meta: { label: "Actions" },
-      cell: ({ row }) =>
-        row.original.kind === "withdrawal" && !row.original.reversed ? (
+      meta: { label: "Status" },
+      cell: ({ row }) => {
+        if (row.original.kind === "reversal") {
+          return <Badge variant="info">Reversal</Badge>;
+        }
+        if (row.original.reversed) {
+          return <Badge variant="secondary">Reversed</Badge>;
+        }
+        return (
           <RevertWithdrawalAlert withdrawalId={row.original._id}>
             <Button
               type="button"
@@ -175,7 +182,8 @@ export function cashColumns(): ColumnDef<CashWithdrawalRow>[] {
               <Undo2 className="size-3.5" />
             </Button>
           </RevertWithdrawalAlert>
-        ) : null,
+        );
+      },
     },
   ];
 }
