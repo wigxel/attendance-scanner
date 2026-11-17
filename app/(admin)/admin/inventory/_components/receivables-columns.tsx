@@ -2,6 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Receivable } from "@/convex/inventory";
+import { serialNo } from "@/lib/data.helpers";
 
 const amountFormatter = new Intl.NumberFormat("en-NG", {
   minimumFractionDigits: 2,
@@ -16,6 +17,11 @@ export function receivableSearchText(receivable: Receivable) {
 }
 
 export const receivablesColumns: ColumnDef<Receivable>[] = [
+  {
+    id: "sn",
+    header: "S/N",
+    cell: ({ row }) => <span>{serialNo(row.index + 1)}</span>,
+  },
   {
     id: "customer",
     header: "Customer",
@@ -40,6 +46,7 @@ export const receivablesColumns: ColumnDef<Receivable>[] = [
   {
     id: "totalOwedKobo",
     header: () => <span className="block text-right">Total owed (₦)</span>,
+    meta: { label: "Total owed" },
     accessorKey: "totalOwedKobo",
     cell: ({ row }) => (
       <span className="block whitespace-nowrap text-right tabular-nums">

@@ -28,7 +28,7 @@ export function ReceivablesContent() {
       <div>
         <h2 className="text-lg font-medium text-foreground">Receivables</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Who owes what, with the oldest unpaid sale on top.
+          Who owes what, oldest debts first.
         </p>
       </div>
 
