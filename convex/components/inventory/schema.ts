@@ -48,6 +48,8 @@ const stockMovements = defineTable({
   ),
   /** True when this row undoes another movement (a voided purchase). */
   reversal: v.optional(v.boolean()),
+  /** The sale whose lines this row moved stock for. */
+  saleId: v.optional(v.id("sales")),
   createdBy: v.string(),
 })
   .index("by_product", ["productId"])

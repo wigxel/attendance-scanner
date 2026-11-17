@@ -152,6 +152,7 @@ export const create = mutation({
         occurredAt: now,
         note: saleLabel,
         source: "sale",
+        saleId,
       });
     }
 
@@ -206,6 +207,7 @@ export const voidSale = mutation({
         occurredAt: now,
         note: label,
         reversal: true,
+        saleId: args.saleId,
       });
     }
 
