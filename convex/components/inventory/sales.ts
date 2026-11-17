@@ -293,26 +293,37 @@ function occurredAtBounds(
   return q;
 }
 
-/** Sales newest first, optionally bounded by occurredAt (inclusive). */
+/** Sales newest first, optionally bounded by occurredAt and/or channel. */
 async function salesIn(
   ctx: QueryCtx,
   start: string | undefined,
   end: string | undefined,
+  channel: "cash" | "pos" | "transfer" | "credit" | undefined,
 ) {
-  return await ctx.db
+  const query = ctx.db
     .query("sales")
     .withIndex("by_occurredAt", (q) => occurredAtBounds(q, start, end))
-    .order("desc")
-    .collect();
+    .order("desc");
+
+  // Filter expressions are serialized, so the channel value rides inside
+  // q.eq; a plain-function capture would come through as undefined.
+  return await (channel === undefined
+    ? query
+    : query.filter((q) => q.eq(q.field("channel"), channel))
+  ).collect();
 }
 
 export const list = query({
   args: {
     start: v.optional(v.string()),
     end: v.optional(v.string()),
+    channel: v.optional(channel),
   },
   handler: async (ctx, args) => {
-    return await enrichSales(ctx, await salesIn(ctx, args.start, args.end));
+    return await enrichSales(
+      ctx,
+      await salesIn(ctx, args.start, args.end, args.channel),
+    );
   },
 });
 
@@ -322,15 +333,23 @@ export const listPage = query({
     paginationOpts: paginationOptsValidator,
     start: v.optional(v.string()),
     end: v.optional(v.string()),
+    channel: v.optional(channel),
   },
   handler: async (ctx, args) => {
-    const page = await ctx.db
+    // A filter expression is serialized, so the channel value rides inside
+    // q.eq; a plain-function capture would come through as undefined.
+    const bounds = (
+      q: IndexRangeBuilder<Doc<"sales">, ["occurredAt", "_creationTime"]>,
+    ) => occurredAtBounds(q, args.start, args.end);
+    const query = ctx.db
       .query("sales")
-      .withIndex("by_occurredAt", (q) =>
-        occurredAtBounds(q, args.start, args.end),
-      )
-      .order("desc")
-      .paginate(args.paginationOpts);
+      .withIndex("by_occurredAt", bounds)
+      .order("desc");
+    const filtered =
+      args.channel === undefined
+        ? query
+        : query.filter((q) => q.eq(q.field("channel"), args.channel));
+    const page = await filtered.paginate(args.paginationOpts);
 
     return { ...page, page: await enrichSales(ctx, page.page) };
   },

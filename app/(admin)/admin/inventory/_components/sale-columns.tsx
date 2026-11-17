@@ -1,6 +1,7 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, Table as TanStackTable } from "@tanstack/react-table";
+import { FilterDropdown } from "@/components/std-table/filter-dropdown";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -8,9 +9,28 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { SaleStatus, SaleSummary } from "@/convex/inventory";
+import type { SaleChannel, SaleStatus, SaleSummary } from "@/convex/inventory";
 import { formatKoboPlain } from "@/lib/currency.helpers";
 import { serialNo } from "@/lib/data.helpers";
+
+/** Filter state shared with the column headers through table.options.meta. */
+export type SaleFilterMeta = {
+  channel: SaleChannel | undefined;
+  status: SaleStatus | undefined;
+  onChannelChange: (channel: SaleChannel | undefined) => void;
+  onStatusChange: (status: SaleStatus | undefined) => void;
+};
+
+function filterMeta(table: TanStackTable<SaleSummary>): SaleFilterMeta {
+  return (
+    (table.options.meta as SaleFilterMeta | undefined) ?? {
+      channel: undefined,
+      status: undefined,
+      onChannelChange: () => {},
+      onStatusChange: () => {},
+    }
+  );
+}
 
 const channelLabels = {
   cash: "Cash",
@@ -18,6 +38,10 @@ const channelLabels = {
   transfer: "Transfer",
   credit: "Credit",
 } as const;
+
+export const saleChannelOptions = Object.entries(channelLabels).map(
+  ([value, label]) => ({ value: value as SaleChannel, label }),
+);
 
 type SaleStatusChip = {
   label: string;
@@ -31,6 +55,10 @@ const statusChips: Record<SaleStatus, SaleStatusChip> = {
   written_off: { label: "Written off", variant: "outline" },
   voided: { label: "Voided", variant: "secondary" },
 };
+
+export const saleStatusOptions = Object.entries(statusChips).map(
+  ([value, chip]) => ({ value: value as SaleStatus, label: chip.label }),
+);
 
 export type SaleStatusBadgeProps = { status: SaleStatus };
 
@@ -112,7 +140,16 @@ export const saleColumns: ColumnDef<SaleSummary>[] = [
   },
   {
     id: "channel",
-    header: "Channel",
+    header: ({ table }) => (
+      <div className="flex items-center gap-1">
+        Channel
+        <FilterDropdown
+          value={filterMeta(table).channel}
+          options={saleChannelOptions}
+          onChange={filterMeta(table).onChannelChange}
+        />
+      </div>
+    ),
     accessorKey: "channel",
     cell: ({ row }) => (
       <span
@@ -126,7 +163,16 @@ export const saleColumns: ColumnDef<SaleSummary>[] = [
   },
   {
     id: "status",
-    header: "Status",
+    header: ({ table }) => (
+      <div className="flex items-center gap-1">
+        Status
+        <FilterDropdown
+          value={filterMeta(table).status}
+          options={saleStatusOptions}
+          onChange={filterMeta(table).onStatusChange}
+        />
+      </div>
+    ),
     accessorKey: "status",
     cell: ({ row }) => <SaleStatusBadge status={row.original.status} />,
   },

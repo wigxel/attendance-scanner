@@ -959,3 +959,165 @@ describe("sales history pagination", () => {
     expect(noMatch.isDone).toBe(true);
   });
 });
+
+describe("sales history filters", () => {
+  // One sale per shape: cash till sale, partial credit, unpaid credit, voided.
+  async function seedFilterSales(t: Tester) {
+    const { admin, unitId, productId } = await seedShop(t);
+    await restock(admin, unitId, productId, 20);
+
+    await t.run(async (ctx) => {
+      for (const id of ["customer-1", "customer-2"]) {
+        await ctx.db.insert("profile", {
+          id,
+          firstName: "Customer",
+          lastName: id,
+          occupation: "None",
+        });
+      }
+    });
+
+    const cash = await admin.mutation(api.inventory.recordSale, {
+      channel: "cash",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    const partPaid = await admin.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      amountPaidKobo: 1000,
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    const unpaid = await admin.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-2",
+      amountPaidKobo: 0,
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    const voidable = await t.run(async (ctx) =>
+      ctx.runMutation(components.inventory.sales.create, {
+        callerId: "admin-user",
+        channel: "cash",
+        amountPaidKobo: 0,
+        lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+      }),
+    );
+    await admin.mutation(api.inventory.voidSale, { saleId: voidable });
+
+    return { admin, cash, partPaid, unpaid, voided: voidable };
+  }
+
+  it("keeps only the chosen channel on every page", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, cash, partPaid, unpaid, voided } = await seedFilterSales(t);
+
+    const cashOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      channel: "cash",
+    });
+    expect(cashOnly.page.map((sale) => sale._id)).toEqual([voided, cash]);
+
+    const creditOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      channel: "credit",
+    });
+    expect(creditOnly.page.map((sale) => sale._id)).toEqual([unpaid, partPaid]);
+  });
+
+  it("pages a channel-filtered history without gaps", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, cash, partPaid, unpaid } = await seedFilterSales(t);
+
+    const first = await admin.query(api.inventory.listSales, {
+      paginationOpts: { numItems: 2, cursor: null },
+      channel: "credit",
+    });
+    expect(first.page).toHaveLength(2);
+    expect(first.isDone).toBe(false);
+
+    const second = await admin.query(api.inventory.listSales, {
+      paginationOpts: { numItems: 2, cursor: first.continueCursor },
+      channel: "credit",
+    });
+    expect(second.page).toHaveLength(0);
+    expect(second.isDone).toBe(true);
+
+    const seen = [...first.page, ...second.page].map((sale) => sale._id);
+    expect(seen).toEqual([unpaid, partPaid]);
+    expect(seen).not.toContain(cash);
+  });
+
+  it("keeps only the chosen status", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, cash, partPaid, unpaid, voided } = await seedFilterSales(t);
+
+    const unpaidOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "unpaid",
+    });
+    expect(unpaidOnly.page.map((sale) => sale._id)).toEqual([unpaid]);
+
+    const partPaidOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "part_paid",
+    });
+    expect(partPaidOnly.page.map((sale) => sale._id)).toEqual([partPaid]);
+
+    const paidOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "paid",
+    });
+    expect(paidOnly.page.map((sale) => sale._id)).toEqual([cash]);
+
+    const voidedOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "voided",
+    });
+    expect(voidedOnly.page.map((sale) => sale._id)).toEqual([voided]);
+  });
+
+  it("combines status, channel and search in one page", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, partPaid } = await seedFilterSales(t);
+
+    const combined = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "part_paid",
+      channel: "credit",
+      search: "peak",
+    });
+    expect(combined.page.map((sale) => sale._id)).toEqual([partPaid]);
+
+    const wrongChannel = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "part_paid",
+      channel: "cash",
+    });
+    expect(wrongChannel.page).toHaveLength(0);
+
+    const wrongSearch = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "part_paid",
+      search: "nothing-matches",
+    });
+    expect(wrongSearch.page).toHaveLength(0);
+  });
+
+  it("pages a status-filtered history without gaps", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unpaid, partPaid } = await seedFilterSales(t);
+
+    const unpaidPage = await admin.query(api.inventory.listSales, {
+      paginationOpts: { numItems: 1, cursor: null },
+      status: "unpaid",
+    });
+    expect(unpaidPage.page.map((sale) => sale._id)).toEqual([unpaid]);
+    expect(unpaidPage.isDone).toBe(true);
+
+    const partPaidPage = await admin.query(api.inventory.listSales, {
+      paginationOpts: { numItems: 1, cursor: null },
+      status: "part_paid",
+    });
+    expect(partPaidPage.page.map((sale) => sale._id)).toEqual([partPaid]);
+    expect(partPaidPage.isDone).toBe(true);
+  });
+});
