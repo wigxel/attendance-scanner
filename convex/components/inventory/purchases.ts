@@ -18,6 +18,13 @@ type LineInput = {
   unitCostKobo: number;
 };
 
+type ResolvedLine = LineInput & {
+  product: Doc<"products">;
+  unitFactor: number;
+  quantityInBase: number;
+  lineTotalKobo: number;
+};
+
 function ensureKobo(label: string, value: number | undefined) {
   if (value === undefined) return;
   if (!Number.isInteger(value) || value < 0) {
@@ -61,6 +68,20 @@ async function loadSupplierId(
   return supplierId;
 }
 
+/** Blend an incoming purchase line into the product's running average cost. */
+function averagedCostKobo(
+  onHand: number,
+  oldCostKobo: number,
+  incomingQuantity: number,
+  incomingUnitCostKobo: number,
+) {
+  if (onHand + incomingQuantity <= 0) return oldCostKobo;
+  return Math.round(
+    (onHand * oldCostKobo + incomingQuantity * incomingUnitCostKobo) /
+      (onHand + incomingQuantity),
+  );
+}
+
 export const create = mutation({
   args: {
     callerId: v.string(),
@@ -84,14 +105,7 @@ export const create = mutation({
 
     // Resolve and validate everything before writing, so a bad line cannot
     // leave half a purchase behind even though the mutation is atomic.
-    const resolved: Array<
-      LineInput & {
-        product: Doc<"products">;
-        unitFactor: number;
-        quantityInBase: number;
-        lineTotalKobo: number;
-      }
-    > = [];
+    const resolved: ResolvedLine[] = [];
 
     for (const line of args.lines) {
       const product = await ctx.db.get(line.productId);
@@ -136,13 +150,12 @@ export const create = mutation({
       const onHand = await currentQuantity(ctx, line.productId);
       const oldCost = line.product.costPriceKobo;
       const unitCostInBase = line.lineTotalKobo / line.quantityInBase;
-      const newCost =
-        onHand + line.quantityInBase > 0
-          ? Math.round(
-              (onHand * oldCost + line.quantityInBase * unitCostInBase) /
-                (onHand + line.quantityInBase),
-            )
-          : oldCost;
+      const newCost = averagedCostKobo(
+        onHand,
+        oldCost,
+        line.quantityInBase,
+        unitCostInBase,
+      );
 
       await ctx.db.insert("purchaseLines", {
         purchaseId,
