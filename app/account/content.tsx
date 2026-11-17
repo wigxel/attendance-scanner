@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
+import { BirthdayPrompt } from "@/components/BirthdayPrompt";
 import {
   BirthdayCheckInConfetti,
   CheckInCard,
@@ -90,6 +91,8 @@ export function Content({ gotoAdmin }: ContentProps) {
 
         <ExpiryWarning />
 
+        <BirthdayPrompt />
+
         <SelfCheckInStatus />
 
         <NotRegistered>
@@ -106,7 +109,7 @@ export function Content({ gotoAdmin }: ContentProps) {
 
         <CommunityLinks />
 
-        <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-background0">
+        <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-background">
           <span />
           <span />
           <span />

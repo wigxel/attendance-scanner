@@ -46,18 +46,6 @@ export function useProfile() {
       return;
     }
 
-    // A profile missing `birthday` counts as incomplete: existing users are
-    // routed through onboarding once to add it.
-    if (
-      isAuthenticated &&
-      profile?.occupation &&
-      profile.occupation !== "None" &&
-      !profile.birthday
-    ) {
-      router.push("/onboarding");
-      return;
-    }
-
     // New user whose webhook may or may not have fired: no profile exists yet.
     // Once accountMeta has loaded and confirmed no profile, send to onboarding.
     if (

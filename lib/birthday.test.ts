@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   buildBirthday,
   daysInMonth,
+  isBirthdayAskQuiet,
   isBirthdayToday,
   shouldCelebrate,
 } from "./birthday";
@@ -53,6 +54,31 @@ describe("buildBirthday", () => {
   });
 });
 
+describe("isBirthdayAskQuiet", () => {
+  const month = 30 * 24 * 60 * 60 * 1000;
+  const now = Date.UTC(2026, 10, 17, 12, 0, 0);
+
+  it("is quiet right after a dismissal", () => {
+    expect(isBirthdayAskQuiet(now - 1000, now)).toBe(true);
+  });
+
+  it("is quiet up to one month minus a millisecond", () => {
+    expect(isBirthdayAskQuiet(now - (month - 1), now)).toBe(true);
+  });
+
+  it("asks again exactly one month after the dismissal", () => {
+    expect(isBirthdayAskQuiet(now - month, now)).toBe(false);
+  });
+
+  it("asks again long after the dismissal", () => {
+    expect(isBirthdayAskQuiet(now - (month + 1), now)).toBe(false);
+  });
+
+  it("treats a never-dismissed member as due", () => {
+    expect(isBirthdayAskQuiet(0, now)).toBe(false);
+  });
+});
+
 describe("shouldCelebrate", () => {
   beforeEach(() => {
     // Edge-runtime has no localStorage; stub the surface we use.
@@ -63,7 +89,9 @@ describe("shouldCelebrate", () => {
     } as unknown as Storage;
   });
 
-  it("fires once per day per trigger", () => {
+  it("fires up to three times per day per trigger", () => {
+    expect(shouldCelebrate("login", new Date(2026, 10, 16))).toBe(true);
+    expect(shouldCelebrate("login", new Date(2026, 10, 16))).toBe(true);
     expect(shouldCelebrate("login", new Date(2026, 10, 16))).toBe(true);
     expect(shouldCelebrate("login", new Date(2026, 10, 16))).toBe(false);
   });

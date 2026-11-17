@@ -65,3 +65,12 @@ export const shouldCelebrate = (trigger: string, date = new Date()) => {
 export const fireBirthdayConfetti = () => {
   confetti({ particleCount: 200, spread: 80, origin: { y: 0.7 } });
 };
+
+/** How long a dismissal silences the birthday ask: one month. */
+export const BIRTHDAY_ASK_QUIET_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** True while the birthday ask should stay quiet after a dismissal. */
+export const isBirthdayAskQuiet = (
+  lastDismissedMs: number,
+  nowMs: number,
+) => nowMs - lastDismissedMs < BIRTHDAY_ASK_QUIET_MS;
