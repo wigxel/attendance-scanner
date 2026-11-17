@@ -2,8 +2,10 @@
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
+import { BirthdayPrompt } from "@/components/BirthdayPrompt";
 import {
   CheckedInConfirmation,
+  BirthdayCheckInConfetti,
   CheckInCard,
   NotRegistered,
 } from "@/components/CheckInCard";
@@ -18,6 +20,7 @@ import { getErrorMessage } from "@/lib/error.helpers";
 import { ActiveBookings } from "./active-bookings";
 import { CommunityLinks } from "./community-links";
 import { ExpiryWarning } from "./expiry-warning";
+import { HappyBirthday } from "./happy-birthday";
 
 function greet_time(): string {
   const date = new Date();
@@ -29,14 +32,19 @@ function greet_time(): string {
   return "Good evening 🌙";
 }
 
-export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
+interface ContentProps {
+  gotoAdmin?: ReactNode;
+}
+
+export function Content({ gotoAdmin }: ContentProps) {
   const { data: profile, isSignedIn } = useProfile();
   const selfCheckIn = useSelfCheckIn();
 
   // Only process a pending QR check-in once the profile is fully set up
   // (onboarding complete). This prevents the check-in from firing and
   // failing before the user has finished onboarding.
-  const isProfileReady = !!profile && profile.occupation !== "None";
+  const isProfileReady =
+    !!profile && profile.occupation !== "None" && !!profile.birthday;
 
   usePendingCheckIn({
     isSignedIn: !!isSignedIn && isProfileReady,
@@ -78,7 +86,13 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
           {gotoAdmin}
         </div>
 
+        <BirthdayCheckInConfetti />
+
+        <HappyBirthday />
+
         <ExpiryWarning />
+
+        <BirthdayPrompt />
 
         <SelfCheckInStatus />
 
@@ -88,6 +102,8 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
           <CheckInCard />
         </NotRegistered>
 
+        {/* Lives outside NotRegistered: it must observe the registration flip. */}
+
         <ActiveBookings />
 
         <AttendanceCalendar />
@@ -96,7 +112,7 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
 
         <CommunityLinks />
 
-        <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-background0">
+        <div className="flex gap-2 py-4 scanline-root justify-center *:rounded-full *:aspect-square *:w-2 *:bg-background">
           <span />
           <span />
           <span />

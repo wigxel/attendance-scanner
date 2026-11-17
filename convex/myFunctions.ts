@@ -155,6 +155,47 @@ export const getAccountMeta = query({
   },
 });
 
+/** Validates "MM-DD": real month, day valid for that month ("02-29" allowed). */
+function ensureBirthday(value: string) {
+  const match = /^(\d{2})-(\d{2})$/.exec(value);
+  const month = match ? Number(match[1]) : 0;
+  const day = match ? Number(match[2]) : 0;
+  const monthLengths = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  if (month < 1 || month > 12 || day < 1 || day > monthLengths[month - 1]) {
+    throw new ConvexError("Birthday must be a valid month and day.");
+  }
+  return value;
+}
+
+/** The signed-in customer sets only their birthday; nothing else is touched. */
+export const setMyBirthday = mutation({
+  args: { birthday: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError("User must be authenticated");
+
+    const birthday = ensureBirthday(args.birthday);
+
+    const userId = await readId(ctx);
+    const profile = userId
+      ? await ctx.db
+          .query("profile")
+          .filter((q) => q.eq(q.field("id"), userId))
+          .first()
+      : await ctx.db
+          .query("profile")
+          .withIndex("by_email", (q) =>
+            q.eq("email", identity.email ?? "--"),
+          )
+          .first();
+
+    if (!profile) throw new ConvexError("Profile not found.");
+
+    await ctx.db.patch(profile._id, { birthday });
+  },
+});
+
 export const getProfile = query({
   args: {},
   handler: async (ctx) => {
@@ -406,6 +447,7 @@ export const updateUser = action({
     lastName: v.string(),
     phoneNumber: v.string(),
     occupation: v.union(v.id("occupations"), v.literal("None")),
+    birthday: v.optional(v.string()),
     // email: v.string(),
   },
   handler: async (ctx, args) => {
@@ -432,6 +474,7 @@ export const updateUser = action({
       email: identity.email,
       phoneNumber: args.phoneNumber,
       occupation: args.occupation,
+      birthday: args.birthday,
     });
   },
 });

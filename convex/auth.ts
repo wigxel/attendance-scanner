@@ -50,6 +50,7 @@ export const createOrUpdateProfile = mutation({
     email: v.string(),
     phoneNumber: v.optional(v.string()),
     occupation: v.optional(v.union(v.id("occupations"), v.literal("None"))),
+    birthday: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -124,6 +125,7 @@ export const createOrUpdateProfile = mutation({
         email: args.email,
         phoneNumber: args.phoneNumber,
         occupation: args.occupation || "None",
+        birthday: args.birthday,
       });
 
       return existing_record_id;
@@ -137,6 +139,7 @@ export const createOrUpdateProfile = mutation({
       email: args.email,
       phoneNumber: args.phoneNumber,
       occupation: args.occupation || "None",
+      birthday: args.birthday,
       role: "user",
     });
 
