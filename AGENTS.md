@@ -32,6 +32,13 @@ Use the simplest assertion that works:
 - **Need to see the shape?** → `toMatchInlineSnapshot()`
 - **Big object, only care about a few fields?** → `toMatchObject()` + field assertions
 
+## Formatting
+
+Run `pnpm format` before committing. The pre-commit hook (`.husky/pre-commit`)
+runs `pnpm lint` and then Biome format on the staged files, re-staging them so
+the commit itself is formatted. Formatting the whole tree by hand is rarely
+needed; `pnpm exec biome check <files>` catches what format would change.
+
 ## Pull requests
 
 Never push to `main`. Every change lands through a PR against `main`.

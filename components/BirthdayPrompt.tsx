@@ -81,7 +81,8 @@ export function BirthdayPromptBody(props: BirthdayPromptBodyProps) {
         </DialogTitle>
 
         <DialogDescription className="text-pretty">
-          Share your birthday with us! We&apos;d love to celebrate with you the InSpace way when your special day arrives.
+          Share your birthday with us! We&apos;d love to celebrate with you the
+          InSpace way when your special day arrives.
         </DialogDescription>
       </DialogHeader>
 

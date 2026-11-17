@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Banknote,
   Boxes,
   ChartNoAxesCombined,
   HandCoins,
@@ -16,6 +17,12 @@ import { cn } from "@/lib/utils";
 
 const tabs = [
   { name: "Sales", href: "/admin/inventory/sales", icon: ShoppingCart },
+  {
+    name: "Cash",
+    href: "/admin/inventory/cash",
+    icon: Banknote,
+    manageOnly: true,
+  },
   {
     name: "Receivables",
     href: "/admin/inventory/receivables",

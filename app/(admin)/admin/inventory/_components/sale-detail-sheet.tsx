@@ -34,7 +34,7 @@ import {
 import { api } from "@/convex/_generated/api";
 import type { SalePaymentRow } from "@/convex/inventory";
 import { usePrivilege } from "@/hooks/usePrivilege";
-import { currencyFormatter } from "@/lib/currency.helpers";
+import { formatKobo } from "@/lib/currency.helpers";
 import { paymentChannelLabels } from "@/lib/payment-channel";
 import { SaleStatusBadge } from "./sale-columns";
 
@@ -44,10 +44,6 @@ const channelLabels = {
   transfer: "Transfer",
   credit: "Credit",
 } as const;
-
-function formatKobo(value: number) {
-  return currencyFormatter.format(value / 100);
-}
 
 function formatPaymentDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-NG", {

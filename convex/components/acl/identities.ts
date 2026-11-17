@@ -44,6 +44,27 @@ export const listIdentitiesByPrivilege = query({
   },
 });
 
+// App-internal lookup for alerts: every identity holding the named role
+// (e.g. "admin"). No caller check — component functions are not exposed to
+// clients, only to the app's own internal functions.
+export const listIdentitiesByRole = query({
+  args: { roleName: v.string() },
+  handler: async (ctx, { roleName }): Promise<IdentityWithRole[]> => {
+    const role = await ctx.db
+      .query("roles")
+      .withIndex("by_name", (q) => q.eq("name", roleName))
+      .unique();
+    if (!role) return [];
+
+    const identities = await ctx.db
+      .query("identities")
+      .withIndex("by_role", (q) => q.eq("role", role._id))
+      .collect();
+
+    return identities.map((identity) => ({ ...identity, role }));
+  },
+});
+
 export const registerIdentity = mutation({
   args: {
     callerId: v.string(),

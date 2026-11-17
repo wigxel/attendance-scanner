@@ -15,12 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
-import { currencyFormatter } from "@/lib/currency.helpers";
+import { formatKobo } from "@/lib/currency.helpers";
 import { purchaseLineColumns } from "./purchase-line-columns";
-
-function formatKobo(value: number) {
-  return currencyFormatter.format(value / 100);
-}
 
 type PurchaseDetailContentProps = {
   purchaseId: string;

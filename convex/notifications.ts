@@ -172,6 +172,20 @@ export const alertRecipientKeys = internalQuery({
   },
 });
 
+// Recipient keys for alerts keyed by role name rather than privilege, so a
+// role that holds only some privileges (or loses one) still counts.
+export const recipientsByRole = internalQuery({
+  args: { roleName: v.string() },
+  handler: async (ctx, args): Promise<string[]> => {
+    const identities = (await ctx.runQuery(
+      components.wigxel_acl.identities.listIdentitiesByRole,
+      { roleName: args.roleName },
+    )) as Array<{ identity: string }>;
+
+    return identities.map((entry) => userKey(entry.identity));
+  },
+});
+
 // send log, newest first — failures carry the transport error message
 export const recent = internalQuery({
   args: {
