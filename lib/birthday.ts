@@ -1,5 +1,7 @@
 import confetti from "canvas-confetti";
 
+export { daysUntilBirthday } from "./birthday-date";
+
 /** Birthday as an "MM-DD" string on the profile (e.g. "02-29"). */
 export const MONTHS = [
   "January",
@@ -70,7 +72,5 @@ export const fireBirthdayConfetti = () => {
 export const BIRTHDAY_ASK_QUIET_MS = 30 * 24 * 60 * 60 * 1000;
 
 /** True while the birthday ask should stay quiet after a dismissal. */
-export const isBirthdayAskQuiet = (
-  lastDismissedMs: number,
-  nowMs: number,
-) => nowMs - lastDismissedMs < BIRTHDAY_ASK_QUIET_MS;
+export const isBirthdayAskQuiet = (lastDismissedMs: number, nowMs: number) =>
+  nowMs - lastDismissedMs < BIRTHDAY_ASK_QUIET_MS;

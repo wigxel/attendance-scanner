@@ -2,12 +2,24 @@
 /// <reference types="vite/client" />
 import aggregateTest from "@convex-dev/aggregate/test";
 import { convexTest } from "convex-test";
-import { format, subDays } from "date-fns";
+import { addDays, format, subDays } from "date-fns";
 import { describe, expect, it } from "vitest";
-import { api, internal } from "./_generated/api";
+import { api, components, internal } from "./_generated/api";
+import aclSchema from "./components/acl/schema";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
+const aclModules = import.meta.glob("./components/acl/**/*.ts");
+
+async function seedAdmin(t: ReturnType<typeof convexTest>) {
+  t.registerComponent("wigxel_acl", aclSchema, aclModules);
+  await t.run(async (ctx) => {
+    await ctx.runMutation(components.wigxel_acl.seed.seedRoles, {});
+    await ctx.runMutation(components.wigxel_acl.seed.makeSuperAdmin, {
+      identity: "admin-user",
+    });
+  });
+}
 
 function todayStr() {
   return format(new Date(), "yyyy-MM-dd");
@@ -926,5 +938,67 @@ describe("computeMetrics", () => {
     expect(metrics).toHaveLength(6);
     const byKind = Object.fromEntries(metrics.map((m) => [m.kind, m.value]));
     expect(byKind.totalCustomers).toBe(1);
+  });
+});
+
+// ─── listUpcomingBirthdays ──────────────────────────────────────────
+
+describe("listUpcomingBirthdays", () => {
+  const birthdayInDays = (daysAhead: number) =>
+    format(addDays(new Date(), daysAhead), "MM-dd");
+
+  async function seedBirthday(
+    t: ReturnType<typeof convexTest>,
+    userId: string,
+    firstName: string,
+    birthday?: string,
+  ) {
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: userId,
+        firstName,
+        lastName: "Test",
+        occupation: "None",
+        ...(birthday ? { birthday } : {}),
+      });
+    });
+  }
+
+  it("requires the booking:read privilege", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const authed = t.withIdentity({ profile_id: "user-1" });
+    await expect(
+      authed.query(api.customers.listUpcomingBirthdays, {}),
+    ).rejects.toThrow('Required privilege: "booking:read"');
+  });
+
+  it("lists birthdays in the next 30 days, soonest first", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    await seedBirthday(t, "user-1", "Ada", birthdayInDays(10));
+    await seedBirthday(t, "user-2", "Ben", birthdayInDays(0));
+    await seedBirthday(t, "user-3", "Cara", birthdayInDays(29));
+
+    const rows = await admin.query(api.customers.listUpcomingBirthdays, {});
+    expect(rows.map((r) => r.name)).toEqual([
+      "Ben Test",
+      "Ada Test",
+      "Cara Test",
+    ]);
+    expect(rows[0].daysAhead).toBe(0);
+  });
+
+  it("skips members without a birthday or beyond 30 days", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    await seedBirthday(t, "user-1", "Ada");
+    await seedBirthday(t, "user-2", "Ben", birthdayInDays(31));
+    await seedBirthday(t, "user-3", "Cara", birthdayInDays(3));
+
+    const rows = await admin.query(api.customers.listUpcomingBirthdays, {});
+    expect(rows.map((r) => r.name)).toEqual(["Cara Test"]);
   });
 });
