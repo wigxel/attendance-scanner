@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { MobileMenu, useMobileMenu } from "@/components/mobile-menu";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -17,15 +18,14 @@ export function MakersNav() {
 
   return (
     <MobileMenu>
-      <header className={cn("sticky top-0 z-40 bg-background")}>
+      <header className={cn("sticky top-0 z-40 bg-background hide-at-footer")}>
         <nav
           aria-label="Inspace Makers"
           className="container mx-auto flex h-16 items-center justify-between gap-2 px-4"
         >
-          <a href="#content" className="font-bold">
-            Inspace Makers
-          </a>
-          <div className="hidden items-center gap-8 font-mono text-sm lg:flex">
+          <BrandLogo />
+
+          <div className="hidden items-center gap-8 text-sm lg:flex">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.id}
@@ -40,13 +40,23 @@ export function MakersNav() {
               </a>
             ))}
           </div>
-          {/* mr on mobile leaves room for the floating menu trigger */}
-          <Button asChild variant="outline" className="mr-11 lg:mr-0">
-            <a href="#tribes">Apply to join</a>
-          </Button>
         </nav>
       </header>
     </MobileMenu>
+  );
+}
+
+function BrandLogo() {
+  return (
+    <Link href="/" className="font-bold">
+      <Image
+        src="/logo.svg"
+        width={40}
+        alt="InSpace brand identity"
+        height={40}
+        className="mix-blend-exclusion apply-dodge apply-dodge-fixed"
+      />
+    </Link>
   );
 }
 
