@@ -38,7 +38,7 @@ export const EMPTY_METRICS: InventoryMetrics = {
 type MetricsContextValue = {
   metrics: InventoryMetrics;
   range: MetricsRange;
-  setRange: (range: MetricsRange) => void;
+  setRange: (range: MetricsRange | null) => void;
 };
 
 const MetricsContext = createContext<MetricsContextValue | null>(null);
@@ -58,11 +58,15 @@ export function MetricsProvider({ children }: { children: ReactNode }) {
   );
 
   const setRange = useCallback(
-    (next: MetricsRange) =>
-      setQuery({
-        metrics_from: parseISO(next.start),
-        metrics_to: parseISO(next.end),
-      }),
+    (next: MetricsRange | null) =>
+      setQuery(
+        next
+          ? {
+              metrics_from: parseISO(next.start),
+              metrics_to: parseISO(next.end),
+            }
+          : { metrics_from: null, metrics_to: null },
+      ),
     [setQuery],
   );
 

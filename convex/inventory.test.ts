@@ -11,6 +11,8 @@ const modules = import.meta.glob("./**/*.ts");
 const aclModules = import.meta.glob("./components/acl/**/*.ts");
 const inventoryModules = import.meta.glob("./components/inventory/**/*.ts");
 
+const historyPage = { numItems: 50, cursor: null as string | null };
+
 type Tester = ReturnType<typeof convexTest>;
 
 async function seedAcl(t: Tester, grantAdmin: boolean) {
@@ -24,6 +26,39 @@ async function seedAcl(t: Tester, grantAdmin: boolean) {
         identity: "admin-user",
       });
     }
+  });
+}
+
+const day = "2026-05-10";
+// Sales are stamped when they are saved, so their window ends today.
+const today = new Date().toISOString().slice(0, 10);
+
+async function seedShop(t: Tester) {
+  await seedAcl(t, true);
+  const admin = t.withIdentity({ profile_id: "admin-user" });
+  const unitId = await admin.mutation(api.inventory.createUnit, {
+    name: "pack",
+  });
+  const productId = await admin.mutation(api.inventory.createProduct, {
+    name: "Peak Milk",
+    baseUnitId: unitId,
+    reorderLevel: 5,
+    costPriceKobo: 2000,
+    sellPriceKobo: 4000,
+  });
+  return { admin, unitId, productId };
+}
+
+async function restock(
+  admin: ReturnType<Tester["withIdentity"]>,
+  unitId: string,
+  productId: string,
+  quantity = 10,
+) {
+  return await admin.mutation(api.inventory.createPurchase, {
+    occurredAt: `${day}T09:00:00+01:00`,
+    amountPaidKobo: 12000,
+    lines: [{ productId, unitId, quantity, unitCostKobo: 2000 }],
   });
 }
 
@@ -197,39 +232,6 @@ describe("seedUnits", () => {
 });
 
 describe("metrics", () => {
-  const day = "2026-05-10";
-  // Sales are stamped when they are saved, so their window ends today.
-  const today = new Date().toISOString().slice(0, 10);
-
-  async function seedShop(t: Tester) {
-    await seedAcl(t, true);
-    const admin = t.withIdentity({ profile_id: "admin-user" });
-    const unitId = await admin.mutation(api.inventory.createUnit, {
-      name: "pack",
-    });
-    const productId = await admin.mutation(api.inventory.createProduct, {
-      name: "Peak Milk",
-      baseUnitId: unitId,
-      reorderLevel: 5,
-      costPriceKobo: 2000,
-      sellPriceKobo: 4000,
-    });
-    return { admin, unitId, productId };
-  }
-
-  async function restock(
-    admin: ReturnType<Tester["withIdentity"]>,
-    unitId: string,
-    productId: string,
-    quantity = 10,
-  ) {
-    return await admin.mutation(api.inventory.createPurchase, {
-      occurredAt: `${day}T09:00:00+01:00`,
-      amountPaidKobo: 12000,
-      lines: [{ productId, unitId, quantity, unitCostKobo: 2000 }],
-    });
-  }
-
   it("aggregates stock, spend, revenue and margin from sales", async () => {
     const t = convexTest(schema, modules);
     const { admin, unitId, productId } = await seedShop(t);
@@ -428,7 +430,11 @@ describe("metrics", () => {
       lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
     });
 
-    const [sale] = await admin.query(api.inventory.listSales, {});
+    const [sale] = (
+      await admin.query(api.inventory.listSales, {
+        paginationOpts: historyPage,
+      })
+    ).page;
     expect(sale.customerName).toBe("Ada Obi");
     expect(sale.items).toMatchObject([{ name: "Peak Milk", quantity: 1 }]);
 
@@ -509,7 +515,13 @@ describe("inventory:sell", () => {
       channel: "cash",
       lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
     });
-    expect(await seller.query(api.inventory.listSales, {})).toHaveLength(1);
+    expect(
+      (
+        await seller.query(api.inventory.listSales, {
+          paginationOpts: historyPage,
+        })
+      ).page,
+    ).toHaveLength(1);
     const formData = await seller.query(api.inventory.saleFormData, {});
     expect(formData.products).toHaveLength(1);
     // Seeded with 10 on the shelf, one just sold.
@@ -607,7 +619,11 @@ describe("credit sales", () => {
       1000,
     );
 
-    const [sale] = await admin.query(api.inventory.listSales, {});
+    const [sale] = (
+      await admin.query(api.inventory.listSales, {
+        paginationOpts: historyPage,
+      })
+    ).page;
     expect(sale).toMatchObject({
       customerName: "Ada Obi",
       paidKobo: 1000,
@@ -818,5 +834,128 @@ describe("credit sales", () => {
         paidAt: "2099-01-01T00:00:00.000Z",
       }),
     ).rejects.toThrow("in the future");
+  });
+});
+
+describe("sales history pagination", () => {
+  async function seedSales(t: Tester) {
+    const { admin, unitId, productId } = await seedShop(t);
+    await restock(admin, unitId, productId, 20);
+    const saleIds: string[] = [];
+    for (let i = 0; i < 3; i += 1) {
+      saleIds.push(
+        await admin.mutation(api.inventory.recordSale, {
+          channel: "cash",
+          lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+        }),
+      );
+    }
+    return { admin, unitId, productId, saleIds };
+  }
+
+  it("walks every row through the pagination cursor, newest first", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, saleIds } = await seedSales(t);
+
+    const first = await admin.query(api.inventory.listSales, {
+      paginationOpts: { numItems: 2, cursor: null },
+    });
+    expect(first.page).toHaveLength(2);
+    expect(first.isDone).toBe(false);
+    expect(first.page[0]._id).toBe(saleIds[2]);
+
+    const second = await admin.query(api.inventory.listSales, {
+      paginationOpts: { numItems: 2, cursor: first.continueCursor },
+    });
+    expect(second.page).toHaveLength(1);
+    expect(second.isDone).toBe(true);
+    expect(second.page[0]._id).toBe(saleIds[0]);
+
+    const seen = [...first.page, ...second.page].map((sale) => sale._id);
+    expect(seen).toEqual([...saleIds].reverse());
+  });
+
+  it("keeps sales outside the date range out of every page", async () => {
+    const t = convexTest(schema, modules);
+    const { admin } = await seedSales(t);
+
+    const past = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      start: day,
+      end: day,
+    });
+    expect(past.page).toHaveLength(0);
+    expect(past.isDone).toBe(true);
+
+    const everything = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      start: day,
+      end: new Date().toISOString().slice(0, 10),
+    });
+    expect(everything.page).toHaveLength(3);
+  });
+
+  it("keeps voided sales visible in the history", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId, saleIds } = await seedSales(t);
+
+    // A till sale with nothing paid has no money against it, so it can be
+    // voided. The host always takes the money up front, so create it directly.
+    const voidable = await t.run(async (ctx) =>
+      ctx.runMutation(components.inventory.sales.create, {
+        callerId: "admin-user",
+        channel: "cash",
+        amountPaidKobo: 0,
+        lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+      }),
+    );
+    await admin.mutation(api.inventory.voidSale, { saleId: voidable });
+
+    const history = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+    });
+    expect(history.page).toHaveLength(saleIds.length + 1);
+    const voided = history.page.find((sale) => sale._id === voidable);
+    expect(voided?.voided).toBe(true);
+  });
+
+  it("searches by customer name and item name on the server", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedSales(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: "customer-1",
+        firstName: "Ada",
+        lastName: "Obi",
+        occupation: "None",
+      });
+    });
+    await admin.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      amountPaidKobo: 0,
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+
+    const byItem = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      search: "peak",
+    });
+    expect(byItem.page).toHaveLength(4);
+    expect(byItem.isDone).toBe(true);
+
+    const byCustomer = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      search: "Ada",
+    });
+    expect(byCustomer.page).toHaveLength(1);
+    expect(byCustomer.page[0].customerName).toBe("Ada Obi");
+
+    const noMatch = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      search: "nothing-matches",
+    });
+    expect(noMatch.page).toHaveLength(0);
+    expect(noMatch.isDone).toBe(true);
   });
 });
