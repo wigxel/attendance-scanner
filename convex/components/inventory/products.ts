@@ -21,11 +21,23 @@ function ensureName(name: string) {
   return trimmed;
 }
 
+function ensureReorderLevel(value: number) {
+  if (!Number.isInteger(value) || value < 0) {
+    throw new Error("Reorder level must be a whole number, 0 or more.");
+  }
+}
+
 type UniqueCheck = {
   name: string;
   sku?: string;
   ignoreId?: Doc<"products">["_id"];
 };
+
+async function allProducts(
+  ctx: QueryCtx | MutationCtx,
+): Promise<Doc<"products">[]> {
+  return ctx.db.query("products").collect();
+}
 
 async function ensureUnique(ctx: QueryCtx | MutationCtx, args: UniqueCheck) {
   const products = await allProducts(ctx);
@@ -44,10 +56,6 @@ async function ensureUnique(ctx: QueryCtx | MutationCtx, args: UniqueCheck) {
     }
   }
 }
-
-const allProducts = async (
-  ctx: QueryCtx | MutationCtx,
-): Promise<Doc<"products">[]> => ctx.db.query("products").collect();
 
 export const list = query({
   args: {
@@ -88,9 +96,7 @@ export const create = mutation({
 
     const reorderLevel = args.reorderLevel ?? 4;
     const costPriceKobo = args.costPriceKobo ?? 0;
-    if (!Number.isInteger(reorderLevel) || reorderLevel < 0) {
-      throw new Error("Reorder level must be a whole number, 0 or more.");
-    }
+    ensureReorderLevel(reorderLevel);
     ensureKobo("Cost price", costPriceKobo);
     ensureKobo("Sell price", args.sellPriceKobo);
 
@@ -131,9 +137,7 @@ export const update = mutation({
     const name = ensureName(args.name);
     const unit = await ctx.db.get(args.baseUnitId);
     if (!unit) throw new Error("Base unit is required.");
-    if (!Number.isInteger(args.reorderLevel) || args.reorderLevel < 0) {
-      throw new Error("Reorder level must be a whole number, 0 or more.");
-    }
+    ensureReorderLevel(args.reorderLevel);
     ensureKobo("Cost price", args.costPriceKobo);
     ensureKobo("Sell price", args.sellPriceKobo);
 

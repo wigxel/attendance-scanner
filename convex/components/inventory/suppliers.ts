@@ -1,4 +1,6 @@
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { normalise } from "./units";
 
@@ -10,6 +12,19 @@ function ensureName(name: string) {
 
 function clean(value: string | undefined) {
   return value?.trim() || undefined;
+}
+
+async function ensureNoDuplicateName(
+  ctx: QueryCtx | MutationCtx,
+  name: string,
+  ignoreId?: Id<"suppliers">,
+) {
+  const suppliers = await ctx.db.query("suppliers").collect();
+  const duplicate = suppliers.some(
+    (other) =>
+      other._id !== ignoreId && normalise(other.name) === normalise(name),
+  );
+  if (duplicate) throw new Error(`A supplier named "${name}" already exists.`);
 }
 
 export const list = query({
@@ -43,12 +58,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const name = ensureName(args.name);
-    const suppliers = await ctx.db.query("suppliers").collect();
-    if (
-      suppliers.some((supplier) => normalise(supplier.name) === normalise(name))
-    ) {
-      throw new Error(`A supplier named "${name}" already exists.`);
-    }
+    await ensureNoDuplicateName(ctx, name);
 
     return await ctx.db.insert("suppliers", {
       name,
@@ -74,15 +84,7 @@ export const update = mutation({
     if (!supplier) throw new Error("Supplier not found.");
 
     const name = ensureName(args.name);
-    const suppliers = await ctx.db.query("suppliers").collect();
-    const duplicate = suppliers.some(
-      (other) =>
-        other._id !== args.supplierId &&
-        normalise(other.name) === normalise(name),
-    );
-    if (duplicate) {
-      throw new Error(`A supplier named "${name}" already exists.`);
-    }
+    await ensureNoDuplicateName(ctx, name, args.supplierId);
 
     await ctx.db.patch(args.supplierId, {
       name,

@@ -1,9 +1,13 @@
 import { v } from "convex/values";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { resolveUnit } from "./productUnits";
 import { ledgerFor, saleBalance } from "./salePayments";
 import { insertMovement } from "./stockMovements";
+
+// The ledger functions live in salePayments.ts and are re-exported so they
+// stay on the sales API surface alongside the receipt they belong to.
+export { recordPayment, reversePayment, writeOff } from "./salePayments";
 
 const channel = v.union(
   v.literal("cash"),
@@ -24,6 +28,12 @@ type LineInput = {
   unitId: Id<"units">;
   quantity: number;
   unitPriceKobo: number;
+};
+
+type ResolvedLine = LineInput & {
+  unitFactor: number;
+  quantityInBase: number;
+  lineTotalKobo: number;
 };
 
 function ensureKobo(label: string, value: number | undefined) {
@@ -70,13 +80,7 @@ export const create = mutation({
 
     // Resolve and validate every line before writing, so a bad line cannot
     // leave a partial sale behind even though the mutation is atomic.
-    const resolved: Array<
-      LineInput & {
-        unitFactor: number;
-        quantityInBase: number;
-        lineTotalKobo: number;
-      }
-    > = [];
+    const resolved: ResolvedLine[] = [];
 
     for (const line of args.lines) {
       const product = await ctx.db.get(line.productId);
@@ -233,21 +237,17 @@ export const setSaleCustomer = mutation({
   },
 });
 
-function groupLinesBySale(lines: Doc<"saleLines">[]) {
-  const bySale = new Map<string, Doc<"saleLines">[]>();
+function groupBySale<T extends { saleId: string }>(rows: T[]) {
+  const bySale = new Map<string, T[]>();
 
-  for (const line of lines) {
-    const group = bySale.get(line.saleId) ?? [];
-    group.push(line);
-    bySale.set(line.saleId, group);
+  for (const row of rows) {
+    const group = bySale.get(row.saleId) ?? [];
+    group.push(row);
+    bySale.set(row.saleId, group);
   }
 
   return bySale;
 }
-
-// The ledger functions live in salePayments.ts and are re-exported so they
-// stay on the sales API surface alongside the receipt they belong to.
-export { recordPayment, reversePayment, writeOff } from "./salePayments";
 
 export const list = query({
   args: {},
@@ -258,13 +258,8 @@ export const list = query({
       ctx.db.query("salePayments").collect(),
     ]);
 
-    const linesBySale = groupLinesBySale(lines);
-    const paymentsBySale = new Map<string, Doc<"salePayments">[]>();
-    for (const payment of payments) {
-      const group = paymentsBySale.get(payment.saleId) ?? [];
-      group.push(payment);
-      paymentsBySale.set(payment.saleId, group);
-    }
+    const linesBySale = groupBySale(lines);
+    const paymentsBySale = groupBySale(payments);
 
     const products = await ctx.db.query("products").collect();
     const productNames = new Map(
