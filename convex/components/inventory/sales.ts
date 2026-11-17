@@ -7,6 +7,10 @@ import { resolveUnit } from "./productUnits";
 import { ledgerFor, saleBalance } from "./salePayments";
 import { insertMovement } from "./stockMovements";
 
+// The ledger functions live in salePayments.ts and are re-exported so they
+// stay on the sales API surface alongside the receipt they belong to.
+export { recordPayment, reversePayment, writeOff } from "./salePayments";
+
 const channel = v.union(
   v.literal("cash"),
   v.literal("pos"),
@@ -26,6 +30,12 @@ type LineInput = {
   unitId: Id<"units">;
   quantity: number;
   unitPriceKobo: number;
+};
+
+type ResolvedLine = LineInput & {
+  unitFactor: number;
+  quantityInBase: number;
+  lineTotalKobo: number;
 };
 
 function ensureKobo(label: string, value: number | undefined) {
@@ -72,13 +82,7 @@ export const create = mutation({
 
     // Resolve and validate every line before writing, so a bad line cannot
     // leave a partial sale behind even though the mutation is atomic.
-    const resolved: Array<
-      LineInput & {
-        unitFactor: number;
-        quantityInBase: number;
-        lineTotalKobo: number;
-      }
-    > = [];
+    const resolved: ResolvedLine[] = [];
 
     for (const line of args.lines) {
       const product = await ctx.db.get(line.productId);
@@ -301,10 +305,6 @@ async function salesIn(
     .order("desc")
     .collect();
 }
-
-// The ledger functions live in salePayments.ts and are re-exported so they
-// stay on the sales API surface alongside the receipt they belong to.
-export { recordPayment, reversePayment, writeOff } from "./salePayments";
 
 export const list = query({
   args: {

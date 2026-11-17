@@ -4,6 +4,7 @@ import {
   Banknote,
   Boxes,
   ChartNoAxesCombined,
+  HandCoins,
   Package,
   ReceiptText,
   Ruler,
@@ -21,6 +22,11 @@ const tabs = [
     href: "/admin/inventory/cash",
     icon: Banknote,
     manageOnly: true,
+  },
+  {
+    name: "Receivables",
+    href: "/admin/inventory/receivables",
+    icon: HandCoins,
   },
   {
     name: "Metrics",

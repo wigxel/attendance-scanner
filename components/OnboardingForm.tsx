@@ -9,6 +9,7 @@ import * as z from "zod";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getPendingCheckIn } from "@/hooks/pending-checkin";
+import { buildBirthday, daysInMonth, MONTHS } from "@/lib/birthday";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
 import {
@@ -46,9 +47,17 @@ const onboardingSchema = z.object({
   occupation: z.string({
     required_error: "Please select an occupation",
   }),
+  birthMonth: z.string().min(1, { message: "Please select a birth month" }),
+  birthDay: z.string().min(1, { message: "Please select a birth day" }),
 });
 
 type OnboardingFormValues = z.infer<typeof onboardingSchema>;
+
+/** Padded "DD" options valid for the selected month (Feb offers 1-29). */
+const dayOptions = (month: string) =>
+  Array.from({ length: daysInMonth(month) }, (_, i) =>
+    String(i + 1).padStart(2, "0"),
+  );
 
 function OnboardingForm({
   initial,
@@ -70,6 +79,8 @@ function OnboardingForm({
         lastName: "",
         phoneNumber: "+234",
         occupation: "",
+        birthMonth: "",
+        birthDay: "",
         ...initial,
       }),
       [initial],
@@ -84,6 +95,7 @@ function OnboardingForm({
         lastName: values.lastName,
         phoneNumber: values.phoneNumber,
         occupation: values.occupation as Id<"occupations"> | "None",
+        birthday: buildBirthday(values.birthMonth, values.birthDay),
       });
       toast.success("Profile created successfully");
 
@@ -201,6 +213,75 @@ function OnboardingForm({
           )}
         />
 
+        <div className="grid grid-cols-2 gap-3">
+          <FormField
+            control={form.control}
+            name="birthMonth"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="sr-only">Birth month</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    // The day list shrinks with the month; drop a now-invalid
+                    // day so the user re-picks.
+                    if (
+                      Number(form.getValues("birthDay")) > daysInMonth(value)
+                    ) {
+                      form.setValue("birthDay", "", { shouldValidate: true });
+                    }
+                  }}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Birth month" />
+                    </SelectTrigger>
+                  </FormControl>
+
+                  <SelectContent>
+                    {MONTHS.map((month) => (
+                      <SelectItem key={month.value} value={month.value}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="birthDay"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="sr-only">Birth day</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Birth day" />
+                    </SelectTrigger>
+                  </FormControl>
+
+                  <SelectContent>
+                    {dayOptions(form.watch("birthMonth") || "01").map((day) => (
+                      <SelectItem key={day} value={day}>
+                        {day}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <button
           className={cn(
             "bg-foreground text-background rounded-md p-2 h-10",
@@ -223,7 +304,9 @@ export default function OnboardingForm_(
 
   React.useEffect(() => {
     if (!profile) return;
-    if (profile?.occupation !== "None") {
+    // Complete only when both onboarding fields are set. A profile with an
+    // occupation but no birthday is here to add the birthday.
+    if (profile.occupation !== "None" && profile.birthday) {
       router.push("/");
     }
   }, [profile, router]);
