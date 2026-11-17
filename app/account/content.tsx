@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 import { BirthdayPrompt } from "@/components/BirthdayPrompt";
 import {
+  CheckedInConfirmation,
   BirthdayCheckInConfetti,
   CheckInCard,
   NotRegistered,
@@ -94,6 +95,8 @@ export function Content({ gotoAdmin }: ContentProps) {
         <BirthdayPrompt />
 
         <SelfCheckInStatus />
+
+        <CheckedInConfirmation />
 
         <NotRegistered>
           <CheckInCard />
