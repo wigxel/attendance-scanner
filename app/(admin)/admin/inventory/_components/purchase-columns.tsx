@@ -3,11 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import type { PurchaseSummary } from "@/convex/inventory";
-import { currencyFormatter } from "@/lib/currency.helpers";
-
-function formatKobo(value: number) {
-  return currencyFormatter.format(value / 100);
-}
+import { formatKobo } from "@/lib/currency.helpers";
 
 export const purchaseColumns: ColumnDef<PurchaseSummary>[] = [
   {

@@ -2,11 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import type { PurchaseLine } from "@/convex/inventory";
-import { currencyFormatter } from "@/lib/currency.helpers";
-
-function formatKobo(value: number) {
-  return currencyFormatter.format(value / 100);
-}
+import { formatKobo } from "@/lib/currency.helpers";
 
 export const purchaseLineColumns: ColumnDef<PurchaseLine>[] = [
   {

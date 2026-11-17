@@ -2,15 +2,8 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Receivable } from "@/convex/inventory";
+import { formatKoboPlain } from "@/lib/currency.helpers";
 import { serialNo } from "@/lib/data.helpers";
-
-const amountFormatter = new Intl.NumberFormat("en-NG", {
-  minimumFractionDigits: 2,
-});
-
-function formatAmount(kobo: number) {
-  return amountFormatter.format(kobo / 100);
-}
 
 export function receivableSearchText(receivable: Receivable) {
   return `${receivable.customerName ?? ""} ${receivable.customerId}`;
@@ -50,7 +43,7 @@ export const receivablesColumns: ColumnDef<Receivable>[] = [
     accessorKey: "totalOwedKobo",
     cell: ({ row }) => (
       <span className="block whitespace-nowrap text-right tabular-nums">
-        {formatAmount(row.original.totalOwedKobo)}
+        {formatKoboPlain(row.original.totalOwedKobo)}
       </span>
     ),
   },

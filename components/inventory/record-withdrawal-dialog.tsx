@@ -33,6 +33,11 @@ function todayInputValue() {
   return new Date().toLocaleDateString("en-CA");
 }
 
+/** Yesterday as YYYY-MM-DD — the oldest date a withdrawal may carry. */
+function yesterdayInputValue() {
+  return new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString("en-CA");
+}
+
 type WithdrawalFormValues = {
   amount: string;
   withdrawnAt: string;
@@ -68,6 +73,12 @@ const withdrawalFormSchema = (cashInHandKobo: number) =>
           code: z.ZodIssueCode.custom,
           path: ["withdrawnAt"],
           message: "That date is in the future.",
+        });
+      } else if (values.withdrawnAt < yesterdayInputValue()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["withdrawnAt"],
+          message: "Only today and yesterday can be recorded.",
         });
       }
     });
@@ -157,7 +168,12 @@ export function RecordWithdrawalDialog({
                 <FormItem>
                   <FormLabel>Date</FormLabel>
                   <FormControl>
-                    <Input type="date" max={todayInputValue()} {...field} />
+                    <Input
+                      type="date"
+                      min={yesterdayInputValue()}
+                      max={todayInputValue()}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

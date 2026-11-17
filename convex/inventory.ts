@@ -1,6 +1,7 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import { components } from "./_generated/api";
+import { formatKobo } from "../lib/currency.helpers";
+import { components, internal } from "./_generated/api";
 import {
   type MutationCtx,
   mutation,
@@ -163,11 +164,10 @@ export type CashWithdrawalRow = Doc<"cashWithdrawals"> & {
   reversed: boolean;
 };
 
-/** The Cash tab header and chart: drawer figure plus range figures. */
+/** The Cash tab header: drawer figure plus range figures. */
 export type CashOverview = {
   cashInHandKobo: number;
   withdrawnInRangeKobo: number;
-  daily: Array<{ day: string; totalKobo: number }>;
 };
 
 export type SaleFormProduct = {
@@ -1226,10 +1226,12 @@ export const recordCashWithdrawal = mutation({
   },
   handler: async (ctx, args) => {
     const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
-    return await ctx.runMutation(
+    const withdrawalId = await ctx.runMutation(
       components.inventory.cashWithdrawals.recordWithdrawal,
       { ...args, callerId: caller },
     );
+    await notifyCashWithdrawal(ctx, { withdrawalId, callerId: caller });
+    return withdrawalId;
   },
 });
 
@@ -1237,12 +1239,73 @@ export const reverseCashWithdrawal = mutation({
   args: { withdrawalId: v.string(), note: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const caller = await requireCallerId(ctx);
-    return await ctx.runMutation(
+    const reversalId = await ctx.runMutation(
       components.inventory.cashWithdrawals.reverseWithdrawal,
       { ...args, callerId: caller },
     );
+    await notifyCashWithdrawal(ctx, {
+      withdrawalId: reversalId,
+      callerId: caller,
+    });
+    return reversalId;
   },
 });
+
+/**
+ * Tell every admin about a cash drawer event, minus the person who did it.
+ * Runs inline but only queues (send never blocks on a network call), and a
+ * failing fan-out must not fail a withdrawal that already hit the ledger.
+ */
+type CashWithdrawalEvent = { withdrawalId: string; callerId: string };
+
+async function notifyCashWithdrawal(
+  ctx: MutationCtx,
+  args: CashWithdrawalEvent,
+) {
+  try {
+    const row = (await ctx.runQuery(
+      components.inventory.cashWithdrawals.getById,
+      // The component returns its row as `any`; this is its shape.
+      { id: args.withdrawalId },
+    )) as { amountKobo: number; kind: "withdrawal" | "reversal" } | null;
+    if (!row) return;
+
+    const recipients = await ctx.runQuery(
+      internal.notifications.recipientsByRole,
+      { roleName: "admin" },
+    );
+    const callerKey = `user:${args.callerId}`;
+    const amount = formatKobo(row.amountKobo);
+    const name = await profileName(ctx, args.callerId);
+    const [title, body] =
+      row.kind === "reversal"
+        ? ["Withdrawal reversed", `${name} put ${amount} back in the drawer.`]
+        : ["Cash withdrawal", `${name} took ${amount} from the drawer.`];
+
+    for (const recipientKey of recipients) {
+      if (recipientKey === callerKey) continue;
+      try {
+        await ctx.runMutation(internal.notifications.send, {
+          recipientKey,
+          channels: ["inapp", "push"],
+          title,
+          body,
+          url: "/admin/inventory/cash",
+          // Dedupe is global by key, so the key must be per recipient —
+          // otherwise only the first admin in the fan-out hears about it.
+          dedupeKey: `${args.withdrawalId}:${recipientKey}`,
+          severity: "info",
+        });
+      } catch (error) {
+        // One bad recipient must not swallow the rest of the fan-out.
+        console.error("cash withdrawal alert failed", recipientKey, error);
+      }
+    }
+  } catch (error) {
+    // The ledger row is already written; the alert is best-effort.
+    console.error("cash withdrawal fan-out failed", error);
+  }
+}
 
 /** Header figures and the daily chart for the Cash tab. */
 export const cashOverview = query({

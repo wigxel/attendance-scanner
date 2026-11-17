@@ -1180,7 +1180,6 @@ describe("cash withdrawals", () => {
     const after = await t.query(api.cashWithdrawals.summary, window);
     expect(after.cashInHandKobo).toBe(50000);
     expect(after.withdrawnInRangeKobo).toBe(150000);
-    expect(after.daily).toHaveLength(1);
   });
 
   it("refuses a withdrawal bigger than the cash in-hand", async () => {
@@ -1212,6 +1211,31 @@ describe("cash withdrawals", () => {
         withdrawnAt: new Date(Date.parse("2099-01-01")).toISOString(),
       }),
     ).rejects.toThrow("future");
+  });
+
+  it("allows a withdrawal dated yesterday but not older", async () => {
+    const t = convexTest(schema, modules);
+    await seedCashSale(t);
+
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    await expect(
+      t.mutation(api.cashWithdrawals.recordWithdrawal, {
+        callerId: "admin",
+        amountKobo: 500,
+        withdrawnAt: yesterday,
+      }),
+    ).resolves.toBeDefined();
+
+    const threeDaysAgo = new Date(
+      Date.now() - 3 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    await expect(
+      t.mutation(api.cashWithdrawals.recordWithdrawal, {
+        callerId: "admin",
+        amountKobo: 500,
+        withdrawnAt: threeDaysAgo,
+      }),
+    ).rejects.toThrow("back one day");
   });
 
   it("reverses a withdrawal exactly once and pays it back", async () => {

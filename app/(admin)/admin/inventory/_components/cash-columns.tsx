@@ -1,14 +1,98 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { useMutation } from "convex/react";
 import { Undo2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { api } from "@/convex/_generated/api";
 import type { CashWithdrawalRow } from "@/convex/inventory";
+import { formatKoboPlain } from "@/lib/currency.helpers";
 
-function formatAmount(kobo: number) {
-  return new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2 }).format(
-    kobo / 100,
+type RevertWithdrawalAlertProps = {
+  withdrawalId: string;
+  children: React.ReactNode;
+};
+
+/** One row's undo: opens its own confirm, runs the reversal, toasts the result. */
+function RevertWithdrawalAlert({
+  withdrawalId,
+  children,
+}: RevertWithdrawalAlertProps) {
+  const reverseWithdrawal = useMutation(api.inventory.reverseCashWithdrawal);
+  const [isReversing, setIsReversing] = useState(false);
+
+  const handleReverse = async () => {
+    setIsReversing(true);
+    try {
+      await reverseWithdrawal({ withdrawalId });
+      toast.success("Withdrawal reversed");
+    } catch (error) {
+      toast.error("Could not reverse withdrawal", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setIsReversing(false);
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+
+      <AlertDialogContent>
+        <AlertDialogHeader className="gap-4">
+          <AlertDialogTitle>Reverse withdrawal?</AlertDialogTitle>
+          <AlertDialogDescription className="text-pretty font-thin">
+            This action will mark the withdrawal as reversed in the transaction
+            history. The withdrawn amount will be added back to the inventory
+            cash in-hand balance.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter className="*:flex-1">
+          <AlertDialogCancel disabled={isReversing}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            onClick={handleReverse}
+            disabled={isReversing}
+          >
+            {isReversing ? "Reversing..." : "Reverse"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
+}
+
+/** "16 Nov 2026, 3:35 PM" — only the AM/PM marker is uppercased. */
+function formatDateTime(iso: string) {
+  const parts = new Intl.DateTimeFormat("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(new Date(iso));
+
+  return parts
+    .map((part) =>
+      part.type === "dayPeriod" ? part.value.toUpperCase() : part.value,
+    )
+    .join("");
 }
 
 function formatDate(iso: string) {
@@ -19,17 +103,25 @@ function formatDate(iso: string) {
   });
 }
 
-export function cashColumns(
-  onReverse: (withdrawalId: string) => void,
-): ColumnDef<CashWithdrawalRow>[] {
+export function cashColumns(): ColumnDef<CashWithdrawalRow>[] {
   return [
     {
       id: "withdrawnAt",
       header: "Date",
       accessorKey: "withdrawnAt",
       cell: ({ row }) => (
-        <span className="whitespace-nowrap">
+        <span className="whitespace-nowrap uppercase">
           {formatDate(row.original.withdrawnAt)}
+        </span>
+      ),
+    },
+    {
+      id: "createdAt",
+      header: "Recorded",
+      accessorKey: "createdAt",
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap">
+          {formatDateTime(row.original.createdAt)}
         </span>
       ),
     },
@@ -50,6 +142,7 @@ export function cashColumns(
     {
       id: "amountKobo",
       header: () => <span className="block text-right">Amount (₦)</span>,
+      meta: { label: "Amount" },
       accessorKey: "amountKobo",
       cell: ({ row }) => {
         const isReversal = row.original.kind === "reversal";
@@ -60,7 +153,7 @@ export function cashColumns(
             }`}
           >
             {isReversal ? "−" : ""}
-            {formatAmount(row.original.amountKobo)}
+            {formatKoboPlain(row.original.amountKobo)}
           </span>
         );
       },
@@ -68,18 +161,20 @@ export function cashColumns(
     {
       id: "actions",
       header: "",
+      meta: { label: "Actions" },
       cell: ({ row }) =>
         row.original.kind === "withdrawal" && !row.original.reversed ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            aria-label="Reverse withdrawal"
-            onClick={() => onReverse(row.original._id)}
-          >
-            <Undo2 className="size-3.5" />
-          </Button>
+          <RevertWithdrawalAlert withdrawalId={row.original._id}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              aria-label="Reverse withdrawal"
+            >
+              <Undo2 className="size-3.5" />
+            </Button>
+          </RevertWithdrawalAlert>
         ) : null,
     },
   ];

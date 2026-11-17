@@ -16,16 +16,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Receivable, SaleSummary } from "@/convex/inventory";
 import { usePrivilege } from "@/hooks/usePrivilege";
-import { currencyFormatter } from "@/lib/currency.helpers";
+import { formatKobo } from "@/lib/currency.helpers";
 import { SaleStatusBadge } from "./sale-columns";
 
 const nairaFormatter = new Intl.NumberFormat("en-NG", {
   minimumFractionDigits: 2,
 });
-
-function formatKobo(value: number) {
-  return currencyFormatter.format(value / 100);
-}
 
 type DebtSheetProps = {
   customer: Receivable | null;

@@ -50,7 +50,7 @@ declare module "@tanstack/react-table" {
 
 // The visibility dropdown cannot render a JSX header, so fall back through
 // string headers, an explicit meta label, then a prettified column id.
-function columnLabel<T extends RowData>(column: Column<T, unknown>) {
+export function columnLabel<T extends RowData>(column: Column<T, unknown>) {
   const { header, meta } = column.columnDef;
   if (typeof header === "string" && header) return header;
   if (meta?.label) return meta.label;

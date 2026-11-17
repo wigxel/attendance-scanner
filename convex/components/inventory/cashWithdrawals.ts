@@ -25,10 +25,17 @@ function day(iso: string) {
   return new Date(iso).toISOString().slice(0, 10);
 }
 
-/** A withdrawal is money handed out of the drawer, never future-dated. */
+/** A withdrawal is dated today or yesterday — never future, never older. */
 function ensureWithdrawnAtInWindow(withdrawnAt: string, now: string) {
   if (day(withdrawnAt) > day(now)) {
     throw new Error("A withdrawal cannot be dated in the future.");
+  }
+
+  const yesterday = new Date(new Date(now).getTime() - 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  if (day(withdrawnAt) < yesterday) {
+    throw new Error("A withdrawal can only be dated back one day.");
   }
 }
 
@@ -73,8 +80,8 @@ export function cashInHandKobo(
 }
 
 /**
- * One read for the Cash tab: the drawer figure, the range total and the
- * per-day series for the chart. All three come from the same ledgers.
+ * One read for the Cash tab: the drawer figure and the range total. Both come
+ * from the same ledgers.
  */
 export const summary = query({
   args: { start: v.string(), end: v.string() },
@@ -88,25 +95,6 @@ export const summary = query({
       (row) => row.withdrawnAt >= start && row.withdrawnAt <= end,
     );
 
-    const byDay = new Map<string, number>();
-    for (const row of inRange) {
-      if (row.kind !== "withdrawal") continue;
-      const key = day(row.withdrawnAt);
-      byDay.set(key, (byDay.get(key) ?? 0) + row.amountKobo);
-    }
-    // A reversal cancels the row it points at, and only that row.
-    for (const row of inRange) {
-      if (row.kind !== "reversal") continue;
-      const target = withdrawals.find(
-        (candidate) => candidate._id === row.reversesId,
-      );
-      if (target?.kind === "withdrawal") {
-        const key = day(target.withdrawnAt);
-        const current = byDay.get(key);
-        if (current !== undefined) byDay.set(key, current - row.amountKobo);
-      }
-    }
-
     return {
       cashInHandKobo: cashInHandKobo(payments, withdrawals),
       withdrawnInRangeKobo: inRange.reduce(
@@ -116,9 +104,6 @@ export const summary = query({
             : sum - row.amountKobo,
         0,
       ),
-      daily: [...byDay.entries()]
-        .map(([day, totalKobo]) => ({ day, totalKobo }))
-        .sort((a, b) => a.day.localeCompare(b.day)),
     };
   },
 });
@@ -135,7 +120,17 @@ export const range = query({
   },
 });
 
-/** Money handed out of the drawer. Refused when the drawer cannot cover it. */
+/** One ledger row by id, for the host's notification fan-out. */
+export const getById = query({
+  args: { id: v.id("cashWithdrawals") },
+  handler: async (ctx, { id }) => {
+    return await ctx.db.get(id);
+  },
+});
+
+/**
+ * Money handed out of the drawer. Refused when the drawer cannot cover it.
+ */
 export const recordWithdrawal = mutation({
   args: {
     callerId: v.string(),

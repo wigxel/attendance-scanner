@@ -1,12 +1,10 @@
 "use client";
 
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { usePaginatedQuery, useQuery } from "convex/react";
 import { format, parseISO } from "date-fns";
 import { Plus } from "lucide-react";
 import { parseAsIsoDate, useQueryStates } from "nuqs";
 import { useDeferredValue, useState } from "react";
-import { Bar, BarChart, XAxis } from "recharts";
-import { toast } from "sonner";
 import {
   EmptyStateContent,
   EmptyStateDescription,
@@ -17,22 +15,12 @@ import { RecordWithdrawalDialog } from "@/components/inventory/record-withdrawal
 import { StdTable } from "@/components/std-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
+import { formatKobo } from "@/lib/currency.helpers";
 import { cashColumns } from "./cash-columns";
 
 const PAGE_SIZE = 100;
-
-function formatKobo(value: number) {
-  return new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2 }).format(
-    value / 100,
-  );
-}
 
 export function CashContent() {
   const [query, setQuery] = useQueryStates({
@@ -75,24 +63,7 @@ export function CashContent() {
     { initialNumItems: PAGE_SIZE },
   );
 
-  const reverseWithdrawal = useMutation(api.inventory.reverseCashWithdrawal);
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  const handleReverse = async (withdrawalId: string) => {
-    const ok = window.confirm(
-      "Reverse this withdrawal? It stays in the history and the money counts back in.",
-    );
-    if (!ok) return;
-
-    try {
-      await reverseWithdrawal({ withdrawalId });
-      toast.success("Withdrawal reversed");
-    } catch (error) {
-      toast.error("Could not reverse withdrawal", {
-        description: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  };
 
   if (overview === undefined || results === undefined) {
     return <Skeleton className="h-[60svh] w-full" />;
@@ -130,47 +101,11 @@ export function CashContent() {
               </p>
             </div>
           </div>
-
-          {overview.daily.length > 0 ? (
-            <div className="h-24">
-              <ChartContainer
-                config={{
-                  withdrawn: { label: "Withdrawn", color: "#f59e0b" },
-                }}
-              >
-                <BarChart
-                  data={overview.daily}
-                  margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
-                >
-                  <XAxis dataKey="day" hide />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        labelFormatter={(value) =>
-                          format(
-                            new Date(`${value as string}T00:00:00`),
-                            "d MMM, yy",
-                          )
-                        }
-                        formatter={(value) => `₦${formatKobo(value as number)}`}
-                      />
-                    }
-                    cursor={false}
-                  />
-                  <Bar
-                    dataKey="totalKobo"
-                    fill="var(--color-withdrawn)"
-                    radius={2}
-                  />
-                </BarChart>
-              </ChartContainer>
-            </div>
-          ) : null}
         </CardContent>
       </Card>
 
       <StdTable.Root
-        columns={cashColumns(handleReverse)}
+        columns={cashColumns()}
         data={results}
         searchTerm={debouncedSearch}
         onSearchChange={setSearch}
