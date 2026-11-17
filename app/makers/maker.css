@@ -1,8 +1,12 @@
 @import "../globals.css";
 
+:root {
+  --sticky-top: calc(var(--header-height) + (--spacing(12)));
+}
+
 @theme inline {
   /* others */
-  --color-brand-maker: var(--color-orange-500);
+  --color-brand-maker: #f4522f;
 
   /* font */
   --font-heading: Safiro;
@@ -61,6 +65,34 @@
     animation-range: entry 0% entry 100%;
     /* matches the old quad ease-in (p^2) */
     animation-timing-function: cubic-bezier(0.55, 0.085, 0.68, 0.53);
+  }
+}
+
+/* Apply CTA dodges the sticky "Tribes" heading: it waits off-screen left,
+   dashes into its spot and settles before the heading's lane reaches it.
+   Scroll-driven so it runs on the compositor and replays on scroll-back.
+   No scroll timelines → button just sits in place (same fallback as the
+   InSpace logo). */
+@keyframes apply-dodge-in {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .apply-dodge {
+    animation: apply-dodge-in both;
+    animation-timeline: view(block);
+    /* in place by the time the button climbs to ~25% viewport height,
+           above the sticky heading's lane — retune the end % if the heading
+           grows */
+    animation-range: entry 0% cover 60%;
+    /* hold, then dash, then land soft — the "getting out of the way" feel */
+    animation-timing-function: cubic-bezier(0.8, 0, 0.2, 1);
   }
 }
 

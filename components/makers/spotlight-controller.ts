@@ -43,7 +43,8 @@ type SpotlightRefs = {
   debugLine: RefObject<HTMLDivElement | null>;
   counter?: RefObject<HTMLDivElement | null>;
   activeName?: RefObject<HTMLDivElement | null>;
-  meta?: ReadonlyArray<{ label: string; color: string }>;
+  activeTitle?: RefObject<HTMLDivElement | null>;
+  meta?: ReadonlyArray<{ label: string; color: string; jobTitle: string }>;
   count: number;
   debug: boolean;
 };
@@ -216,6 +217,14 @@ export function createSpotlightController(refs: SpotlightRefs) {
       paint(nameEl, value, () => {
         nameEl.textContent = meta.label;
         nameEl.style.setProperty("--active-tribe-color", meta.color);
+      });
+    }
+
+    // The active leader's job title, same diff-gated paint as the name.
+    const titleEl = refs.activeTitle?.current;
+    if (titleEl && meta) {
+      paint(titleEl, meta.jobTitle, () => {
+        titleEl.textContent = meta.jobTitle;
       });
     }
     lastSnapshot = snapshot;

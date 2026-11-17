@@ -3,9 +3,7 @@ import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "@/lib/utils";
 
 const RADIUS = 40; // in viewBox units, out of 100
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-const ARC_SHARE = 0.35; // the label runs along this much of the circle
-const ARC_LENGTH = CIRCUMFERENCE * ARC_SHARE;
+const ARC_SHARE = 0.45; // the label runs along this much of the circle
 const LABEL_SIZE = 5;
 
 // arc centred on 12 o'clock, running clockwise
@@ -47,9 +45,9 @@ export function CircularButton({
       type="button"
       aria-label={text}
       className={cn(
-        "relative w-[15vw] cursor-pointer aspect-square rounded-full flex items-center justify-center",
+        "group relative w-[15vw] cursor-pointer aspect-square rounded-full flex items-center justify-center",
         {
-          "bg-brand-maker text-black/60": variant === "default",
+          "bg-brand-maker text-background-lv1": variant === "default",
           "text-brand-maker bg-transparent hover:bg-white/5 border-dashed border border-white/25":
             variant === "outline",
         },
@@ -73,7 +71,7 @@ export function CircularButton({
       />
 
       {text ? (
-        <div className="*:animate-spin *:animation-duration-[30s]">
+        <div className="group-hover:*:paused *:animate-spin *:animation-duration-[30s]">
           <svg
             viewBox="0 0 100 100"
             aria-hidden
@@ -93,8 +91,7 @@ export function CircularButton({
                 href={`#${pathId}`}
                 startOffset="50%"
                 textAnchor="middle"
-                textLength={ARC_LENGTH}
-                lengthAdjust="spacing"
+                letterSpacing={2}
               >
                 {text}
               </textPath>
@@ -120,8 +117,7 @@ export function CircularButton({
                 href={`#${pathId}`}
                 startOffset="50%"
                 textAnchor="middle"
-                textLength={ARC_LENGTH}
-                lengthAdjust="spacing"
+                letterSpacing={2}
               >
                 {text}
               </textPath>

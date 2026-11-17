@@ -3,9 +3,7 @@ import { motion, useInView } from "motion/react";
 import Image from "next/image";
 import React, { type RefObject, useEffect, useRef, useState } from "react";
 import useEvent from "react-use-event-hook";
-import { heading } from "@/app/font";
 import { RandomText } from "@/components/creative/random-text";
-import { cn } from "@/lib/utils";
 
 const testimonies = [
   {
@@ -104,7 +102,7 @@ function TestimonyItem({ testimony }: TestimonyItemProps) {
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Accounted for
     <div
-      className="flex-none w-[384px] border border-[#3FD6FC]/10 shadow-md snap-center flex flex-col aspect-384/492"
+      className="flex-none w-[384px] border border-border shadow-md snap-center flex flex-col aspect-384/492"
       onMouseEnter={() => {
         setHovering(true);
       }}
@@ -122,7 +120,7 @@ function TestimonyItem({ testimony }: TestimonyItemProps) {
         {testimony.comment}
       </p>
 
-      <figure className="flex border-t pointer-events-none border-[#3FD6FC]/10">
+      <figure className="flex border-t pointer-events-none border-border">
         <Image
           src={testimony.avatar}
           width={72}
@@ -131,7 +129,7 @@ function TestimonyItem({ testimony }: TestimonyItemProps) {
           className="w-16 h-16 shrink-0 object-cover"
         />
 
-        <figcaption className="text-start flex border-l border-[#3FD6FC]/10 w-full flex-col px-4 justify-center relaive scanline-container">
+        <figcaption className="text-start flex border-l border-border w-full flex-col px-4 bg-transparent justify-center">
           <p className="font-semibold">{testimony.name}</p>
           <div className="text-base relative overflow-y-clip font-thin">
             <p className="invisible not-sr-only ">{testimony.title}</p>

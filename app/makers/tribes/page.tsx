@@ -1,5 +1,5 @@
 import { heading } from "@/app/font";
-import { TribesDetail } from "@/components/makers/tribes";
+import { TribesDetail } from "@/components/makers/tribes-detail";
 import { cn } from "@/lib/utils";
 
 // /makers/tribes — the verification path behind the landing teaser:

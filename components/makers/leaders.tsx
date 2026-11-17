@@ -1,10 +1,8 @@
 "use client";
 
-import { PlusIcon } from "lucide-react";
 import Image from "next/image";
 import { type ReactNode, type RefObject, useLayoutEffect, useRef } from "react";
 import { CountValue } from "@/components/creative/counter-value";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 // Calibration knobs and the imperative spotlight controller live in
 // ./spotlight-controller; this file renders the shell they drive.
@@ -20,6 +18,7 @@ type TribeId = (typeof TRIBES)[number]["id"];
 
 type Leader = {
   tribeName: string; // display name, mirrors TRIBES[i].name
+  jobTitle: string; // role shown next to the tribe label
   bio: string; // one-sentence draft; owner edits per person
   shortBio?: ReactNode; // longer bio (JSX), owner-supplied
   name: string;
@@ -35,6 +34,7 @@ const LEADERS: Array<Leader & { tribe: TribeId }> = [
     tribe: "tribe-web-dev",
     tribeName: "Software Engineering",
     name: "Joseph Julius Owonvwon",
+    jobTitle: "Software Engineer",
     bio: "Builds and reviews the community's websites and internal tools, and signs off client work before it ships.",
     photo: "/images/leaders/joseph-owonvwon.webp",
     tribeImage: "/images/tribes/tribe-web-dev.svg",
@@ -45,6 +45,7 @@ const LEADERS: Array<Leader & { tribe: TribeId }> = [
     tribe: "tribe-design",
     tribeName: "Design",
     name: "Henry Ephriam",
+    jobTitle: "3D Animator",
     bio: "Designs the community's identity and interfaces; keeps every maker project looking considered, from event posters to product screens.",
     photo: "/images/leaders/henry__.webp",
     tribeImage: "/images/tribes/tribe-design.svg",
@@ -55,6 +56,7 @@ const LEADERS: Array<Leader & { tribe: TribeId }> = [
     tribe: "tribe-design",
     tribeName: "Design",
     name: "Divine Igiran",
+    jobTitle: "Creative Designer/Architect",
     bio: "Works across interface and print; turns rough maker ideas into clear layouts, screens and brand materials people can use.",
     photo: "/images/leaders/divine.webp",
     tribeImage: "/images/tribes/tribe-design.svg",
@@ -65,6 +67,7 @@ const LEADERS: Array<Leader & { tribe: TribeId }> = [
     tribe: "tribe-additive-manufacturing",
     tribeName: "Additive Manufacturing",
     name: "Dr. Fidelis Saleh",
+    jobTitle: "Mechanical Engineer",
     bio: "Leads the Additive Manufacturing tribe; reviews printed parts against one question — made for real use, or for display.",
     photo: "/images/leaders/fidelis-live.webp",
     tribeImage: "/images/tribes/tribe-additive-manufacturing.svg",
@@ -95,10 +98,11 @@ const LEADERS: Array<Leader & { tribe: TribeId }> = [
   },
   {
     tribe: "tribe-additive-manufacturing",
-    tribeName: "Additive Manufacturing",
+    tribeName: "Manufacturing",
     name: "Joseph Ogbonna",
+    jobTitle: "Electronics Engineer",
     photo: "/images/leaders/joseph-ogbonna.webp",
-    bio: "Prototypes enclosures and hardware alongside the tribe; iterates prints until they survive real handling, not just the print bed.",
+    bio: "Designs and programs hardware, from initial concept to functional prototypes, ensuring reliable and robust electronic solutions for the community.",
     tribeImage: "/images/tribes/tribe-additive-manufacturing.svg",
     tier: "Verified",
     proof: [
@@ -112,6 +116,7 @@ const LEADERS: Array<Leader & { tribe: TribeId }> = [
     tribe: "tribe-ml-ai",
     tribeName: "ML/AI",
     name: "Mark Odike",
+    jobTitle: "Machine Learning Engineer",
     bio: "Runs AI project nights and reviews model work; what ships is measured against a baseline, not against a demo.",
     photo: "/images/leaders/joseph-owonvwon.webp",
     tribeImage: "/images/tribes/tribe-ml-ai.svg",
@@ -122,6 +127,7 @@ const LEADERS: Array<Leader & { tribe: TribeId }> = [
     tribe: "tribe-blockchain",
     tribeName: "Blockchain",
     name: "Dominion Ekpuk",
+    jobTitle: "Software Engineer",
     bio: "Builds with chains where a ledger genuinely earns its place; keeps the tribe honest about complexity for its own sake.",
     photo: "/images/leaders/joseph-owonvwon.webp",
     tribeImage: "/images/tribes/tribe-blockchain.svg",
@@ -132,6 +138,7 @@ const LEADERS: Array<Leader & { tribe: TribeId }> = [
     tribe: "tribe-qa",
     tribeName: "Quality Assurance",
     name: "Chisaneme Aloni",
+    jobTitle: "Technical Writer",
     bio: "I ensure all product User Experience makes sense across the community",
     shortBio: (
       <p>
@@ -144,7 +151,7 @@ const LEADERS: Array<Leader & { tribe: TribeId }> = [
       </p>
     ),
     photo: "/images/leaders/chisaneme.webp",
-    tribeImage: "/images/tribes/tribe-blockchain.svg",
+    tribeImage: "/images/tribes/tribe-qa.svg",
     tier: "Verified",
     proof: [{ label: "Github", href: "https://github.com/alachi77" }],
   },
@@ -154,23 +161,6 @@ type Entry = {
   tribe: (typeof TRIBES)[number];
   leader: Leader & { tribe: TribeId };
 };
-
-function JoinLink({ tribeName }: { tribeName: string }) {
-  // real form opens in a modal — batch F; mailto is real and works in the
-  // meantime (same precedent as the build-team and tribe-proposal mailtos)
-  return (
-    <Button asChild variant="ghost" size="icon">
-      <a
-        title={`Join ${tribeName}`}
-        href={`mailto:business@inspace.ng?subject=${encodeURIComponent(
-          `Apply to join the ${tribeName} tribe`,
-        )}`}
-      >
-        <PlusIcon className="size-8" strokeWidth={1} />
-      </a>
-    </Button>
-  );
-}
 
 type SpotlightProps = {
   entries: ReadonlyArray<Entry>;
@@ -255,12 +245,14 @@ export function LeadersSection() {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const counterRef = useRef<HTMLDivElement | null>(null);
   const activeNameRef = useRef<HTMLDivElement | null>(null);
+  const activeTitleRef = useRef<HTMLDivElement | null>(null);
   const debugLineRef = useRef<HTMLDivElement | null>(null);
 
   // Minimal per-index data the controller needs to paint the active name.
   const meta = named.map(({ leader, tribe }) => ({
     label: leader.tribeName,
     color: tribe.color,
+    jobTitle: leader.jobTitle,
   }));
 
   useLayoutEffect(() => {
@@ -270,6 +262,7 @@ export function LeadersSection() {
       frame: frameRef,
       counter: counterRef,
       activeName: activeNameRef,
+      activeTitle: activeTitleRef,
       meta,
       debugLine: debugLineRef,
       count: named.length,
@@ -325,7 +318,12 @@ export function LeadersSection() {
               <CountValue ref={counterRef} index={1} />
             </span>
 
-            <div ref={activeNameRef}>{meta[0].label}</div>
+            <div className="flex flex-col gap-3">
+              <div ref={activeTitleRef}>{meta[0].jobTitle}</div>
+              <div ref={activeNameRef} className="text-muted-foreground">
+                {meta[0].label}
+              </div>
+            </div>
           </span>
         </div>
 

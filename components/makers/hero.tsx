@@ -48,18 +48,21 @@ export function MakersHero() {
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <CircularButton variant="default" text="See Makers Project" />
+            <CircularButton
+              variant="default"
+              text="VIEW ALL PROJECTS"
+              className="hover"
+            />
           </div>
         </div>
 
         <div className="overflow-clip col-span-6 scanline-container relative after:z-10! mt-32">
           <Image
             src="/images/makers/cover-image.webp"
-            width={745}
-            height={1064}
             loading="eager"
+            fill
             fetchPriority="high"
-            className="z-0 relative"
+            className="z-0 relative object-cover"
             alt="A electronics engineer repairing a drone"
           />
         </div>
