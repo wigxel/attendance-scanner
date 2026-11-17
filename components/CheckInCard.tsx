@@ -236,7 +236,7 @@ export function CheckedInConfirmation() {
         <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0" />
         <div>
           <p className="font-semibold text-base tracking-tight">Checked in</p>
-          <p className="text-xs text-muted-foreground font-medium">
+          <p className="text-base font-thin text-muted-foreground">
             Staff confirmed your check-in for today.
           </p>
         </div>
