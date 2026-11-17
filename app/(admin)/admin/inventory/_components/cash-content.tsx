@@ -75,7 +75,7 @@ export function CashContent() {
         <div>
           <h2 className="text-lg font-medium text-foreground">Cash</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Money taken out of the drawer, with what the drawer holds.
+            Track cash withdrawals and current cash in hand.
           </p>
         </div>
 
