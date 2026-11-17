@@ -9,6 +9,11 @@ import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";
 import { useCheckInMode } from "@/hooks/flags";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
+import {
+  fireBirthdayConfetti,
+  isBirthdayToday,
+  shouldCelebrate,
+} from "@/lib/birthday";
 import { safeStr } from "@/lib/data.helpers";
 import { ScanTimeCodec } from "@/lib/scan";
 import { cn } from "@/lib/utils";
@@ -170,6 +175,33 @@ export function ResizeableQRCode({ hash, className }: ResizableQRCodeProps) {
       )}
     </div>
   );
+}
+
+/**
+ * Fires confetti the moment the member's check-in lands on their birthday.
+ * Rendered outside <NotRegistered> — that gate unmounts its children as soon
+ * as registration succeeds, so the false→true flip would never be observed
+ * from inside it.
+ */
+export function BirthdayCheckInConfetti() {
+  const profile = useProfile();
+  const birthday = profile.data?.birthday;
+  const is_registered = useQuery(api.myFunctions.isRegisteredForToday);
+  const wasRegistered = React.useRef<boolean | null>(null);
+
+  React.useEffect(() => {
+    if (is_registered === undefined) return;
+
+    const prev = wasRegistered.current;
+    wasRegistered.current = is_registered;
+
+    // Only a live false→true flip: not the first load, not already true.
+    if (prev !== false || !is_registered) return;
+    if (!isBirthdayToday(birthday)) return;
+    if (shouldCelebrate("checkin")) fireBirthdayConfetti();
+  }, [is_registered, birthday]);
+
+  return null;
 }
 
 type NotRegisterdProps = {
