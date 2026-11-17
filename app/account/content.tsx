@@ -1,6 +1,5 @@
 "use client";
 import type { ReactNode } from "react";
-import { useEffect } from "react";
 import { toast } from "sonner";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 import {
@@ -15,15 +14,11 @@ import { SelfCheckInMessages } from "@/convex/shared";
 import { useProfile } from "@/hooks/auth";
 import { usePendingCheckIn } from "@/hooks/pending-checkin";
 import { useSelfCheckIn } from "@/hooks/self-service";
-import {
-  fireBirthdayConfetti,
-  isBirthdayToday,
-  shouldCelebrate,
-} from "@/lib/birthday";
 import { getErrorMessage } from "@/lib/error.helpers";
 import { ActiveBookings } from "./active-bookings";
 import { CommunityLinks } from "./community-links";
 import { ExpiryWarning } from "./expiry-warning";
+import { HappyBirthday } from "./happy-birthday";
 
 function greet_time(): string {
   const date = new Date();
@@ -35,7 +30,11 @@ function greet_time(): string {
   return "Good evening 🌙";
 }
 
-export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
+interface ContentProps {
+  gotoAdmin?: ReactNode;
+}
+
+export function Content({ gotoAdmin }: ContentProps) {
   const { data: profile, isSignedIn } = useProfile();
   const selfCheckIn = useSelfCheckIn();
 
@@ -44,13 +43,6 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
   // failing before the user has finished onboarding.
   const isProfileReady =
     !!profile && profile.occupation !== "None" && !!profile.birthday;
-
-  // Birthday celebration on login: once a day, on the account screen.
-  const birthday = profile?.birthday;
-  useEffect(() => {
-    if (!isBirthdayToday(birthday)) return;
-    if (shouldCelebrate("login")) fireBirthdayConfetti();
-  }, [birthday]);
 
   usePendingCheckIn({
     isSignedIn: !!isSignedIn && isProfileReady,
@@ -92,6 +84,10 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
           {gotoAdmin}
         </div>
 
+        <BirthdayCheckInConfetti />
+
+        <HappyBirthday />
+
         <ExpiryWarning />
 
         <SelfCheckInStatus />
@@ -101,7 +97,6 @@ export function Content({ gotoAdmin }: { gotoAdmin?: ReactNode }) {
         </NotRegistered>
 
         {/* Lives outside NotRegistered: it must observe the registration flip. */}
-        <BirthdayCheckInConfetti />
 
         <ActiveBookings />
 

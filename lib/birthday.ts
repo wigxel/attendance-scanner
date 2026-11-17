@@ -48,13 +48,20 @@ export const shouldCelebrate = (trigger: string, date = new Date()) => {
   const store = globalThis.localStorage;
   if (!store) return false;
 
-  const key = `birthday-confetti:${trigger}:${date.toISOString().slice(0, 10)}`;
-  if (store.getItem(key)) return false;
+  const dateKey = date.toISOString().slice(0, 10);
+  const key = `birthday-confetti:${trigger}:${dateKey}`;
+  const countKey = `${key}:count`;
 
-  store.setItem(key, "1");
-  return true;
+  const count = Number(store.getItem(countKey) || "0");
+
+  if (count < 3) {
+    store.setItem(countKey, String(count + 1));
+    return true;
+  }
+
+  return false;
 };
 
 export const fireBirthdayConfetti = () => {
-  confetti({ particleCount: 160, spread: 80, origin: { y: 0.7 } });
+  confetti({ particleCount: 200, spread: 80, origin: { y: 0.7 } });
 };
