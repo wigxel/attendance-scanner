@@ -194,6 +194,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       >;
     };
     salePayments: {
+      get: FunctionReference<
+        "query",
+        "internal",
+        { paymentId: string },
+        any,
+        Name
+      >;
       range: FunctionReference<
         "query",
         "internal",
