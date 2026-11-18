@@ -268,7 +268,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
       list: FunctionReference<
         "query",
         "internal",
-        { end?: string; start?: string },
+        {
+          channel?: "cash" | "pos" | "transfer" | "credit";
+          end?: string;
+          start?: string;
+        },
         any,
         Name
       >;
@@ -276,6 +280,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         {
+          channel?: "cash" | "pos" | "transfer" | "credit";
           end?: string;
           paginationOpts: {
             cursor: string | null;

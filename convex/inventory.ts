@@ -1126,33 +1126,46 @@ export const listSales = query({
     start: v.optional(v.string()),
     end: v.optional(v.string()),
     search: v.optional(v.string()),
+    channel: v.optional(saleChannelValidator),
+    status: v.optional(
+      v.union(
+        v.literal("paid"),
+        v.literal("part_paid"),
+        v.literal("unpaid"),
+        v.literal("written_off"),
+        v.literal("voided"),
+      ),
+    ),
   },
   handler: async (ctx, args) => {
     await requireAny(ctx, SELL_OR_MANAGE);
 
     const start = dayToIso(args.start, "from");
     const end = dayToIso(args.end, "to");
+    const term = args.search?.trim().toLowerCase();
 
-    // Searching scans the bounded range and pages the matches in memory:
-    // customer and item names are resolved data, so they cannot ride the
-    // index. ponytail: full in-bounds collect per search; a searchIndex on
+    // Search and status are both derived or resolved data, so neither can
+    // ride the index: scan the bounded range and page the matches in memory.
+    // ponytail: full in-bounds collect per filtered load; a searchIndex on
     // sales (with a denormalised text field + backfill) when the shop's
     // history gets big enough to feel it.
-    if (args.search?.trim()) {
-      const term = args.search.trim().toLowerCase();
+    if (term || args.status) {
       const rows = (await ctx.runQuery(components.inventory.sales.list, {
         start,
         end,
+        channel: args.channel,
       })) as ComponentSaleRow[];
 
       const nameById = await customerNames(ctx, rows);
       const matches = rows.filter(
         (sale) =>
-          (sale.customerId ? (nameById.get(sale.customerId) ?? "") : "")
-            .toLowerCase()
-            .includes(term) ||
-          sale.items.some((item) => item.name.toLowerCase().includes(term)) ||
-          (sale.note ?? "").toLowerCase().includes(term),
+          (args.status === undefined || sale.balance.status === args.status) &&
+          (term === undefined ||
+            (sale.customerId ? (nameById.get(sale.customerId) ?? "") : "")
+              .toLowerCase()
+              .includes(term) ||
+            sale.items.some((item) => item.name.toLowerCase().includes(term)) ||
+            (sale.note ?? "").toLowerCase().includes(term)),
       );
 
       const from = Number.parseInt(args.paginationOpts.cursor ?? "0", 10) || 0;
@@ -1170,6 +1183,7 @@ export const listSales = query({
       paginationOpts: args.paginationOpts,
       start,
       end,
+      channel: args.channel,
     })) as {
       page: ComponentSaleRow[];
       isDone: boolean;

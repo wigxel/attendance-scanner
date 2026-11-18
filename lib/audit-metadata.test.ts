@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { formatMetadataParts } from "./audit-metadata";
 
 function fmt(amount: number) {
-  const formatter = new Intl.NumberFormat("en-US", {
+  const formatter = new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
     minimumFractionDigits: 2,

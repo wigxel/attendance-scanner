@@ -13,16 +13,26 @@ import {
 } from "@/components/empty-state";
 import type { MetricsRange } from "@/components/inventory/metrics-date-range";
 import { StdTable } from "@/components/std-table";
+import { useTableFilters } from "@/components/std-table/filters";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { SaleSummary } from "@/convex/inventory";
-import { saleColumns } from "./sale-columns";
+import {
+  saleChannelOptions,
+  saleColumns,
+  saleStatusOptions,
+} from "./sale-columns";
 import { SaleDetailSheet } from "./sale-detail-sheet";
 
 const PAGE_SIZE = 100;
 
 export function SalesContent() {
+  const filters = useTableFilters({
+    channel: { options: saleChannelOptions, queryKey: "sales_channel" },
+    status: { options: saleStatusOptions, queryKey: "sales_status" },
+  });
+
   const [query, setQuery] = useQueryStates({
     sales_from: parseAsIsoDate,
     sales_to: parseAsIsoDate,
@@ -55,6 +65,8 @@ export function SalesContent() {
       search: debouncedSearch.trim() || undefined,
       start: range?.start,
       end: range?.end,
+      channel: filters.channel.value,
+      status: filters.status.value,
     },
     { initialNumItems: PAGE_SIZE },
   );
@@ -92,6 +104,7 @@ export function SalesContent() {
         isLoading={status === "LoadingMore"}
         hasMore={status === "CanLoadMore" || status === "LoadingMore"}
         onLoadMore={() => loadMore(PAGE_SIZE)}
+        meta={filters}
       >
         <StdTable.Card>
           <StdTable.Header>
