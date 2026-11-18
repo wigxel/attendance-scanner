@@ -89,8 +89,8 @@ function MetricCard({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
-          <TooltipContent side="bottom" className="w-80 p-0 max-h-[400px]">
-            <ScrollArea className="h-[300px]">
+          <TooltipContent side="bottom" className="w-80 p-0 max-h-100">
+            <ScrollArea className="h-75">
               <ul className="py-2">
                 {newCustomers === undefined && (
                   <li className="px-4 py-2 text-sm text-muted-foreground text-center">

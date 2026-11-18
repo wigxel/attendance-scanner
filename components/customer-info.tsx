@@ -236,7 +236,7 @@ function CustomerSheet({ userId, open, onOpenChange }: CustomerSheetProps) {
                     <dt className="basis-4/12 shrink-0 text-muted-foreground">
                       {detail.label}
                     </dt>
-                    <dd className="basis-6/12 min-w-0 break-words">
+                    <dd className="basis-6/12 min-w-0 wrap-break-word">
                       {detail.href ? (
                         <a
                           href={detail.href}

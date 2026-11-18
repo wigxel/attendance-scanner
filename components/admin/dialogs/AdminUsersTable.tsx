@@ -53,8 +53,8 @@ export function AdminUsersTable() {
         <InviteTeamMemberDialog />
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-md border border-(--border)">
-        <table className="min-w-full divide-y divide-(--border)">
+      <div className="mt-4 overflow-hidden rounded-md border border-border">
+        <table className="min-w-full divide-y divide-border">
           <thead className="bg-background">
             <tr>
               <th className="py-2.5 pl-4 pr-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -71,7 +71,7 @@ export function AdminUsersTable() {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-(--border)">
+          <tbody className="divide-y divide-border">
             {isLoading ? (
               <tr>
                 <td

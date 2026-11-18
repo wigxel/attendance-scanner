@@ -1,6 +1,9 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useState } from "react";
+import { SaleDetailSheet } from "@/app/(admin)/admin/inventory/_components/sale-detail-sheet";
+import { Button } from "@/components/ui/button";
 import {
   EmptyState,
   EmptyStateContent,
@@ -38,6 +41,32 @@ type MovementHistorySheetProps = {
   } | null;
 };
 
+/** The note cell for a sale-linked movement; clicking opens the sale. */
+function SaleNoteButton({
+  saleId,
+  customerName,
+  isVoid,
+  onOpen,
+}: {
+  saleId: string;
+  customerName: string | null;
+  isVoid: boolean;
+  onOpen: (saleId: string) => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="link"
+      size="sm"
+      className="h-auto p-0 text-muted-foreground hover:text-foreground"
+      onClick={() => onOpen(saleId)}
+    >
+      {isVoid ? "Void" : "Sale"} — {customerName ?? "unknown customer"}{" "}
+      <span className="font-mono text-[10px]">({saleId})</span>
+    </Button>
+  );
+}
+
 export function MovementHistorySheet({
   open,
   onOpenChange,
@@ -47,6 +76,7 @@ export function MovementHistorySheet({
     api.inventory.productMovements,
     product ? { productId: product.productId } : "skip",
   );
+  const [saleId, setSaleId] = useState<string | null>(null);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -122,7 +152,16 @@ export function MovementHistorySheet({
                         </TableCell>
                         <TableCell>{movement.recordedBy}</TableCell>
                         <TableCell className="text-muted-foreground">
-                          {movement.note ?? "—"}
+                          {movement.linkedSaleId ? (
+                            <SaleNoteButton
+                              saleId={movement.linkedSaleId}
+                              customerName={movement.saleCustomerName}
+                              isVoid={movement.reversal === true}
+                              onOpen={setSaleId}
+                            />
+                          ) : (
+                            (movement.note ?? "—")
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -133,6 +172,13 @@ export function MovementHistorySheet({
           )}
         </div>
       </SheetContent>
+
+      <SaleDetailSheet
+        saleId={saleId}
+        onOpenChange={(next) => {
+          if (!next) setSaleId(null);
+        }}
+      />
     </Sheet>
   );
 }

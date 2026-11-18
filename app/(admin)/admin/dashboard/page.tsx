@@ -4,6 +4,7 @@ import { ExpiringSubscriptions } from "@/components/expiring-subscriptions";
 import { Feedbacks } from "@/components/feedbacks";
 import { MetricsChart } from "@/components/metrics";
 import { TakeAttendance } from "@/components/TakeAttendance";
+import { UpcomingBirthdays } from "@/components/upcoming-birthdays";
 import {
   CashPayments,
   TotalRevenue,
@@ -46,7 +47,11 @@ const Page = () => {
           <ExpiringSubscriptions />
         </div>
 
-        <div className="md:col-span-6">
+        <div className="md:col-span-2">
+          <UpcomingBirthdays />
+        </div>
+
+        <div className="md:col-span-4">
           <Feedbacks />
         </div>
       </div>

@@ -19,7 +19,7 @@ export function CalendarSection() {
   });
 
   if (dailyBuckets === undefined) {
-    return <Skeleton className="h-[140px]" />;
+    return <Skeleton className="h-35" />;
   }
 
   return (

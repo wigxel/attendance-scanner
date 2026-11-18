@@ -25,7 +25,7 @@ export function HistorySection() {
   });
 
   if (historyBuckets === undefined) {
-    return <Skeleton className="h-[280px]" />;
+    return <Skeleton className="h-70" />;
   }
   const chartData = [...historyBuckets].reverse().map((bucket) => ({
     time: format(new Date(bucket.bucketStart), "HH:mm"),

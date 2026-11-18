@@ -54,7 +54,7 @@ export function RoomEnvironmentWidget({ roomId = "all", className }: Props) {
   });
 
   if (liveReading === undefined || strip === undefined) {
-    return <Skeleton className={cn("h-[140px]", className)} />;
+    return <Skeleton className={cn("h-35", className)} />;
   }
 
   if (liveReading === null) {

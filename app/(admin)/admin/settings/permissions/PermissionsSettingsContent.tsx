@@ -86,8 +86,8 @@ export function PermissionsSettingsContent() {
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">
                 {category}
               </h3>
-              <div className="rounded-lg border border-(--border) bg-background shadow-sm overflow-hidden">
-                <table className="min-w-full divide-y divide-(--border)">
+              <div className="rounded-lg border border-border bg-background shadow-sm overflow-hidden">
+                <table className="min-w-full divide-y divide-border">
                   <thead className="bg-background">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -101,7 +101,7 @@ export function PermissionsSettingsContent() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-(--background-lv1) divide-y divide-(--border)">
+                  <tbody className="bg-background-lv1 divide-y divide-border">
                     {perms.map((perm) => (
                       <tr
                         key={perm._id}

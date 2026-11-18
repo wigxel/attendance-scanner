@@ -29,7 +29,7 @@ export function AppSpinner({
 
 export function AppLoader() {
   return (
-    <div className="bg-(--background) aspect-square w-min rounded-full p-4">
+    <div className="bg-background aspect-square w-min rounded-full p-4">
       <AppSpinner size="xl" />
     </div>
   );

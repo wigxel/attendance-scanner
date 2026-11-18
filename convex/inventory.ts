@@ -33,7 +33,13 @@ export type StockLevel = {
   lastMovementAt: string | null;
 };
 
-export type ProductMovement = Doc<"stockMovements"> & { recordedBy: string };
+export type ProductMovement = Doc<"stockMovements"> & {
+  recordedBy: string;
+  /** The sale this row moved stock for; parsed from the note on legacy rows. */
+  linkedSaleId: string | null;
+  /** Customer on that sale; null when the sale or profile is gone. */
+  saleCustomerName: string | null;
+};
 
 export type Supplier = Doc<"suppliers">;
 
@@ -612,6 +618,21 @@ export const recordBulkAdjustment = mutation({
   },
 });
 
+/**
+ * Legacy rows carry the sale id only inside the note. Only sale-sourced usage
+ * and void reversals are parsed, so a user-typed note cannot fake one.
+ */
+export function saleIdFromNote(movement: Doc<"stockMovements">) {
+  const note = movement.note ?? "";
+  if (movement.source === "sale") {
+    return /^Sale ([a-z0-9]+)$/.exec(note)?.[1] ?? null;
+  }
+  if (movement.reversal) {
+    return /^Void sale ([a-z0-9]+)$/.exec(note)?.[1] ?? null;
+  }
+  return null;
+}
+
 export const productMovements = query({
   args: { productId: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
@@ -621,6 +642,29 @@ export const productMovements = query({
       args,
     )) as Doc<"stockMovements">[];
 
+    const saleIds = [
+      ...new Set(
+        movements
+          .map((movement) => movement.saleId ?? saleIdFromNote(movement))
+          .filter((saleId): saleId is string => saleId !== null),
+      ),
+    ];
+    // One lookup per distinct sale, not one per movement row.
+    const customerBySale = new Map(
+      await Promise.all(
+        saleIds.map(async (saleId) => {
+          const detail = (await ctx.runQuery(components.inventory.sales.get, {
+            saleId,
+          })) as { sale: Doc<"sales"> } | null;
+          const customerId = detail?.sale.customerId;
+          return [
+            saleId,
+            customerId ? await profileName(ctx, customerId) : null,
+          ] as const;
+        }),
+      ),
+    );
+
     return await Promise.all(
       movements.map(async (movement): Promise<ProductMovement> => {
         const recorder = await ctx.db
@@ -628,11 +672,16 @@ export const productMovements = query({
           .withIndex("by_user_id", (q) => q.eq("id", movement.createdBy))
           .first();
 
+        const linkedSaleId = movement.saleId ?? saleIdFromNote(movement);
         return {
           ...movement,
           recordedBy: recorder
             ? `${recorder.firstName} ${recorder.lastName}`.trim()
             : movement.createdBy,
+          linkedSaleId: linkedSaleId ?? null,
+          saleCustomerName: linkedSaleId
+            ? (customerBySale.get(linkedSaleId) ?? null)
+            : null,
         };
       }),
     );

@@ -16,6 +16,7 @@ import { range } from "effect/Array";
 import { intersperse } from "effect/Iterable";
 import { isNullable } from "effect/Predicate";
 import {
+  Cake,
   ChevronLeft,
   ChevronRight,
   Crown,
@@ -372,7 +373,7 @@ export function TodaysCustomers() {
       </CardHeader>
 
       <EmptyState isEmpty={records.length === 0}>
-        <EmptyStateContent className="px-4 flex-1">
+        <EmptyStateContent className="px-4 flex-1 min-h-[30svh]">
           <EmptyStateTitle className="text-start w-full">
             No scans yet
           </EmptyStateTitle>
@@ -382,8 +383,8 @@ export function TodaysCustomers() {
         </EmptyStateContent>
 
         <EmptyStateConceal>
-          <CardContent className="p-0 flex-1">
-            <ul className="max-h-[28rem] overflow-y-auto">
+          <CardContent className="p-0 flex-1 min-h-[30svh]">
+            <ul className="max-h-112 overflow-y-auto">
               {records.map((e) => {
                 return <RegisteredUserEntry entry={e} key={e._id} />;
               })}
@@ -460,6 +461,7 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
   const user = useCustomer({ userId: entry.userId }) ?? {
     firstName: "",
     lastName: "",
+    birthday: undefined,
   };
   const visitCount = useVisitCount({ userId: entry.userId });
   const diffFromNow = format_time_to_now(entry.timestamp);
@@ -490,6 +492,10 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
 
   if (!user) return <p>No user found</p>;
 
+  // The scan's day in MM-DD, so the birthday icon follows the day being viewed.
+  const scanDay = format(new Date(entry.timestamp), "MM-dd");
+  const isBirthday = !!user.birthday && user.birthday === scanDay;
+
   const content = (
     <li>
       <DebugClick input={() => ({ isReservation, entry, user })}>
@@ -498,8 +504,16 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
 
           <div className="group-last:border-none border-b flex items-center flex-1 pb-2">
             <div className="flex-1 flex-col gap-1 flex">
-              <div className="font-semibold">
-                {user.firstName} {user.lastName}
+              <div className="font-semibold flex items-center gap-1">
+                <span>
+                  {user.firstName} {user.lastName}
+                </span>
+                {isBirthday && (
+                  <Cake
+                    className="h-4 w-4 text-amber-500"
+                    aria-label="Birthday"
+                  />
+                )}
               </div>
 
               <div className="flex gap-2 text-xs text-gray-500 font-mono">
@@ -702,11 +716,19 @@ export function RegisteredUserEntry(props: RegisterUserEntryProps) {
 
       <SelectSeparator />
 
-      <div className="text-xs text-muted-foreground font-mono">
-        Scanned{" "}
-        <span className="text-foreground">
-          {format(new Date(entry.timestamp), "do MMM yyyy, h:mm a")}
-        </span>
+      <div className="flex flex-col gap-2 font-mono text-xs">
+        <div className="text-muted-foreground">
+          Scanned{" "}
+          <span className="text-foreground">
+            {format(new Date(entry.timestamp), "do MMM yyyy, h:mm a")}
+          </span>
+        </div>
+
+        {isBirthday && (
+          <div className="text-amber-600 dark:text-amber-500">
+            It&apos;s their birthday today
+          </div>
+        )}
       </div>
     </section>
   );
@@ -1174,7 +1196,7 @@ function TopCustomersSheet() {
               </div>
 
               <EmptyStateConceal>
-                <ul className="divide-y divide-border grow-0 shrink-1 overflow-hidden flex flex-col">
+                <ul className="divide-y divide-border grow-0 shrink overflow-hidden flex flex-col">
                   {displayCustomers.map((customer, i) => (
                     <li
                       key={customer.userId}

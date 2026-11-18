@@ -22,7 +22,7 @@ export function CheckInModeSelect({
   onChange,
   allowAuto = false,
   disabled = false,
-  className = "w-[180px]",
+  className = "w-45",
 }: {
   value: SelectableMode;
   onChange: (mode: SelectableMode) => void;

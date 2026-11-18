@@ -49,7 +49,7 @@ export function AttendanceDrawer({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-[400px] sm:w-[540px]">
+      <SheetContent className="w-100 sm:w-135">
         <SheetHeader>
           <SheetTitle>Attendance Details</SheetTitle>
         </SheetHeader>
@@ -67,7 +67,7 @@ export function AttendanceDrawer({
               </p>
             </div>
 
-            <div className="my-4 border-t border-(--border)" />
+            <div className="my-4 border-t border-border" />
           </>
         ) : null}
 

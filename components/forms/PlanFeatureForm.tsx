@@ -59,7 +59,7 @@ export function PlanFeatureForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-3 rounded-lg border p-4 bg-(--background-lv1)"
+        className="space-y-3 rounded-lg border p-4 bg-background-lv1"
       >
         <div className="grid grid-cols-2 gap-3">
           <FormField

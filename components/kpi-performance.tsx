@@ -114,7 +114,7 @@ function PerformanceChild() {
           </div>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="h-[250px] w-full">
+          <ChartContainer config={chartConfig} className="h-62.5 w-full">
             <ComposedChart accessibilityLayer data={chartData}>
               <CartesianGrid vertical={false} />
               <XAxis
