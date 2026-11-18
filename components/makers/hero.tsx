@@ -3,6 +3,7 @@ import Balancer from "react-wrap-balancer";
 import { cn } from "@/lib/utils";
 import { CircularButton } from "../circular-button";
 import { Fit } from "../creative/fit";
+import { SplitZoomInEffect } from "../creative/split-zoom-in-effect";
 
 export function MakersHero() {
   return (
@@ -56,15 +57,20 @@ export function MakersHero() {
           </div>
         </div>
 
-        <div className="overflow-clip col-span-6 scanline-container relative after:z-10! mt-32">
-          <Image
-            src="/images/makers/cover-image.webp"
-            loading="eager"
+        <div className="overflow-clip col-span-6 scanline-container relative after:z-10! mt-32 text-9xl">
+          <SplitZoomInEffect
             fill
-            fetchPriority="high"
-            className="z-0 relative object-cover"
-            alt="A electronics engineer repairing a drone"
-          />
+            className="[--shutter-color:var(--background)] [--shutter-height:var(--text-9xl)]"
+          >
+            <Image
+              src="/images/makers/cover-image.webp"
+              loading="eager"
+              fill
+              fetchPriority="high"
+              className="z-0 relative object-cover"
+              alt="A electronics engineer repairing a drone"
+            />
+          </SplitZoomInEffect>
         </div>
       </section>
     </div>

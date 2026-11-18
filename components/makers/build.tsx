@@ -168,51 +168,6 @@ const ON_THIS_PAGE = [
   { href: "#questions", label: "Questions" },
 ] as const;
 
-// Landing #build: full-bleed poster section. The image fills 100vh;
-// text sits on a black scrim, top-left and bottom-left anchored. Replace
-// /images/makers/build-with.svg with a real photo of members at work
-// (≤120 KB, PRD rule); until then the SVG is a neutral placeholder.
-export function BuildSection() {
-  return (
-    <div className="relative h-[calc(60vh-4rem)] overflow-hidden">
-      <Image
-        src="/images/team-meetings.jpg"
-        alt=""
-        fill
-        unoptimized
-        loading="lazy"
-        className="object-cover"
-        sizes="100vw"
-      />
-
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-linear-to-b from-black/70 via-black/30 to-transparent"
-      />
-
-      <h2
-        className={cn(
-          heading.className,
-          "absolute left-6 top-6 z-10 max-w-[20ch] text-3xl tracking-tighter text-white md:left-10 md:top-10 md:text-5xl",
-        )}
-      >
-        Build with Inspace Makers
-      </h2>
-
-      <div className="absolute bottom-6 left-6 z-10 flex max-w-[52ch] flex-col items-start gap-5 md:bottom-10 md:left-10">
-        <p className="font-mono text-xs text-white/70">For organisations</p>
-        <p className="text-lg text-pretty text-white/90">
-          A build team of verified members delivers software, AI, hardware and
-          games for organisations, under a named Build Lead.
-        </p>
-        <Button asChild size="lg">
-          <a href="/makers/build">See what a build team delivers</a>
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 // /makers/build — the dedicated client page. PRD sub-blocks 5.1–5.7 on
 // the block grid.
 export function BuildDetail() {

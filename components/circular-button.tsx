@@ -64,7 +64,7 @@ export function CircularButton({
         width={200}
         height={200}
         alt=""
-        className={cn({
+        className={cn("z-bounce", {
           "w-5/12": variant === "default",
           "w-3/12": variant === "outline",
         })}

@@ -231,6 +231,32 @@
   animation-play-state: paused;
 }
 
+/* CircularButton arrow: pops toward the viewer on the z-axis. True
+   translateZ needs a perspective parent; scale reads the same. */
+@keyframes z-bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+.z-bounce {
+  animation: z-bounce 1.4s ease-in-out infinite;
+}
+
+.group:hover .z-bounce {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .z-bounce {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
     animation: none;
