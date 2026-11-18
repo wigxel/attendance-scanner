@@ -4,7 +4,7 @@ import { usePaginatedQuery } from "convex/react";
 import { format, parseISO } from "date-fns";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { parseAsIsoDate, parseAsStringLiteral, useQueryStates } from "nuqs";
+import { parseAsIsoDate, useQueryStates } from "nuqs";
 import { useDeferredValue, useState } from "react";
 import {
   EmptyStateContent,
@@ -13,10 +13,11 @@ import {
 } from "@/components/empty-state";
 import type { MetricsRange } from "@/components/inventory/metrics-date-range";
 import { StdTable } from "@/components/std-table";
+import { useTableFilters } from "@/components/std-table/filters";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
-import type { SaleChannel, SaleStatus, SaleSummary } from "@/convex/inventory";
+import type { SaleSummary } from "@/convex/inventory";
 import {
   saleChannelOptions,
   saleColumns,
@@ -26,15 +27,15 @@ import { SaleDetailSheet } from "./sale-detail-sheet";
 
 const PAGE_SIZE = 100;
 
-const SALE_CHANNELS = saleChannelOptions.map((option) => option.value);
-const SALE_STATUSES = saleStatusOptions.map((option) => option.value);
-
 export function SalesContent() {
+  const filters = useTableFilters({
+    channel: { options: saleChannelOptions, queryKey: "sales_channel" },
+    status: { options: saleStatusOptions, queryKey: "sales_status" },
+  });
+
   const [query, setQuery] = useQueryStates({
     sales_from: parseAsIsoDate,
     sales_to: parseAsIsoDate,
-    sales_channel: parseAsStringLiteral(SALE_CHANNELS),
-    sales_status: parseAsStringLiteral(SALE_STATUSES),
   });
 
   // No dates in the URL defaults to today; the picker hides its All-time
@@ -64,8 +65,8 @@ export function SalesContent() {
       search: debouncedSearch.trim() || undefined,
       start: range?.start,
       end: range?.end,
-      channel: query.sales_channel ?? undefined,
-      status: query.sales_status ?? undefined,
+      channel: filters.channel.value,
+      status: filters.status.value,
     },
     { initialNumItems: PAGE_SIZE },
   );
@@ -103,14 +104,7 @@ export function SalesContent() {
         isLoading={status === "LoadingMore"}
         hasMore={status === "CanLoadMore" || status === "LoadingMore"}
         onLoadMore={() => loadMore(PAGE_SIZE)}
-        meta={{
-          channel: query.sales_channel ?? undefined,
-          status: query.sales_status ?? undefined,
-          onChannelChange: (channel: SaleChannel | undefined) =>
-            setQuery({ sales_channel: channel ?? null }),
-          onStatusChange: (status: SaleStatus | undefined) =>
-            setQuery({ sales_status: status ?? null }),
-        }}
+        meta={filters}
       >
         <StdTable.Card>
           <StdTable.Header>

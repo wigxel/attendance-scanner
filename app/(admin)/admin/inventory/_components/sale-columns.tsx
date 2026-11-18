@@ -1,7 +1,7 @@
 "use client";
 
-import type { ColumnDef, Table as TanStackTable } from "@tanstack/react-table";
-import { FilterDropdown } from "@/components/std-table/filter-dropdown";
+import type { ColumnDef } from "@tanstack/react-table";
+import { HeaderFilter } from "@/components/std-table/filters";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -12,25 +12,6 @@ import {
 import type { SaleChannel, SaleStatus, SaleSummary } from "@/convex/inventory";
 import { formatKoboPlain } from "@/lib/currency.helpers";
 import { serialNo } from "@/lib/data.helpers";
-
-/** Filter state shared with the column headers through table.options.meta. */
-export type SaleFilterMeta = {
-  channel: SaleChannel | undefined;
-  status: SaleStatus | undefined;
-  onChannelChange: (channel: SaleChannel | undefined) => void;
-  onStatusChange: (status: SaleStatus | undefined) => void;
-};
-
-function filterMeta(table: TanStackTable<SaleSummary>): SaleFilterMeta {
-  return (
-    (table.options.meta as SaleFilterMeta | undefined) ?? {
-      channel: undefined,
-      status: undefined,
-      onChannelChange: () => {},
-      onStatusChange: () => {},
-    }
-  );
-}
 
 const channelLabels = {
   cash: "Cash",
@@ -141,14 +122,7 @@ export const saleColumns: ColumnDef<SaleSummary>[] = [
   {
     id: "channel",
     header: ({ table }) => (
-      <div className="flex items-center gap-1">
-        Channel
-        <FilterDropdown
-          value={filterMeta(table).channel}
-          options={saleChannelOptions}
-          onChange={filterMeta(table).onChannelChange}
-        />
-      </div>
+      <HeaderFilter table={table} id="channel" label="Channel" />
     ),
     accessorKey: "channel",
     cell: ({ row }) => (
@@ -164,14 +138,7 @@ export const saleColumns: ColumnDef<SaleSummary>[] = [
   {
     id: "status",
     header: ({ table }) => (
-      <div className="flex items-center gap-1">
-        Status
-        <FilterDropdown
-          value={filterMeta(table).status}
-          options={saleStatusOptions}
-          onChange={filterMeta(table).onStatusChange}
-        />
-      </div>
+      <HeaderFilter table={table} id="status" label="Status" />
     ),
     accessorKey: "status",
     cell: ({ row }) => <SaleStatusBadge status={row.original.status} />,

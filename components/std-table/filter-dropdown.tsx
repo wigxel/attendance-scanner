@@ -1,6 +1,6 @@
 "use client";
 
-import { ListFilter } from "lucide-react";
+import { CheckIcon, ListFilter } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
 
 type FilterDropdownProps<T extends string> = {
   value: T | undefined;
@@ -30,19 +31,22 @@ export function FilterDropdown<T extends string>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant={"ghost"}
+          size="icon-xs"
           aria-label={active ? "Filter is active" : "Filter"}
           className={cn(
-            "inline-flex cursor-pointer items-center rounded-sm p-0.5 text-muted-foreground hover:text-foreground",
-            active && "text-primary hover:text-primary",
+            "opacity-50",
+            active && "text-primary opacity-100 hover:opacity-80 ",
           )}
         >
           <ListFilter className="h-3.5 w-3.5" />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuItem onSelect={() => onChange(undefined)}>
+          <CheckIcon className={cn("invisible", !active && "visible")} />
           All
         </DropdownMenuItem>
         {options.map((option) => (
@@ -50,6 +54,9 @@ export function FilterDropdown<T extends string>({
             key={option.value}
             onSelect={() => onChange(option.value)}
           >
+            <CheckIcon
+              className={cn("invisible", value === option.value && "visible")}
+            />
             {option.label}
           </DropdownMenuItem>
         ))}
