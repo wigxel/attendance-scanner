@@ -352,7 +352,7 @@ export function PurchaseForm() {
                       <TableHead className="min-w-48">Product</TableHead>
                       <TableHead className="min-w-40">Qty / Unit</TableHead>
                       <TableHead className="min-w-32">Cost per unit</TableHead>
-                      <TableHead className="min-w-[9.375rem] text-right">
+                      <TableHead className="min-w-37.5 text-right">
                         Total (NGN)
                       </TableHead>
                       <TableHead className="w-10" />

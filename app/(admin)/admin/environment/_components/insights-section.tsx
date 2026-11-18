@@ -66,7 +66,7 @@ export function InsightsSection() {
   });
 
   if (liveBucket === undefined) {
-    return <Skeleton className="h-[140px]" />;
+    return <Skeleton className="h-35" />;
   }
 
   if (liveBucket === null) {
@@ -114,7 +114,7 @@ export function InsightsSection() {
                 <TooltipTrigger asChild>
                   <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[250px]">
+                <TooltipContent side="top" className="max-w-62.5">
                   <p>{comfortTooltip}</p>
                 </TooltipContent>
               </Tooltip>
@@ -136,7 +136,7 @@ export function InsightsSection() {
                 <TooltipTrigger asChild>
                   <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[250px]">
+                <TooltipContent side="top" className="max-w-62.5">
                   <p>{moldTooltip}</p>
                 </TooltipContent>
               </Tooltip>
@@ -163,7 +163,7 @@ export function InsightsSection() {
                 <TooltipTrigger asChild>
                   <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[250px]">
+                <TooltipContent side="top" className="max-w-62.5">
                   <p>{dryTooltip}</p>
                 </TooltipContent>
               </Tooltip>
@@ -180,7 +180,7 @@ export function InsightsSection() {
                 <TooltipTrigger asChild>
                   <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[250px]">
+                <TooltipContent side="top" className="max-w-62.5">
                   <p>{condensationTooltip}</p>
                 </TooltipContent>
               </Tooltip>

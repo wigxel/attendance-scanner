@@ -305,7 +305,7 @@ export default function TokenCheckInPage() {
     <>
       <title>Check In | InSpace</title>
       <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />
-      <div className="z-[2] relative">
+      <div className="z-2 relative">
         <Header />
         <main className="px-4">
           <TokenCheckInFlow />

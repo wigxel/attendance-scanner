@@ -46,7 +46,7 @@ function SuccessPageContent() {
   }
 
   return (
-    <div className="w-10/12 min-w-[340px] flex flex-col gap-6 max-w-lg mx-auto mt-3 pt-6">
+    <div className="w-10/12 min-w-85 flex flex-col gap-6 max-w-lg mx-auto mt-3 pt-6">
       <div className="flex flex-col items-center gap-3">
         <span className="flex items-center justify-center bg-[#0000FF] w-16 h-16 rounded-full">
           <Image src={CheckMark} alt="Checkmark" className="w-7 h-5" />

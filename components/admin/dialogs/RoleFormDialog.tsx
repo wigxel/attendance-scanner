@@ -155,7 +155,7 @@ export function RoleFormDialog({
                 id="name"
                 type="text"
                 {...register("name")}
-                className="mt-1 w-full rounded-md border border-(--border) px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 disabled={role?.name === "admin"}
               />
               {form.formState.errors.name && (
@@ -176,7 +176,7 @@ export function RoleFormDialog({
                 id="description"
                 rows={3}
                 {...register("description")}
-                className="mt-1 w-full rounded-md border border-(--border) px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               {form.formState.errors.description && (
                 <p className="mt-1 text-xs text-red-600">
@@ -238,7 +238,7 @@ export function RoleFormDialog({
             </div>
           </div>
 
-          <SheetFooter className="sticky flex-row *:flex-1 bottom-0 bg-(--background) pt-4 border-t mt-6">
+          <SheetFooter className="sticky flex-row *:flex-1 bottom-0 bg-background pt-4 border-t mt-6">
             <Button variant="outline" onClick={() => handleOpenChange(false)}>
               Cancel
             </Button>

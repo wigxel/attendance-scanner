@@ -71,12 +71,9 @@ function MetricsChartChild() {
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="pt-0">
         <div className="gap-4 flex items-end">
-          <ChartContainer
-            config={chartConfig}
-            className="flex-1 h-[250px] w-full"
-          >
+          <ChartContainer config={chartConfig} className="flex-1 h-62.5 w-full">
             <BarChart accessibilityLayer data={chartData}>
               <CartesianGrid vertical={false} />
               <XAxis

@@ -153,7 +153,7 @@ export function PurchaseLineRow({
                     min={0}
                     step="any"
                     aria-label={`Line ${index + 1} quantity`}
-                    className="w-20 min-w-[3.125rem] tabular-nums"
+                    className="w-20 min-w-12.5 tabular-nums"
                     value={field.value}
                     onChange={field.onChange}
                   />

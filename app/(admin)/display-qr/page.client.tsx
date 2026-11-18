@@ -29,11 +29,11 @@ function QrPanel({ token, qrUrl, generating }: QrPanelProps) {
   const scannable = token !== null;
 
   return (
-    <div className="w-[320px] h-[320px] relative overflow-hidden">
+    <div className="w-[320px] h-80 relative overflow-hidden">
       <QRCodeSVG value={qrUrl} size={320} fgColor="#000000" bgColor="#ffffff" />
 
       {!scannable && (
-        <div className="absolute inset-0 bg-white/[0.3] backdrop-blur-lg flex items-center justify-center">
+        <div className="absolute inset-0 bg-white/30 backdrop-blur-lg flex items-center justify-center">
           {generating ? (
             <AppLoader />
           ) : (

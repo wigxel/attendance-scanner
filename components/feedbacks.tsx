@@ -85,7 +85,7 @@ export function Feedbacks() {
         <CardHeader>
           <CardTitle>Customer Suggestions</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <Skeleton className="h-48" />
         </CardContent>
       </Card>
@@ -98,7 +98,7 @@ export function Feedbacks() {
         <CardTitle>Customer Suggestions</CardTitle>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="pt-0">
         <EmptyState isEmpty={suggestions.length === 0}>
           <EmptyStateContent>
             <EmptyStateTitle>No suggestions yet</EmptyStateTitle>
@@ -396,7 +396,7 @@ export function VotingSection() {
         src="/images/3d-bubble.webp"
         width={500}
         height={500}
-        className="absolute w-[2rem] right-8 scale-[2.2] top-0 origin-bottom"
+        className="absolute w-8 right-8 scale-[2.2] top-0 origin-bottom"
       />
       <CardHeader>
         <CardTitle>
@@ -561,7 +561,7 @@ export function SuggestionsFAB() {
               <XIcon />
             </Button>
 
-            <div className="flex flex-col gap-[0.5rem]">
+            <div className="flex flex-col gap-2">
               <h1 className="text-lg font-semibold text-start">
                 Need something?
               </h1>

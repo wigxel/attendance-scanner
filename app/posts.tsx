@@ -37,7 +37,7 @@ export async function Posts() {
                   <Link key={e.title} href={e.url}>
                     <section className="group relative pt-4">
                       <div className="grid grid-cols-12">
-                        <span className="font-bold flex pointer-events-none group-hover:opacity-25 leading-[1ex] pt-2 font-mono -tracking-[0.8svw] select-none text-[12svw] top opacity-5 col-span-3">
+                        <span className="font-bold flex pointer-events-none group-hover:opacity-25 leading-[1ex] pt-2 font-mono tracking-[-0.8svw] select-none text-[12svw] top opacity-5 col-span-3">
                           {String(items.length - index).padStart(2, "0")}
                         </span>
 
@@ -52,7 +52,7 @@ export async function Posts() {
                         </div>
                       </div>
 
-                      <div className="border-t border-(--border) my-4" />
+                      <div className="border-t border-border my-4" />
 
                       <div className="grid grid-cols-12">
                         <div className="col-span-3" />

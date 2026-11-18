@@ -86,7 +86,7 @@ export const StepperInput = React.forwardRef<
 
             if (!isAmountKey(event)) event.preventDefault();
           }}
-          className={cn("min-w-[7.5rem]", prefix && "pl-7", className)}
+          className={cn("min-w-30", prefix && "pl-7", className)}
         />
       </div>
 

@@ -40,7 +40,7 @@ function UpcomingBirthdayRow({ row }: BirthdayRowProps) {
       : `in ${row.daysAhead} day${row.daysAhead === 1 ? "" : "s"}`;
 
   return (
-    <li className="flex items-center gap-2 text-sm">
+    <li className="flex items-center gap-2 text-sm py-2 min-h-8 -mx-2">
       <Avatar className="h-6 w-6 shrink-0 select-none">
         <AvatarFallback>{initials}</AvatarFallback>
       </Avatar>

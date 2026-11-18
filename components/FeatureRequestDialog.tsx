@@ -56,7 +56,7 @@ export function FeatureRequestDialog(props: { children: React.ReactNode }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{props.children}</DialogTrigger>
 
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-106.25">
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Make a suggestion</DialogTitle>
@@ -88,7 +88,7 @@ export function FeatureRequestDialog(props: { children: React.ReactNode }) {
               <Textarea
                 id="description"
                 placeholder="Describe your feature request in detail"
-                className="min-h-[100px]"
+                className="min-h-25"
                 {...form.register("description", { required: true })}
               />
               {form.formState.errors.description && (

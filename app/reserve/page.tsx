@@ -162,10 +162,10 @@ function Content() {
             canShowCheckmark={false}
           />
           {/* progress bar */}
-          <div className="absolute bottom-[-2px] left-0 h-px w-full bg-background-lv1" />
+          <div className="absolute -bottom-0.5 left-0 h-px w-full bg-background-lv1" />
 
           <div
-            className={`absolute bottom-[-2px] left-0 h-px bg-[#0000FF] transition-all duration-300 ease-in-out rounded-r-full
+            className={`absolute -bottom-0.5 left-0 h-px bg-[#0000FF] transition-all duration-300 ease-in-out rounded-r-full
               ${activeTab === "booking" && "w-1/3"}
               ${activeTab === "choose" && "w-2/3"}
               ${activeTab === "payment" && "w-full"}
@@ -436,7 +436,7 @@ function MakePaymentTab() {
         </div>
 
         {showTimer && (
-          <div className="border border-(--border) rounded-lg p-4 mb-2">
+          <div className="border border-border rounded-lg p-4 mb-2">
             <div className="flex items-center justify-between mb-3 text-sm">
               <h3 className="text-foreground">Time Remaining</h3>
               <Badge
@@ -471,7 +471,7 @@ export default function ReservePage() {
       <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />
 
       <PendingBookingsModal />
-      <div className="z-[2] relative">
+      <div className="z-2 relative">
         <Header />
 
         <main className="min-h-screen">

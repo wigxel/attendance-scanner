@@ -83,7 +83,7 @@ export function MetricsRevenueSection() {
       <h3 className="text-sm font-medium text-foreground">
         Revenue by channel
       </h3>
-      <div className="rounded-md border border-(--border) bg-(--background)">
+      <div className="rounded-md border border-border bg-background">
         <RevenueTable shares={metrics.revenue.byChannel} />
       </div>
     </section>

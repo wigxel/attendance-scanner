@@ -41,7 +41,7 @@ export function AlertsSection() {
   const pushEnabled = status === "subscribed";
 
   if (alerts === undefined) {
-    return <Skeleton className="h-[200px]" />;
+    return <Skeleton className="h-50" />;
   }
 
   const unacknowledgedCount = alerts.filter(
@@ -83,7 +83,7 @@ export function AlertsSection() {
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="pt-0">
         <EmptyState isEmpty={alerts.length === 0}>
           <EmptyStateContent className="py-8">
             <EmptyStateTitle>All clear</EmptyStateTitle>
