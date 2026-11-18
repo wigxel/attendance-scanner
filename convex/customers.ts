@@ -13,6 +13,7 @@ import {
   startOfWeek,
   subDays,
 } from "date-fns";
+import { daysUntilBirthday } from "../lib/birthday-date";
 import { api, components, internal } from "./_generated/api";
 import type { DataModel, Id } from "./_generated/dataModel";
 import {
@@ -24,6 +25,7 @@ import {
 import { requirePrivilege } from "./acl";
 import { deleteConfig, getConfig, setConfig } from "./config";
 import { DEFAULT_LIMIT } from "./constants";
+import { lagosDay } from "./kpis";
 import { checkInModeValidator } from "./shared";
 
 export const updateProfile = mutation({
@@ -816,5 +818,54 @@ export const backfillVisitsAggregate = internalMutation({
     for (const reg of registers) {
       await visitsAggregate.insert(ctx, reg);
     }
+  },
+});
+
+/** How far ahead the dashboard birthday card looks. */
+export const BIRTHDAY_WINDOW_DAYS = 30;
+
+/**
+ * Admin dashboard card: every profile with a birthday set whose next
+ * occurrence (Africa/Lagos) falls within the next 30 days, soonest first.
+ * "02-29" is treated as 03-01 in non-leap years.
+ *
+ * @returns Rows sorted by days ahead then name, capped at 50.
+ */
+export const listUpcomingBirthdays = query({
+  args: {},
+  handler: async (ctx) => {
+    await requirePrivilege(ctx, "booking:read");
+
+    // Anchor the window to the Lagos day, not the server's own midnight.
+    const lagos = lagosDay(Date.now());
+    const reference = new Date(lagos.year, lagos.month - 1, lagos.day);
+
+    const profiles = await ctx.db.query("profile").collect();
+
+    const rows: Array<{
+      profileId: string;
+      name: string;
+      daysAhead: number;
+      nextDate: string;
+    }> = [];
+
+    for (const profile of profiles) {
+      const { birthday } = profile;
+      if (!birthday) continue;
+
+      const daysAhead = daysUntilBirthday(birthday, reference);
+      if (daysAhead === null || daysAhead > BIRTHDAY_WINDOW_DAYS) continue;
+
+      rows.push({
+        profileId: profile._id,
+        name: `${profile.firstName} ${profile.lastName}`,
+        daysAhead,
+        nextDate: format(addDays(reference, daysAhead), "yyyy-MM-dd"),
+      });
+    }
+
+    return rows
+      .sort((a, b) => a.daysAhead - b.daysAhead || a.name.localeCompare(b.name))
+      .slice(0, 50);
   },
 });

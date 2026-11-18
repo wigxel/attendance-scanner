@@ -24,7 +24,7 @@ export function DynamicSeatLayout({
 
   if (seatLayout === undefined) {
     return (
-      <div className="h-96 bg-(--background-lv1) rounded-lg flex justify-center items-center">
+      <div className="h-96 bg-background-lv1 rounded-lg flex justify-center items-center">
         <AppLoader />
       </div>
     );

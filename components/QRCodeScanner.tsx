@@ -189,10 +189,7 @@ export default function QRCodeScanner({
                 }}
               >
                 <SelectTrigger className="bg-white w-full">
-                  <SelectValue
-                    placeholder="Select camera"
-                    className="h-[4rem]"
-                  />
+                  <SelectValue placeholder="Select camera" className="h-16" />
                 </SelectTrigger>
                 <SelectContent>
                   {cameras.map((camera) => (
@@ -213,7 +210,7 @@ export default function QRCodeScanner({
                 initial={{ opacity: 0 }}
                 animate={isScanning ? { opacity: 1 } : { opacity: 0 }}
                 className={cn(
-                  "*:first:rounded-2xl *:first:overflow-hidden z-20 fixed flex flex-col items-center justify-center p-12 inset-0 bg-black/[0.86]",
+                  "*:first:rounded-2xl *:first:overflow-hidden z-20 fixed flex flex-col items-center justify-center p-12 inset-0 bg-black/86",
                   {
                     "pointer-events-none": !isScanning,
                   },
@@ -232,10 +229,10 @@ export default function QRCodeScanner({
 
                 <button
                   type="button"
-                  className="w-12 fixed right-6 top-6 flex justify-center items-center rounded-full bg-white/[0.36] backdrop-blur-sm aspect-square"
+                  className="w-12 fixed right-6 top-6 flex justify-center items-center rounded-full bg-white/36 backdrop-blur-sm aspect-square"
                   onClick={stopScanner}
                 >
-                  <XIcon className="text-white/[0.95]" />
+                  <XIcon className="text-white/95" />
                 </button>
               </motion.div>
             </Portal>

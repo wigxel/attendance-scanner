@@ -29,7 +29,7 @@ export default function SharePage() {
     return (
       <>
         <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />
-        <div className="z-[2] relative">
+        <div className="z-2 relative">
           <Header />
           <main className="min-h-screen">
             <div className="h-96 rounded-lg flex justify-center items-center">
@@ -62,10 +62,10 @@ export default function SharePage() {
 
       <div className="fixed inset-0 z-0 scanline-container pointer-events-none" />
 
-      <div className="z-[2] relative">
+      <div className="z-2 relative">
         <Header />
         <main className="max-w-xl mx-auto py-12 px-4 min-h-screen">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-(--border)">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-border">
             <h1 className="text-2xl font-bold mb-2">Group Booking Invite</h1>
             <p className="text-gray-500 mb-6">
               {isPurchaser
@@ -156,7 +156,7 @@ export default function SharePage() {
               </section>
             ) : null}
 
-            <div className="my-4 border-t-[1px] border-gray-200" />
+            <div className="my-4 border-t border-gray-200" />
 
             <section>
               <h4 className="font-medium mb-2 text-sm">

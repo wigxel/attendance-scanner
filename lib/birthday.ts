@@ -1,5 +1,7 @@
 import confetti from "canvas-confetti";
 
+export { daysUntilBirthday } from "./birthday-date";
+
 /** Birthday as an "MM-DD" string on the profile (e.g. "02-29"). */
 export const MONTHS = [
   "January",

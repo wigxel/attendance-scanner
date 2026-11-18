@@ -53,7 +53,7 @@ const BookingCalendar = () => {
         </div>
       </div>
 
-      <div className="my-8 h-px bg-gradient-to-l from-transparent via-border to-transparent w-full" />
+      <div className="my-8 h-px bg-linear-to-l from-transparent via-border to-transparent w-full" />
 
       <div className="flex flex-col gap-4">
         {selectedDate && (

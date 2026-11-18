@@ -18,7 +18,7 @@ export function MetricsTopProductsSection() {
   return (
     <section className="space-y-3">
       <h3 className="text-sm font-medium text-foreground">Top sold products</h3>
-      <div className="rounded-md border border-(--border) bg-(--background)">
+      <div className="rounded-md border border-border bg-background">
         <Table>
           <TableHeader>
             <TableRow>

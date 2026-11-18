@@ -282,7 +282,7 @@ export function CreateBookingForm({
                 <AppSpinner size="lg" />
               </div>
             ) : (
-              <div className="p-3 mb-3 -mx-4 bg-(--background-lv1) min-h-[400px] rounded-lg">
+              <div className="p-3 mb-3 -mx-4 bg-background-lv1 min-h-100 rounded-lg">
                 <DynamicSeatLayout
                   seats={seatOptions}
                   selectedSeatNumbers={
@@ -291,7 +291,7 @@ export function CreateBookingForm({
                   onSeatClick={handleSeatClick}
                 />
 
-                <div className="flex flex-col bg-(--background) border p-4 rounded-lg mt-4">
+                <div className="flex flex-col bg-background border p-4 rounded-lg mt-4">
                   <div>
                     <p className="text-foreground text-sm">Selected Seat:</p>
                     <div className="text-sm text-gray-600 mt-1">

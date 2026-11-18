@@ -209,7 +209,7 @@ export function AuditLogsTab() {
             return setActionFilter(isNullable(v) || isEmpty(v) ? "all" : v);
           }}
         >
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-50">
             <SelectValue placeholder="All Events" />
           </SelectTrigger>
           <SelectContent>

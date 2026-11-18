@@ -73,7 +73,7 @@ export function ScrollFade({
       <div
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-y-0 left-0 bg-gradient-to-r to-transparent transition-opacity duration-150",
+          "pointer-events-none absolute inset-y-0 left-0 bg-linear-to-r to-transparent transition-opacity duration-150",
           fadeClassName,
           className,
         )}
@@ -82,7 +82,7 @@ export function ScrollFade({
       <div
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-y-0 right-0 bg-gradient-to-l to-transparent transition-opacity duration-150",
+          "pointer-events-none absolute inset-y-0 right-0 bg-linear-to-l to-transparent transition-opacity duration-150",
           fadeClassName,
           className,
         )}

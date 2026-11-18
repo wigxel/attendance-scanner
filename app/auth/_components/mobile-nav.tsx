@@ -15,7 +15,7 @@ export function MobileNav({ children }: Props) {
   return (
     <>
       <MobileMenuTrigger
-        className={cn("transition-default fixed top-4 z-[10000] end-4", {
+        className={cn("transition-default fixed top-4 z-10000 inset-e-4", {
           "top-6 right-6": open,
         })}
       >
