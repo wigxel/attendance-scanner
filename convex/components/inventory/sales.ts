@@ -2,7 +2,12 @@ import type { IndexRange, IndexRangeBuilder } from "convex/server";
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { mutation, type QueryCtx, query } from "./_generated/server";
+import {
+  type MutationCtx,
+  mutation,
+  type QueryCtx,
+  query,
+} from "./_generated/server";
 import { resolveUnit } from "./productUnits";
 import { ledgerFor, saleBalance } from "./salePayments";
 import { insertMovement } from "./stockMovements";
@@ -57,6 +62,37 @@ function ensureLines(lines: LineInput[]) {
   }
 }
 
+/** True once a payment or write-off row exists: money has moved against the sale. */
+async function hasMoneyRecorded(ctx: QueryCtx, saleId: Id<"sales">) {
+  const rows = await ledgerFor(ctx, saleId);
+  return rows.some((row) => row.kind === "payment" || row.kind === "writeOff");
+}
+
+/** Check every product and unit before anything is written, so a bad line
+ * cannot leave a partial sale behind. */
+async function resolveSaleLines(
+  ctx: MutationCtx,
+  lines: LineInput[],
+): Promise<ResolvedLine[]> {
+  const resolved: ResolvedLine[] = [];
+  for (const line of lines) {
+    const product = await ctx.db.get(line.productId);
+    if (!product) throw new Error("Product not found.");
+    if (!product.active) {
+      throw new Error(`"${product.name}" is archived and cannot be sold.`);
+    }
+    const { unitFactor } = await resolveUnit(ctx, product, line.unitId);
+
+    resolved.push({
+      ...line,
+      unitFactor,
+      quantityInBase: line.quantity * unitFactor,
+      lineTotalKobo: Math.round(line.quantity * line.unitPriceKobo),
+    });
+  }
+  return resolved;
+}
+
 export const create = mutation({
   args: {
     callerId: v.string(),
@@ -79,27 +115,7 @@ export const create = mutation({
     }
 
     const now = new Date().toISOString();
-
-    // Resolve and validate every line before writing, so a bad line cannot
-    // leave a partial sale behind even though the mutation is atomic.
-    const resolved: ResolvedLine[] = [];
-
-    for (const line of args.lines) {
-      const product = await ctx.db.get(line.productId);
-      if (!product) throw new Error("Product not found.");
-      if (!product.active) {
-        throw new Error(`"${product.name}" is archived and cannot be sold.`);
-      }
-      const { unitFactor } = await resolveUnit(ctx, product, line.unitId);
-      const quantityInBase = line.quantity * unitFactor;
-
-      resolved.push({
-        ...line,
-        unitFactor,
-        quantityInBase,
-        lineTotalKobo: Math.round(line.quantity * line.unitPriceKobo),
-      });
-    }
+    const resolved = await resolveSaleLines(ctx, args.lines);
 
     const totalKobo = resolved.reduce(
       (sum, line) => sum + line.lineTotalKobo,
@@ -183,8 +199,7 @@ export const voidSale = mutation({
     if (!sale) throw new Error("Sale not found.");
     if (sale.voided) throw new Error("This sale is already voided.");
 
-    const rows = await ledgerFor(ctx, args.saleId);
-    if (rows.some((row) => row.kind === "payment" || row.kind === "writeOff")) {
+    if (await hasMoneyRecorded(ctx, args.saleId)) {
       throw new Error("This sale has money against it and cannot be voided.");
     }
 
@@ -228,8 +243,7 @@ export const setSaleCustomer = mutation({
     const sale = await ctx.db.get(args.saleId);
     if (!sale) throw new Error("Sale not found.");
 
-    const rows = await ledgerFor(ctx, args.saleId);
-    if (rows.some((row) => row.kind === "payment" || row.kind === "writeOff")) {
+    if (await hasMoneyRecorded(ctx, args.saleId)) {
       throw new Error(
         "This sale has money against it; the customer cannot change.",
       );
@@ -295,8 +309,8 @@ function occurredAtBounds(
   return q;
 }
 
-/** Sales newest first, optionally bounded by occurredAt and/or channel. */
-async function salesIn(
+/** Sales query, newest first, optionally bounded by occurredAt and/or channel. */
+function salesQuery(
   ctx: QueryCtx,
   start: string | undefined,
   end: string | undefined,
@@ -309,10 +323,9 @@ async function salesIn(
 
   // Filter expressions are serialized, so the channel value rides inside
   // q.eq; a plain-function capture would come through as undefined.
-  return await (channel === undefined
+  return channel === undefined
     ? query
-    : query.filter((q) => q.eq(q.field("channel"), channel))
-  ).collect();
+    : query.filter((q) => q.eq(q.field("channel"), channel));
 }
 
 export const list = query({
@@ -322,10 +335,13 @@ export const list = query({
     channel: v.optional(channel),
   },
   handler: async (ctx, args) => {
-    return await enrichSales(
+    const sales = await salesQuery(
       ctx,
-      await salesIn(ctx, args.start, args.end, args.channel),
-    );
+      args.start,
+      args.end,
+      args.channel,
+    ).collect();
+    return await enrichSales(ctx, sales);
   },
 });
 
@@ -338,24 +354,29 @@ export const listPage = query({
     channel: v.optional(channel),
   },
   handler: async (ctx, args) => {
-    // A filter expression is serialized, so the channel value rides inside
-    // q.eq; a plain-function capture would come through as undefined.
-    const bounds = (
-      q: IndexRangeBuilder<Doc<"sales">, ["occurredAt", "_creationTime"]>,
-    ) => occurredAtBounds(q, args.start, args.end);
-    const query = ctx.db
-      .query("sales")
-      .withIndex("by_occurredAt", bounds)
-      .order("desc");
-    const filtered =
-      args.channel === undefined
-        ? query
-        : query.filter((q) => q.eq(q.field("channel"), args.channel));
-    const page = await filtered.paginate(args.paginationOpts);
+    const page = await salesQuery(
+      ctx,
+      args.start,
+      args.end,
+      args.channel,
+    ).paginate(args.paginationOpts);
 
     return { ...page, page: await enrichSales(ctx, page.page) };
   },
 });
+
+/** One sale line with its product and unit names attached. */
+async function saleLineDetail(ctx: QueryCtx, line: Doc<"saleLines">) {
+  const [product, unit] = await Promise.all([
+    ctx.db.get(line.productId),
+    ctx.db.get(line.unitId),
+  ]);
+  return {
+    ...line,
+    productName: product?.name ?? "Unknown product",
+    unitName: unit?.name ?? "unit",
+  };
+}
 
 export const get = query({
   args: { saleId: v.id("sales") },
@@ -368,25 +389,11 @@ export const get = query({
       .withIndex("by_sale", (q) => q.eq("saleId", saleId))
       .collect();
 
-    const enriched = await Promise.all(
-      lines.map(async (line) => {
-        const [product, unit] = await Promise.all([
-          ctx.db.get(line.productId),
-          ctx.db.get(line.unitId),
-        ]);
-        return {
-          ...line,
-          productName: product?.name ?? "Unknown product",
-          unitName: unit?.name ?? "unit",
-        };
-      }),
-    );
-
     const payments = await ledgerFor(ctx, saleId);
 
     return {
       sale,
-      lines: enriched,
+      lines: await Promise.all(lines.map((line) => saleLineDetail(ctx, line))),
       payments,
       balance: saleBalance(sale, payments),
     };
@@ -403,8 +410,8 @@ export const linesInRange = query({
       )
       .collect();
 
-    const saleIds = [...new Set(lines.map((line) => line.saleId))];
-    const sales = await Promise.all(saleIds.map((id) => ctx.db.get(id)));
+    const saleIds = new Set(lines.map((line) => line.saleId));
+    const sales = await Promise.all([...saleIds].map((id) => ctx.db.get(id)));
     const voided = new Set(
       sales.filter((sale) => sale?.voided).map((sale) => sale?._id),
     );
