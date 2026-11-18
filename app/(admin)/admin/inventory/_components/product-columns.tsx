@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { Archive, Pencil, PlusCircle } from "lucide-react";
+import { Archive, ArchiveRestore, Pencil, PlusCircle } from "lucide-react";
 import { AppTableActions } from "@/components/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ const naira = new Intl.NumberFormat("en-NG", {
 export function createProductColumns(actions: {
   onEdit: (product: ProductRow) => void;
   onArchive: (product: ProductRow) => void;
+  onRestore: (product: ProductRow) => void;
   onRecordMovement: (product: ProductRow) => void;
 }): ColumnDef<ProductRow>[] {
   return [
@@ -100,6 +101,16 @@ export function createProductColumns(actions: {
                 onClick={() => actions.onArchive(product)}
               >
                 <Archive className="h-4 w-4" />
+              </Button>
+            )}
+            {!product.active && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => actions.onRestore(product)}
+              >
+                <ArchiveRestore className="h-4 w-4" />
+                Restore
               </Button>
             )}
           </AppTableActions>

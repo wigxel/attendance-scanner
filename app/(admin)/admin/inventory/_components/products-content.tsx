@@ -34,6 +34,7 @@ export function ProductsContent() {
   });
   const units = useQuery(api.inventory.listUnits, { includeArchived: true });
   const archiveProduct = useMutation(api.inventory.archiveProduct);
+  const restoreProduct = useMutation(api.inventory.restoreProduct);
 
   const openCreate = useCallback(() => {
     setEditing(null);
@@ -68,14 +69,29 @@ export function ProductsContent() {
     [archiveProduct],
   );
 
+  const handleRestore = useCallback(
+    async (product: ProductRow) => {
+      try {
+        await restoreProduct({ productId: product._id });
+        toast.success("Product restored");
+      } catch (error) {
+        toast.error("Could not restore product", {
+          description: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    },
+    [restoreProduct],
+  );
+
   const columns = useMemo(
     () =>
       createProductColumns({
         onEdit: openEdit,
         onArchive: handleArchive,
+        onRestore: handleRestore,
         onRecordMovement: openMovement,
       }),
-    [openEdit, handleArchive, openMovement],
+    [openEdit, handleArchive, handleRestore, openMovement],
   );
 
   if (products === undefined || units === undefined) {

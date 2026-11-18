@@ -470,6 +470,25 @@ describe("products", () => {
       await t.query(api.products.list, { includeArchived: true }),
     ).toHaveLength(1);
   });
+
+  it("restores an archived product back to the active list", async () => {
+    const t = convexTest(schema, modules);
+    const baseUnitId = await unitId(t);
+    const productId = await t.mutation(api.products.create, {
+      callerId: "admin",
+      name: "Peak Milk",
+      baseUnitId,
+    });
+    await t.mutation(api.products.archive, { callerId: "admin", productId });
+    expect(await t.query(api.products.list, {})).toHaveLength(0);
+
+    await t.mutation(api.products.restore, { callerId: "admin", productId });
+
+    const products = await t.query(api.products.list, {});
+    expect(products).toHaveLength(1);
+    expect(products[0].active).toBe(true);
+    expect(products[0].updatedBy).toBe("admin");
+  });
 });
 
 describe("purchases", () => {

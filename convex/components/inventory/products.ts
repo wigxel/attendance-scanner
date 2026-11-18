@@ -173,3 +173,17 @@ export const archive = mutation({
     });
   },
 });
+
+export const restore = mutation({
+  args: { callerId: v.string(), productId: v.id("products") },
+  handler: async (ctx, { callerId, productId }) => {
+    const product = await ctx.db.get(productId);
+    if (!product) throw new Error("Product not found.");
+
+    await ctx.db.patch(productId, {
+      active: true,
+      updatedAt: new Date().toISOString(),
+      updatedBy: callerId,
+    });
+  },
+});
