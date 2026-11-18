@@ -502,6 +502,17 @@ export const archiveProduct = mutation({
   },
 });
 
+export const restoreProduct = mutation({
+  args: { productId: v.string() },
+  handler: async (ctx, { productId }) => {
+    const caller = await requireCallerId(ctx);
+    await ctx.runMutation(components.inventory.products.restore, {
+      productId,
+      callerId: caller,
+    });
+  },
+});
+
 export const listUnits = query({
   args: { includeArchived: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
