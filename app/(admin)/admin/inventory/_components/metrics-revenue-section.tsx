@@ -16,8 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { RevenueChannelShare, SaleChannel } from "@/convex/inventory";
+import { formatKobo } from "@/lib/currency.helpers";
 import { useMetrics } from "./metrics-context";
-import { formatAmount } from "./metrics-format";
 
 const channelLabels: Record<SaleChannel, string> = {
   cash: "Cash",
@@ -65,7 +65,7 @@ function RevenueTable({ shares }: { shares: RevenueChannelShare[] }) {
                 </span>
               </TableCell>
               <TableCell className="text-right font-medium tabular-nums">
-                {formatAmount(share.totalKobo)}
+                {formatKobo(share.totalKobo)}
               </TableCell>
             </TableRow>
           );
@@ -83,7 +83,7 @@ export function MetricsRevenueSection() {
       <h3 className="text-sm font-medium text-foreground">
         Revenue by channel
       </h3>
-      <div className="rounded-md border border-(--border) bg-(--background)">
+      <div className="rounded-md border border-border bg-background">
         <RevenueTable shares={metrics.revenue.byChannel} />
       </div>
     </section>

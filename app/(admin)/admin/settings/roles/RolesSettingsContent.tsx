@@ -69,7 +69,7 @@ export function RolesSettingsContent() {
         </Button>
       </div>
 
-      <div className="rounded-lg border border-(--border) bg-background shadow-sm overflow-hidden">
+      <div className="rounded-lg border border-border bg-background shadow-sm overflow-hidden">
         {roles === undefined ? (
           <div className="flex justify-center p-8">
             <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
@@ -79,7 +79,7 @@ export function RolesSettingsContent() {
             No roles found.
           </div>
         ) : (
-          <table className="min-w-full divide-y divide-(--border)">
+          <table className="min-w-full divide-y divide-border">
             <thead className="bg-background">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -96,7 +96,7 @@ export function RolesSettingsContent() {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-background divide-y divide-(--border)">
+            <tbody className="bg-background divide-y divide-border">
               {roles.map((role) => (
                 <tr
                   key={role._id}

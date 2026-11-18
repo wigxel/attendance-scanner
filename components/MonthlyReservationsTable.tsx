@@ -316,7 +316,7 @@ export function MonthlyReservationsTable() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="min-w-[120px]">
+                  <Button variant="outline" size="sm" className="min-w-30">
                     {monthLabel()} <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -351,7 +351,7 @@ export function MonthlyReservationsTable() {
                       />
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[250px]">
+                  <TooltipContent side="bottom" className="max-w-62.5">
                     <p>
                       Show reservations that started in this month but ended in
                       a different month (e.g., a monthly pass starting April 15

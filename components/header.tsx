@@ -20,7 +20,7 @@ export function Header() {
     >
       <div className="absolute inset-0 z-0 scanline-container pointer-events-none" />
 
-      <Logo className="w-[7rem] md:w-[9rem]" />
+      <Logo className="w-28 md:w-36" />
 
       <div className="flex gap-4 items-center">
         <nav>
@@ -38,7 +38,7 @@ export function Header() {
             <SignUpButton>
               <button
                 type="button"
-                className="bg-(--primary) text-foreground rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer"
+                className="bg-primary text-foreground rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer"
               >
                 Sign Up
               </button>

@@ -66,7 +66,7 @@ function PendingBookingItem({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 border border-(--border) text-gray-700 py-2 rounded-lg font-medium hover:bg-background transition-colors cursor-pointer"
+          className="flex-1 border border-border text-gray-700 py-2 rounded-lg font-medium hover:bg-background transition-colors cursor-pointer"
         >
           Cancel
         </button>
@@ -175,7 +175,7 @@ const PendingBookingsModal = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Pending Booking Found</h2>
           <div
-            className={`text-sm font-semibold px-3 py-1 rounded-full min-w-[57px] text-center ${
+            className={`text-sm font-semibold px-3 py-1 rounded-full min-w-14.25 text-center ${
               isExpiringSoon
                 ? "bg-red-100 text-red-700"
                 : "bg-yellow-100 text-yellow-700"

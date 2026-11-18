@@ -190,6 +190,11 @@ export const recordPayment = mutation({
  * A mistake is undone by a compensating row, never by editing. Reversing a
  * reversal is refused: the ledger stays a straight line of cause and effect.
  */
+export const get = query({
+  args: { paymentId: v.id("salePayments") },
+  handler: async (ctx, { paymentId }) => await ctx.db.get(paymentId),
+});
+
 export const reversePayment = mutation({
   args: {
     callerId: v.string(),

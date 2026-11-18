@@ -64,7 +64,7 @@ export function TemperatureHeatmap({ dailyBuckets }: Properties) {
     <div className="flex flex-col gap-2">
       <div className="overflow-x-auto">
         <table
-          className="w-full min-w-[55rem] border-separate lg:min-w-0"
+          className="w-full min-w-220 border-separate lg:min-w-0"
           style={{ borderSpacing: "4px" }}
         >
           <thead>
@@ -145,7 +145,7 @@ export function TemperatureHeatmap({ dailyBuckets }: Properties) {
 
       <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
         <span>20°C</span>
-        <div className="flex gap-[2px] flex-1 max-w-[80px]">
+        <div className="flex gap-0.5 flex-1 max-w-20">
           {palette.map((color) => {
             return (
               <div
@@ -158,7 +158,7 @@ export function TemperatureHeatmap({ dailyBuckets }: Properties) {
         </div>
         <span>35°C</span>
         <span className="ml-2">Less</span>
-        <div className="flex gap-[2px]">
+        <div className="flex gap-0.5">
           <div
             className="h-3 w-3 rounded-[2px]"
             style={{

@@ -58,7 +58,7 @@ export const SegmentProgressBar = (props: {
             key={index}
             data-active={isActive}
             className={cn(
-              "w-[3px] h-6 group relative overflow-hidden rounded-sm",
+              "w-0.75 h-6 group relative overflow-hidden rounded-sm",
               className,
               !isActive && "bg-gray-200",
             )}
@@ -66,7 +66,7 @@ export const SegmentProgressBar = (props: {
             <span
               className={cn(
                 "absolute inset-0 transition-all duration-500",
-                !isActive && "top-[100%]",
+                !isActive && "top-full",
               )}
               style={style}
             />

@@ -163,10 +163,10 @@ function Content() {
             canShowCheckmark={false}
           />
           {/* progress bar */}
-          <div className="absolute bottom-[-2px] left-0 h-px w-full bg-background-lv1" />
+          <div className="absolute -bottom-0.5 left-0 h-px w-full bg-background-lv1" />
 
           <div
-            className={`absolute bottom-[-2px] left-0 h-px bg-[#0000FF] transition-all duration-300 ease-in-out rounded-r-full
+            className={`absolute -bottom-0.5 left-0 h-px bg-[#0000FF] transition-all duration-300 ease-in-out rounded-r-full
               ${activeTab === "booking" && "w-1/3"}
               ${activeTab === "choose" && "w-2/3"}
               ${activeTab === "payment" && "w-full"}

@@ -34,7 +34,7 @@ import {
 import { api } from "@/convex/_generated/api";
 import type { SalePaymentRow } from "@/convex/inventory";
 import { usePrivilege } from "@/hooks/usePrivilege";
-import { currencyFormatter } from "@/lib/currency.helpers";
+import { formatKobo } from "@/lib/currency.helpers";
 import { paymentChannelLabels } from "@/lib/payment-channel";
 import { SaleStatusBadge } from "./sale-columns";
 
@@ -44,10 +44,6 @@ const channelLabels = {
   transfer: "Transfer",
   credit: "Credit",
 } as const;
-
-function formatKobo(value: number) {
-  return currencyFormatter.format(value / 100);
-}
 
 function formatPaymentDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-NG", {
@@ -165,6 +161,10 @@ export function SaleDetailSheet({
   const reverseSalePayment = useMutation(api.inventory.reverseSalePayment);
   const writeOffSale = useMutation(api.inventory.writeOffSale);
   const { valid: canManage } = usePrivilege("inventory:manage");
+  const { valid: canSell } = usePrivilege("inventory:sell");
+  // Till users may correct a fresh sale (void, customer); managers can do
+  // everything, including reverse payments and write off.
+  const canAdjust = canManage || canSell;
 
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [customerId, setCustomerId] = useState("");
@@ -294,7 +294,7 @@ export function SaleDetailSheet({
                   </div>
                   <div className="flex items-center gap-2">
                     <SaleStatusBadge status={detail.status} />
-                    {canManage ? (
+                    {canAdjust ? (
                       <Button
                         type="button"
                         variant="outline"
@@ -395,9 +395,9 @@ export function SaleDetailSheet({
                   </div>
                 ) : null}
 
-                {canManage && !detail.sale.voided ? (
+                {canAdjust && !detail.sale.voided ? (
                   <div className="flex flex-wrap gap-2">
-                    {detail.outstandingKobo > 0 ? (
+                    {canManage && detail.outstandingKobo > 0 ? (
                       <Button
                         type="button"
                         variant="outline"

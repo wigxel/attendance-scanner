@@ -1,5 +1,6 @@
 "use client";
 import {
+  type Column,
   type ColumnDef,
   type ColumnFiltersState,
   flexRender,
@@ -7,6 +8,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type RowData,
   type SortingState,
   useReactTable,
   type VisibilityState,
@@ -38,6 +40,22 @@ import {
   EmptyStateTitle,
 } from "./empty-state";
 import { Card, CardContent } from "./ui/card";
+
+declare module "@tanstack/react-table" {
+  interface ColumnMeta<TData extends RowData, TValue> {
+    /** Human label for the column dropdown when the header is not a string. */
+    label?: string;
+  }
+}
+
+// The visibility dropdown cannot render a JSX header, so fall back through
+// string headers, an explicit meta label, then a prettified column id.
+export function columnLabel<T extends RowData>(column: Column<T, unknown>) {
+  const { header, meta } = column.columnDef;
+  if (typeof header === "string" && header) return header;
+  if (meta?.label) return meta.label;
+  return column.id.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+}
 
 export type LoadMoreState = {
   canNextPage: boolean;
@@ -164,7 +182,7 @@ export function AppDataTable<T>({
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {columnLabel(column)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}

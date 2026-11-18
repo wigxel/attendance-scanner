@@ -159,7 +159,7 @@
 }
 
 .scanline-root .scanline-container:after {
-  @apply absolute inset-[-5px] z-[-1] transform translate-y-1;
+  @apply absolute -inset-1.25 z-[-1] transform translate-y-1;
 
   content: "";
   display: block;
@@ -181,7 +181,7 @@
 }
 
 .button-iso {
-  @apply relative border-2 !leading-[2ex] bg-(--iso-color) hover:bg-[hsla(from_var(--iso-color)_h_s_l_/_0.9)] border-(--iso-color);
+  @apply relative border-2 leading-[2ex]! bg-(--iso-color) hover:bg-[hsla(from_var(--iso-color)_h_s_l/0.9)] border-(--iso-color);
 }
 
 .button-iso::after {
@@ -190,7 +190,7 @@
 }
 
 .button-iso:focus {
-  @apply translate-y-[1px] border-b-0 ring-0;
+  @apply translate-y-px border-b-0 ring-0;
 }
 
 /* Charts */

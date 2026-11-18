@@ -60,8 +60,7 @@ export function RecordPaymentDialog({
         <DialogHeader>
           <DialogTitle>Record payment</DialogTitle>
           <DialogDescription>
-            Money taken against this sale.
-            <br /> A mistake is reversed, never edited.
+            Record a payment for this sale. Mistakes are reversed, not edited.
           </DialogDescription>
         </DialogHeader>
 

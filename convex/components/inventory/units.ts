@@ -1,9 +1,30 @@
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { DEFAULT_UNIT_NAMES } from "./defaultUnits";
 
 export function normalise(value: string) {
   return value.trim().toLowerCase();
+}
+
+function ensureName(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("Unit name is required.");
+  return trimmed;
+}
+
+async function ensureNoDuplicateName(
+  ctx: QueryCtx | MutationCtx,
+  name: string,
+  ignoreId?: Id<"units">,
+) {
+  const units = await ctx.db.query("units").collect();
+  const duplicate = units.some(
+    (other) =>
+      other._id !== ignoreId && normalise(other.name) === normalise(name),
+  );
+  if (duplicate) throw new Error(`A unit named "${name}" already exists.`);
 }
 
 export const list = query({
@@ -23,13 +44,8 @@ export const create = mutation({
     abbreviation: v.optional(v.string()),
   },
   handler: async (ctx, { name, abbreviation }) => {
-    const trimmed = name.trim();
-    if (!trimmed) throw new Error("Unit name is required.");
-
-    const units = await ctx.db.query("units").collect();
-    if (units.some((unit) => normalise(unit.name) === normalise(trimmed))) {
-      throw new Error(`A unit named "${trimmed}" already exists.`);
-    }
+    const trimmed = ensureName(name);
+    await ensureNoDuplicateName(ctx, trimmed);
 
     return await ctx.db.insert("units", {
       name: trimmed,
@@ -50,15 +66,8 @@ export const rename = mutation({
     const unit = await ctx.db.get(unitId);
     if (!unit) throw new Error("Unit not found.");
 
-    const trimmed = name.trim();
-    if (!trimmed) throw new Error("Unit name is required.");
-
-    const units = await ctx.db.query("units").collect();
-    const duplicate = units.some(
-      (other) =>
-        other._id !== unitId && normalise(other.name) === normalise(trimmed),
-    );
-    if (duplicate) throw new Error(`A unit named "${trimmed}" already exists.`);
+    const trimmed = ensureName(name);
+    await ensureNoDuplicateName(ctx, trimmed, unitId);
 
     await ctx.db.patch(unitId, {
       name: trimmed,

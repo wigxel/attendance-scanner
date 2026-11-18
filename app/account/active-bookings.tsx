@@ -124,7 +124,7 @@ export function BookingCalendarBox({
 }) {
   const date = new Date(startDate);
   return (
-    <div className="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg shrink-0 border border-(--border)">
+    <div className="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg shrink-0 border border-border">
       <span className="text-[10px] font-bold text-gray-500 uppercase">
         {date.toLocaleString("default", { month: "short" })}
       </span>
@@ -201,7 +201,7 @@ function BookingSeatNumbers({ seats }: Pick<Booking, "seats">) {
         {seats?.map((seat, index) => (
           <span
             key={seat?._id || index}
-            className="text-sm font-mono font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-(--border)"
+            className="text-sm font-mono font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-border"
           >
             {seat?.seatNumber}
           </span>
@@ -219,7 +219,7 @@ function BookingItem({ booking }: { booking: Booking }) {
     <div className="group py-4 border-b border-gray-100 last:border-0 flex flex-col gap-3">
       <div className="group flex flex-col md:flex-row sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
         {/* LEFT: Date and Time */}
-        <div className="flex items-center gap-3 min-w-[180px]">
+        <div className="flex items-center gap-3 min-w-45">
           <BookingCalendarBox startDate={booking.startDate} />
           <BookingDateTimeInfo
             startDate={booking.startDate}
@@ -230,7 +230,7 @@ function BookingItem({ booking }: { booking: Booking }) {
         </div>
 
         {/* RIGHT: Action Button / Status Badge */}
-        <div className="flex items-center md:justify-end sm:min-w-[140px]">
+        <div className="flex items-center md:justify-end sm:min-w-35">
           <BookingActionStatus role={booking.role} />
         </div>
       </div>

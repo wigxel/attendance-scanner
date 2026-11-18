@@ -208,7 +208,7 @@ export default function KpisPage() {
 
         <section
           aria-label="Checklist"
-          className="min-w-0 lg:col-start-2 lg:row-start-1 lg:row-end-[-1] lg:self-stretch"
+          className="min-w-0 lg:col-start-2 lg:row-start-1 lg:-row-end-1 lg:self-stretch"
         >
           <Card className="h-full">
             <CardHeader>
@@ -229,7 +229,7 @@ export default function KpisPage() {
                 </fieldset>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {priority.length > 0 && (
                 <div className="mb-6">
                   <div className="mb-2 flex items-baseline gap-2">

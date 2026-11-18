@@ -8,9 +8,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatKobo } from "@/lib/currency.helpers";
 import { serialNo } from "@/lib/data.helpers";
 import { useMetrics } from "./metrics-context";
-import { formatAmount } from "./metrics-format";
 
 export function MetricsTopProductsSection() {
   const { metrics } = useMetrics();
@@ -18,7 +18,7 @@ export function MetricsTopProductsSection() {
   return (
     <section className="space-y-3">
       <h3 className="text-sm font-medium text-foreground">Top sold products</h3>
-      <div className="rounded-md border border-(--border) bg-(--background)">
+      <div className="rounded-md border border-border bg-background">
         <Table>
           <TableHeader>
             <TableRow>
@@ -49,7 +49,7 @@ export function MetricsTopProductsSection() {
                     {product.quantity} {product.unitName}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {formatAmount(product.revenueKobo)}
+                    {formatKobo(product.revenueKobo)}
                   </TableCell>
                 </TableRow>
               ))

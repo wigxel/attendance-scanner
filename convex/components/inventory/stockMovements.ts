@@ -92,6 +92,8 @@ type Entry = {
   source?: "bulk" | "manual" | "sale";
   /** Set when this row undoes another movement instead of real usage. */
   reversal?: boolean;
+  /** The sale whose lines this row moved stock for. */
+  saleId?: Id<"sales">;
   /** Alternate unit snapshot; defaults to the product's base unit. */
   unitId?: Id<"units">;
   unitFactor?: number;
@@ -140,6 +142,7 @@ export async function insertMovement(ctx: MutationCtx, entry: Entry) {
     note,
     source: entry.source ?? "manual",
     reversal: entry.reversal,
+    saleId: entry.saleId,
     createdBy: entry.callerId,
   });
 }

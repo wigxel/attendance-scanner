@@ -27,7 +27,7 @@ export default async function AdminLayout(props: {
 
       <PushGate />
 
-      <main className="mx-auto container min-h-[calc(100svh_-_150px)]">
+      <main className="mx-auto container min-h-[calc(100svh-150px)]">
         {props.children}
       </main>
 

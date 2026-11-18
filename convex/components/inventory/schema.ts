@@ -48,6 +48,8 @@ const stockMovements = defineTable({
   ),
   /** True when this row undoes another movement (a voided purchase). */
   reversal: v.optional(v.boolean()),
+  /** The sale whose lines this row moved stock for. */
+  saleId: v.optional(v.id("sales")),
   createdBy: v.string(),
 })
   .index("by_product", ["productId"])
@@ -176,6 +178,20 @@ const productUnits = defineTable({
   isBase: v.boolean(),
 }).index("by_product", ["productId"]);
 
+// Append-only cash withdrawal ledger, mirroring salePayments: a mistake is
+// reversed with a compensating row, never edited or deleted. Withdrawals only
+// move money out of the drawer; they never touch stock, sales or purchases.
+const cashWithdrawals = defineTable({
+  amountKobo: v.number(),
+  withdrawnAt: v.string(),
+  kind: v.union(v.literal("withdrawal"), v.literal("reversal")),
+  /** Set on a reversal: the row this one undoes. */
+  reversesId: v.optional(v.id("cashWithdrawals")),
+  note: v.optional(v.string()),
+  createdBy: v.string(),
+  createdAt: v.string(),
+}).index("by_withdrawnAt", ["withdrawnAt"]);
+
 export default defineSchema({
   units,
   products,
@@ -186,5 +202,6 @@ export default defineSchema({
   sales,
   saleLines,
   salePayments,
+  cashWithdrawals,
   productUnits,
 });

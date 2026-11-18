@@ -1,6 +1,7 @@
 "use client";
+
 import { useQuery } from "convex/react";
-import { XIcon } from "lucide-react";
+import { CheckCircle2, XIcon } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import React from "react";
 import { AppLoader } from "@/components/loader";
@@ -9,6 +10,11 @@ import { api } from "@/convex/_generated/api";
 import { useProfile } from "@/hooks/auth";
 import { useCheckInMode } from "@/hooks/flags";
 import { useDeviceMeta, useQueryHash } from "@/hooks/tracking";
+import {
+  fireBirthdayConfetti,
+  isBirthdayToday,
+  shouldCelebrate,
+} from "@/lib/birthday";
 import { safeStr } from "@/lib/data.helpers";
 import { ScanTimeCodec } from "@/lib/scan";
 import { cn } from "@/lib/utils";
@@ -172,6 +178,33 @@ export function ResizeableQRCode({ hash, className }: ResizableQRCodeProps) {
   );
 }
 
+/**
+ * Fires confetti the moment the member's check-in lands on their birthday.
+ * Rendered outside <NotRegistered> — that gate unmounts its children as soon
+ * as registration succeeds, so the false→true flip would never be observed
+ * from inside it.
+ */
+export function BirthdayCheckInConfetti() {
+  const profile = useProfile();
+  const birthday = profile.data?.birthday;
+  const is_registered = useQuery(api.myFunctions.isRegisteredForToday);
+  const wasRegistered = React.useRef<boolean | null>(null);
+
+  React.useEffect(() => {
+    if (is_registered === undefined) return;
+
+    const prev = wasRegistered.current;
+    wasRegistered.current = is_registered;
+
+    // Only a live false→true flip: not the first load, not already true.
+    if (prev !== false || !is_registered) return;
+    if (!isBirthdayToday(birthday)) return;
+    if (shouldCelebrate("checkin")) fireBirthdayConfetti();
+  }, [is_registered, birthday]);
+
+  return null;
+}
+
 type NotRegisterdProps = {
   children: React.ReactNode;
 };
@@ -184,4 +217,30 @@ export function NotRegistered({ children }: NotRegisterdProps) {
   if (is_registered) return null;
 
   return <div>{children}</div>;
+}
+
+export function CheckedInConfirmation() {
+  const mode = useCheckInMode();
+  const is_registered = useQuery(api.myFunctions.isRegisteredForToday);
+
+  // Self-service modes already show their own "You're checked in" card.
+  if (mode !== "staff_scan") return null;
+
+  // Nothing while the query loads or before staff scan lands; the QR card
+  // covers those cases.
+  if (!is_registered) return null;
+
+  return (
+    <div className="border overflow-hidden rounded-lg bg-background">
+      <div className="p-4 flex items-center gap-3">
+        <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0" />
+        <div>
+          <p className="font-semibold text-base tracking-tight">Checked in</p>
+          <p className="text-base font-thin text-muted-foreground">
+            Staff confirmed your check-in for today.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }

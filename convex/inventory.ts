@@ -1,6 +1,8 @@
 import { paginationOptsValidator } from "convex/server";
-import { v } from "convex/values";
-import { components } from "./_generated/api";
+import { ConvexError, v } from "convex/values";
+import { differenceInHours } from "date-fns";
+import { formatKobo } from "../lib/currency.helpers";
+import { components, internal } from "./_generated/api";
 import {
   type MutationCtx,
   mutation,
@@ -32,7 +34,13 @@ export type StockLevel = {
   lastMovementAt: string | null;
 };
 
-export type ProductMovement = Doc<"stockMovements"> & { recordedBy: string };
+export type ProductMovement = Doc<"stockMovements"> & {
+  recordedBy: string;
+  /** The sale this row moved stock for; parsed from the note on legacy rows. */
+  linkedSaleId: string | null;
+  /** Customer on that sale; null when the sale or profile is gone. */
+  saleCustomerName: string | null;
+};
 
 export type Supplier = Doc<"suppliers">;
 
@@ -149,9 +157,24 @@ export type SaleDetail = SaleBalance & {
 /** One customer who still owes money, for the receivables screen. */
 export type Receivable = {
   customerId: string;
-  customerName: string;
+  /** Null when the profile is gone; the UI says "Deleted customer". */
+  customerName: string | null;
   totalOwedKobo: number;
   oldestUnpaidAt: string;
+};
+
+/** One ledger row in the withdrawal history. */
+export type CashWithdrawalRow = Doc<"cashWithdrawals"> & {
+  /** Profile name of whoever recorded or reversed it. */
+  recordedByName: string;
+  /** True for a reversal row, or a withdrawal that one already undoes. */
+  reversed: boolean;
+};
+
+/** The Cash tab header: drawer figure plus range figures. */
+export type CashOverview = {
+  cashInHandKobo: number;
+  withdrawnInRangeKobo: number;
 };
 
 export type SaleFormProduct = {
@@ -596,6 +619,21 @@ export const recordBulkAdjustment = mutation({
   },
 });
 
+/**
+ * Legacy rows carry the sale id only inside the note. Only sale-sourced usage
+ * and void reversals are parsed, so a user-typed note cannot fake one.
+ */
+export function saleIdFromNote(movement: Doc<"stockMovements">) {
+  const note = movement.note ?? "";
+  if (movement.source === "sale") {
+    return /^Sale ([a-z0-9]+)$/.exec(note)?.[1] ?? null;
+  }
+  if (movement.reversal) {
+    return /^Void sale ([a-z0-9]+)$/.exec(note)?.[1] ?? null;
+  }
+  return null;
+}
+
 export const productMovements = query({
   args: { productId: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
@@ -605,6 +643,29 @@ export const productMovements = query({
       args,
     )) as Doc<"stockMovements">[];
 
+    const saleIds = [
+      ...new Set(
+        movements
+          .map((movement) => movement.saleId ?? saleIdFromNote(movement))
+          .filter((saleId): saleId is string => saleId !== null),
+      ),
+    ];
+    // One lookup per distinct sale, not one per movement row.
+    const customerBySale = new Map(
+      await Promise.all(
+        saleIds.map(async (saleId) => {
+          const detail = (await ctx.runQuery(components.inventory.sales.get, {
+            saleId,
+          })) as { sale: Doc<"sales"> } | null;
+          const customerId = detail?.sale.customerId;
+          return [
+            saleId,
+            customerId ? await profileName(ctx, customerId) : null,
+          ] as const;
+        }),
+      ),
+    );
+
     return await Promise.all(
       movements.map(async (movement): Promise<ProductMovement> => {
         const recorder = await ctx.db
@@ -612,11 +673,16 @@ export const productMovements = query({
           .withIndex("by_user_id", (q) => q.eq("id", movement.createdBy))
           .first();
 
+        const linkedSaleId = movement.saleId ?? saleIdFromNote(movement);
         return {
           ...movement,
           recordedBy: recorder
             ? `${recorder.firstName} ${recorder.lastName}`.trim()
             : movement.createdBy,
+          linkedSaleId: linkedSaleId ?? null,
+          saleCustomerName: linkedSaleId
+            ? (customerBySale.get(linkedSaleId) ?? null)
+            : null,
         };
       }),
     );
@@ -876,6 +942,27 @@ async function customerNames(
   );
 }
 
+/** Customer display names, or null where the profile no longer exists. */
+async function customerNamesOrMissing(
+  ctx: QueryCtx,
+  customerIds: Array<string | undefined>,
+) {
+  const distinct = [...new Set(customerIds.filter((id): id is string => !!id))];
+  const entries = await Promise.all(
+    distinct.map(async (id) => {
+      const profile = await ctx.db
+        .query("profile")
+        .withIndex("by_user_id", (q) => q.eq("id", id))
+        .first();
+      return [
+        id,
+        profile ? `${profile.firstName} ${profile.lastName}`.trim() : null,
+      ] as const;
+    }),
+  );
+  return new Map(entries);
+}
+
 type SaleRow = Doc<"sales"> &
   SaleBalance & {
     lineCount: number;
@@ -979,10 +1066,39 @@ export const recordSale = mutation({
   },
 });
 
+// Correcting a sale is an everyday till act: sell users may void, reverse a
+// payment or reassign the customer within 3 hours of the sale. Past the
+// window only managers can. The receipt is what's adjusted, so the window
+// runs from sale.occurredAt, not a payment's paidAt. Write-off stays
+// manage-only — forgiving debt is a manager's decision.
+async function requireSaleAdjustable(
+  ctx: MutationCtx,
+  caller: string,
+  saleId: string,
+) {
+  const { valid } = await ctx.runQuery(
+    components.wigxel_acl.identities.hasPrivilege,
+    { identity: caller, privilege: PRIVILEGE },
+  );
+  if (valid) return;
+
+  const detail = (await ctx.runQuery(components.inventory.sales.get, {
+    saleId,
+  })) as { sale: Doc<"sales"> } | null;
+  if (!detail) throw new ConvexError("Sale not found.");
+
+  if (differenceInHours(Date.now(), detail.sale.occurredAt) >= 3) {
+    throw new ConvexError(
+      "Sale is older than 3 hours. Ask an inventory manager to adjust it.",
+    );
+  }
+}
+
 export const voidSale = mutation({
   args: { saleId: v.string() },
   handler: async (ctx, { saleId }) => {
-    const caller = await requireCallerId(ctx);
+    const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
+    await requireSaleAdjustable(ctx, caller, saleId);
     await ctx.runMutation(components.inventory.sales.voidSale, {
       saleId,
       callerId: caller,
@@ -993,7 +1109,8 @@ export const voidSale = mutation({
 export const setSaleCustomer = mutation({
   args: { saleId: v.string(), customerId: v.optional(v.string()) },
   handler: async (ctx, { saleId, customerId }) => {
-    await requireCallerId(ctx);
+    const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
+    await requireSaleAdjustable(ctx, caller, saleId);
 
     const trimmed = customerId?.trim() || undefined;
     if (trimmed && !(await customerExists(ctx, trimmed))) {
@@ -1040,33 +1157,46 @@ export const listSales = query({
     start: v.optional(v.string()),
     end: v.optional(v.string()),
     search: v.optional(v.string()),
+    channel: v.optional(saleChannelValidator),
+    status: v.optional(
+      v.union(
+        v.literal("paid"),
+        v.literal("part_paid"),
+        v.literal("unpaid"),
+        v.literal("written_off"),
+        v.literal("voided"),
+      ),
+    ),
   },
   handler: async (ctx, args) => {
     await requireAny(ctx, SELL_OR_MANAGE);
 
     const start = dayToIso(args.start, "from");
     const end = dayToIso(args.end, "to");
+    const term = args.search?.trim().toLowerCase();
 
-    // Searching scans the bounded range and pages the matches in memory:
-    // customer and item names are resolved data, so they cannot ride the
-    // index. ponytail: full in-bounds collect per search; a searchIndex on
+    // Search and status are both derived or resolved data, so neither can
+    // ride the index: scan the bounded range and page the matches in memory.
+    // ponytail: full in-bounds collect per filtered load; a searchIndex on
     // sales (with a denormalised text field + backfill) when the shop's
     // history gets big enough to feel it.
-    if (args.search?.trim()) {
-      const term = args.search.trim().toLowerCase();
+    if (term || args.status) {
       const rows = (await ctx.runQuery(components.inventory.sales.list, {
         start,
         end,
+        channel: args.channel,
       })) as ComponentSaleRow[];
 
       const nameById = await customerNames(ctx, rows);
       const matches = rows.filter(
         (sale) =>
-          (sale.customerId ? (nameById.get(sale.customerId) ?? "") : "")
-            .toLowerCase()
-            .includes(term) ||
-          sale.items.some((item) => item.name.toLowerCase().includes(term)) ||
-          (sale.note ?? "").toLowerCase().includes(term),
+          (args.status === undefined || sale.balance.status === args.status) &&
+          (term === undefined ||
+            (sale.customerId ? (nameById.get(sale.customerId) ?? "") : "")
+              .toLowerCase()
+              .includes(term) ||
+            sale.items.some((item) => item.name.toLowerCase().includes(term)) ||
+            (sale.note ?? "").toLowerCase().includes(term)),
       );
 
       const from = Number.parseInt(args.paginationOpts.cursor ?? "0", 10) || 0;
@@ -1084,6 +1214,7 @@ export const listSales = query({
       paginationOpts: args.paginationOpts,
       start,
       end,
+      channel: args.channel,
     })) as {
       page: ComponentSaleRow[];
       isDone: boolean;
@@ -1152,7 +1283,15 @@ export const recordSalePayment = mutation({
 export const reverseSalePayment = mutation({
   args: { paymentId: v.string(), note: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const caller = await requireCallerId(ctx);
+    const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
+
+    // The window follows the sale, not the payment's paidAt.
+    const payment = (await ctx.runQuery(components.inventory.salePayments.get, {
+      paymentId: args.paymentId,
+    })) as Doc<"salePayments"> | null;
+    if (!payment) throw new ConvexError("Payment not found.");
+    await requireSaleAdjustable(ctx, caller, payment.saleId);
+
     return await ctx.runMutation(
       components.inventory.salePayments.reversePayment,
       { ...args, callerId: caller },
@@ -1175,6 +1314,162 @@ export const writeOffSale = mutation({
   },
 });
 
+// ---------------------------------------------------------------------------
+// Cash withdrawals
+// ---------------------------------------------------------------------------
+
+// Taking money out of the drawer is an everyday till act, so sellers may
+// record it; undoing a recorded withdrawal is a manager's decision.
+export const recordCashWithdrawal = mutation({
+  args: {
+    amountKobo: v.number(),
+    withdrawnAt: v.optional(v.string()),
+    note: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
+    if (!args.note.trim()) throw new Error("A note is required.");
+    const withdrawalId = await ctx.runMutation(
+      components.inventory.cashWithdrawals.recordWithdrawal,
+      { ...args, callerId: caller },
+    );
+    await notifyCashWithdrawal(ctx, { withdrawalId, callerId: caller });
+    return withdrawalId;
+  },
+});
+
+export const reverseCashWithdrawal = mutation({
+  args: { withdrawalId: v.string(), note: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const caller = await requireCallerId(ctx);
+    const reversalId = await ctx.runMutation(
+      components.inventory.cashWithdrawals.reverseWithdrawal,
+      { ...args, callerId: caller },
+    );
+    await notifyCashWithdrawal(ctx, {
+      withdrawalId: reversalId,
+      callerId: caller,
+    });
+    return reversalId;
+  },
+});
+
+/**
+ * Tell every admin about a cash drawer event, minus the person who did it.
+ * Runs inline but only queues (send never blocks on a network call), and a
+ * failing fan-out must not fail a withdrawal that already hit the ledger.
+ */
+type CashWithdrawalEvent = { withdrawalId: string; callerId: string };
+
+async function notifyCashWithdrawal(
+  ctx: MutationCtx,
+  args: CashWithdrawalEvent,
+) {
+  try {
+    const row = (await ctx.runQuery(
+      components.inventory.cashWithdrawals.getById,
+      // The component returns its row as `any`; this is its shape.
+      { id: args.withdrawalId },
+    )) as { amountKobo: number; kind: "withdrawal" | "reversal" } | null;
+    if (!row) return;
+
+    const recipients = await ctx.runQuery(
+      internal.notifications.recipientsByRole,
+      { roleName: "admin" },
+    );
+    const callerKey = `user:${args.callerId}`;
+    const amount = formatKobo(row.amountKobo);
+    const name = await profileName(ctx, args.callerId);
+    const [title, body] =
+      row.kind === "reversal"
+        ? ["Withdrawal reversed", `${name} put ${amount} back in the drawer.`]
+        : ["Cash withdrawal", `${name} took ${amount} from the drawer.`];
+
+    for (const recipientKey of recipients) {
+      if (recipientKey === callerKey) continue;
+      try {
+        await ctx.runMutation(internal.notifications.send, {
+          recipientKey,
+          channels: ["inapp", "push"],
+          title,
+          body,
+          url: "/admin/inventory/cash",
+          // Dedupe is global by key, so the key must be per recipient —
+          // otherwise only the first admin in the fan-out hears about it.
+          dedupeKey: `${args.withdrawalId}:${recipientKey}`,
+          severity: "info",
+        });
+      } catch (error) {
+        // One bad recipient must not swallow the rest of the fan-out.
+        console.error("cash withdrawal alert failed", recipientKey, error);
+      }
+    }
+  } catch (error) {
+    // The ledger row is already written; the alert is best-effort.
+    console.error("cash withdrawal fan-out failed", error);
+  }
+}
+
+/** Header figures and the daily chart for the Cash tab. */
+export const cashOverview = query({
+  args: { start: v.string(), end: v.string() },
+  handler: async (ctx, args): Promise<CashOverview> => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    // dayToIso returns string | undefined only when its input is; both are
+    // required strings here.
+    const start = dayToIso(args.start, "from") as string;
+    const end = dayToIso(args.end, "to") as string;
+    return (await ctx.runQuery(components.inventory.cashWithdrawals.summary, {
+      start,
+      end,
+    })) as CashOverview;
+  },
+});
+
+/** One page of the withdrawal history, newest first, with names attached. */
+export const listCashWithdrawals = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    start: v.optional(v.string()),
+    end: v.optional(v.string()),
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAny(ctx, SELL_OR_MANAGE);
+
+    const start = dayToIso(args.start, "from");
+    const end = dayToIso(args.end, "to");
+
+    const result = (await ctx.runQuery(
+      components.inventory.cashWithdrawals.listPage,
+      { paginationOpts: args.paginationOpts, start, end, search: args.search },
+    )) as {
+      page: Doc<"cashWithdrawals">[];
+      reversedIds: string[];
+      isDone: boolean;
+      continueCursor: string;
+    };
+
+    const nameById = await profileNames(
+      ctx,
+      result.page.map((row) => row.createdBy),
+    );
+
+    return {
+      ...result,
+      page: result.page.map(
+        (row): CashWithdrawalRow => ({
+          ...row,
+          reversed:
+            result.reversedIds.includes(row._id) || row.kind === "reversal",
+          recordedByName: nameById.get(row.createdBy) ?? row.createdBy,
+        }),
+      ),
+    };
+  },
+});
+
 /** Every customer who still owes money, oldest debt first. */
 export const receivables = query({
   args: {},
@@ -1182,7 +1477,10 @@ export const receivables = query({
     await requireAny(ctx, SELL_OR_MANAGE);
 
     const sales = (await salesWithBalance(ctx)).filter(owesMoney);
-    const nameById = await customerNames(ctx, sales);
+    const nameById = await customerNamesOrMissing(
+      ctx,
+      sales.map((sale) => sale.customerId),
+    );
     const byCustomer = new Map<string, Receivable>();
 
     for (const sale of sales) {
@@ -1190,7 +1488,7 @@ export const receivables = query({
       if (!customerId) continue;
       const row = byCustomer.get(customerId) ?? {
         customerId,
-        customerName: nameById.get(customerId) ?? customerId,
+        customerName: nameById.get(customerId) ?? null,
         totalOwedKobo: 0,
         oldestUnpaidAt: sale.occurredAt,
       };

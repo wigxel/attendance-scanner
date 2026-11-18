@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { HeaderFilter } from "@/components/std-table/filters";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -8,16 +9,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { SaleStatus, SaleSummary } from "@/convex/inventory";
+import type { SaleChannel, SaleStatus, SaleSummary } from "@/convex/inventory";
+import { formatKoboPlain } from "@/lib/currency.helpers";
 import { serialNo } from "@/lib/data.helpers";
-
-const amountFormatter = new Intl.NumberFormat("en-NG", {
-  minimumFractionDigits: 2,
-});
-
-function formatAmount(kobo: number) {
-  return amountFormatter.format(kobo / 100);
-}
 
 const channelLabels = {
   cash: "Cash",
@@ -25,6 +19,10 @@ const channelLabels = {
   transfer: "Transfer",
   credit: "Credit",
 } as const;
+
+export const saleChannelOptions = Object.entries(channelLabels).map(
+  ([value, label]) => ({ value: value as SaleChannel, label }),
+);
 
 type SaleStatusChip = {
   label: string;
@@ -39,6 +37,10 @@ const statusChips: Record<SaleStatus, SaleStatusChip> = {
   voided: { label: "Voided", variant: "secondary" },
 };
 
+export const saleStatusOptions = Object.entries(statusChips).map(
+  ([value, chip]) => ({ value: value as SaleStatus, label: chip.label }),
+);
+
 export type SaleStatusBadgeProps = { status: SaleStatus };
 
 export function SaleStatusBadge({ status }: SaleStatusBadgeProps) {
@@ -52,10 +54,10 @@ export type SaleTotalCellProps = { sale: SaleSummary };
 export function SaleTotalCell({ sale }: SaleTotalCellProps) {
   return (
     <span className="block whitespace-nowrap text-right tabular-nums">
-      {formatAmount(sale.totalKobo)}
+      {formatKoboPlain(sale.totalKobo)}
       {sale.outstandingKobo > 0 ? (
         <span className="block text-xs font-normal text-muted-foreground">
-          {formatAmount(sale.outstandingKobo)} due
+          {formatKoboPlain(sale.outstandingKobo)} due
         </span>
       ) : null}
     </span>
@@ -119,7 +121,9 @@ export const saleColumns: ColumnDef<SaleSummary>[] = [
   },
   {
     id: "channel",
-    header: "Channel",
+    header: ({ table }) => (
+      <HeaderFilter table={table} id="channel" label="Channel" />
+    ),
     accessorKey: "channel",
     cell: ({ row }) => (
       <span
@@ -133,7 +137,9 @@ export const saleColumns: ColumnDef<SaleSummary>[] = [
   },
   {
     id: "status",
-    header: "Status",
+    header: ({ table }) => (
+      <HeaderFilter table={table} id="status" label="Status" />
+    ),
     accessorKey: "status",
     cell: ({ row }) => <SaleStatusBadge status={row.original.status} />,
   },

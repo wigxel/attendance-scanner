@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as cashWithdrawals from "../cashWithdrawals.js";
 import type * as defaultUnits from "../defaultUnits.js";
 import type * as productUnits from "../productUnits.js";
 import type * as products from "../products.js";
@@ -26,6 +27,7 @@ import type {
 import { anyApi, componentsGeneric } from "convex/server";
 
 const fullApi: ApiFromModules<{
+  cashWithdrawals: typeof cashWithdrawals;
   defaultUnits: typeof defaultUnits;
   productUnits: typeof productUnits;
   products: typeof products;

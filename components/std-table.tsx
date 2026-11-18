@@ -6,11 +6,13 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   type SortingState,
+  type TableMeta,
   type Table as TanStackTable,
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
+import { columnLabel } from "@/components/DataTable";
 import {
   MetricsDateRange,
   type MetricsRange,
@@ -117,6 +119,7 @@ function Root<T>({
   hasMore,
   onLoadMore,
   pageSize,
+  meta,
   children,
 }: {
   columns: ColumnDef<T>[];
@@ -128,6 +131,8 @@ function Root<T>({
   onLoadMore?: () => void;
   /** Enables client-side paging; pair with <StdTable.Pagination />. */
   pageSize?: number;
+  /** Shared state column header renderers read via table.options.meta. */
+  meta?: TableMeta<T>;
   children: React.ReactNode;
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -152,6 +157,7 @@ function Root<T>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: pageSize ? getPaginationRowModel() : undefined,
+    meta,
     state: { sorting, columnVisibility, pagination },
   });
 
@@ -412,7 +418,7 @@ function ColumnSelector() {
               checked={column.getIsVisible()}
               onCheckedChange={(value) => column.toggleVisibility(!!value)}
             >
-              {column.id}
+              {columnLabel(column)}
             </DropdownMenuCheckboxItem>
           ))}
       </DropdownMenuContent>

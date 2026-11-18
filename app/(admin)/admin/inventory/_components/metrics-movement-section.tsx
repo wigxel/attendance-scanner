@@ -60,7 +60,7 @@ export function MetricsMovementSection() {
       <h3 className="text-sm font-medium text-foreground">
         Stock purchased vs used
       </h3>
-      <div className="rounded-md border border-(--border) bg-(--background)">
+      <div className="rounded-md border border-border bg-background">
         <MovementTable rows={metrics.movement} />
       </div>
       <p className="text-xs text-muted-foreground">

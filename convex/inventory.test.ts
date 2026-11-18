@@ -1,10 +1,12 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api, components } from "./_generated/api";
 import aclSchema from "./components/acl/schema";
+import type { Doc } from "./components/inventory/_generated/dataModel";
 import { DEFAULT_UNIT_NAMES } from "./components/inventory/defaultUnits";
 import inventorySchema from "./components/inventory/schema";
+import { saleIdFromNote } from "./inventory";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -468,6 +470,13 @@ describe("metrics", () => {
 });
 
 describe("inventory:sell", () => {
+  beforeEach(() => {
+    // The 3-hour adjustment window is measured from the real clock.
+    vi.useFakeTimers({ toFake: ["Date"] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   async function seedSeller(t: Tester) {
     await seedAcl(t, true);
     const admin = t.withIdentity({ profile_id: "admin-user" });
@@ -488,10 +497,7 @@ describe("inventory:sell", () => {
     return { admin, unitId, productId };
   }
 
-  it("can record and list sales but not void them or read metrics", async () => {
-    const t = convexTest(schema, modules);
-    const { admin, unitId, productId } = await seedSeller(t);
-
+  async function registerSeller(t: Tester) {
     const role = await t.run(async (ctx) =>
       ctx.runMutation(components.wigxel_acl.roles.createRole, {
         callerId: "admin-user",
@@ -501,7 +507,6 @@ describe("inventory:sell", () => {
       }),
     );
     if (!role.success) throw new Error(role.error);
-
     await t.run(async (ctx) =>
       ctx.runMutation(components.wigxel_acl.identities.registerIdentity, {
         callerId: "admin-user",
@@ -509,7 +514,25 @@ describe("inventory:sell", () => {
         roleId: role.data.roleId,
       }),
     );
-    const seller = t.withIdentity({ profile_id: "seller-user" });
+    return t.withIdentity({ profile_id: "seller-user" });
+  }
+
+  async function seedCustomer(t: Tester) {
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: "customer-1",
+        firstName: "Ada",
+        lastName: "Obi",
+        occupation: "None",
+      });
+    });
+  }
+
+  it("can record and list sales but not void them or read metrics", async () => {
+    const t = convexTest(schema, modules);
+    const { unitId, productId } = await seedSeller(t);
+
+    const seller = await registerSeller(t);
 
     const saleId = await seller.mutation(api.inventory.recordSale, {
       channel: "cash",
@@ -527,23 +550,109 @@ describe("inventory:sell", () => {
     // Seeded with 10 on the shelf, one just sold.
     expect(formData.products[0].stockQty).toBe(9);
 
+    // Within the 3-hour window the till may correct its own sale, but this
+    // cash sale has money against it, so voiding is still refused.
     await expect(
       seller.mutation(api.inventory.voidSale, { saleId }),
-    ).rejects.toThrow('Access denied. Required privilege: "inventory:manage"');
-    await expect(
-      seller.mutation(api.inventory.setSaleCustomer, { saleId }),
-    ).rejects.toThrow("inventory:manage");
+    ).rejects.toThrow("money against it");
     await expect(
       seller.query(api.inventory.metrics, {
         start: "2026-05-10",
         end: "2026-05-10",
       }),
     ).rejects.toThrow("inventory:manage");
+  });
 
-    // The till took the money, so the sale cannot be voided any more.
+  it("can adjust a fresh sale but not one older than 3 hours", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedSeller(t);
+    await seedCustomer(t);
+    const seller = await registerSeller(t);
+
+    const freshId = await seller.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    // Till corrections within the window: reassign the customer, void.
+    await seller.mutation(api.inventory.setSaleCustomer, {
+      saleId: freshId,
+      customerId: undefined,
+    });
+    await seller.mutation(api.inventory.voidSale, { saleId: freshId });
+
+    // Four hours later the window has closed for a sale taken now.
+    const staleId = await seller.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    vi.setSystemTime(new Date(Date.now() + 4 * 60 * 60 * 1000));
     await expect(
-      admin.mutation(api.inventory.voidSale, { saleId }),
-    ).rejects.toThrow("money against it");
+      seller.mutation(api.inventory.voidSale, { saleId: staleId }),
+    ).rejects.toThrow("Sale is older than 3 hours.");
+    await expect(
+      seller.mutation(api.inventory.setSaleCustomer, { saleId: staleId }),
+    ).rejects.toThrow("Sale is older than 3 hours.");
+
+    // Managers stay unrestricted.
+    await admin.mutation(api.inventory.voidSale, { saleId: staleId });
+  });
+
+  it("cannot reverse payments on a sale older than 3 hours", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedSeller(t);
+    await seedCustomer(t);
+    const seller = await registerSeller(t);
+
+    const saleId = await seller.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    const paymentId = await seller.mutation(api.inventory.recordSalePayment, {
+      saleId,
+      amountKobo: 2000,
+      channel: "cash",
+    });
+    // Within the window the till can undo its own payment.
+    await seller.mutation(api.inventory.reverseSalePayment, { paymentId });
+
+    // Four hours later only a manager can reverse.
+    vi.setSystemTime(new Date(Date.now() + 4 * 60 * 60 * 1000));
+    const laterPaymentId = await seller.mutation(
+      api.inventory.recordSalePayment,
+      { saleId, amountKobo: 1000, channel: "cash" },
+    );
+    await expect(
+      seller.mutation(api.inventory.reverseSalePayment, {
+        paymentId: laterPaymentId,
+      }),
+    ).rejects.toThrow("Sale is older than 3 hours.");
+    await admin.mutation(api.inventory.reverseSalePayment, {
+      paymentId: laterPaymentId,
+    });
+  });
+
+  it("cannot write off a balance", async () => {
+    const t = convexTest(schema, modules);
+    const { unitId, productId } = await seedSeller(t);
+    await seedCustomer(t);
+    const seller = await registerSeller(t);
+
+    const saleId = await seller.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+
+    await expect(
+      seller.mutation(api.inventory.writeOffSale, {
+        saleId,
+        amountKobo: 4000,
+        note: "Goodwill",
+      }),
+    ).rejects.toThrow("inventory:manage");
   });
 });
 
@@ -800,9 +909,8 @@ describe("credit sales", () => {
     ).toBe(3000);
     expect(await seller.query(api.inventory.receivables, {})).toHaveLength(1);
 
-    await expect(
-      seller.mutation(api.inventory.reverseSalePayment, { paymentId }),
-    ).rejects.toThrow("inventory:manage");
+    // The till may undo a payment it just took.
+    await seller.mutation(api.inventory.reverseSalePayment, { paymentId });
     await expect(
       seller.mutation(api.inventory.writeOffSale, {
         saleId,
@@ -834,6 +942,94 @@ describe("credit sales", () => {
         paidAt: "2099-01-01T00:00:00.000Z",
       }),
     ).rejects.toThrow("in the future");
+  });
+});
+
+describe("sale movements in product history", () => {
+  async function seedSaleHistory(t: Tester) {
+    await seedAcl(t, true);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    const unitId = await admin.mutation(api.inventory.createUnit, {
+      name: "pack",
+    });
+    const productId = await admin.mutation(api.inventory.createProduct, {
+      name: "Peak Milk",
+      baseUnitId: unitId,
+      sellPriceKobo: 4000,
+    });
+    await admin.mutation(api.inventory.recordMovement, {
+      productId,
+      kind: "restock",
+      quantity: 50,
+      note: "Delivery",
+    });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: "customer-1",
+        firstName: "Ada",
+        lastName: "Obi",
+        occupation: "None",
+      });
+    });
+    return { admin, productId, unitId };
+  }
+
+  it("names the customer on sale and void movements", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, productId, unitId } = await seedSaleHistory(t);
+
+    const saleId = await admin.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    await admin.mutation(api.inventory.voidSale, { saleId });
+
+    const movements = await admin.query(api.inventory.productMovements, {
+      productId,
+    });
+    const saleRow = movements.find((movement) => movement.kind === "usage");
+    const voidRow = movements.find((movement) => movement.reversal);
+    expect(saleRow).toMatchObject({
+      linkedSaleId: saleId,
+      saleCustomerName: "Ada Obi",
+    });
+    expect(voidRow).toMatchObject({
+      linkedSaleId: saleId,
+      reversal: true,
+      saleCustomerName: "Ada Obi",
+    });
+  });
+
+  it("parses the sale id out of legacy notes only", () => {
+    expect(
+      saleIdFromNote({
+        source: "sale",
+        note: "Sale abc123",
+      } as Doc<"stockMovements">),
+    ).toBe("abc123");
+    expect(
+      saleIdFromNote({
+        reversal: true,
+        note: "Void sale abc123",
+      } as Doc<"stockMovements">),
+    ).toBe("abc123");
+    // A manual note that happens to mention a sale is not a sale movement.
+    expect(
+      saleIdFromNote({ note: "Sale abc123" } as Doc<"stockMovements">),
+    ).toBeNull();
+    expect(
+      saleIdFromNote({
+        reversal: true,
+        note: "Void purchase abc123",
+      } as Doc<"stockMovements">),
+    ).toBeNull();
+    expect(
+      saleIdFromNote({
+        source: "sale",
+        note: "Stocktake fix",
+      } as Doc<"stockMovements">),
+    ).toBeNull();
   });
 });
 
@@ -957,5 +1153,167 @@ describe("sales history pagination", () => {
     });
     expect(noMatch.page).toHaveLength(0);
     expect(noMatch.isDone).toBe(true);
+  });
+});
+
+describe("sales history filters", () => {
+  // One sale per shape: cash till sale, partial credit, unpaid credit, voided.
+  async function seedFilterSales(t: Tester) {
+    const { admin, unitId, productId } = await seedShop(t);
+    await restock(admin, unitId, productId, 20);
+
+    await t.run(async (ctx) => {
+      for (const id of ["customer-1", "customer-2"]) {
+        await ctx.db.insert("profile", {
+          id,
+          firstName: "Customer",
+          lastName: id,
+          occupation: "None",
+        });
+      }
+    });
+
+    const cash = await admin.mutation(api.inventory.recordSale, {
+      channel: "cash",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    const partPaid = await admin.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      amountPaidKobo: 1000,
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    const unpaid = await admin.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-2",
+      amountPaidKobo: 0,
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    const voidable = await t.run(async (ctx) =>
+      ctx.runMutation(components.inventory.sales.create, {
+        callerId: "admin-user",
+        channel: "cash",
+        amountPaidKobo: 0,
+        lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+      }),
+    );
+    await admin.mutation(api.inventory.voidSale, { saleId: voidable });
+
+    return { admin, cash, partPaid, unpaid, voided: voidable };
+  }
+
+  it("keeps only the chosen channel on every page", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, cash, partPaid, unpaid, voided } = await seedFilterSales(t);
+
+    const cashOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      channel: "cash",
+    });
+    expect(cashOnly.page.map((sale) => sale._id)).toEqual([voided, cash]);
+
+    const creditOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      channel: "credit",
+    });
+    expect(creditOnly.page.map((sale) => sale._id)).toEqual([unpaid, partPaid]);
+  });
+
+  it("pages a channel-filtered history without gaps", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, cash, partPaid, unpaid } = await seedFilterSales(t);
+
+    const first = await admin.query(api.inventory.listSales, {
+      paginationOpts: { numItems: 2, cursor: null },
+      channel: "credit",
+    });
+    expect(first.page).toHaveLength(2);
+    expect(first.isDone).toBe(false);
+
+    const second = await admin.query(api.inventory.listSales, {
+      paginationOpts: { numItems: 2, cursor: first.continueCursor },
+      channel: "credit",
+    });
+    expect(second.page).toHaveLength(0);
+    expect(second.isDone).toBe(true);
+
+    const seen = [...first.page, ...second.page].map((sale) => sale._id);
+    expect(seen).toEqual([unpaid, partPaid]);
+    expect(seen).not.toContain(cash);
+  });
+
+  it("keeps only the chosen status", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, cash, partPaid, unpaid, voided } = await seedFilterSales(t);
+
+    const unpaidOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "unpaid",
+    });
+    expect(unpaidOnly.page.map((sale) => sale._id)).toEqual([unpaid]);
+
+    const partPaidOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "part_paid",
+    });
+    expect(partPaidOnly.page.map((sale) => sale._id)).toEqual([partPaid]);
+
+    const paidOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "paid",
+    });
+    expect(paidOnly.page.map((sale) => sale._id)).toEqual([cash]);
+
+    const voidedOnly = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "voided",
+    });
+    expect(voidedOnly.page.map((sale) => sale._id)).toEqual([voided]);
+  });
+
+  it("combines status, channel and search in one page", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, partPaid } = await seedFilterSales(t);
+
+    const combined = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "part_paid",
+      channel: "credit",
+      search: "peak",
+    });
+    expect(combined.page.map((sale) => sale._id)).toEqual([partPaid]);
+
+    const wrongChannel = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "part_paid",
+      channel: "cash",
+    });
+    expect(wrongChannel.page).toHaveLength(0);
+
+    const wrongSearch = await admin.query(api.inventory.listSales, {
+      paginationOpts: historyPage,
+      status: "part_paid",
+      search: "nothing-matches",
+    });
+    expect(wrongSearch.page).toHaveLength(0);
+  });
+
+  it("pages a status-filtered history without gaps", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unpaid, partPaid } = await seedFilterSales(t);
+
+    const unpaidPage = await admin.query(api.inventory.listSales, {
+      paginationOpts: { numItems: 1, cursor: null },
+      status: "unpaid",
+    });
+    expect(unpaidPage.page.map((sale) => sale._id)).toEqual([unpaid]);
+    expect(unpaidPage.isDone).toBe(true);
+
+    const partPaidPage = await admin.query(api.inventory.listSales, {
+      paginationOpts: { numItems: 1, cursor: null },
+      status: "part_paid",
+    });
+    expect(partPaidPage.page.map((sale) => sale._id)).toEqual([partPaid]);
+    expect(partPaidPage.isDone).toBe(true);
   });
 });
