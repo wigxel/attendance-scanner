@@ -1,5 +1,6 @@
 import { paginationOptsValidator } from "convex/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
+import { differenceInHours } from "date-fns";
 import { formatKobo } from "../lib/currency.helpers";
 import { components, internal } from "./_generated/api";
 import {
@@ -1065,10 +1066,39 @@ export const recordSale = mutation({
   },
 });
 
+// Correcting a sale is an everyday till act: sell users may void, reverse a
+// payment or reassign the customer within 3 hours of the sale. Past the
+// window only managers can. The receipt is what's adjusted, so the window
+// runs from sale.occurredAt, not a payment's paidAt. Write-off stays
+// manage-only — forgiving debt is a manager's decision.
+async function requireSaleAdjustable(
+  ctx: MutationCtx,
+  caller: string,
+  saleId: string,
+) {
+  const { valid } = await ctx.runQuery(
+    components.wigxel_acl.identities.hasPrivilege,
+    { identity: caller, privilege: PRIVILEGE },
+  );
+  if (valid) return;
+
+  const detail = (await ctx.runQuery(components.inventory.sales.get, {
+    saleId,
+  })) as { sale: Doc<"sales"> } | null;
+  if (!detail) throw new ConvexError("Sale not found.");
+
+  if (differenceInHours(Date.now(), detail.sale.occurredAt) >= 3) {
+    throw new ConvexError(
+      "Sale is older than 3 hours. Ask an inventory manager to adjust it.",
+    );
+  }
+}
+
 export const voidSale = mutation({
   args: { saleId: v.string() },
   handler: async (ctx, { saleId }) => {
-    const caller = await requireCallerId(ctx);
+    const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
+    await requireSaleAdjustable(ctx, caller, saleId);
     await ctx.runMutation(components.inventory.sales.voidSale, {
       saleId,
       callerId: caller,
@@ -1079,7 +1109,8 @@ export const voidSale = mutation({
 export const setSaleCustomer = mutation({
   args: { saleId: v.string(), customerId: v.optional(v.string()) },
   handler: async (ctx, { saleId, customerId }) => {
-    await requireCallerId(ctx);
+    const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
+    await requireSaleAdjustable(ctx, caller, saleId);
 
     const trimmed = customerId?.trim() || undefined;
     if (trimmed && !(await customerExists(ctx, trimmed))) {
@@ -1252,7 +1283,15 @@ export const recordSalePayment = mutation({
 export const reverseSalePayment = mutation({
   args: { paymentId: v.string(), note: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const caller = await requireCallerId(ctx);
+    const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
+
+    // The window follows the sale, not the payment's paidAt.
+    const payment = (await ctx.runQuery(components.inventory.salePayments.get, {
+      paymentId: args.paymentId,
+    })) as Doc<"salePayments"> | null;
+    if (!payment) throw new ConvexError("Payment not found.");
+    await requireSaleAdjustable(ctx, caller, payment.saleId);
+
     return await ctx.runMutation(
       components.inventory.salePayments.reversePayment,
       { ...args, callerId: caller },

@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api, components } from "./_generated/api";
 import aclSchema from "./components/acl/schema";
 import type { Doc } from "./components/inventory/_generated/dataModel";
@@ -470,6 +470,13 @@ describe("metrics", () => {
 });
 
 describe("inventory:sell", () => {
+  beforeEach(() => {
+    // The 3-hour adjustment window is measured from the real clock.
+    vi.useFakeTimers({ toFake: ["Date"] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   async function seedSeller(t: Tester) {
     await seedAcl(t, true);
     const admin = t.withIdentity({ profile_id: "admin-user" });
@@ -490,10 +497,7 @@ describe("inventory:sell", () => {
     return { admin, unitId, productId };
   }
 
-  it("can record and list sales but not void them or read metrics", async () => {
-    const t = convexTest(schema, modules);
-    const { admin, unitId, productId } = await seedSeller(t);
-
+  async function registerSeller(t: Tester) {
     const role = await t.run(async (ctx) =>
       ctx.runMutation(components.wigxel_acl.roles.createRole, {
         callerId: "admin-user",
@@ -503,7 +507,6 @@ describe("inventory:sell", () => {
       }),
     );
     if (!role.success) throw new Error(role.error);
-
     await t.run(async (ctx) =>
       ctx.runMutation(components.wigxel_acl.identities.registerIdentity, {
         callerId: "admin-user",
@@ -511,7 +514,25 @@ describe("inventory:sell", () => {
         roleId: role.data.roleId,
       }),
     );
-    const seller = t.withIdentity({ profile_id: "seller-user" });
+    return t.withIdentity({ profile_id: "seller-user" });
+  }
+
+  async function seedCustomer(t: Tester) {
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: "customer-1",
+        firstName: "Ada",
+        lastName: "Obi",
+        occupation: "None",
+      });
+    });
+  }
+
+  it("can record and list sales but not void them or read metrics", async () => {
+    const t = convexTest(schema, modules);
+    const { unitId, productId } = await seedSeller(t);
+
+    const seller = await registerSeller(t);
 
     const saleId = await seller.mutation(api.inventory.recordSale, {
       channel: "cash",
@@ -529,23 +550,109 @@ describe("inventory:sell", () => {
     // Seeded with 10 on the shelf, one just sold.
     expect(formData.products[0].stockQty).toBe(9);
 
+    // Within the 3-hour window the till may correct its own sale, but this
+    // cash sale has money against it, so voiding is still refused.
     await expect(
       seller.mutation(api.inventory.voidSale, { saleId }),
-    ).rejects.toThrow('Access denied. Required privilege: "inventory:manage"');
-    await expect(
-      seller.mutation(api.inventory.setSaleCustomer, { saleId }),
-    ).rejects.toThrow("inventory:manage");
+    ).rejects.toThrow("money against it");
     await expect(
       seller.query(api.inventory.metrics, {
         start: "2026-05-10",
         end: "2026-05-10",
       }),
     ).rejects.toThrow("inventory:manage");
+  });
 
-    // The till took the money, so the sale cannot be voided any more.
+  it("can adjust a fresh sale but not one older than 3 hours", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedSeller(t);
+    await seedCustomer(t);
+    const seller = await registerSeller(t);
+
+    const freshId = await seller.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    // Till corrections within the window: reassign the customer, void.
+    await seller.mutation(api.inventory.setSaleCustomer, {
+      saleId: freshId,
+      customerId: undefined,
+    });
+    await seller.mutation(api.inventory.voidSale, { saleId: freshId });
+
+    // Four hours later the window has closed for a sale taken now.
+    const staleId = await seller.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    vi.setSystemTime(new Date(Date.now() + 4 * 60 * 60 * 1000));
     await expect(
-      admin.mutation(api.inventory.voidSale, { saleId }),
-    ).rejects.toThrow("money against it");
+      seller.mutation(api.inventory.voidSale, { saleId: staleId }),
+    ).rejects.toThrow("Sale is older than 3 hours.");
+    await expect(
+      seller.mutation(api.inventory.setSaleCustomer, { saleId: staleId }),
+    ).rejects.toThrow("Sale is older than 3 hours.");
+
+    // Managers stay unrestricted.
+    await admin.mutation(api.inventory.voidSale, { saleId: staleId });
+  });
+
+  it("cannot reverse payments on a sale older than 3 hours", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedSeller(t);
+    await seedCustomer(t);
+    const seller = await registerSeller(t);
+
+    const saleId = await seller.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    const paymentId = await seller.mutation(api.inventory.recordSalePayment, {
+      saleId,
+      amountKobo: 2000,
+      channel: "cash",
+    });
+    // Within the window the till can undo its own payment.
+    await seller.mutation(api.inventory.reverseSalePayment, { paymentId });
+
+    // Four hours later only a manager can reverse.
+    vi.setSystemTime(new Date(Date.now() + 4 * 60 * 60 * 1000));
+    const laterPaymentId = await seller.mutation(
+      api.inventory.recordSalePayment,
+      { saleId, amountKobo: 1000, channel: "cash" },
+    );
+    await expect(
+      seller.mutation(api.inventory.reverseSalePayment, {
+        paymentId: laterPaymentId,
+      }),
+    ).rejects.toThrow("Sale is older than 3 hours.");
+    await admin.mutation(api.inventory.reverseSalePayment, {
+      paymentId: laterPaymentId,
+    });
+  });
+
+  it("cannot write off a balance", async () => {
+    const t = convexTest(schema, modules);
+    const { unitId, productId } = await seedSeller(t);
+    await seedCustomer(t);
+    const seller = await registerSeller(t);
+
+    const saleId = await seller.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+
+    await expect(
+      seller.mutation(api.inventory.writeOffSale, {
+        saleId,
+        amountKobo: 4000,
+        note: "Goodwill",
+      }),
+    ).rejects.toThrow("inventory:manage");
   });
 });
 
@@ -802,9 +909,8 @@ describe("credit sales", () => {
     ).toBe(3000);
     expect(await seller.query(api.inventory.receivables, {})).toHaveLength(1);
 
-    await expect(
-      seller.mutation(api.inventory.reverseSalePayment, { paymentId }),
-    ).rejects.toThrow("inventory:manage");
+    // The till may undo a payment it just took.
+    await seller.mutation(api.inventory.reverseSalePayment, { paymentId });
     await expect(
       seller.mutation(api.inventory.writeOffSale, {
         saleId,
