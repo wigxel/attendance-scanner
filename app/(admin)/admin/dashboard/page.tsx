@@ -51,7 +51,7 @@ const Page = () => {
           <UpcomingBirthdays />
         </div>
 
-        <div className="md:col-span-6">
+        <div className="md:col-span-4">
           <Feedbacks />
         </div>
       </div>
