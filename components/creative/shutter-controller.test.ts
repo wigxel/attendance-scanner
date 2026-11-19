@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
 import { animate } from "motion";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mountShutters, shutterCount } from "./shutter-controller";
+import {
+  mountShutters,
+  type ShutterControls,
+  shutterCount,
+} from "./shutter-controller";
 
 const mocks = vi.hoisted(() => ({
-  completions: [] as Array<() => void>,
   stop: vi.fn(),
   play: vi.fn(),
   pause: vi.fn(),
@@ -12,10 +15,6 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("motion", () => ({
   animate: vi.fn(() => ({
-    // biome-ignore lint/suspicious/noThenProperty: motion's controls are thenable
-    then: (onDone: () => void) => {
-      mocks.completions.push(onDone);
-    },
     stop: mocks.stop,
     play: mocks.play,
     pause: mocks.pause,
@@ -37,19 +36,39 @@ function hostWithCover(height: number) {
   return { host, cover };
 }
 
+// Every mount binds window keys; tear them all down between tests so stale
+// listeners never answer another test's keypress.
+const mounted: ShutterControls[] = [];
+
+function mount(
+  host: HTMLElement,
+  options?: Parameters<typeof mountShutters>[1],
+) {
+  const controls = mountShutters(host, options);
+  mounted.push(controls);
+  return controls;
+}
+
 beforeEach(() => {
-  mocks.completions.length = 0;
   mocks.stop.mockClear();
+  mocks.play.mockClear();
+  mocks.pause.mockClear();
   vi.mocked(animate).mockClear();
 });
 
 afterEach(() => {
-  vi.useRealTimers();
+  for (const controls of mounted) controls.teardown();
+  mounted.length = 0;
+  vi.unstubAllGlobals();
 });
 
 describe("shutterCount", () => {
-  it("splits 600px into two shutters", () => {
+  it("splits 600px into two shutters at the default target", () => {
     expect(shutterCount(600)).toBe(2);
+  });
+
+  it("uses the given target slice height", () => {
+    expect(shutterCount(600, 200)).toBe(3);
   });
 
   it("never returns less than one shutter", () => {
@@ -58,97 +77,173 @@ describe("shutterCount", () => {
 });
 
 describe("mountShutters", () => {
-  function mount(host: HTMLElement) {
-    const controls = mountShutters(host);
-    return {
-      controls,
-      unmount: () => controls.teardown(),
-      cover: host.querySelector<HTMLElement>("[data-shutter-cover]"),
-    };
-  }
-
-  it("stacks bars covering the parent at their own offsets", () => {
+  it("mounts full-cover bars at their own offsets", () => {
     const host = parent(600);
-    const unmount = mountShutters(host).teardown;
+
+    mount(host);
 
     const bars = [...host.children] as HTMLElement[];
     expect(bars).toHaveLength(2);
     expect(bars[0].style.top).toBe("0px");
-    expect(bars[0].style.height).toBe("0px");
+    expect(bars[0].style.height).toBe("300px");
+    expect(bars[0].style.transformOrigin).toBe("bottom");
     expect(bars[1].style.top).toBe("300px");
-    expect(bars[1].style.height).toBe("0px");
-
-    unmount();
-    expect(host.children).toHaveLength(0);
+    expect(bars[1].style.height).toBe("300px");
   });
 
-  it("animates every bar to its slice height, staggered top first", () => {
-    const { unmount } = mount(parent(600));
+  it("hides the pre-hydration cover as soon as the bars are in place", () => {
+    const { host, cover } = hostWithCover(600);
 
-    expect(animate).toHaveBeenCalledTimes(1);
-    const [targets, keyframes, options] = vi.mocked(animate).mock
-      .calls[0] as unknown as [
+    mount(host);
+
+    expect(cover.style.display).toBe("none");
+  });
+
+  it("does not animate until started", () => {
+    mount(parent(600));
+
+    expect(animate).not.toHaveBeenCalled();
+  });
+
+  it("pre-zooms the child behind the bars", () => {
+    const host = parent(600);
+    const child = document.createElement("div");
+    host.appendChild(child);
+
+    mount(host);
+
+    expect(child.style.transform).toBe("scale(1.5)");
+  });
+
+  it("start animates the bars and the child, lazily", () => {
+    const host = parent(600);
+    const child = document.createElement("div");
+    host.appendChild(child);
+    const controls = mount(host);
+
+    controls.start();
+
+    expect(animate).toHaveBeenCalledTimes(2);
+    const barsCall = vi.mocked(animate).mock.calls[0] as unknown as [
       HTMLElement[],
-      { height: string },
+      Record<string, unknown>,
       { duration: number; delay: (index: number) => number },
     ];
-    expect(targets).toHaveLength(2);
-    expect(keyframes.height).toBe("300px");
-    expect(options.duration).toBe(0.4);
-    expect(options.delay(0)).toBe(0);
-    expect(options.delay(1)).toBe(0.1);
+    const childCall = vi.mocked(animate).mock.calls[1] as unknown as [
+      HTMLElement,
+      Record<string, unknown>,
+      { duration: number },
+    ];
+    expect(barsCall[0]).toHaveLength(2);
+    expect(barsCall[1]).toEqual({ scaleY: 0 });
+    expect(barsCall[2].duration).toBe(0.4);
+    expect(barsCall[2].delay(0)).toBe(0);
+    expect(barsCall[2].delay(1)).toBe(0.1);
+    expect(childCall[0]).toBe(child);
+    expect(childCall[1]).toEqual({ scale: 1 });
+    expect(childCall[2].duration).toBe(0.9);
+    expect(mocks.play).toHaveBeenCalledTimes(2);
 
-    unmount();
+    // A second start replays the same animations instead of building more.
+    controls.start();
+    expect(animate).toHaveBeenCalledTimes(2);
   });
 
-  it("hides the cover when the animation completes", () => {
-    const { cover, unmount } = mount(hostWithCover(600).host);
-    const coverEl = cover as HTMLElement;
+  it("pause freezes both animations", () => {
+    const controls = mount(parent(600));
 
-    expect(coverEl.style.display).toBe("");
-    for (const done of mocks.completions) done();
-    expect(coverEl.style.display).toBe("none");
+    controls.start();
+    controls.pause();
 
-    unmount();
+    expect(mocks.pause).toHaveBeenCalledTimes(2);
   });
 
-  it("hides the cover even when the animation never completes", () => {
-    vi.useFakeTimers();
-    const { cover, unmount } = mount(hostWithCover(600).host);
-    const coverEl = cover as HTMLElement;
+  it("reset restores the cover and pre-zoom, and the next start replays", () => {
+    const host = parent(600);
+    const child = document.createElement("div");
+    host.appendChild(child);
+    const controls = mount(host);
 
-    vi.advanceTimersByTime(400 + 100 + 100);
+    controls.start();
+    controls.reset();
 
-    expect(coverEl.style.display).toBe("none");
-    unmount();
+    expect(mocks.stop).toHaveBeenCalledTimes(2);
+    // The child comes first in the host; the bars follow.
+    const bars = ([...host.children] as HTMLElement[]).slice(1);
+    expect(bars.every((bar) => bar.style.transform === "")).toBe(true);
+    expect(child.style.transform).toBe("scale(1.5)");
+
+    controls.start();
+    expect(animate).toHaveBeenCalledTimes(4);
   });
 
-  it("teardown stops the animation and removes the bars", () => {
-    const { unmount } = mount(hostWithCover(600).host);
+  it("honours an explicit heightPx", () => {
+    const host = parent(600);
 
-    unmount();
+    mount(host, { heightPx: 200 });
 
-    expect(mocks.stop).toHaveBeenCalled();
+    const bars = [...host.children] as HTMLElement[];
+    expect(bars).toHaveLength(3);
+    expect(bars[2].style.top).toBe("400px");
+    expect(bars[2].style.height).toBe("200px");
+  });
+
+  it("reads --shutter-height from the parent as px", () => {
+    vi.stubGlobal(
+      "getComputedStyle",
+      vi.fn(() => ({
+        getPropertyValue: (name: string) =>
+          name === "--shutter-height" ? "200px" : "",
+        fontSize: "16px",
+      })),
+    );
+
+    const host = parent(600);
+
+    mount(host);
+
+    expect([...host.children]).toHaveLength(3);
   });
 
   it.each([
-    ["a", "play"],
-    ["s", "pause"],
-    ["d", "stop"],
-  ] as const)("binds %s to %s", (key, handler) => {
-    mount(parent(600));
+    ["a", () => expect(animate).toHaveBeenCalled()],
+    ["s", () => expect(mocks.pause).toHaveBeenCalled()],
+    ["d", () => expect(mocks.stop).toHaveBeenCalled()],
+  ] as const)("binds %s to its control", (key, assert) => {
+    const controls = mount(parent(600));
+    if (key !== "a") {
+      // pause/reset act on the running animation; start it first.
+      controls.start();
+    }
 
     window.dispatchEvent(new KeyboardEvent("keydown", { key }));
 
-    expect(mocks[handler]).toHaveBeenCalled();
+    assert();
+  });
+
+  it("ignores held-down repeats", () => {
+    mount(parent(600));
+
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "a", repeat: true }),
+    );
+
+    expect(animate).not.toHaveBeenCalled();
   });
 
   it("unbinds the keys on teardown", () => {
-    const { unmount } = mount(parent(600));
-    unmount();
+    const host = parent(600);
+    const child = document.createElement("div");
+    host.appendChild(child);
+    const controls = mount(host);
+    controls.start();
+    controls.teardown();
 
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "a" }));
 
-    expect(mocks.play).not.toHaveBeenCalled();
+    expect(animate).toHaveBeenCalledTimes(2); // start only, not the keypress
+    // Only the child remains; the controller-owned bars are gone.
+    expect(host.querySelectorAll("div")).toHaveLength(1);
+    expect(child.style.transform).toBe("");
   });
 });

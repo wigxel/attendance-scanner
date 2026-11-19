@@ -34,7 +34,6 @@ export function shutterCount(height: number, target = SHUTTER_TARGET_PX) {
 function shutterHeightFor(parent: HTMLElement, heightPx?: number) {
   if (heightPx !== undefined) return heightPx;
   const resolved = getCssVarInPx(parent, "--shutter-height");
-  console.log({ resolved });
 
   return resolved > 0 ? resolved : SHUTTER_TARGET_PX;
 }
@@ -129,7 +128,7 @@ export function mountShutters(
       imageAnimation = undefined;
       // Back to full cover and pre-zoom; the next start plays fresh.
       for (const bar of shutters) bar.style.transform = "";
-      if (child) child.style.transform = "scale(1.4)";
+      if (child) child.style.transform = "scale(1.5)";
     },
     teardown: () => {
       animation?.stop();
