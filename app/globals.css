@@ -203,3 +203,62 @@
 .transition-default {
   @apply transition-all duration-200 ease-in-out;
 }
+
+/* Makers landing: smooth anchor scroll that respects reduced motion
+   (PRD nav behaviour). scroll-mt-* on sections handles the sticky-bar
+   offset, so headings never hide under it. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Trusted by marquee (PRD section 2). Plain CSS loop so it runs without
+   JS; the explicit pause control is the only JS-dependent part. */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee 60s linear infinite;
+}
+
+.marquee-paused,
+.group:hover .marquee-track,
+.group:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+/* CircularButton arrow: pops toward the viewer on the z-axis. True
+   translateZ needs a perspective parent; scale reads the same. */
+@keyframes z-bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+.z-bounce {
+  animation: z-bounce 1.4s ease-in-out infinite;
+}
+
+.group:hover .z-bounce {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .z-bounce {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}

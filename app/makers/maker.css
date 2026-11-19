@@ -1,0 +1,151 @@
+@import "../globals.css";
+
+:root {
+  --sticky-top: calc(var(--header-height) + (--spacing(12)));
+}
+
+@theme inline {
+  /* others */
+  --color-brand-maker: #f4522f;
+
+  /* font */
+  --font-heading: Safiro;
+
+  /* heading sizes ship with the display tracking baked in */
+  --text-6xl--letter-spacing: -0.04em;
+}
+
+/* Community grid: each icon pops in while spinning, holds, then collapses at 5s. */
+@keyframes tribe-pop {
+  0% {
+    opacity: 0;
+    transform: rotate(-120deg) scale(0);
+  }
+
+  10%,
+  83% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: rotate(120deg) scale(0);
+  }
+}
+
+.tribe-pop {
+  animation: tribe-pop 6s cubic-bezier(0.22, 1, 0.36, 1) infinite backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tribe-pop {
+    animation: none;
+  }
+}
+
+/* InSpace footer logo: letters rise while the logo scrolls into view.
+   Scroll-driven so it runs on the compositor; each letter carries --rise.
+   Wrapped in @supports so browsers without scroll timelines keep the
+   static logo instead of playing the animation once on load. */
+@keyframes inspace-rise {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(var(--rise, 70%));
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .inspace-rise {
+    animation: inspace-rise both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry 100%;
+    /* matches the old quad ease-in (p^2) */
+    animation-timing-function: cubic-bezier(0.55, 0.085, 0.68, 0.53);
+  }
+}
+
+/* Apply CTA dodges the sticky "Tribes" heading: it waits off-screen left,
+   dashes into its spot and settles before the heading's lane reaches it.
+   Scroll-driven so it runs on the compositor and replays on scroll-back.
+   No scroll timelines → button just sits in place (same fallback as the
+   InSpace logo). */
+@keyframes apply-dodge-in {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .apply-dodge {
+    animation: apply-dodge-in both;
+    animation-timeline: view(block);
+    /* in place by the time the button climbs to ~25% viewport height,
+           above the sticky heading's lane — retune the end % if the heading
+           grows */
+    animation-range: entry 0% cover 60%;
+    /* hold, then dash, then land soft — the "getting out of the way" feel */
+    animation-timing-function: cubic-bezier(0.8, 0, 0.2, 1);
+  }
+}
+
+/* Sticky-nav variant (e.g. the nav logo): a sticky element never travels
+   through the viewport, so it is driven by the page scroll instead.
+   At the top of the page the logo sits in its original spot; past
+   --header-height its rotation is bound to the scroll position — it spins
+   as the user scrolls and freezes the moment they stop. Scroll-linked, so
+   scroll-back unspins it. */
+@keyframes logo-spin {
+  from {
+    rotate: 0deg;
+  }
+
+  to {
+    /* total spin spread over the rest of the page — raise for a faster
+       spin, lower for lazier */
+    rotate: 720deg;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .apply-dodge-fixed {
+    animation: logo-spin both;
+    animation-timeline: scroll(root block);
+    /* spin starts once the page passes the header height and runs to the
+       page end; linear keeps rotation proportional to scrollY */
+    animation-range: var(--header-height) 100%;
+    animation-timing-function: linear;
+  }
+}
+
+.text-stroke {
+  -webkit-text-stroke: 1px var(--text-outline-color, orangered);
+  color: transparent;
+}
+
+/* Sticky header lifts out of the way once the page bottom (the footer) is
+   in view. Driven by the root scroll position: the range starts one
+   viewport above the scroll end, which is when the footer's top edge
+   crosses the viewport bottom. ponytail: assumes the footer is ~one
+   viewport tall — a much shorter footer starts hiding a beat early;
+   switch to a named view-timeline on the footer if that matters. */
+@keyframes header-lift {
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .hide-at-footer {
+    animation: header-lift both;
+    animation-timeline: scroll(root block);
+    animation-range: calc(100% - 100svh) 100%;
+  }
+}

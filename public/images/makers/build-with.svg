@@ -1,0 +1,11 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <rect fill="#111827" width="800" height="600"/>
+  <line x1="0" y1="600" x2="800" y2="0" stroke="#374151" stroke-width="2"/>
+  <line x1="0" y1="0" x2="800" y2="600" stroke="#374151" stroke-width="2"/>
+  <text x="400" y="285" text-anchor="middle" fill="#9ca3af" font-family="ui-sans-serif, system-ui, sans-serif" font-size="24">
+    Photo: members at work
+  </text>
+  <text x="400" y="325" text-anchor="middle" fill="#6b7280" font-family="ui-monospace, monospace" font-size="14">
+    Replace with a real image ≤120 KB
+  </text>
+</svg>

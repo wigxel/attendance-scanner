@@ -6,6 +6,7 @@ description: Frontend development rules and patterns for Next.js/React projects
 # Frontend Skill
 
 ## Tech Stack
+
 - Next.js 15 (App Router)
 - React 19
 - Shadcn UI components
@@ -18,26 +19,32 @@ description: Frontend development rules and patterns for Next.js/React projects
 ## Conventions
 
 ### Component Structure
+
 - Path: `components/`
 - UI components: `components/ui/`
 - Feature components: `components/[feature]/`
 
 ### Form Pattern (from form.dialog.mdc)
+
 Dialog → Integrated → Form:
+
 - `FooDialog.tsx` - Dialog wrapper with trigger button
 - `FooIntegrated.tsx` - Form logic + submission handling
 - `FooForm.tsx` - Pure form with react-hook-form + zod validation
 
 ### Hooks
+
 - Path: `hooks/`
 - Use for reusable state/logic
 
 ### State Management
+
 - **TanStack Query**: server state, API calls
 - **React useState**: local component state
 - **Zustand**: global client state
 
 ### UI Guidelines (from ui.mdc)
+
 - Prefer shadcn components over custom ones
 - Use Lucide React icons exclusively
 - Use appropriate color variables from theme
@@ -45,6 +52,7 @@ Dialog → Integrated → Form:
 - Use `cn` helper for conditional and dynamic classname concatenation
 
 ### Currency Formatting (Naira)
+
 ```typescript
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("en-NG", {
@@ -53,9 +61,11 @@ const formatPrice = (price: number) =>
     maximumFractionDigits: 0,
   }).format(price);
 ```
+
 Returns: "₦1,500"
 
 ### TanStack Query Usage
+
 ```typescript
 // Query
 const data = useQuery(api.myFunction, { arg });
@@ -66,6 +76,7 @@ mutate({ arg });
 ```
 
 ### React Hook Form + Zod
+
 ```typescript
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -81,16 +92,20 @@ const { register, handleSubmit } = useForm({
 ```
 
 ### Alerts and Dialogs
+
 - Use shadcn `AlertDialog` for destructive actions
 - Use shadcn `Dialog` for forms
 
 ### Tabs
+
 - Use shadcn `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`
 
 ## Code Optimization
 
 ### Extract Repeated Lookups
+
 Instead of repeated `find()` calls in JSX:
+
 ```typescript
 // Bad - repeated find in JSX
 <Form initialData={currentPlanId ? plans.find(p => p.id === currentPlanId) : undefined} />
@@ -101,12 +116,15 @@ const currentPlan = plans.find(p => p.id === currentPlanId);
 ```
 
 ### Memoize Expensive Computations
+
 ```typescript
 const computed = React.useMemo(() => expensiveOperation(data), [data]);
 ```
 
 ### Early Return Pattern
+
 Return early to reduce nesting:
+
 ```typescript
 if (!data) return <Skeleton />;
 
@@ -114,7 +132,9 @@ return ( /* main content */ );
 ```
 
 ### Derived State in JSX
+
 Avoid creating separate state for derived values:
+
 ```typescript
 // Bad - duplicate state
 const [filtered, setFiltered] = useState(data);
@@ -125,6 +145,7 @@ const filtered = data.filter(...);
 ```
 
 ### Object Extraction for Repeated Props
+
 ```typescript
 // Bad
 <Component a={obj.a} b={obj.b} c={obj.c} d={obj.d} />
@@ -138,7 +159,9 @@ const { a, b, c, d } = obj;
 ```
 
 ### Form Component Props Pattern
+
 Forms should use local `isSubmitting` state passed to `isLoading` prop:
+
 ```typescript
 const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -158,7 +181,9 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 ```
 
 ### Avoid Inline Arrow Functions in JSX
+
 Inline functions cause child components to rerender on every parent render:
+
 ```typescript
 // Bad - creates new function each render
 <Button onClick={() => handleClick(id)} />
@@ -168,7 +193,9 @@ Inline functions cause child components to rerender on every parent render:
 ```
 
 ### Conditional Rendering with Maps
+
 Prefer map with direct access over multiple/nested ternary operations for JavaScript conditionals.
+
 ```typescript
 // Bad - nested ternaries
 const value = var === "a" ? 1 : var === "b" ? 2 : var === "c" ? 3 : "default";
@@ -183,6 +210,7 @@ const value = valueMap[var] || "default";
 ```
 
 ### Conditional Rendering
+
 ```typescript
 // Show/Hide with && (for no else case)
 {isOpen && <Content />}
@@ -192,7 +220,9 @@ const value = valueMap[var] || "default";
 ```
 
 ### Compound Component Pattern
+
 Group related components for cleaner exports:
+
 ```typescript
 // Instead of
 export { Button } from "./button";

@@ -4,6 +4,7 @@ const isPublicRoute = createRouteMatcher([
   "/auth(.*)",
   "/legal(.*)",
   "/blog(.*)",
+  "/makers(.*)",
   "/shortlinks/(.*)",
 ]);
 

@@ -21,7 +21,7 @@ export default async function BlogIndex() {
           <p className="voxx-index__desc">{config.site.description}</p>
         ) : null}
       </header>
-      <PostList posts={posts} config={config} />
+      <PostList posts={posts} />
     </main>
   );
 }

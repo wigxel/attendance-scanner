@@ -5,7 +5,8 @@ date: 2026-07-19
 tags: [community, inspace, creativity]
 category: General
 draft: false
-author: { name: "Joseph Julius Owonvwon", url: "https://linkedin.com/in/owonwo" }
+author:
+  { name: "Joseph Julius Owonvwon", url: "https://linkedin.com/in/owonwo" }
 ---
 
 If you’ve ever visited InSpace, you’ve probably wondered why we have a computer sitting on display. At first glance, it just looks like another desktop.

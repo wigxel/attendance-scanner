@@ -5,7 +5,8 @@ date: 2026-06-24
 tags: [getting-started]
 category: General
 draft: false
-author: { name: "Joseph Julius Owonvwon", url: "https://linkedin.com/in/owonwo" }
+author:
+  { name: "Joseph Julius Owonvwon", url: "https://linkedin.com/in/owonwo" }
 ---
 
 ### Childhood Curiosity
