@@ -45,7 +45,7 @@ export function CircularButton({
       type="button"
       aria-label={text}
       className={cn(
-        "group relative w-[15vw] cursor-pointer aspect-square rounded-full flex items-center justify-center",
+        "group relative w-[15vw] max-w-64 cursor-pointer aspect-square rounded-full flex items-center justify-center",
         {
           "bg-brand-maker text-background-lv1": variant === "default",
           "text-brand-maker bg-transparent hover:bg-white/5 border-dashed border border-white/25":

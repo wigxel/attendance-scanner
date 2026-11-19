@@ -291,11 +291,7 @@ export function LeadersSection() {
       )}
 
       <div className="container flex flex-col mx-auto sticky top-0 px-4 gap-12 py-24">
-        <h2
-          className={cn(
-            "font-heading font-black text-3xl md:text-6xl h-[40vh]",
-          )}
-        >
+        <h2 className={cn("font-heading font-black text-3xl md:text-6xl")}>
           Tribe leaders
         </h2>
       </div>

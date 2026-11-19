@@ -33,22 +33,17 @@ export const getCssVarInPx = (
   );
   const rawValue = style.getPropertyValue(varName)?.trim() || "";
 
-  console.log({ rawValue });
-
   if (!rawValue) return 0;
 
   if (rawValue.endsWith("px")) {
-    console.log("px", { rawValue });
     return parseFloat(rawValue) || 0;
   }
 
   if (rawValue.endsWith("rem")) {
     const rootFontSize = parseFloat(style.fontSize) || 16;
-    console.log({ rawValue, rootFontSize });
     return rootFontSize;
   }
 
-  console.log("fallback", { rawValue });
   // fallback: try to parse whatever value is provided (e.g., number)
   return parseFloat(rawValue) || 0;
 };

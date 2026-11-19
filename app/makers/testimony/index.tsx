@@ -243,6 +243,9 @@ export function TestimonySection() {
   const count = testimonies.length;
   const carouselRef = useRef<HTMLDivElement>(null);
   const [scroll, setScroll] = useState({ progress: 0, viewportRatio: 1 });
+  // Width from the carousel's left edge out to the viewport's right edge,
+  // so the cards bleed past the grid column they are anchored to.
+  const [carouselWidth, setCarouselWidth] = useState(0);
 
   // The handle width is the visible slice of the track and its travel is the
   // remaining width, so both the edges and the end scroll line up exactly.
@@ -259,6 +262,11 @@ export function TestimonySection() {
             ? Math.min(carousel.clientWidth / carousel.scrollWidth, 1)
             : 1,
       });
+
+      // clientWidth excludes the scrollbar, so the bleed stops at the real
+      // content edge. Re-measured by the observer below on every resize.
+      const { left } = carousel.getBoundingClientRect();
+      setCarouselWidth(document.documentElement.clientWidth - left);
     };
 
     measure();
@@ -266,6 +274,9 @@ export function TestimonySection() {
 
     const observer = new ResizeObserver(measure);
     observer.observe(carousel);
+    // The carousel box only changes after a re-measure, so also watch the
+    // viewport itself — it resizes with the window and kicks the loop off.
+    observer.observe(document.documentElement);
 
     return () => {
       carousel.removeEventListener("scroll", measure);
@@ -292,6 +303,7 @@ export function TestimonySection() {
             </h2>
 
             <svg
+              aria-hidden
               width="336"
               height="12"
               viewBox="0 0 336 12"
@@ -335,7 +347,10 @@ export function TestimonySection() {
             <TestimonyNav carouselRef={carouselRef} />
           </div>
 
-          <div className="col-span-10 testimony-carousel flex-1 relative">
+          <div
+            className="col-span-10 testimony-carousel flex-1 relative"
+            style={{ width: carouselWidth || undefined }}
+          >
             <div className="invisible">
               <TestimonyItem
                 testimony={{

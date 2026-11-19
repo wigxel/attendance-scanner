@@ -89,18 +89,20 @@ export function mountShutters(
 
   // The child sits behind the bars, pre-zoomed until the reveal begins.
   const child = parent.firstElementChild as HTMLElement | null;
-  if (child) child.style.transform = "scale(1.4)";
+  if (child) child.style.transform = "scale(1.5)";
 
   let animation: ReturnType<typeof animate> | undefined;
   let imageAnimation: ReturnType<typeof animate> | undefined;
 
   const controls: ShutterControls = {
     start: () => {
+      const DURATION = durationMs / 1000;
+
       animation ??= animate(
         shutters,
         { scaleY: 0 },
         {
-          duration: durationMs / 1000,
+          duration: DURATION,
           delay: stagger(staggerMs / 1000),
           ease: "easeOut",
         },
@@ -111,7 +113,7 @@ export function mountShutters(
         imageAnimation ??= animate(
           child,
           { scale: 1 },
-          { duration: durationMs / 1000, ease: "easeOut" },
+          { duration: DURATION + 0.5, ease: "easeOut" },
         );
         imageAnimation.play();
       }
