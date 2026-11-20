@@ -4,12 +4,13 @@ import { toast } from "sonner";
 import { AttendanceCalendar } from "@/components/AttendanceCalendar";
 import { BirthdayPrompt } from "@/components/BirthdayPrompt";
 import {
-  CheckedInConfirmation,
   BirthdayCheckInConfetti,
+  CheckedInConfirmation,
   CheckInCard,
   NotRegistered,
 } from "@/components/CheckInCard";
 import { SuggestionsFAB, VotingSection } from "@/components/feedbacks";
+import { Greeting } from "@/components/greeting";
 import { RoomEnvironmentWidget } from "@/components/room-environment-widget";
 import { SelfCheckInStatus } from "@/components/self-checkin-status";
 import { SelfCheckInMessages } from "@/convex/shared";
@@ -21,16 +22,6 @@ import { ActiveBookings } from "./active-bookings";
 import { CommunityLinks } from "./community-links";
 import { ExpiryWarning } from "./expiry-warning";
 import { HappyBirthday } from "./happy-birthday";
-
-function greet_time(): string {
-  const date = new Date();
-  const hour = date.getHours();
-
-  if (hour < 12) return "Good morning ☀️";
-  if (hour < 18) return "Good afternoon 🌤️";
-
-  return "Good evening 🌙";
-}
 
 interface ContentProps {
   gotoAdmin?: ReactNode;
@@ -71,7 +62,7 @@ export function Content({ gotoAdmin }: ContentProps) {
       <section className="min-h-screen gap-[1.6rem] flex flex-col">
         <div className="flex flex-col gap-1">
           <h1>
-            <span className="flex text-sm lg:text-base">{greet_time()}</span>
+            <Greeting className="flex text-sm lg:text-base" />
             <span className="text-2xl lg:text-4xl font-sans tracking-[-1.5px] font-semibold">
               {profile?.role !== "admin" ? (
                 <>
