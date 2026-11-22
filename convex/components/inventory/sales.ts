@@ -21,6 +21,7 @@ const channel = v.union(
   v.literal("pos"),
   v.literal("transfer"),
   v.literal("credit"),
+  v.literal("free"),
 );
 
 const lineInput = v.object({
@@ -48,6 +49,13 @@ function ensureKobo(label: string, value: number | undefined) {
   if (!Number.isInteger(value) || value < 0) {
     throw new Error(`${label} must be a whole number of kobo, 0 or more.`);
   }
+}
+
+/** Cash, POS and transfer take the money at the till. */
+function isTillChannel(
+  channel: "cash" | "pos" | "transfer" | "credit" | "free",
+) {
+  return channel === "cash" || channel === "pos" || channel === "transfer";
 }
 
 function ensureLines(lines: LineInput[]) {
@@ -110,8 +118,8 @@ export const create = mutation({
     ensureKobo("Amount paid", args.amountPaidKobo);
 
     const customerId = args.customerId?.trim() || undefined;
-    if (args.channel === "credit" && !customerId) {
-      throw new Error("A credit sale needs a named customer.");
+    if ((args.channel === "credit" || args.channel === "free") && !customerId) {
+      throw new Error("Free and credit sales need a named customer.");
     }
 
     const now = new Date().toISOString();
@@ -122,10 +130,15 @@ export const create = mutation({
       0,
     );
 
-    // Cash, POS and transfer take the money at the till; credit takes a
-    // deposit the seller types in, which may be nothing.
+    // Money taken at the till for cash, POS and transfer; credit takes a
+    // deposit the seller types in, which may be nothing; free takes none.
+    if (args.channel === "free" && (args.amountPaidKobo ?? 0) > 0) {
+      // A stray money row here would count in collected revenue while the
+      // sale itself stays out of booked revenue, and block voiding.
+      throw new Error("A free sale takes no money.");
+    }
     const amountPaidKobo =
-      args.amountPaidKobo ?? (args.channel === "credit" ? 0 : totalKobo);
+      args.amountPaidKobo ?? (isTillChannel(args.channel) ? totalKobo : 0);
     if (amountPaidKobo > totalKobo) {
       throw new Error("Amount paid cannot be more than the sale total.");
     }
@@ -178,7 +191,7 @@ export const create = mutation({
         saleId,
         amountKobo: amountPaidKobo,
         paidAt: now,
-        channel: args.channel === "credit" ? undefined : args.channel,
+        channel: isTillChannel(args.channel) ? args.channel : undefined,
         kind: "payment",
         createdBy: args.callerId,
         createdAt: now,
@@ -314,7 +327,7 @@ function salesQuery(
   ctx: QueryCtx,
   start: string | undefined,
   end: string | undefined,
-  channel: "cash" | "pos" | "transfer" | "credit" | undefined,
+  channel: "cash" | "pos" | "transfer" | "credit" | "free" | undefined,
 ) {
   const query = ctx.db
     .query("sales")

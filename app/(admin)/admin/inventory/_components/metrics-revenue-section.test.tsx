@@ -19,6 +19,7 @@ function metrics(revenue: Partial<InventoryMetrics["revenue"]>) {
         outstandingKobo: 0,
         salesCount: 0,
         byChannel: [],
+        givenAway: { count: 0, valueKobo: 0 },
         ...revenue,
       },
     },
@@ -39,5 +40,27 @@ describe("MetricsRevenueSection", () => {
 
     expect(html).toContain("Credit");
     expect(html).toContain("5,000.00");
+  });
+
+  it("shows a Given away line with count and value", () => {
+    mockedUseMetrics.mockReturnValue(
+      metrics({ givenAway: { count: 2, valueKobo: 120_000 } }),
+    );
+
+    const html = renderToStaticMarkup(<MetricsRevenueSection />);
+
+    expect(html).toContain("Given away");
+    expect(html).toContain("1,200.00");
+    expect(html).toContain("2 sales");
+  });
+
+  it("hides the Given away line when nothing was given away", () => {
+    mockedUseMetrics.mockReturnValue(
+      metrics({ givenAway: { count: 0, valueKobo: 0 } }),
+    );
+
+    const html = renderToStaticMarkup(<MetricsRevenueSection />);
+
+    expect(html).not.toContain("Given away");
   });
 });

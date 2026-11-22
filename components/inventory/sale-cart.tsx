@@ -9,6 +9,7 @@ import { CustomerCombobox } from "@/components/forms/CustomerCombobox";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { api } from "@/convex/_generated/api";
@@ -24,14 +25,17 @@ import { useSaleCart } from "./sale-cart-store";
 
 const SALES_PATH = "/admin/inventory/sales";
 
-type SaleChannel = "cash" | "pos" | "transfer" | "credit";
+type SaleChannel = "cash" | "pos" | "transfer" | "credit" | "free";
 
 const CHANNELS: { value: SaleChannel; label: string }[] = [
   { value: "cash", label: "Cash" },
   { value: "pos", label: "POS" },
   { value: "transfer", label: "Transfer" },
   { value: "credit", label: "Credit" },
+  { value: "free", label: "Free" },
 ];
+
+const FREE_NOTE_PRESETS = ["Welcome gift", "Birthday"];
 
 type SaleCartProps = {
   products: SaleFormProduct[];
@@ -68,6 +72,7 @@ export function SaleCart({ products }: SaleCartProps) {
   const [channel, setChannel] = useState<SaleChannel>("cash");
   const [customerId, setCustomerId] = useState("");
   const [paidNaira, setPaidNaira] = useState("0");
+  const [freeNote, setFreeNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const lines = pickSaleLines(products, quantities);
@@ -81,15 +86,18 @@ export function SaleCart({ products }: SaleCartProps) {
   );
 
   const isCredit = channel === "credit";
-  const needsCustomer = isCredit && customerId === "";
+  const isFree = channel === "free";
+  const needsCustomer = (isCredit || isFree) && customerId === "";
   const balance = useQuery(
     api.inventory.customerBalance,
     customerId ? { customerId } : "skip",
   );
   const paidKobo = depositKobo(paidNaira, totalKobo);
-  const customerHint = isCredit
-    ? "Choose a customer to sell on credit."
-    : "Leave blank for a walk-in.";
+  const customerHint = isFree
+    ? "Choose the customer receiving this gift."
+    : isCredit
+      ? "Choose a customer to sell on credit."
+      : "Leave blank for a walk-in.";
 
   // Keep the typed deposit at or below what the cart is worth.
   const handlePaidChange = (value: string) => {
@@ -129,7 +137,7 @@ export function SaleCart({ products }: SaleCartProps) {
         channel,
         customerId: customerId || undefined,
         amountPaidKobo: isCredit ? paidKobo : undefined,
-        note: saleNote(itemCount),
+        note: isFree ? freeNote.trim() || undefined : saleNote(itemCount),
         lines: saleLines,
       });
       clear();
@@ -158,11 +166,11 @@ export function SaleCart({ products }: SaleCartProps) {
       </div>
 
       {lines.length === 0 ? (
-        <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+        <p className="min-h-32 flex items-center justify-center text-center text-sm text-muted-foreground">
           Pick a product to start a sale.
         </p>
       ) : (
-        <ul className="max-h-[60svh] divide-y overflow-y-auto">
+        <ul className="min-h-32 max-h-[60svh] divide-y overflow-y-auto">
           {lines.map(({ product, quantity, unitPriceKobo }) => (
             <li
               key={product.productId}
@@ -272,6 +280,32 @@ export function SaleCart({ products }: SaleCartProps) {
               value={paidNaira}
               onChange={handlePaidChange}
               placeholder="0.00"
+            />
+          </div>
+        ) : null}
+
+        {isFree ? (
+          <div className="space-y-1.5">
+            <Label htmlFor="sale-free-note">Note</Label>
+            <div className="flex gap-2">
+              {FREE_NOTE_PRESETS.map((preset) => (
+                <Button
+                  key={preset}
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="h-7 font-normal rounded-full"
+                  onClick={() => setFreeNote(preset)}
+                >
+                  {preset}
+                </Button>
+              ))}
+            </div>
+            <Input
+              id="sale-free-note"
+              value={freeNote}
+              onChange={(event) => setFreeNote(event.target.value)}
+              placeholder="Why the stock is free (optional)"
             />
           </div>
         ) : null}

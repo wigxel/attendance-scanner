@@ -112,6 +112,7 @@ const sales = defineTable({
     v.literal("pos"),
     v.literal("transfer"),
     v.literal("credit"),
+    v.literal("free"),
   ),
   /** profile.id of the buyer; absent means a walk-in. */
   customerId: v.optional(v.string()),

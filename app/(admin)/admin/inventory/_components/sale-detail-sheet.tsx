@@ -43,6 +43,7 @@ const channelLabels = {
   pos: "POS",
   transfer: "Transfer",
   credit: "Credit",
+  free: "Free",
 } as const;
 
 function formatPaymentDate(iso: string) {

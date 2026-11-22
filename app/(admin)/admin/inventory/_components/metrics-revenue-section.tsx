@@ -3,6 +3,7 @@
 import {
   BanknoteIcon,
   CreditCardIcon,
+  GiftIcon,
   HandCoinsIcon,
   LandmarkIcon,
   type LucideIcon,
@@ -15,11 +16,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { RevenueChannelShare, SaleChannel } from "@/convex/inventory";
+import type {
+  InventoryMetrics,
+  RevenueChannelShare,
+  SaleChannel,
+} from "@/convex/inventory";
 import { formatKobo } from "@/lib/currency.helpers";
 import { useMetrics } from "./metrics-context";
 
-const channelLabels: Record<SaleChannel, string> = {
+/** Free never appears in byChannel; it reports under "Given away". */
+type MoneyChannel = Exclude<SaleChannel, "free">;
+
+const channelLabels: Record<MoneyChannel, string> = {
   cash: "Cash",
   pos: "POS",
   transfer: "Transfer",
@@ -27,7 +35,7 @@ const channelLabels: Record<SaleChannel, string> = {
 };
 
 const channelStyles: Record<
-  SaleChannel,
+  MoneyChannel,
   { Icon: LucideIcon; className: string }
 > = {
   cash: { Icon: BanknoteIcon, className: "text-green-700 dark:text-green-400" },
@@ -42,7 +50,12 @@ const channelStyles: Record<
   },
 };
 
-function RevenueTable({ shares }: { shares: RevenueChannelShare[] }) {
+type RevenueTableProps = {
+  shares: RevenueChannelShare[];
+  givenAway: InventoryMetrics["revenue"]["givenAway"];
+};
+
+function RevenueTable({ shares, givenAway }: RevenueTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -70,6 +83,25 @@ function RevenueTable({ shares }: { shares: RevenueChannelShare[] }) {
             </TableRow>
           );
         })}
+        {givenAway.count > 0 ? (
+          <TableRow>
+            <TableCell>
+              <span className="flex items-center gap-2">
+                <GiftIcon
+                  className="size-4 text-muted-foreground"
+                  aria-hidden
+                />
+                <span>Given away</span>
+              </span>
+            </TableCell>
+            <TableCell className="text-right font-medium tabular-nums">
+              {formatKobo(givenAway.valueKobo)}
+              <span className="block text-xs font-normal text-muted-foreground">
+                {givenAway.count} sale{givenAway.count === 1 ? "" : "s"}
+              </span>
+            </TableCell>
+          </TableRow>
+        ) : null}
       </TableBody>
     </Table>
   );
@@ -84,7 +116,10 @@ export function MetricsRevenueSection() {
         Revenue by channel
       </h3>
       <div className="rounded-md border border-border bg-background">
-        <RevenueTable shares={metrics.revenue.byChannel} />
+        <RevenueTable
+          shares={metrics.revenue.byChannel}
+          givenAway={metrics.revenue.givenAway}
+        />
       </div>
     </section>
   );

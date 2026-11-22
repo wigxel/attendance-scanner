@@ -31,6 +31,7 @@ const statusLabels: Record<SaleStatus, string> = {
   unpaid: "Unpaid",
   written_off: "Written off",
   voided: "Voided",
+  free: "Free",
 };
 
 describe("SaleStatusBadge", () => {
