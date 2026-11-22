@@ -29,6 +29,7 @@ export const EMPTY_METRICS: InventoryMetrics = {
     outstandingKobo: 0,
     salesCount: 0,
     byChannel: CHANNELS.map((channel) => ({ channel, totalKobo: 0 })),
+    givenAway: { count: 0, valueKobo: 0 },
   },
   topProducts: [],
   margin: { cogsKobo: 0, grossMarginKobo: 0, grossMarginPercent: null },

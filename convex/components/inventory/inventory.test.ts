@@ -1165,6 +1165,94 @@ describe("sales", () => {
   });
 });
 
+describe("free sales", () => {
+  async function seedFreeSale(t: ReturnType<typeof convexTest>) {
+    const packId = await t.mutation(api.units.create, {
+      callerId: "admin",
+      name: "pack",
+    });
+    const productId = await t.mutation(api.products.create, {
+      callerId: "admin",
+      name: "Peak Milk",
+      baseUnitId: packId,
+    });
+    await t.mutation(api.stockMovements.record, {
+      callerId: "admin",
+      productId,
+      kind: "restock",
+      quantity: 20,
+      note: "Delivery",
+    });
+    const saleId = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "free",
+      customerId: "customer-1",
+      note: "Welcome gift",
+      lines: [{ productId, unitId: packId, quantity: 2, unitPriceKobo: 1500 }],
+    });
+    return { packId, productId, saleId };
+  }
+
+  it("moves stock and records the real total with no payment row", async () => {
+    const t = convexTest(schema, modules);
+    const { saleId } = await seedFreeSale(t);
+
+    const [level] = await t.query(api.stockMovements.levels, {});
+    expect(level.quantity).toBe(18);
+
+    const detail = await t.query(api.sales.get, { saleId });
+    expect(detail?.sale.totalKobo).toBe(3000);
+    expect(detail?.sale.note).toBe("Welcome gift");
+    expect(detail?.lines[0]).toMatchObject({
+      unitPriceKobo: 1500,
+      lineTotalKobo: 3000,
+    });
+    expect(detail?.payments).toHaveLength(0);
+    expect(detail?.balance).toMatchObject({
+      paidKobo: 0,
+      outstandingKobo: 0,
+      status: "free",
+    });
+  });
+
+  it("requires a named customer, sharing the credit guard", async () => {
+    const t = convexTest(schema, modules);
+    const packId = await t.mutation(api.units.create, {
+      callerId: "admin",
+      name: "pack",
+    });
+    const productId = await t.mutation(api.products.create, {
+      callerId: "admin",
+      name: "Peak Milk",
+      baseUnitId: packId,
+    });
+
+    await expect(
+      t.mutation(api.sales.create, {
+        callerId: "admin",
+        channel: "free",
+        lines: [
+          { productId, unitId: packId, quantity: 1, unitPriceKobo: 1500 },
+        ],
+      }),
+    ).rejects.toThrow("Free and credit sales need a named customer.");
+  });
+
+  it("voids like any other sale: restocks and reads as voided", async () => {
+    const t = convexTest(schema, modules);
+    const { saleId } = await seedFreeSale(t);
+
+    await t.mutation(api.sales.voidSale, { callerId: "admin", saleId });
+
+    const [level] = await t.query(api.stockMovements.levels, {});
+    expect(level.quantity).toBe(20);
+
+    const detail = await t.query(api.sales.get, { saleId });
+    expect(detail?.sale.voided).toBe(true);
+    expect(detail?.balance).toMatchObject({ status: "voided" });
+  });
+});
+
 describe("cash withdrawals", () => {
   const window = { start: "2020-01-01", end: "2099-12-31" };
 

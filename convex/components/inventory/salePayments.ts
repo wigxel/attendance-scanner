@@ -14,7 +14,8 @@ export type SaleStatus =
   | "part_paid"
   | "unpaid"
   | "written_off"
-  | "voided";
+  | "voided"
+  | "free";
 
 export type SaleBalance = {
   paidKobo: number;
@@ -65,6 +66,17 @@ export function saleBalance(
     const target = rows.find((candidate) => candidate._id === row.reversesId);
     if (target?.kind === "payment") paidKobo -= row.amountKobo;
     if (target?.kind === "writeOff") writtenOffKobo -= row.amountKobo;
+  }
+
+  if (sale.channel === "free") {
+    // Nothing is owed on a gift: no money moved, so it must never read as
+    // unpaid, reach receivables or count in credit metrics.
+    return {
+      paidKobo: 0,
+      writtenOffKobo: 0,
+      outstandingKobo: 0,
+      status: sale.voided ? "voided" : "free",
+    };
   }
 
   if (rows.length === 0 && sale.channel !== "credit") {

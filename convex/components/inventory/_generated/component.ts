@@ -251,7 +251,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         {
           amountPaidKobo?: number;
           callerId: string;
-          channel: "cash" | "pos" | "transfer" | "credit";
+          channel: "cash" | "pos" | "transfer" | "credit" | "free";
           customerId?: string;
           dueDate?: string;
           lines: Array<{
@@ -283,7 +283,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         {
-          channel?: "cash" | "pos" | "transfer" | "credit";
+          channel?: "cash" | "pos" | "transfer" | "credit" | "free";
           end?: string;
           start?: string;
         },
@@ -294,7 +294,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         "query",
         "internal",
         {
-          channel?: "cash" | "pos" | "transfer" | "credit";
+          channel?: "cash" | "pos" | "transfer" | "credit" | "free";
           end?: string;
           paginationOpts: {
             cursor: string | null;

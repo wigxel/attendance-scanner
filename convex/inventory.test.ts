@@ -469,6 +469,89 @@ describe("metrics", () => {
   });
 });
 
+describe("free sales", () => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  async function seedFreeShop(t: Tester) {
+    await seedAcl(t, true);
+    const admin = t.withIdentity({ profile_id: "admin-user" });
+    const unitId = await admin.mutation(api.inventory.createUnit, {
+      name: "pack",
+    });
+    const productId = await admin.mutation(api.inventory.createProduct, {
+      name: "Peak Milk",
+      baseUnitId: unitId,
+      sellPriceKobo: 4000,
+    });
+    await admin.mutation(api.inventory.recordMovement, {
+      productId,
+      kind: "restock",
+      quantity: 10,
+      note: "Delivery",
+    });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("profile", {
+        id: "customer-1",
+        firstName: "Ada",
+        lastName: "Obi",
+        occupation: "None",
+      });
+    });
+    return { admin, unitId, productId };
+  }
+
+  it("stays out of booked revenue and receivables, showing as given away", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedFreeShop(t);
+
+    const saleId = await admin.mutation(api.inventory.recordSale, {
+      channel: "free",
+      customerId: "customer-1",
+      note: "Welcome gift",
+      lines: [{ productId, unitId, quantity: 2, unitPriceKobo: 4000 }],
+    });
+
+    const metrics = await admin.query(api.inventory.metrics, {
+      start: today,
+      end: today,
+    });
+    expect(metrics.revenue).toMatchObject({
+      totalKobo: 0,
+      outstandingKobo: 0,
+      givenAway: { count: 1, valueKobo: 8000 },
+    });
+    expect(
+      metrics.revenue.byChannel.every((share) => share.totalKobo === 0),
+    ).toBe(true);
+
+    const [sale] = (
+      await admin.query(api.inventory.listSales, {
+        paginationOpts: historyPage,
+      })
+    ).page;
+    expect(sale).toMatchObject({
+      status: "free",
+      outstandingKobo: 0,
+      totalKobo: 8000,
+    });
+    expect(
+      (
+        await admin.query(api.inventory.listSales, {
+          paginationOpts: historyPage,
+          status: "unpaid",
+        })
+      ).page,
+    ).toHaveLength(0);
+    expect(await admin.query(api.inventory.receivables, {})).toHaveLength(0);
+    expect(
+      await admin.query(api.inventory.customerBalance, {
+        customerId: "customer-1",
+      }),
+    ).toBe(0);
+    expect(saleId).toBeTruthy();
+  });
+});
+
 describe("inventory:sell", () => {
   beforeEach(() => {
     // The 3-hour adjustment window is measured from the real clock.
@@ -718,7 +801,7 @@ describe("credit sales", () => {
         channel: "credit",
         lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
       }),
-    ).rejects.toThrow("A credit sale needs a named customer");
+    ).rejects.toThrow("Free and credit sales need a named customer");
 
     const saleId = await sellOnCredit(
       admin,

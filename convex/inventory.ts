@@ -90,17 +90,19 @@ const saleChannelValidator = v.union(
   v.literal("pos"),
   v.literal("transfer"),
   v.literal("credit"),
+  v.literal("free"),
 );
 
 /** Channel a sale was taken on. */
-export type SaleChannel = "cash" | "pos" | "transfer" | "credit";
+export type SaleChannel = "cash" | "pos" | "transfer" | "credit" | "free";
 
 export type SaleStatus =
   | "paid"
   | "part_paid"
   | "unpaid"
   | "written_off"
-  | "voided";
+  | "voided"
+  | "free";
 
 /** Money view of one sale, always derived from its payment rows. */
 export type SaleBalance = {
@@ -111,7 +113,8 @@ export type SaleBalance = {
 };
 
 export type RevenueChannelShare = {
-  channel: SaleChannel;
+  /** Free is never a money channel; it reports under givenAway. */
+  channel: Exclude<SaleChannel, "free">;
   totalKobo: number;
 };
 
@@ -225,6 +228,8 @@ export type InventoryMetrics = {
     outstandingKobo: number;
     salesCount: number;
     byChannel: RevenueChannelShare[];
+    /** Stock handed out free: excluded from booked revenue above. */
+    givenAway: { count: number; valueKobo: number };
   };
   topProducts: TopProduct[];
   margin: {
@@ -235,7 +240,12 @@ export type InventoryMetrics = {
   movement: InventoryMovementRow[];
 };
 
-const SALE_CHANNELS: SaleChannel[] = ["cash", "pos", "transfer", "credit"];
+const SALE_CHANNELS: Exclude<SaleChannel, "free">[] = [
+  "cash",
+  "pos",
+  "transfer",
+  "credit",
+];
 
 function parseDay(value: string, label: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -256,11 +266,20 @@ function revenueBreakdown(
   sales: Array<Doc<"sales"> & SaleBalance>,
   payments: Doc<"salePayments">[],
 ) {
-  const totals = new Map<SaleChannel, number>(
+  const totals = new Map<Exclude<SaleChannel, "free">, number>(
     SALE_CHANNELS.map((channel) => [channel, 0]),
   );
 
+  // Free sales are not revenue: stock left at no charge, so they total up
+  // separately as "given away" and stay out of every money figure.
+  const given = sales.filter((sale) => sale.channel === "free");
+  const givenAway = {
+    count: given.length,
+    valueKobo: given.reduce((sum, sale) => sum + sale.totalKobo, 0),
+  };
+
   for (const sale of sales) {
+    if (sale.channel === "free") continue;
     totals.set(sale.channel, (totals.get(sale.channel) ?? 0) + sale.totalKobo);
   }
 
@@ -283,6 +302,7 @@ function revenueBreakdown(
     collectedKobo,
     outstandingKobo: sales.reduce((sum, sale) => sum + sale.outstandingKobo, 0),
     salesCount: sales.length,
+    givenAway,
   };
 }
 
@@ -1062,18 +1082,24 @@ export const recordSale = mutation({
     const caller = await requireCallerId(ctx, SELL_OR_MANAGE);
 
     const customerId = args.customerId?.trim() || undefined;
-    if (args.channel === "credit" && !customerId) {
-      throw new Error("A credit sale needs a named customer.");
+    if ((args.channel === "credit" || args.channel === "free") && !customerId) {
+      throw new Error("Free and credit sales need a named customer.");
     }
     if (customerId && !(await customerExists(ctx, customerId))) {
       throw new Error("Customer not found.");
     }
 
-    return await ctx.runMutation(components.inventory.sales.create, {
+    const saleId = await ctx.runMutation(components.inventory.sales.create, {
       ...args,
       customerId,
       callerId: caller,
     });
+
+    if (args.channel === "free") {
+      await notifyFreeSale(ctx, { saleId, callerId: caller });
+    }
+
+    return saleId;
   },
 });
 
@@ -1176,6 +1202,7 @@ export const listSales = query({
         v.literal("unpaid"),
         v.literal("written_off"),
         v.literal("voided"),
+        v.literal("free"),
       ),
     ),
   },
@@ -1418,6 +1445,54 @@ async function notifyCashWithdrawal(
   } catch (error) {
     // The ledger row is already written; the alert is best-effort.
     console.error("cash withdrawal fan-out failed", error);
+  }
+}
+
+/**
+ * Tell every holder of inventory:manage that stock left the shop for free.
+ * Runs inline but only queues, and a failing fan-out must not fail a sale
+ * whose stock has already moved.
+ */
+type FreeSaleEvent = { saleId: string; callerId: string };
+
+async function notifyFreeSale(ctx: MutationCtx, args: FreeSaleEvent) {
+  try {
+    const detail = (await ctx.runQuery(components.inventory.sales.get, {
+      saleId: args.saleId,
+    })) as {
+      sale: { totalKobo: number; customerId?: string };
+      lines: Array<{ productName: string; quantity: number }>;
+    } | null;
+    if (!detail) return;
+
+    const recipients = await ctx.runQuery(
+      internal.notifications.alertRecipientKeys,
+      { privilege: PRIVILEGE },
+    );
+    const name = await profileName(ctx, args.callerId);
+    const customer = await customerName(ctx, detail.sale.customerId);
+    const items = detail.lines
+      .map((line) => `${line.quantity} ${line.productName}`)
+      .join(", ");
+
+    for (const recipientKey of recipients) {
+      try {
+        await ctx.runMutation(internal.notifications.send, {
+          recipientKey,
+          channels: ["inapp", "push"],
+          title: "Free sale",
+          body: `${name} gave ${items} (worth ${formatKobo(detail.sale.totalKobo)}) to ${customer ?? "a customer"}.`,
+          url: "/admin/inventory/sales",
+          dedupeKey: `${args.saleId}:${recipientKey}`,
+          severity: "info",
+        });
+      } catch (error) {
+        console.error("free sale alert failed", recipientKey, error);
+      }
+    }
+  } catch (error) {
+    // The sale is already recorded; the alert is best-effort.
+    console.error("free sale fan-out failed", error);
   }
 }
 

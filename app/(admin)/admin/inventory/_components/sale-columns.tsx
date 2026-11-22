@@ -18,6 +18,7 @@ const channelLabels = {
   pos: "POS",
   transfer: "Transfer",
   credit: "Credit",
+  free: "Free",
 } as const;
 
 export const saleChannelOptions = Object.entries(channelLabels).map(
@@ -35,6 +36,7 @@ const statusChips: Record<SaleStatus, SaleStatusChip> = {
   unpaid: { label: "Unpaid", variant: "destructive" },
   written_off: { label: "Written off", variant: "outline" },
   voided: { label: "Voided", variant: "secondary" },
+  free: { label: "Free", variant: "secondary" },
 };
 
 export const saleStatusOptions = Object.entries(statusChips).map(
