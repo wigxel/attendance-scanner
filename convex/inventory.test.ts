@@ -523,6 +523,8 @@ describe("free sales", () => {
     expect(
       metrics.revenue.byChannel.every((share) => share.totalKobo === 0),
     ).toBe(true);
+    // Gifted stock is not sold: top products must not book its value.
+    expect(metrics.topProducts).toHaveLength(0);
 
     const [sale] = (
       await admin.query(api.inventory.listSales, {

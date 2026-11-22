@@ -1690,6 +1690,15 @@ export const metrics = query({
         sale.occurredAt <= endIso,
     );
 
+    // Gifts are not sold: their lines stay out of top products so the
+    // table's revenue column cannot contradict booked revenue above.
+    const freeSaleIds = new Set(
+      allSales
+        .filter((sale) => sale.channel === "free")
+        .map((sale) => sale._id),
+    );
+    const soldLines = saleLines.filter((line) => !freeSaleIds.has(line.saleId));
+
     const productById = new Map<string, Doc<"products">>(
       products.map((product) => [product._id, product]),
     );
@@ -1716,7 +1725,7 @@ export const metrics = query({
       stock,
       spend,
       revenue,
-      topProducts: topProducts(saleLines, productById, unitNameById),
+      topProducts: topProducts(soldLines, productById, unitNameById),
       margin: {
         cogsKobo: movement.cogsKobo,
         grossMarginKobo,

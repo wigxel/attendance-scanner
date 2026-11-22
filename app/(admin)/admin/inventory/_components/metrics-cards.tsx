@@ -84,7 +84,7 @@ export function MetricsCards() {
       <MetricCard
         label="Gross margin"
         value={formatKobo(margin.grossMarginKobo)}
-        info="What the shop kept after paying for the stock that was sold. The lines below show it as a share of sales, and what the sold stock cost."
+        info="What the shop kept after paying for the stock that was sold. The lines below show it as a share of sales, and what the sold stock cost. Stock given away free adds its cost here without adding any sales, so gifts pull this number down."
       >
         <div className="space-y-1">
           <p>

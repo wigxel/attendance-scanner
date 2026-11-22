@@ -1215,6 +1215,23 @@ describe("free sales", () => {
     });
   });
 
+  it("takes no money, even if a caller tries to pass some", async () => {
+    const t = convexTest(schema, modules);
+    const { productId, packId } = await seedFreeSale(t);
+
+    await expect(
+      t.mutation(api.sales.create, {
+        callerId: "admin",
+        channel: "free",
+        customerId: "customer-1",
+        amountPaidKobo: 500,
+        lines: [
+          { productId, unitId: packId, quantity: 1, unitPriceKobo: 1500 },
+        ],
+      }),
+    ).rejects.toThrow("A free sale takes no money.");
+  });
+
   it("requires a named customer, sharing the credit guard", async () => {
     const t = convexTest(schema, modules);
     const packId = await t.mutation(api.units.create, {

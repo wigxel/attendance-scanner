@@ -166,11 +166,11 @@ export function SaleCart({ products }: SaleCartProps) {
       </div>
 
       {lines.length === 0 ? (
-        <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+        <p className="min-h-32 flex items-center justify-center text-center text-sm text-muted-foreground">
           Pick a product to start a sale.
         </p>
       ) : (
-        <ul className="max-h-[60svh] divide-y overflow-y-auto">
+        <ul className="min-h-32 max-h-[60svh] divide-y overflow-y-auto">
           {lines.map(({ product, quantity, unitPriceKobo }) => (
             <li
               key={product.productId}
@@ -292,9 +292,9 @@ export function SaleCart({ products }: SaleCartProps) {
                 <Button
                   key={preset}
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
-                  className="h-7 font-normal"
+                  className="h-7 font-normal rounded-full"
                   onClick={() => setFreeNote(preset)}
                 >
                   {preset}

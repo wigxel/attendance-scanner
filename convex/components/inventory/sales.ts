@@ -132,6 +132,11 @@ export const create = mutation({
 
     // Money taken at the till for cash, POS and transfer; credit takes a
     // deposit the seller types in, which may be nothing; free takes none.
+    if (args.channel === "free" && (args.amountPaidKobo ?? 0) > 0) {
+      // A stray money row here would count in collected revenue while the
+      // sale itself stays out of booked revenue, and block voiding.
+      throw new Error("A free sale takes no money.");
+    }
     const amountPaidKobo =
       args.amountPaidKobo ?? (isTillChannel(args.channel) ? totalKobo : 0);
     if (amountPaidKobo > totalKobo) {
