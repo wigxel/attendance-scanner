@@ -76,7 +76,6 @@ const STATUS_META: Record<
   },
 };
 
-const RANGES = [30, 60, 90] as const;
 const WEEKDAY_ROWS = [0, 1, 2, 3, 4, 5, 6];
 
 // Africa/Lagos has no DST, so offsetting now by whole days stays aligned.
@@ -345,10 +344,9 @@ type StaffLogProps = { userId: string };
 
 function StaffLog({ userId }: StaffLogProps) {
   const [asOf] = useState(() => Date.now());
-  const [range, setRange] = useState<(typeof RANGES)[number]>(30);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const to = lagosKey(asOf);
-  const from = lagosKey(asOf - (range - 1) * 86400000);
+  const from = lagosKey(asOf - 89 * 86400000);
 
   const log = useQuery(api.kpis.staffLog, { userId, from, to });
   const profile = useQuery(api.myFunctions.getUserById, { userId });
@@ -385,22 +383,9 @@ function StaffLog({ userId }: StaffLogProps) {
           <div>
             <h1 className="font-bold text-2xl">{name}</h1>
             <p className="mt-1 text-muted-foreground text-sm">
-              {totalEarned} pts earned · last {range} days
+              {totalEarned} pts earned · last 90 days
             </p>
           </div>
-          <fieldset className="flex gap-2">
-            <legend className="sr-only">Range</legend>
-            {RANGES.map((days) => (
-              <Button
-                key={days}
-                size="sm"
-                variant={range === days ? "default" : "outline"}
-                onClick={() => setRange(days)}
-              >
-                {days}d
-              </Button>
-            ))}
-          </fieldset>
         </div>
       </header>
 
