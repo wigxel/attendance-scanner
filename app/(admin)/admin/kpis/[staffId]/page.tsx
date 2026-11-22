@@ -159,12 +159,7 @@ function KpiHeatmap({ days, todayKey, onSelect }: HeatmapProps) {
     }
   }
 
-  const rowLabel = (row: number) => {
-    if (row === 1) return "Mon";
-    if (row === 3) return "Wed";
-    if (row === 5) return "Fri";
-    return "";
-  };
+  const rowLabel = (row: number) => "SMTWTFS"[row];
 
   return (
     <div className="flex flex-col gap-2">
@@ -205,7 +200,10 @@ function KpiHeatmap({ days, todayKey, onSelect }: HeatmapProps) {
                           onSelect={onSelect}
                         />
                       ) : (
-                        <span className="block size-5" />
+                        <span
+                          className="block size-5 rounded-sm"
+                          style={{ background: "var(--background-lv1)" }}
+                        />
                       )}
                     </td>
                   );
@@ -232,6 +230,8 @@ function KpiHeatmap({ days, todayKey, onSelect }: HeatmapProps) {
           className="size-3 rounded-[2px] border border-border"
           style={{ background: "var(--background-lv1)" }}
         />
+        <span className="ml-2">Missed</span>
+        <span className="size-[5px] rounded-full bg-destructive" />
       </div>
     </div>
   );
@@ -258,12 +258,18 @@ function HeatmapCell({ day, isToday, onSelect }: HeatmapCellProps) {
       title={tooltip}
       aria-label={tooltip}
       className={cn(
-        "size-5 rounded-sm border border-transparent transition-opacity hover:opacity-80",
-        missed && "border-b-2 border-b-destructive",
+        "relative size-5 rounded-sm border border-transparent transition-opacity hover:opacity-80",
         level === 0 ? "border-border/60" : LEVEL_CLASSES[level],
       )}
       style={level === 0 ? { background: "var(--background-lv1)" } : undefined}
-    />
+    >
+      {missed && (
+        <span
+          aria-hidden
+          className="absolute top-1/2 left-1/2 size-[5px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-destructive"
+        />
+      )}
+    </button>
   );
 }
 
@@ -398,14 +404,18 @@ function StaffLog({ userId }: StaffLogProps) {
         </div>
       </header>
 
-      <section aria-label="Completion heatmap">
-        <h2 className="mb-2 font-semibold text-sm">Daily completion</h2>
-        <KpiHeatmap
-          days={log.days}
-          todayKey={todayKey}
-          onSelect={setSelectedDate}
-        />
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Daily completion</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <KpiHeatmap
+            days={log.days}
+            todayKey={todayKey}
+            onSelect={setSelectedDate}
+          />
+        </CardContent>
+      </Card>
 
       <section aria-label="Recent days" className="flex flex-col gap-3">
         <h2 className="font-semibold text-sm">Recent days</h2>
