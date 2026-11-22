@@ -161,62 +161,53 @@ function KpiHeatmap({ days, todayKey, onSelect }: HeatmapProps) {
   const rowLabel = (row: number) => "SMTWTFS"[row];
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="overflow-x-auto">
-        <table
-          className="w-full min-w-220 border-separate lg:min-w-0"
-          style={{ borderSpacing: "4px" }}
-        >
-          <thead>
-            <tr>
-              <th className="w-8" />
-              {weeks.map((week, column) => {
-                const label = monthLabels.find(
-                  (entry) => entry.column === column,
-                );
-                return (
-                  <th
-                    key={week[0]?.date ?? `pad-${column}`}
-                    className="relative h-5 text-left font-normal text-xs text-muted-foreground/50"
-                  >
-                    <span className="absolute top-0">{label?.month ?? ""}</span>
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {WEEKDAY_ROWS.map((row) => (
-              <tr key={row}>
-                <th className="pr-1 text-left font-normal text-xs text-muted-foreground/50">
-                  {rowLabel(row)}
-                </th>
-                {weeks.map((week, column) => {
-                  const day = week[row];
-                  return (
-                    <td
-                      key={day?.date ?? `pad-${column}`}
-                      className="aspect-square p-0"
-                    >
-                      {day ? (
-                        <HeatmapCell
-                          day={day}
-                          isToday={day.date === todayKey}
-                          onSelect={onSelect}
-                        />
-                      ) : (
-                        <span
-                          className="block aspect-square w-full rounded-sm"
-                          style={{ background: "var(--background-lv1)" }}
-                        />
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="flex flex-col gap-1">
+      <div
+        className="grid gap-1"
+        style={{
+          gridTemplateColumns: `1rem repeat(${weeks.length}, minmax(0, 1fr))`,
+          gridTemplateRows: "1rem repeat(7, auto)",
+        }}
+      >
+        {monthLabels.map(({ month, column }) => (
+          <span
+            key={`${month}-${column}`}
+            className="text-left font-normal text-muted-foreground/50 text-xs"
+            style={{ gridColumn: column + 2, gridRow: 1 }}
+          >
+            {month}
+          </span>
+        ))}
+        {WEEKDAY_ROWS.map((row) => (
+          <span
+            key={row}
+            className="self-center text-muted-foreground/50 text-xs"
+            style={{ gridColumn: 1, gridRow: row + 2 }}
+          >
+            {rowLabel(row)}
+          </span>
+        ))}
+        {weeks.map((week, column) =>
+          week.map((day, row) => (
+            <div
+              key={day?.date ?? `pad-${column}-${row}`}
+              style={{ gridColumn: column + 2, gridRow: row + 2 }}
+            >
+              {day ? (
+                <HeatmapCell
+                  day={day}
+                  isToday={day.date === todayKey}
+                  onSelect={onSelect}
+                />
+              ) : (
+                <span
+                  className="block aspect-square w-full rounded-sm"
+                  style={{ background: "var(--background-lv1)" }}
+                />
+              )}
+            </div>
+          )),
+        )}
       </div>
 
       <div className="flex items-center justify-end gap-2 text-muted-foreground text-xs">
@@ -263,7 +254,7 @@ function HeatmapCell({ day, isToday, onSelect }: HeatmapCellProps) {
       title={tooltip}
       aria-label={tooltip}
       className={cn(
-        "relative aspect-square w-full rounded-sm border border-transparent transition-opacity hover:opacity-80",
+        "relative block aspect-square w-full rounded-sm border border-transparent transition-opacity hover:opacity-80",
         level === 0 ? "border-border/60" : LEVEL_CLASSES[level],
       )}
       style={level === 0 ? { background: "var(--background-lv1)" } : undefined}
