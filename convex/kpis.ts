@@ -443,6 +443,158 @@ export const archiveKpi = mutation({
   },
 });
 
+export type KpiLogStatus = "done" | "missed" | "neglected" | "pending";
+
+type ClassifyFields = {
+  cadence?: "daily" | "weekly" | "monthly";
+  dueWeekday?: number;
+  dueMonthDay?: number;
+  windowEnd?: string;
+};
+
+/**
+ * Read-time status of one checklist item on one log day. `date >= todayKey`
+ * means the day is not over yet, so an unchecked item can still be done.
+ * Hard due points (instance date, weekly dueWeekday, monthly dueMonthDay,
+ * windowEnd) that passed unchecked are "missed"; items checkable anytime in
+ * their period that were never checked are "neglected".
+ */
+// ponytail: past days are reconstructed from the CURRENT checklist — no daily
+// snapshot exists, so renamed/deleted items drift. Add a per-day checklist
+// snapshot table if that ever matters.
+export function classifyItem(
+  item: ClassifyFields | null,
+  completed: boolean,
+  date: string,
+  todayKey: string,
+): KpiLogStatus {
+  if (completed) return "done";
+  if (date >= todayKey) return "pending";
+  // null item = kpiInstances row; its date is the hard due point.
+  if (item === null) return "missed";
+  if (item.dueWeekday !== undefined || item.dueMonthDay !== undefined) {
+    return "missed";
+  }
+  if (item.windowEnd) return "missed";
+  return "neglected";
+}
+
+type StaffLogItem = {
+  kind: "preset" | "instance";
+  title: string;
+  cadence?: "daily" | "weekly" | "monthly";
+  points: number;
+  status: KpiLogStatus;
+  completedAt: number | null;
+};
+
+export const staffLog = query({
+  args: { userId: v.string(), from: v.string(), to: v.string() },
+  handler: async (ctx, args) => {
+    const caller = await readId(ctx);
+    if (!caller) throw new Error("Authentication required.");
+    const fromMs = Date.parse(`${args.from}T00:00:00+01:00`);
+    const toMs = Date.parse(`${args.to}T00:00:00+01:00`);
+    if (Number.isNaN(fromMs) || Number.isNaN(toMs) || fromMs > toMs) {
+      throw new Error("Invalid date range.");
+    }
+    const daysAsc: string[] = [];
+    for (
+      let ms = fromMs;
+      ms <= toMs && daysAsc.length < MAX_RANGE_DAYS;
+      ms += 86400000
+    ) {
+      daysAsc.push(dayKey(lagosParts(ms)));
+    }
+    const daySet = new Set(daysAsc);
+    const todayKey = dayKeyOf(lagosDay(Date.now()));
+    const kpis = await ctx.db
+      .query("kpis")
+      .filter((q) => q.eq(q.field("isActive"), true))
+      .collect();
+
+    // Start 31 days early so weekly/monthly completions whose period covers
+    // the first range days are still found (periodKey always matches the
+    // completion date's period, so the widened fetch cannot overreach).
+    const completions = (
+      await ctx.db
+        .query("kpiCompletions")
+        .withIndex("by_completed_at", (q) =>
+          q
+            .gte("completedAt", fromMs - 31 * 86400000)
+            .lte("completedAt", toMs + 86400000 - 1),
+        )
+        .collect()
+    ).filter((c) => c.completedBy === args.userId);
+    const presetDone = new Map<string, number>();
+    const instanceDone = new Map<string, number>();
+    for (const c of completions) {
+      if (c.kpiId) presetDone.set(`${c.kpiId}|${c.periodKey}`, c.completedAt);
+      if (c.instanceId) {
+        instanceDone.set(`${c.instanceId}|${c.periodKey}`, c.completedAt);
+      }
+    }
+    const liveByDay = new Map<string, number>();
+    for (const c of completions) {
+      const date = dayKey(lagosParts(c.completedAt));
+      if (daySet.has(date)) {
+        liveByDay.set(date, (liveByDay.get(date) ?? 0) + c.pointsEarned);
+      }
+    }
+
+    const days = [];
+    for (const date of daysAsc) {
+      const day = lagosDayFromKey(date);
+      const stored = await ctx.db
+        .query("kpiDailyScores")
+        .withIndex("by_date", (q) => q.eq("date", date))
+        .first();
+      const available =
+        stored?.available ?? (await availableForDay(ctx, kpis, date, day));
+      const earned = stored?.earned[args.userId] ?? liveByDay.get(date) ?? 0;
+
+      const items: StaffLogItem[] = [];
+      const parts = { ...day, hhmm: "00:00" };
+      for (const kpi of kpis) {
+        if (!isDue(kpi, day)) continue;
+        const periodKey = periodKeyFor(kpi.cadence, parts);
+        const completedAt = presetDone.get(`${kpi._id}|${periodKey}`);
+        items.push({
+          kind: "preset",
+          title: kpi.title,
+          cadence: kpi.cadence,
+          points: kpi.points,
+          status: classifyItem(kpi, completedAt !== undefined, date, todayKey),
+          completedAt: completedAt ?? null,
+        });
+      }
+      const instances = await ctx.db
+        .query("kpiInstances")
+        .withIndex("by_date", (q) => q.eq("date", date))
+        .collect();
+      for (const inst of instances) {
+        const completedAt = instanceDone.get(`${inst._id}|${date}`);
+        items.push({
+          kind: "instance",
+          title: inst.title,
+          points: inst.points,
+          status: classifyItem(null, completedAt !== undefined, date, todayKey),
+          completedAt: completedAt ?? null,
+        });
+      }
+      const order: Record<KpiLogStatus, number> = {
+        done: 0,
+        missed: 1,
+        neglected: 2,
+        pending: 3,
+      };
+      items.sort((a, b) => order[a.status] - order[b.status]);
+      days.push({ date, earned, available, items });
+    }
+    return { userId: args.userId, days: days.reverse() };
+  },
+});
+
 export const performance = query({
   args: { from: v.string(), to: v.string() },
   handler: async (ctx, args) => {

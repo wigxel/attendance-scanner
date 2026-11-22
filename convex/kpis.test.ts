@@ -5,6 +5,7 @@ import { afterAll, describe, expect, it, vi } from "vitest";
 import { api, components, internal } from "./_generated/api";
 import aclSchema from "./components/acl/schema";
 import {
+  classifyItem,
   dayBounds,
   isDue,
   isoWeekKey,
@@ -809,5 +810,154 @@ describe("priority instances", () => {
     await expect(mgr1.mutation(api.kpis.toggleCheck, {})).rejects.toThrow(
       "exactly one",
     );
+  });
+});
+
+describe("classifyItem", () => {
+  const PAST = "2026-10-07";
+
+  it("done wins whenever the item was completed", () => {
+    expect(classifyItem(null, true, PAST, TODAY)).toBe("done");
+    expect(classifyItem({ cadence: "daily" }, true, TODAY, TODAY)).toBe("done");
+  });
+
+  it("unchecked items on a day that is not over are pending", () => {
+    expect(classifyItem({ cadence: "daily" }, false, TODAY, TODAY)).toBe(
+      "pending",
+    );
+    expect(classifyItem(null, false, TODAY, TODAY)).toBe("pending");
+  });
+
+  it("misses hard due points, neglects anytime items", () => {
+    expect(classifyItem(null, false, PAST, TODAY)).toBe("missed");
+    expect(
+      classifyItem({ cadence: "weekly", dueWeekday: 0 }, false, PAST, TODAY),
+    ).toBe("missed");
+    expect(
+      classifyItem({ cadence: "monthly", dueMonthDay: 1 }, false, PAST, TODAY),
+    ).toBe("missed");
+    expect(
+      classifyItem(
+        { cadence: "daily", windowEnd: "09:00" },
+        false,
+        PAST,
+        TODAY,
+      ),
+    ).toBe("missed");
+    expect(classifyItem({ cadence: "daily" }, false, PAST, TODAY)).toBe(
+      "neglected",
+    );
+    expect(classifyItem({ cadence: "weekly" }, false, PAST, TODAY)).toBe(
+      "neglected",
+    );
+    expect(classifyItem({ cadence: "monthly" }, false, PAST, TODAY)).toBe(
+      "neglected",
+    );
+  });
+});
+
+describe("staffLog", () => {
+  it("rejects unauthenticated callers", async () => {
+    const t = convexTest(schema, modules);
+    await expect(
+      t.query(api.kpis.staffLog, { userId: "mgr-1", from: TODAY, to: TODAY }),
+    ).rejects.toThrow();
+  });
+
+  it("classifies done, missed, neglected and pending across days", async () => {
+    vi.setSystemTime(NOON); // Thursday 2026-10-08
+    const { t, mgr1 } = await setupTwoUsers();
+    const doneId = await insertKpi(t, { title: "Mop" });
+    await insertKpi(t, { title: "Sweep" });
+    await insertKpi(t, {
+      title: "Window wipe",
+      windowStart: "06:00",
+      windowEnd: "09:00",
+    });
+    await mgr1.mutation(api.kpis.toggleCheck, { kpiId: doneId });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("kpiInstances", {
+        title: "Greet James",
+        customerId: "cust-1",
+        points: 3,
+        date: "2026-10-07",
+        createdAt: Date.now(),
+      });
+    });
+
+    const res = await mgr1.query(api.kpis.staffLog, {
+      userId: "mgr-1",
+      from: "2026-10-07",
+      to: TODAY,
+    });
+
+    expect(res.days).toHaveLength(2);
+    expect(res.days[0].date).toBe(TODAY);
+    const today = res.days[0];
+    expect(today.items.find((i) => i.title === "Mop")).toMatchObject({
+      status: "done",
+      kind: "preset",
+      points: 5,
+    });
+    expect(today.earned).toBe(5);
+    expect(today.available).toBe(15);
+    expect(today.items.find((i) => i.title === "Sweep")).toMatchObject({
+      status: "pending",
+    });
+
+    const yesterday = res.days[1];
+    expect(yesterday.date).toBe("2026-10-07");
+    expect(yesterday.earned).toBe(0);
+    expect(
+      yesterday.items.find((i) => i.title === "Greet James"),
+    ).toMatchObject({ status: "missed", kind: "instance", points: 3 });
+    expect(
+      yesterday.items.find((i) => i.title === "Window wipe"),
+    ).toMatchObject({ status: "missed" });
+    expect(yesterday.items.find((i) => i.title === "Mop")).toMatchObject({
+      status: "neglected",
+    });
+  });
+
+  it("finds weekly completions whose check happened before the range", async () => {
+    vi.setSystemTime(NOON); // Thursday of ISO week W41
+    const { t, mgr1 } = await setupTwoUsers();
+    const weeklyId = await insertKpi(t, {
+      title: "Stock take",
+      cadence: "weekly",
+      points: 10,
+    });
+    vi.setSystemTime(new Date("2026-10-05T11:00:00.000Z")); // Monday, same week
+    await mgr1.mutation(api.kpis.toggleCheck, { kpiId: weeklyId });
+    vi.setSystemTime(NOON);
+
+    const res = await mgr1.query(api.kpis.staffLog, {
+      userId: "mgr-1",
+      from: TODAY,
+      to: TODAY,
+    });
+    expect(
+      res.days[0].items.find((i) => i.title === "Stock take"),
+    ).toMatchObject({ status: "done", points: 10 });
+    // Points count on the day they were earned (Monday), not the log day.
+    expect(res.days[0].earned).toBe(0);
+  });
+
+  it("prefers the frozen daily score for earned and available", async () => {
+    vi.setSystemTime(NOON);
+    const { t, mgr1 } = await setupTwoUsers();
+    const kpiId = await insertKpi(t, { title: "Daily", points: 5 });
+    await mgr1.mutation(api.kpis.toggleCheck, { kpiId });
+    await t.mutation(internal.kpis.closeKpiDayJob, { day: TODAY });
+    await t.run(async (ctx) => {
+      await ctx.db.patch(kpiId, { points: 50 });
+    });
+
+    const res = await mgr1.query(api.kpis.staffLog, {
+      userId: "mgr-1",
+      from: TODAY,
+      to: TODAY,
+    });
+    expect(res.days[0]).toMatchObject({ earned: 5, available: 5 });
   });
 });

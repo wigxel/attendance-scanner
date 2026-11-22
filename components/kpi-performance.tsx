@@ -1,6 +1,7 @@
 "use client";
 import { useConvexAuth, useQuery } from "convex/react";
 import { format } from "date-fns";
+import Link from "next/link";
 import * as React from "react";
 import {
   Bar,
@@ -52,22 +53,28 @@ function LeaderboardRow({ userId, earned, pct, rank }: LeaderboardRowProps) {
         : userId.slice(0, 8);
 
   return (
-    <li className="flex items-center gap-3 p-3">
-      <span className="w-6 text-sm font-bold text-muted-foreground">
-        {serialNo(rank)}
-      </span>
-      <Avatar className="h-8 w-8">
-        <AvatarFallback>
-          {name
-            .split(" ")
-            .map((w) => w[0])
-            .slice(0, 2)
-            .join("")}
-        </AvatarFallback>
-      </Avatar>
-      <span className="flex-1 text-sm font-medium">{name}</span>
-      <Badge variant="secondary">{earned} pts</Badge>
-      <Badge>{pct.toFixed(0)}%</Badge>
+    <li>
+      <Link
+        href={`/admin/kpis/${userId}`}
+        aria-label={`Open ${name}'s daily KPI log`}
+        className="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-muted/50"
+      >
+        <span className="w-6 text-sm font-bold text-muted-foreground">
+          {serialNo(rank)}
+        </span>
+        <Avatar className="h-8 w-8">
+          <AvatarFallback>
+            {name
+              .split(" ")
+              .map((w) => w[0])
+              .slice(0, 2)
+              .join("")}
+          </AvatarFallback>
+        </Avatar>
+        <span className="flex-1 text-sm font-medium">{name}</span>
+        <Badge variant="secondary">{earned} pts</Badge>
+        <Badge>{pct.toFixed(0)}%</Badge>
+      </Link>
     </li>
   );
 }
