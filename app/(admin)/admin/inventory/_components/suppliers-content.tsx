@@ -4,28 +4,30 @@ import { useMutation, useQuery } from "convex/react";
 import { Plus } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AppDataTable } from "@/components/DataTable";
 import {
   EmptyStateContent,
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/empty-state";
 import { SupplierFormDialog } from "@/components/inventory/supplier-form-dialog";
+import { StdTable } from "@/components/std-table";
+import { useTableFilters } from "@/components/std-table/filters";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { api } from "@/convex/_generated/api";
+import { statusFilterOptions } from "./product-columns";
 import { createSupplierColumns, type SupplierRow } from "./supplier-columns";
 
 export function SuppliersContent() {
   const [search, setSearch] = useState("");
-  const [showArchived, setShowArchived] = useState(false);
+  const filters = useTableFilters({
+    status: { options: statusFilterOptions, queryKey: "suppliers_status" },
+  });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<SupplierRow | null>(null);
 
   const suppliers = useQuery(api.inventory.listSuppliers, {
-    includeArchived: showArchived,
+    includeArchived: true,
   });
   const archiveSupplier = useMutation(api.inventory.archiveSupplier);
 
@@ -65,6 +67,12 @@ export function SuppliersContent() {
     return <Skeleton className="h-[60svh] w-full" />;
   }
 
+  // No filter picked means Active — the old toggle-off view.
+  const showArchived = filters.status.value === "archived";
+  const visibleSuppliers = suppliers.filter((supplier) =>
+    showArchived ? !supplier.active : supplier.active,
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -76,14 +84,6 @@ export function SuppliersContent() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="show-archived-suppliers"
-              checked={showArchived}
-              onCheckedChange={setShowArchived}
-            />
-            <Label htmlFor="show-archived-suppliers">Show archived</Label>
-          </div>
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4" />
             New supplier
@@ -91,21 +91,36 @@ export function SuppliersContent() {
         </div>
       </div>
 
-      <AppDataTable
+      <StdTable.Root
         columns={columns}
-        data={suppliers}
+        data={visibleSuppliers}
         searchTerm={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search by name or phone..."
-        emptyState={
-          <EmptyStateContent>
-            <EmptyStateTitle>No suppliers yet</EmptyStateTitle>
-            <EmptyStateDescription>
-              Add the people or shops you buy stock from.
-            </EmptyStateDescription>
-          </EmptyStateContent>
-        }
-      />
+        meta={filters}
+        pageSize={10}
+      >
+        <StdTable.Card>
+          <StdTable.Header>
+            <StdTable.SearchInput placeholder="Search by name or phone..." />
+            <StdTable.ColumnSelector />
+          </StdTable.Header>
+
+          <StdTable.CardBody
+            emptyState={
+              <EmptyStateContent>
+                <EmptyStateTitle>No suppliers yet</EmptyStateTitle>
+                <EmptyStateDescription>
+                  Add the people or shops you buy stock from.
+                </EmptyStateDescription>
+              </EmptyStateContent>
+            }
+          />
+
+          <StdTable.Footer>
+            <StdTable.Pagination />
+          </StdTable.Footer>
+        </StdTable.Card>
+      </StdTable.Root>
 
       <SupplierFormDialog
         open={isFormOpen}

@@ -4,31 +4,33 @@ import { useMutation, useQuery } from "convex/react";
 import { Plus } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AppDataTable } from "@/components/DataTable";
 import {
   EmptyStateContent,
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/empty-state";
 import { UnitFormDialog } from "@/components/inventory/unit-form-dialog";
+import { StdTable } from "@/components/std-table";
+import { useTableFilters } from "@/components/std-table/filters";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
+import { statusFilterOptions } from "./product-columns";
 import { createUnitColumns, type UnitRow } from "./unit-columns";
 
 type Unit = Doc<"units">;
 
 export function UnitsContent() {
   const [search, setSearch] = useState("");
-  const [showArchived, setShowArchived] = useState(false);
+  const filters = useTableFilters({
+    status: { options: statusFilterOptions, queryKey: "units_status" },
+  });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Unit | null>(null);
 
   const units = useQuery(api.inventory.listUnits, {
-    includeArchived: showArchived,
+    includeArchived: true,
   });
   const archiveUnit = useMutation(api.inventory.archiveUnit);
 
@@ -68,6 +70,12 @@ export function UnitsContent() {
     return <Skeleton className="h-[60svh] w-full" />;
   }
 
+  // No filter picked means Active — the old toggle-off view.
+  const showArchived = filters.status.value === "archived";
+  const visibleUnits = units.filter((unit) =>
+    showArchived ? !unit.active : unit.active,
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -80,14 +88,6 @@ export function UnitsContent() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="show-archived-units"
-              checked={showArchived}
-              onCheckedChange={setShowArchived}
-            />
-            <Label htmlFor="show-archived-units">Show archived</Label>
-          </div>
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4" />
             New unit
@@ -95,21 +95,36 @@ export function UnitsContent() {
         </div>
       </div>
 
-      <AppDataTable
+      <StdTable.Root
         columns={columns}
-        data={units}
+        data={visibleUnits}
         searchTerm={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search by name or abbreviation..."
-        emptyState={
-          <EmptyStateContent>
-            <EmptyStateTitle>No units yet</EmptyStateTitle>
-            <EmptyStateDescription>
-              Add a unit such as pack or carton before adding products.
-            </EmptyStateDescription>
-          </EmptyStateContent>
-        }
-      />
+        meta={filters}
+        pageSize={10}
+      >
+        <StdTable.Card>
+          <StdTable.Header>
+            <StdTable.SearchInput placeholder="Search by name or abbreviation..." />
+            <StdTable.ColumnSelector />
+          </StdTable.Header>
+
+          <StdTable.CardBody
+            emptyState={
+              <EmptyStateContent>
+                <EmptyStateTitle>No units yet</EmptyStateTitle>
+                <EmptyStateDescription>
+                  Add a unit such as pack or carton before adding products.
+                </EmptyStateDescription>
+              </EmptyStateContent>
+            }
+          />
+
+          <StdTable.Footer>
+            <StdTable.Pagination />
+          </StdTable.Footer>
+        </StdTable.Card>
+      </StdTable.Root>
 
       <UnitFormDialog
         open={isFormOpen}

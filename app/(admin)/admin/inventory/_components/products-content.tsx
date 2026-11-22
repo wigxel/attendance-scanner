@@ -4,7 +4,6 @@ import { useMutation, useQuery } from "convex/react";
 import { Plus } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AppDataTable } from "@/components/DataTable";
 import {
   EmptyStateContent,
   EmptyStateDescription,
@@ -12,28 +11,35 @@ import {
 } from "@/components/empty-state";
 import { MovementFormDialog } from "@/components/inventory/movement-form-dialog";
 import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
+import { StdTable } from "@/components/std-table";
+import { useTableFilters } from "@/components/std-table/filters";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
-import { createProductColumns, type ProductRow } from "./product-columns";
+import {
+  createProductColumns,
+  type ProductRow,
+  statusFilterOptions,
+} from "./product-columns";
 
 type Product = Doc<"products">;
 
 export function ProductsContent() {
   const [search, setSearch] = useState("");
-  const [showArchived, setShowArchived] = useState(false);
+  const filters = useTableFilters({
+    status: { options: statusFilterOptions, queryKey: "products_status" },
+  });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [movementTarget, setMovementTarget] = useState<ProductRow | null>(null);
 
   const products = useQuery(api.inventory.listProducts, {
-    includeArchived: showArchived,
+    includeArchived: true,
   });
   const units = useQuery(api.inventory.listUnits, { includeArchived: true });
   const archiveProduct = useMutation(api.inventory.archiveProduct);
+  const restoreProduct = useMutation(api.inventory.restoreProduct);
 
   const openCreate = useCallback(() => {
     setEditing(null);
@@ -68,14 +74,29 @@ export function ProductsContent() {
     [archiveProduct],
   );
 
+  const handleRestore = useCallback(
+    async (product: ProductRow) => {
+      try {
+        await restoreProduct({ productId: product._id });
+        toast.success("Product restored");
+      } catch (error) {
+        toast.error("Could not restore product", {
+          description: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    },
+    [restoreProduct],
+  );
+
   const columns = useMemo(
     () =>
       createProductColumns({
         onEdit: openEdit,
         onArchive: handleArchive,
+        onRestore: handleRestore,
         onRecordMovement: openMovement,
       }),
-    [openEdit, handleArchive, openMovement],
+    [openEdit, handleArchive, handleRestore, openMovement],
   );
 
   if (products === undefined || units === undefined) {
@@ -87,6 +108,13 @@ export function ProductsContent() {
     ...product,
     baseUnitName: unitNames.get(product.baseUnitId) ?? "Unknown unit",
   }));
+
+  // No filter picked means Active — the old toggle-off view. "Archived" shows
+  // only archived rows; there is deliberately no mixed view.
+  const showArchived = filters.status.value === "archived";
+  const visibleRows = rows.filter((row) =>
+    showArchived ? !row.active : row.active,
+  );
 
   const movementDialogTarget = movementTarget
     ? {
@@ -108,14 +136,6 @@ export function ProductsContent() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="show-archived-products"
-              checked={showArchived}
-              onCheckedChange={setShowArchived}
-            />
-            <Label htmlFor="show-archived-products">Show archived</Label>
-          </div>
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4" />
             New product
@@ -123,21 +143,36 @@ export function ProductsContent() {
         </div>
       </div>
 
-      <AppDataTable
+      <StdTable.Root
         columns={columns}
-        data={rows}
+        data={visibleRows}
         searchTerm={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search by name or SKU..."
-        emptyState={
-          <EmptyStateContent>
-            <EmptyStateTitle>No products yet</EmptyStateTitle>
-            <EmptyStateDescription>
-              Add a product to start picking it on stock changes later.
-            </EmptyStateDescription>
-          </EmptyStateContent>
-        }
-      />
+        meta={filters}
+        pageSize={10}
+      >
+        <StdTable.Card>
+          <StdTable.Header>
+            <StdTable.SearchInput placeholder="Search by name or SKU..." />
+            <StdTable.ColumnSelector />
+          </StdTable.Header>
+
+          <StdTable.CardBody
+            emptyState={
+              <EmptyStateContent>
+                <EmptyStateTitle>No products yet</EmptyStateTitle>
+                <EmptyStateDescription>
+                  Add a product to start picking it on stock changes later.
+                </EmptyStateDescription>
+              </EmptyStateContent>
+            }
+          />
+
+          <StdTable.Footer>
+            <StdTable.Pagination />
+          </StdTable.Footer>
+        </StdTable.Card>
+      </StdTable.Root>
 
       <ProductFormDialog
         open={isFormOpen}

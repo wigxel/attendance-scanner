@@ -114,6 +114,13 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         any,
         Name
       >;
+      restore: FunctionReference<
+        "mutation",
+        "internal",
+        { callerId: string; productId: string },
+        any,
+        Name
+      >;
       update: FunctionReference<
         "mutation",
         "internal",

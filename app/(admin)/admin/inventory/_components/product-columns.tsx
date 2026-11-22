@@ -1,13 +1,23 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { Archive, Pencil, PlusCircle } from "lucide-react";
-import { AppTableActions } from "@/components/DataTable";
+import { Archive, ArchiveRestore, Pencil, PlusCircle } from "lucide-react";
+import { HeaderFilter } from "@/components/std-table/filters";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
+import { RowActions } from "./row-actions";
 
 export type ProductRow = Doc<"products"> & { baseUnitName: string };
+
+export type CatalogueStatus = "active" | "archived";
+
+export const statusFilterOptions: readonly {
+  value: CatalogueStatus;
+  label: string;
+}[] = [
+  { value: "active", label: "Active" },
+  { value: "archived", label: "Archived" },
+];
 
 const naira = new Intl.NumberFormat("en-NG", {
   style: "currency",
@@ -15,11 +25,16 @@ const naira = new Intl.NumberFormat("en-NG", {
   maximumFractionDigits: 0,
 });
 
-export function createProductColumns(actions: {
+type ProductColumnParam = {
   onEdit: (product: ProductRow) => void;
   onArchive: (product: ProductRow) => void;
+  onRestore: (product: ProductRow) => void;
   onRecordMovement: (product: ProductRow) => void;
-}): ColumnDef<ProductRow>[] {
+};
+
+export function createProductColumns(
+  actions: ProductColumnParam,
+): ColumnDef<ProductRow>[] {
   return [
     {
       id: "name",
@@ -59,10 +74,13 @@ export function createProductColumns(actions: {
     },
     {
       id: "status",
-      header: "Status",
+      header: ({ table }) => (
+        <HeaderFilter table={table} id="status" label="Status" />
+      ),
+      meta: { label: "Status" },
       accessorKey: "active",
       cell: ({ row }) => (
-        <Badge variant={row.original.active ? "default" : "secondary"}>
+        <Badge variant={row.original.active ? "success" : "secondary"}>
           {row.original.active ? "Active" : "Archived"}
         </Badge>
       ),
@@ -73,36 +91,41 @@ export function createProductColumns(actions: {
       cell: ({ row }) => {
         const product = row.original;
         return (
-          <AppTableActions>
-            {product.active && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => actions.onRecordMovement(product)}
-              >
-                <PlusCircle className="h-4 w-4" />
-                Record change
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`Edit ${product.name}`}
-              onClick={() => actions.onEdit(product)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            {product.active && (
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Archive ${product.name}`}
-                onClick={() => actions.onArchive(product)}
-              >
-                <Archive className="h-4 w-4" />
-              </Button>
-            )}
-          </AppTableActions>
+          <RowActions
+            rowLabel={product.name}
+            actions={
+              product.active
+                ? [
+                    {
+                      icon: <PlusCircle />,
+                      label: "Record change",
+                      onSelect: () => actions.onRecordMovement(product),
+                    },
+                    {
+                      icon: <Pencil />,
+                      label: "Edit",
+                      onSelect: () => actions.onEdit(product),
+                    },
+                    {
+                      icon: <Archive />,
+                      label: "Archive",
+                      onSelect: () => actions.onArchive(product),
+                    },
+                  ]
+                : [
+                    {
+                      icon: <Pencil />,
+                      label: "Edit",
+                      onSelect: () => actions.onEdit(product),
+                    },
+                    {
+                      icon: <ArchiveRestore />,
+                      label: "Restore",
+                      onSelect: () => actions.onRestore(product),
+                    },
+                  ]
+            }
+          />
         );
       },
     },
