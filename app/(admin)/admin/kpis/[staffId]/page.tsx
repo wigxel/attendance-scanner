@@ -163,7 +163,10 @@ function KpiHeatmap({ days, todayKey, onSelect }: HeatmapProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="overflow-x-auto">
-        <table className="border-separate" style={{ borderSpacing: "4px" }}>
+        <table
+          className="w-full min-w-220 border-separate lg:min-w-0"
+          style={{ borderSpacing: "4px" }}
+        >
           <thead>
             <tr>
               <th className="w-8" />
@@ -191,7 +194,10 @@ function KpiHeatmap({ days, todayKey, onSelect }: HeatmapProps) {
                 {weeks.map((week, column) => {
                   const day = week[row];
                   return (
-                    <td key={day?.date ?? `pad-${column}`} className="p-0">
+                    <td
+                      key={day?.date ?? `pad-${column}`}
+                      className="aspect-square p-0"
+                    >
                       {day ? (
                         <HeatmapCell
                           day={day}
@@ -200,7 +206,7 @@ function KpiHeatmap({ days, todayKey, onSelect }: HeatmapProps) {
                         />
                       ) : (
                         <span
-                          className="block size-5 rounded-sm"
+                          className="block aspect-square w-full rounded-sm"
                           style={{ background: "var(--background-lv1)" }}
                         />
                       )}
@@ -257,7 +263,7 @@ function HeatmapCell({ day, isToday, onSelect }: HeatmapCellProps) {
       title={tooltip}
       aria-label={tooltip}
       className={cn(
-        "relative size-5 rounded-sm border border-transparent transition-opacity hover:opacity-80",
+        "relative aspect-square w-full rounded-sm border border-transparent transition-opacity hover:opacity-80",
         level === 0 ? "border-border/60" : LEVEL_CLASSES[level],
       )}
       style={level === 0 ? { background: "var(--background-lv1)" } : undefined}
