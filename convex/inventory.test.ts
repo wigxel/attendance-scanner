@@ -544,7 +544,9 @@ describe("free sales", () => {
         })
       ).page,
     ).toHaveLength(0);
-    expect(await admin.query(api.inventory.receivables, {})).toHaveLength(0);
+    expect(
+      await admin.query(api.inventory.receivables, { today }),
+    ).toHaveLength(0);
     expect(
       await admin.query(api.inventory.customerBalance, {
         customerId: "customer-1",
@@ -897,7 +899,7 @@ describe("credit sales", () => {
       lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
     });
 
-    const owing = await admin.query(api.inventory.receivables, {});
+    const owing = await admin.query(api.inventory.receivables, { today });
     expect(owing).toHaveLength(2);
     const owed = new Map(owing.map((row) => [row.customerId, row]));
     expect(owed.get("customer-1")?.totalOwedKobo).toBe(4000);
@@ -912,6 +914,44 @@ describe("credit sales", () => {
       customerName: "Bola Eze",
       outstandingKobo: 3500,
       status: "part_paid",
+    });
+  });
+
+  it("flags credit past its due date as overdue", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedCreditShop(t);
+
+    // Due in the past and still fully owed: overdue.
+    await admin.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-1",
+      dueDate: "2026-11-01",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 4000 }],
+    });
+    // Not yet due: owed, but not overdue.
+    await sellOnCredit(admin, unitId, productId, "customer-1");
+    // Settled before its due date: not in receivables at all.
+    const settledId = await admin.mutation(api.inventory.recordSale, {
+      channel: "credit",
+      customerId: "customer-2",
+      dueDate: "2026-11-01",
+      lines: [{ productId, unitId, quantity: 1, unitPriceKobo: 2000 }],
+    });
+    await admin.mutation(api.inventory.recordSalePayment, {
+      saleId: settledId,
+      amountKobo: 2000,
+      channel: "cash",
+    });
+
+    const owing = await admin.query(api.inventory.receivables, {
+      today: "2026-11-22",
+    });
+    expect(owing.map((row) => row.customerId)).toEqual(["customer-1"]);
+    expect(owing[0]).toMatchObject({
+      totalOwedKobo: 8000,
+      overdueKobo: 4000,
+      oldestOverdueDueDate: "2026-11-01",
+      daysOverdue: 21,
     });
   });
 
@@ -959,6 +999,35 @@ describe("credit sales", () => {
     });
   });
 
+  it("counts write-offs as their own revenue figure", async () => {
+    const t = convexTest(schema, modules);
+    const { admin, unitId, productId } = await seedCreditShop(t);
+
+    const saleId = await sellOnCredit(
+      admin,
+      unitId,
+      productId,
+      "customer-1",
+      1000,
+    );
+    await admin.mutation(api.inventory.writeOffSale, {
+      saleId,
+      amountKobo: 3000,
+      note: "Moved away",
+    });
+
+    const metrics = await admin.query(api.inventory.metrics, {
+      start: today,
+      end: today,
+    });
+    expect(metrics.revenue).toMatchObject({
+      totalKobo: 4000,
+      collectedKobo: 1000,
+      outstandingKobo: 0,
+      writtenOff: { count: 1, amountKobo: 3000 },
+    });
+  });
+
   it("lets a seller take money but not reverse or write off", async () => {
     const t = convexTest(schema, modules);
     const { unitId, productId } = await seedCreditShop(t);
@@ -992,7 +1061,9 @@ describe("credit sales", () => {
         customerId: "customer-1",
       }),
     ).toBe(3000);
-    expect(await seller.query(api.inventory.receivables, {})).toHaveLength(1);
+    expect(
+      await seller.query(api.inventory.receivables, { today }),
+    ).toHaveLength(1);
 
     // The till may undo a payment it just took.
     await seller.mutation(api.inventory.reverseSalePayment, { paymentId });

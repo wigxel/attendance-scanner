@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
+import { format, parseISO } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RecordPaymentDialog } from "@/components/inventory/record-payment-dialog";
@@ -96,6 +97,11 @@ export function CustomerDebtSheet({ customer, onOpenChange }: DebtSheetProps) {
                         month: "short",
                         year: "numeric",
                       })}
+                      {sale.dueDate ? (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          Due {format(parseISO(sale.dueDate), "d MMM yyyy")}
+                        </span>
+                      ) : null}
                     </p>
                     <SaleStatusBadge status={sale.status} />
                   </div>

@@ -48,6 +48,30 @@ export const receivablesColumns: ColumnDef<Receivable>[] = [
     ),
   },
   {
+    id: "overdueKobo",
+    header: () => <span className="block text-right">Overdue (₦)</span>,
+    meta: { label: "Overdue" },
+    accessorKey: "overdueKobo",
+    cell: ({ row }) => {
+      const { overdueKobo, daysOverdue } = row.original;
+      if (overdueKobo === 0) {
+        return (
+          <span className="block text-right text-muted-foreground">—</span>
+        );
+      }
+      return (
+        <span className="block whitespace-nowrap text-right tabular-nums">
+          {formatKoboPlain(overdueKobo)}
+          {daysOverdue !== null ? (
+            <span className="block text-xs font-normal text-destructive">
+              {daysOverdue} {daysOverdue === 1 ? "day" : "days"} late
+            </span>
+          ) : null}
+        </span>
+      );
+    },
+  },
+  {
     id: "oldestUnpaidAt",
     header: "Oldest unpaid",
     accessorKey: "oldestUnpaidAt",
