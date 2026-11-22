@@ -2,9 +2,8 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { History, PlusCircle } from "lucide-react";
-import { AppTableActions } from "@/components/DataTable";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { RowActions } from "./row-actions";
 
 export type StockRow = {
   productId: string;
@@ -84,24 +83,21 @@ export function createStockColumns(actions: {
       cell: ({ row }) => {
         const stock = row.original;
         return (
-          <AppTableActions>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => actions.onRecordMovement(stock)}
-            >
-              <PlusCircle className="h-4 w-4" />
-              Record change
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`History for ${stock.name}`}
-              onClick={() => actions.onOpenHistory(stock)}
-            >
-              <History className="h-4 w-4" />
-            </Button>
-          </AppTableActions>
+          <RowActions
+            rowLabel={stock.name}
+            actions={[
+              {
+                icon: <PlusCircle />,
+                label: "Record change",
+                onSelect: () => actions.onRecordMovement(stock),
+              },
+              {
+                icon: <History />,
+                label: "History",
+                onSelect: () => actions.onOpenHistory(stock),
+              },
+            ]}
+          />
         );
       },
     },

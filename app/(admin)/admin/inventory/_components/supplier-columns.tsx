@@ -2,11 +2,11 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { Archive, Pencil, Phone, TriangleAlert } from "lucide-react";
-import { AppTableActions } from "@/components/DataTable";
+import { HeaderFilter } from "@/components/std-table/filters";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
 import { formatPhone, isValidPhone, normalizePhone } from "@/lib/phone.helpers";
+import { RowActions } from "./row-actions";
 
 export type SupplierRow = Doc<"suppliers">;
 
@@ -65,7 +65,10 @@ export function createSupplierColumns(actions: {
     },
     {
       id: "status",
-      header: "Status",
+      header: ({ table }) => (
+        <HeaderFilter table={table} id="status" label="Status" />
+      ),
+      meta: { label: "Status" },
       accessorKey: "active",
       cell: ({ row }) => (
         <Badge variant={row.original.active ? "default" : "secondary"}>
@@ -79,26 +82,25 @@ export function createSupplierColumns(actions: {
       cell: ({ row }) => {
         const supplier = row.original;
         return (
-          <AppTableActions>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`Edit ${supplier.name}`}
-              onClick={() => actions.onEdit(supplier)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            {supplier.active && (
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Archive ${supplier.name}`}
-                onClick={() => actions.onArchive(supplier)}
-              >
-                <Archive className="h-4 w-4" />
-              </Button>
-            )}
-          </AppTableActions>
+          <RowActions
+            rowLabel={supplier.name}
+            actions={[
+              {
+                icon: <Pencil />,
+                label: "Edit",
+                onSelect: () => actions.onEdit(supplier),
+              },
+              ...(supplier.active
+                ? [
+                    {
+                      icon: <Archive />,
+                      label: "Archive",
+                      onSelect: () => actions.onArchive(supplier),
+                    },
+                  ]
+                : []),
+            ]}
+          />
         );
       },
     },

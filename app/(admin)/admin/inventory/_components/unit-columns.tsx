@@ -2,10 +2,10 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { Archive, Pencil } from "lucide-react";
-import { AppTableActions } from "@/components/DataTable";
+import { HeaderFilter } from "@/components/std-table/filters";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
+import { RowActions } from "./row-actions";
 
 export type UnitRow = Doc<"units">;
 
@@ -27,7 +27,10 @@ export function createUnitColumns(actions: {
     },
     {
       id: "status",
-      header: "Status",
+      header: ({ table }) => (
+        <HeaderFilter table={table} id="status" label="Status" />
+      ),
+      meta: { label: "Status" },
       accessorKey: "active",
       cell: ({ row }) => (
         <Badge variant={row.original.active ? "default" : "secondary"}>
@@ -41,26 +44,25 @@ export function createUnitColumns(actions: {
       cell: ({ row }) => {
         const unit = row.original;
         return (
-          <AppTableActions>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={`Edit ${unit.name}`}
-              onClick={() => actions.onEdit(unit)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            {unit.active && (
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Archive ${unit.name}`}
-                onClick={() => actions.onArchive(unit)}
-              >
-                <Archive className="h-4 w-4" />
-              </Button>
-            )}
-          </AppTableActions>
+          <RowActions
+            rowLabel={unit.name}
+            actions={[
+              {
+                icon: <Pencil />,
+                label: "Edit",
+                onSelect: () => actions.onEdit(unit),
+              },
+              ...(unit.active
+                ? [
+                    {
+                      icon: <Archive />,
+                      label: "Archive",
+                      onSelect: () => actions.onArchive(unit),
+                    },
+                  ]
+                : []),
+            ]}
+          />
         );
       },
     },

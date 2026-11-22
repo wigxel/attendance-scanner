@@ -67,6 +67,11 @@ export function shouldLoadMore(state: LoadMoreState) {
   return !state.canNextPage && Boolean(state.hasMore) && !state.isLoading;
 }
 
+/**
+ * @deprecated Use `StdTable` (`@/components/std-table`) instead — same table
+ * with a composition API. Existing callers still work; new tables should not
+ * use this.
+ */
 export function AppDataTable<T>({
   columns,
   data,
