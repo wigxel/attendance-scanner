@@ -98,6 +98,7 @@ const seedStock = async (t: Tester) => {
     quantity: 3,
     note: "Delivery",
   });
+  return unitId;
 };
 
 const sweep = (t: Tester) => t.mutation(internal.lowStockDigest.sweep, {});
@@ -157,6 +158,35 @@ describe("lowStockDigest.sweep", () => {
 
     expect(await sweep(t)).toMatchObject({ sent: 0 });
     expect(await inbox(t, "manager")).toHaveLength(0);
+  });
+
+  it("leaves archived products out of the digest", async () => {
+    const t = setup();
+    await seedStaff(t);
+    const unitId = await seedStock(t);
+
+    // Archive a second low product: it must vanish from the sweep, while
+    // the still-active low product stays in.
+    const admin = t.withIdentity({ profile_id: "manager" });
+    const archivedId = await admin.mutation(api.inventory.createProduct, {
+      name: "Old Soap",
+      baseUnitId: unitId,
+      reorderLevel: 5,
+    });
+    await admin.mutation(api.inventory.recordMovement, {
+      productId: archivedId,
+      kind: "restock",
+      quantity: 2,
+      note: "Delivery",
+    });
+    await admin.mutation(api.inventory.archiveProduct, {
+      productId: archivedId,
+    });
+
+    expect(await sweep(t)).toMatchObject({ sent: 3 });
+    const manager = await inbox(t, "manager");
+    expect(manager[0].title).toBe("Low stock: 1 product to reorder");
+    expect(manager[0].body).toBe("Peak Milk: 3 left");
   });
 
   it("uses the configured timezone for the day key", async () => {
