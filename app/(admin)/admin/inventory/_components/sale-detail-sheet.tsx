@@ -1,12 +1,12 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Undo2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CustomerCombobox } from "@/components/forms/CustomerCombobox";
 import { RecordPaymentDialog } from "@/components/inventory/record-payment-dialog";
 import { Button } from "@/components/ui/button";
+import { ConfirmAction } from "@/components/ui/confirm-action";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -32,10 +33,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/convex/_generated/api";
-import type { SalePaymentRow } from "@/convex/inventory";
 import { usePrivilege } from "@/hooks/usePrivilege";
 import { formatKobo } from "@/lib/currency.helpers";
-import { paymentChannelLabels } from "@/lib/payment-channel";
+import { PaymentLedger } from "./payment-ledger";
 import { SaleStatusBadge } from "./sale-columns";
 
 const channelLabels = {
@@ -45,104 +45,6 @@ const channelLabels = {
   credit: "Credit",
   free: "Free",
 } as const;
-
-function formatPaymentDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-NG", {
-    day: "numeric",
-    month: "short",
-  });
-}
-
-/** What the money came in on, or why the row is not money in. */
-function tenderLabel(payment: SalePaymentRow) {
-  if (payment.kind === "payment") {
-    return payment.channel ? paymentChannelLabels[payment.channel] : "Cash";
-  }
-  return payment.kind === "writeOff" ? "Write-off" : "Reversal";
-}
-
-type PaymentLedgerProps = {
-  /** Newest first. */
-  payments: SalePaymentRow[];
-  reversedIds: ReadonlySet<string>;
-  canManage: boolean;
-  onReverse: (paymentId: string) => void;
-};
-
-function PaymentLedger({
-  payments,
-  reversedIds,
-  canManage,
-  onReverse,
-}: PaymentLedgerProps) {
-  if (payments.length === 0) {
-    return (
-      <p className="text-xs text-muted-foreground">
-        No money rows on this sale.
-      </p>
-    );
-  }
-
-  return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead className="text-right">Amount (₦)</TableHead>
-            <TableHead>Tender</TableHead>
-            <TableHead>Who</TableHead>
-            {canManage ? <TableHead /> : null}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {payments.map((payment) => {
-            const isReversal = payment.kind === "reversal";
-            const isReversible = !isReversal && !reversedIds.has(payment._id);
-
-            return (
-              <TableRow key={payment._id}>
-                <TableCell className="whitespace-nowrap">
-                  {formatPaymentDate(payment.paidAt)}
-                </TableCell>
-                <TableCell
-                  className={
-                    isReversal
-                      ? "text-right tabular-nums text-muted-foreground"
-                      : "text-right tabular-nums"
-                  }
-                >
-                  {isReversal ? "−" : ""}
-                  {formatKobo(payment.amountKobo)}
-                </TableCell>
-                <TableCell>{tenderLabel(payment)}</TableCell>
-                <TableCell className="max-w-28 truncate">
-                  {payment.recordedByName}
-                </TableCell>
-                {canManage ? (
-                  <TableCell className="text-right">
-                    {isReversible ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        aria-label="Reverse payment"
-                        onClick={() => onReverse(payment._id)}
-                      >
-                        <Undo2 className="size-3.5" />
-                      </Button>
-                    ) : null}
-                  </TableCell>
-                ) : null}
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
-  );
-}
 
 type SaleDetailSheetProps = {
   saleId: string | null;
@@ -178,11 +80,6 @@ export function SaleDetailSheet({
 
   const handleVoid = async () => {
     if (!saleId) return;
-    const ok = window.confirm(
-      "Void this sale? The stock goes back and the money leaves revenue.",
-    );
-    if (!ok) return;
-
     try {
       await voidSale({ saleId });
       toast.success("Sale voided");
@@ -194,11 +91,6 @@ export function SaleDetailSheet({
   };
 
   const handleReverse = async (paymentId: string) => {
-    const ok = window.confirm(
-      "Reverse this row? It stays in the history and the balance goes back up.",
-    );
-    if (!ok) return;
-
     try {
       await reverseSalePayment({ paymentId });
       toast.success("Payment reversed");
@@ -211,11 +103,6 @@ export function SaleDetailSheet({
 
   const handleWriteOff = async (outstandingKobo: number) => {
     if (!saleId) return;
-    const ok = window.confirm(
-      `Write off ${formatKobo(outstandingKobo)}? That money stops counting as owed.`,
-    );
-    if (!ok) return;
-
     try {
       await writeOffSale({ saleId, amountKobo: outstandingKobo });
       toast.success("Balance written off");
@@ -245,16 +132,8 @@ export function SaleDetailSheet({
     }
   };
 
-  // The ledger is append-only, so a reversal is just another row. Mark the
-  // rows it points at so they stop offering Reverse again.
-  const payments = detail
-    ? [...detail.payments].sort((a, b) => b.paidAt.localeCompare(a.paidAt))
-    : [];
-  const reversedIds = new Set(
-    payments.flatMap((payment) =>
-      payment.reversesId ? [payment.reversesId] : [],
-    ),
-  );
+  // The ledger is append-only, so a reversal is just another row. The shared
+  // PaymentLedger sorts newest first and marks already-reversed rows.
   const canTakePayment = Boolean(
     detail && detail.outstandingKobo > 0 && detail.status !== "voided",
   );
@@ -279,66 +158,77 @@ export function SaleDetailSheet({
                   {formatKobo(detail.sale.totalKobo)} ·{" "}
                   {channelLabels[detail.sale.channel]}
                 </SheetTitle>
-                <SheetDescription>
-                  {new Date(detail.sale.occurredAt).toLocaleString("en-NG")} ·
-                  recorded by {detail.createdByName}
+                <SheetDescription className="max-w-[40ch]">
+                  Everything recorded about this sale, with its items and
+                  payment history.
                 </SheetDescription>
               </SheetHeader>
 
               <div className="space-y-6 px-4 pb-8">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Customer</p>
-                    <p className="text-sm text-foreground">
-                      {detail.customerName ?? "Walk-in"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
+                <dl className="grid grid-cols-[0.3fr_0.7fr] items-baseline gap-x-6 gap-y-4 text-sm">
+                  <dt className="text-muted-foreground">Status</dt>
+                  <dd>
                     <SaleStatusBadge status={detail.status} />
-                    {canAdjust ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={openCustomerDialog}
-                      >
-                        Change customer
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
+                  </dd>
 
-                <div className="grid grid-cols-3 gap-3 rounded-md border px-3 py-2">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Total</p>
-                    <p className="text-sm tabular-nums">
-                      {formatKobo(detail.sale.totalKobo)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Paid</p>
-                    <p className="text-sm tabular-nums">
-                      {formatKobo(detail.paidKobo)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Balance due</p>
-                    <p className="text-sm tabular-nums">
-                      {formatKobo(detail.outstandingKobo)}
-                    </p>
-                  </div>
-                </div>
+                  <dt className="text-muted-foreground">Customer</dt>
+                  <dd className="text-foreground">
+                    {detail.customerName ?? "Walk-in"}
+                  </dd>
 
-                {detail.sale.dueDate ? (
-                  <p className="-mt-3 text-xs text-muted-foreground">
-                    Due{" "}
-                    {new Date(detail.sale.dueDate).toLocaleDateString("en-NG", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </p>
+                  <dt className="text-muted-foreground">Channel</dt>
+                  <dd className="text-foreground">
+                    {channelLabels[detail.sale.channel]}
+                  </dd>
+
+                  <dt className="text-muted-foreground">Date</dt>
+                  <dd className="whitespace-nowrap text-foreground">
+                    {new Date(detail.sale.occurredAt).toLocaleString("en-NG")}
+                  </dd>
+
+                  <dt className="text-muted-foreground">Recorded by</dt>
+                  <dd className="text-foreground">{detail.createdByName}</dd>
+
+                  <dt className="text-muted-foreground">Due date</dt>
+                  <dd className="text-foreground">
+                    {detail.sale.dueDate
+                      ? new Date(detail.sale.dueDate).toLocaleDateString(
+                          "en-NG",
+                          {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          },
+                        )
+                      : "—"}
+                  </dd>
+
+                  <dt className="text-muted-foreground">Total</dt>
+                  <dd className="tabular-nums text-foreground">
+                    {formatKobo(detail.sale.totalKobo)}
+                  </dd>
+
+                  <dt className="text-muted-foreground">Paid</dt>
+                  <dd className="tabular-nums text-foreground">
+                    {formatKobo(detail.paidKobo)}
+                  </dd>
+
+                  <dt className="text-muted-foreground">Balance due</dt>
+                  <dd className="tabular-nums text-foreground">
+                    {formatKobo(detail.outstandingKobo)}
+                  </dd>
+                </dl>
+
+                <Separator />
+
+                {detail.sale.note ? (
+                  <div className="flex flex-col gap-1 text-sm">
+                    <p className="text-foreground">Note</p>
+                    <p className="text-foreground">{detail.sale.note}</p>
+                  </div>
                 ) : null}
+
+                {detail.sale.note ? <Separator /> : null}
 
                 <div className="rounded-md border">
                   <Table>
@@ -365,6 +255,8 @@ export function SaleDetailSheet({
                   </Table>
                 </div>
 
+                <Separator />
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-medium">Payments</p>
@@ -380,42 +272,46 @@ export function SaleDetailSheet({
                   </div>
 
                   <PaymentLedger
-                    payments={payments}
-                    reversedIds={reversedIds}
+                    payments={detail?.payments ?? []}
                     canManage={canManage ?? false}
                     onReverse={handleReverse}
                   />
                 </div>
 
-                {detail.sale.note ? (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Note</p>
-                    <p className="text-sm text-foreground">
-                      {detail.sale.note}
-                    </p>
-                  </div>
-                ) : null}
-
-                {canAdjust && !detail.sale.voided ? (
+                {canAdjust ? (
                   <div className="flex flex-wrap gap-2">
-                    {canManage && detail.outstandingKobo > 0 ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleWriteOff(detail.outstandingKobo)}
-                      >
-                        Write off balance
-                      </Button>
-                    ) : null}
                     <Button
                       type="button"
-                      variant="destructive"
+                      variant="outline"
                       size="sm"
-                      onClick={handleVoid}
+                      onClick={openCustomerDialog}
                     >
-                      Void sale
+                      Change customer
                     </Button>
+                    {canManage && detail.outstandingKobo > 0 ? (
+                      <ConfirmAction
+                        title={`Write off ${formatKobo(detail.outstandingKobo)}?`}
+                        description="That money stops counting as owed."
+                        confirmLabel="Write off"
+                        onConfirm={() => handleWriteOff(detail.outstandingKobo)}
+                      >
+                        <Button type="button" variant="outline" size="sm">
+                          Write off balance
+                        </Button>
+                      </ConfirmAction>
+                    ) : null}
+                    {!detail.sale.voided ? (
+                      <ConfirmAction
+                        title="Void this sale?"
+                        description="The stock goes back and the money leaves revenue."
+                        confirmLabel="Void"
+                        onConfirm={handleVoid}
+                      >
+                        <Button type="button" variant="destructive" size="sm">
+                          Void sale
+                        </Button>
+                      </ConfirmAction>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
