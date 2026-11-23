@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { createConfirmAction } from "@/components/ui/confirm-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/inventory.track";
 import { statusFilterOptions } from "./product-columns";
 import { createSupplierColumns, type SupplierRow } from "./supplier-columns";
 
@@ -54,6 +55,7 @@ export function SuppliersContent() {
     async (supplier: SupplierRow) => {
       try {
         await archiveSupplier({ supplierId: supplier._id });
+        track("inventory_supplier_archived", { supplier_id: supplier._id });
         toast.success("Supplier archived");
       } catch (error) {
         toast.error("Could not archive supplier", {

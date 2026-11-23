@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
+import { track, useTrackOpen } from "@/lib/inventory.track";
 
 type Product = Doc<"products">;
 
@@ -55,6 +56,10 @@ export function ProductFormDialog({
 }: ProductFormDialogProps) {
   const createProduct = useMutation(api.inventory.createProduct);
   const updateProduct = useMutation(api.inventory.updateProduct);
+  useTrackOpen("inventory_product_form_opened", open, {
+    mode: product ? "edit" : "create",
+    product_id: product?._id,
+  });
 
   const initialFormData: ProductFormValues | undefined = product
     ? {
@@ -81,6 +86,7 @@ export function ProductFormDialog({
           reorderLevel: values.reorderLevel,
           ...money,
         });
+        track("inventory_product_updated", { product_id: product._id });
         toast.success("Product updated");
       } else {
         const productId = await createProduct({
@@ -90,6 +96,7 @@ export function ProductFormDialog({
           reorderLevel: values.reorderLevel,
           ...money,
         });
+        track("inventory_product_created", { product_id: productId });
         onCreated?.({
           productId,
           name: values.name,

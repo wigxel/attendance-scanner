@@ -22,6 +22,7 @@ import { api } from "@/convex/_generated/api";
 import type { Receivable, SaleSummary } from "@/convex/inventory";
 import { usePrivilege } from "@/hooks/usePrivilege";
 import { formatKobo } from "@/lib/currency.helpers";
+import { track, useTrackOpen } from "@/lib/inventory.track";
 import { SaleStatusBadge } from "./sale-columns";
 
 type DebtSheetProps = {
@@ -41,12 +42,20 @@ export function CustomerDebtSheet({ customer, onOpenChange }: DebtSheetProps) {
 
   // The dialog is bound to one sale at a time; the section's trigger opens it.
   const [paymentSale, setPaymentSale] = useState<SaleSummary | null>(null);
+  useTrackOpen("inventory_customer_debt_viewed", customer !== null, {
+    customer_id: customerId || undefined,
+  });
 
   const handleWriteOff = async (sale: SaleSummary) => {
     try {
       await writeOffSale({
         saleId: sale._id,
         amountKobo: sale.outstandingKobo,
+      });
+      track("inventory_sale_written_off", {
+        sale_id: sale._id,
+        amount_kobo: sale.outstandingKobo,
+        customer_id: customerId || undefined,
       });
       toast.success("Balance written off");
     } catch (error) {
@@ -59,6 +68,10 @@ export function CustomerDebtSheet({ customer, onOpenChange }: DebtSheetProps) {
   const handleReverse = async (paymentId: string) => {
     try {
       await reverseSalePayment({ paymentId });
+      track("inventory_sale_payment_reversed", {
+        payment_id: paymentId,
+        customer_id: customerId || undefined,
+      });
       toast.success("Payment reversed");
     } catch (error) {
       toast.error("Could not reverse payment", {

@@ -37,6 +37,7 @@ import {
 import { api } from "@/convex/_generated/api";
 import { usePrivilege } from "@/hooks/usePrivilege";
 import { formatKobo } from "@/lib/currency.helpers";
+import { track, useTrackOpen } from "@/lib/inventory.track";
 import { SaleStatusBadge } from "./sale-columns";
 
 const channelLabels = {
@@ -73,6 +74,9 @@ export function SaleDetailSheet({
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [customerId, setCustomerId] = useState("");
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  useTrackOpen("inventory_sale_detail_viewed", saleId !== null, {
+    sale_id: saleId ?? undefined,
+  });
 
   const handleSheetOpenChange = (open: boolean) => {
     if (!open) setPaymentDialogOpen(false);
@@ -89,6 +93,7 @@ export function SaleDetailSheet({
     if (!saleId) return;
     try {
       await voidSale({ saleId });
+      track("inventory_sale_voided", { sale_id: saleId });
       toast.success("Sale voided");
     } catch (error) {
       toast.error("Could not void sale", {
@@ -100,6 +105,10 @@ export function SaleDetailSheet({
   const handleReverse = async (paymentId: string) => {
     try {
       await reverseSalePayment({ paymentId });
+      track("inventory_sale_payment_reversed", {
+        sale_id: saleId,
+        payment_id: paymentId,
+      });
       toast.success("Payment reversed");
     } catch (error) {
       toast.error("Could not reverse payment", {
@@ -112,6 +121,10 @@ export function SaleDetailSheet({
     if (!saleId) return;
     try {
       await writeOffSale({ saleId, amountKobo: outstandingKobo });
+      track("inventory_sale_written_off", {
+        sale_id: saleId,
+        amount_kobo: outstandingKobo,
+      });
       toast.success("Balance written off");
     } catch (error) {
       toast.error("Could not write off balance", {
@@ -130,6 +143,10 @@ export function SaleDetailSheet({
 
     try {
       await setSaleCustomer({ saleId, customerId: customerId || undefined });
+      track("inventory_sale_customer_set", {
+        sale_id: saleId,
+        customer_id: customerId || undefined,
+      });
       setCustomerDialogOpen(false);
       toast.success("Customer updated");
     } catch (error) {

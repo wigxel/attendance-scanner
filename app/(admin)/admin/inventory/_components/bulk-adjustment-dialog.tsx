@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { StepperInput } from "@/components/ui/stepper-input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
+import { track, useTrackOpen } from "@/lib/inventory.track";
 import type { StockRow } from "./stock-columns";
 
 type BulkAdjustmentDialogProps = {
@@ -33,6 +34,7 @@ export function BulkAdjustmentDialog({
   const [counts, setCounts] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  useTrackOpen("inventory_bulk_adjustment_opened", open);
 
   const filled = useMemo(
     () =>
@@ -75,6 +77,7 @@ export function BulkAdjustmentDialog({
         rows: changed,
         note: note.trim() || undefined,
       });
+      track("inventory_bulk_adjustment_recorded", { row_count: written });
       toast.success(`Bulk adjustment saved for ${written} products`);
       setCounts({});
       setNote("");

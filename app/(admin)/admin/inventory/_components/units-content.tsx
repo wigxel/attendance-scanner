@@ -17,6 +17,7 @@ import { createConfirmAction } from "@/components/ui/confirm-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
+import { track } from "@/lib/inventory.track";
 import { statusFilterOptions } from "./product-columns";
 import { createUnitColumns, type UnitRow } from "./unit-columns";
 
@@ -56,6 +57,7 @@ export function UnitsContent() {
     async (unit: UnitRow) => {
       try {
         await archiveUnit({ unitId: unit._id });
+        track("inventory_unit_archived", { unit_id: unit._id });
         toast.success("Unit archived");
       } catch (error) {
         toast.error("Could not archive unit", {

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
+import { track, useTrackOpen } from "@/lib/inventory.track";
 
 type Unit = Doc<"units">;
 
@@ -28,6 +29,9 @@ export function UnitFormDialog({
 }: UnitFormDialogProps) {
   const createUnit = useMutation(api.inventory.createUnit);
   const renameUnit = useMutation(api.inventory.renameUnit);
+  useTrackOpen("inventory_unit_form_opened", open, {
+    mode: unit ? "edit" : "create",
+  });
 
   const initialFormData: UnitFormValues | undefined = unit
     ? { name: unit.name, abbreviation: unit.abbreviation ?? "" }
@@ -41,12 +45,14 @@ export function UnitFormDialog({
           name: values.name,
           abbreviation: values.abbreviation,
         });
+        track("inventory_unit_renamed", { unit_id: unit._id });
         toast.success("Unit updated");
       } else {
-        await createUnit({
+        const unitId = await createUnit({
           name: values.name,
           abbreviation: values.abbreviation,
         });
+        track("inventory_unit_created", { unit_id: unitId });
         toast.success("Unit created");
       }
       onOpenChange(false);

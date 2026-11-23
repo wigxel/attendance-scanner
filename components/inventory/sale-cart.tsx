@@ -20,6 +20,7 @@ import {
   parseAmountInput,
 } from "@/lib/currency.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
+import { track } from "@/lib/inventory.track";
 import { cn } from "@/lib/utils";
 import { useSaleCart } from "./sale-cart-store";
 
@@ -139,6 +140,11 @@ export function SaleCart({ products }: SaleCartProps) {
         amountPaidKobo: isCredit ? paidKobo : undefined,
         note: isFree ? freeNote.trim() || undefined : saleNote(itemCount),
         lines: saleLines,
+      });
+      track("inventory_sale_recorded", {
+        channel,
+        customer_id: customerId || undefined,
+        line_count: saleLines.length,
       });
       clear();
       toast.success("Sale recorded");
