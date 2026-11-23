@@ -21,11 +21,26 @@ const customerCell = (receivable: Receivable) => {
   );
 };
 
+const statusCell = (receivable: Receivable) => {
+  const column = receivablesColumns.find((entry) => entry.id === "status");
+  if (!column || typeof column.cell !== "function") {
+    throw new Error("status cell missing");
+  }
+  return renderToStaticMarkup(
+    column.cell({
+      row: { original: receivable },
+    } as never),
+  );
+};
+
 const receivable: Receivable = {
   customerId: "c1",
   customerName: "Ada Obi",
   totalOwedKobo: 450000,
   oldestUnpaidAt: "2026-11-01T09:00:00.000Z",
+  overdueKobo: 0,
+  oldestOverdueDueDate: null,
+  daysOverdue: null,
 };
 
 describe("receivables customer cell", () => {
@@ -47,5 +62,33 @@ describe("receivables customer cell", () => {
         "c1",
       );
     }
+  });
+});
+
+describe("receivables status cell", () => {
+  it("says not yet due for a customer with nothing overdue", () => {
+    expect(statusCell(receivable)).toContain("Not yet due");
+  });
+
+  it("says overdue and how many days late", () => {
+    const html = statusCell({
+      ...receivable,
+      overdueKobo: 200000,
+      daysOverdue: 12,
+    });
+
+    expect(html).toContain("Overdue");
+    expect(html).toContain("12 days late");
+  });
+
+  it("says day, not days, when one day late", () => {
+    const html = statusCell({
+      ...receivable,
+      overdueKobo: 5000,
+      daysOverdue: 1,
+    });
+
+    expect(html).toContain("1 day late");
+    expect(html).not.toContain("1 days late");
   });
 });

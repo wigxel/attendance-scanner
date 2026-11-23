@@ -13,10 +13,18 @@ import { SupplierFormDialog } from "@/components/inventory/supplier-form-dialog"
 import { StdTable } from "@/components/std-table";
 import { useTableFilters } from "@/components/std-table/filters";
 import { Button } from "@/components/ui/button";
+import { createConfirmAction } from "@/components/ui/confirm-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import { statusFilterOptions } from "./product-columns";
 import { createSupplierColumns, type SupplierRow } from "./supplier-columns";
+
+const ConfirmArchiveSupplier = createConfirmAction<SupplierRow>({
+  title: (supplier) => `Archive "${supplier.name}"?`,
+  description:
+    "It stays in the list but can no longer be picked for purchases.",
+  confirmLabel: "Archive",
+});
 
 export function SuppliersContent() {
   const [search, setSearch] = useState("");
@@ -25,6 +33,7 @@ export function SuppliersContent() {
   });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<SupplierRow | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<SupplierRow | null>(null);
 
   const suppliers = useQuery(api.inventory.listSuppliers, {
     includeArchived: true,
@@ -43,9 +52,6 @@ export function SuppliersContent() {
 
   const handleArchive = useCallback(
     async (supplier: SupplierRow) => {
-      const ok = window.confirm(`Archive "${supplier.name}"?`);
-      if (!ok) return;
-
       try {
         await archiveSupplier({ supplierId: supplier._id });
         toast.success("Supplier archived");
@@ -59,8 +65,12 @@ export function SuppliersContent() {
   );
 
   const columns = useMemo(
-    () => createSupplierColumns({ onEdit: openEdit, onArchive: handleArchive }),
-    [openEdit, handleArchive],
+    () =>
+      createSupplierColumns({
+        onEdit: openEdit,
+        onArchive: (supplier) => setArchiveTarget(supplier),
+      }),
+    [openEdit],
   );
 
   if (suppliers === undefined) {
@@ -126,6 +136,15 @@ export function SuppliersContent() {
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         supplier={editing}
+      />
+
+      <ConfirmArchiveSupplier
+        item={archiveTarget}
+        open={archiveTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setArchiveTarget(null);
+        }}
+        onConfirm={handleArchive}
       />
     </div>
   );

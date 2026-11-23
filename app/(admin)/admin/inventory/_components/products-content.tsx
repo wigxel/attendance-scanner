@@ -14,6 +14,7 @@ import { ProductFormDialog } from "@/components/inventory/product-form-dialog";
 import { StdTable } from "@/components/std-table";
 import { useTableFilters } from "@/components/std-table/filters";
 import { Button } from "@/components/ui/button";
+import { createConfirmAction } from "@/components/ui/confirm-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
@@ -25,6 +26,12 @@ import {
 
 type Product = Doc<"products">;
 
+const ConfirmArchiveProduct = createConfirmAction<ProductRow>({
+  title: (product) => `Archive "${product.name}"?`,
+  description: "It stays in the catalogue but is hidden from picking.",
+  confirmLabel: "Archive",
+});
+
 export function ProductsContent() {
   const [search, setSearch] = useState("");
   const filters = useTableFilters({
@@ -33,6 +40,7 @@ export function ProductsContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [movementTarget, setMovementTarget] = useState<ProductRow | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<ProductRow | null>(null);
 
   const products = useQuery(api.inventory.listProducts, {
     includeArchived: true,
@@ -57,11 +65,6 @@ export function ProductsContent() {
 
   const handleArchive = useCallback(
     async (product: ProductRow) => {
-      const ok = window.confirm(
-        `Archive "${product.name}"? It stays in the catalogue but is hidden from picking.`,
-      );
-      if (!ok) return;
-
       try {
         await archiveProduct({ productId: product._id });
         toast.success("Product archived");
@@ -92,11 +95,11 @@ export function ProductsContent() {
     () =>
       createProductColumns({
         onEdit: openEdit,
-        onArchive: handleArchive,
+        onArchive: (product) => setArchiveTarget(product),
         onRestore: handleRestore,
         onRecordMovement: openMovement,
       }),
-    [openEdit, handleArchive, handleRestore, openMovement],
+    [openEdit, handleRestore, openMovement],
   );
 
   if (products === undefined || units === undefined) {
@@ -186,6 +189,15 @@ export function ProductsContent() {
           if (!open) setMovementTarget(null);
         }}
         target={movementDialogTarget}
+      />
+
+      <ConfirmArchiveProduct
+        item={archiveTarget}
+        open={archiveTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setArchiveTarget(null);
+        }}
+        onConfirm={handleArchive}
       />
     </div>
   );

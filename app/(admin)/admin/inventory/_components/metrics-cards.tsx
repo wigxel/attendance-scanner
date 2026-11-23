@@ -82,6 +82,17 @@ export function MetricsCards() {
       />
 
       <MetricCard
+        label="Written off"
+        value={formatKobo(revenue.writtenOff.amountKobo)}
+        info="Debt the shop has given up collecting: write-offs recorded in the range, whichever sale they belong to. Written-off money is no longer owed, so it does not count in Owed."
+      >
+        <p>
+          {revenue.writtenOff.count}{" "}
+          {revenue.writtenOff.count === 1 ? "write-off" : "write-offs"} recorded
+        </p>
+      </MetricCard>
+
+      <MetricCard
         label="Gross margin"
         value={formatKobo(margin.grossMarginKobo)}
         info="What the shop kept after paying for the stock that was sold. The lines below show it as a share of sales, and what the sold stock cost. Stock given away free adds its cost here without adding any sales, so gifts pull this number down."

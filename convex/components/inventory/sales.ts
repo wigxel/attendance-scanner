@@ -147,7 +147,14 @@ export const create = mutation({
       occurredAt: now,
       channel: args.channel,
       customerId,
-      dueDate: args.dueDate?.trim() || undefined,
+      // Credit falls due two days after purchase unless a due date is given.
+      dueDate:
+        args.dueDate?.trim() ||
+        (args.channel === "credit"
+          ? new Date(Date.parse(now) + 2 * 86_400_000)
+              .toISOString()
+              .slice(0, 10)
+          : undefined),
       totalKobo,
       note: args.note?.trim() || undefined,
       voided: false,

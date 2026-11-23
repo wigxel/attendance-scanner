@@ -21,6 +21,7 @@ function metrics(revenue: Partial<InventoryMetrics["revenue"]>) {
         outstandingKobo: 0,
         salesCount: 0,
         byChannel: [],
+        writtenOff: { count: 0, amountKobo: 0 },
         ...revenue,
       },
       margin: { grossMarginKobo: 0, grossMarginPercent: null, cogsKobo: 0 },
@@ -52,5 +53,17 @@ describe("MetricsCards", () => {
     expect(html).toContain("400.00");
     // The basis copy sits in a tooltip on an info icon by each label.
     expect(html).toContain('aria-label="About Owed"');
+  });
+
+  it("shows write-offs with a count", () => {
+    mockedUseMetrics.mockReturnValue(
+      metrics({ writtenOff: { count: 2, amountKobo: 15_000 } }),
+    );
+
+    const html = renderToStaticMarkup(<MetricsCards />);
+
+    expect(html).toContain("Written off");
+    expect(html).toContain("150.00");
+    expect(html).toContain("2 write-offs recorded");
   });
 });

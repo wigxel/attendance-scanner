@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { Badge } from "@/components/ui/badge";
 import type { Receivable } from "@/convex/inventory";
 import { formatKoboPlain } from "@/lib/currency.helpers";
 import { serialNo } from "@/lib/data.helpers";
@@ -46,6 +47,26 @@ export const receivablesColumns: ColumnDef<Receivable>[] = [
         {formatKoboPlain(row.original.totalOwedKobo)}
       </span>
     ),
+  },
+  {
+    id: "status",
+    header: "Status",
+    meta: { label: "Status" },
+    // Anything past its due date with money still on it reads as overdue.
+    accessorFn: (row) => (row.overdueKobo > 0 ? "overdue" : "due"),
+    cell: ({ row }) => {
+      const { overdueKobo, daysOverdue } = row.original;
+      return overdueKobo > 0 ? (
+        <Badge variant="destructive">
+          Overdue
+          {daysOverdue !== null
+            ? ` · ${daysOverdue} ${daysOverdue === 1 ? "day" : "days"} late`
+            : ""}
+        </Badge>
+      ) : (
+        <Badge variant="secondary">Not yet due</Badge>
+      );
+    },
   },
   {
     id: "oldestUnpaidAt",

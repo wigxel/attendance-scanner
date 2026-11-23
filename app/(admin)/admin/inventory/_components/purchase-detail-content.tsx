@@ -13,6 +13,7 @@ import {
 } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmAction } from "@/components/ui/confirm-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import { formatKobo } from "@/lib/currency.helpers";
@@ -47,11 +48,6 @@ export function PurchaseDetailContent({
   const { purchase, supplier, lines, outstandingKobo } = detail;
 
   const handleVoid = async () => {
-    const ok = window.confirm(
-      "Void this purchase? Stock goes back and the previous average cost is restored.",
-    );
-    if (!ok) return;
-
     try {
       await voidPurchase({ purchaseId });
       toast.success("Purchase voided");
@@ -90,9 +86,14 @@ export function PurchaseDetailContent({
             {purchase.voided ? "Voided" : "Posted"}
           </Badge>
           {!purchase.voided && (
-            <Button variant="destructive" onClick={handleVoid}>
-              Void purchase
-            </Button>
+            <ConfirmAction
+              title="Void this purchase?"
+              description="Stock goes back and the previous average cost is restored."
+              confirmLabel="Void"
+              onConfirm={handleVoid}
+            >
+              <Button variant="destructive">Void purchase</Button>
+            </ConfirmAction>
           )}
         </div>
       </div>

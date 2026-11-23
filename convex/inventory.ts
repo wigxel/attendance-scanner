@@ -164,6 +164,12 @@ export type Receivable = {
   customerName: string | null;
   totalOwedKobo: number;
   oldestUnpaidAt: string;
+  /** The part of the debt on sales past their due date. */
+  overdueKobo: number;
+  /** Due date of the oldest overdue sale; null when nothing is overdue. */
+  oldestOverdueDueDate: string | null;
+  /** Days past that due date. */
+  daysOverdue: number | null;
 };
 
 /** One ledger row in the withdrawal history. */
@@ -230,6 +236,8 @@ export type InventoryMetrics = {
     byChannel: RevenueChannelShare[];
     /** Stock handed out free: excluded from booked revenue above. */
     givenAway: { count: number; valueKobo: number };
+    /** Debt given up on: write-off rows dated in the range, whichever sale they belong to. */
+    writtenOff: { count: number; amountKobo: number };
   };
   topProducts: TopProduct[];
   margin: {
@@ -296,6 +304,19 @@ function revenueBreakdown(
     return sum;
   }, 0);
 
+  // Write-offs are dated in the range like collected money, whichever sale
+  // they sit on. They are not collected and not owed: debt given up on.
+  const writtenOff = payments.reduce(
+    (total, row) => {
+      if (row.kind !== "writeOff") return total;
+      return {
+        count: total.count + 1,
+        amountKobo: total.amountKobo + row.amountKobo,
+      };
+    },
+    { count: 0, amountKobo: 0 },
+  );
+
   return {
     byChannel,
     totalKobo: byChannel.reduce((sum, share) => sum + share.totalKobo, 0),
@@ -303,6 +324,7 @@ function revenueBreakdown(
     outstandingKobo: sales.reduce((sum, sale) => sum + sale.outstandingKobo, 0),
     salesCount: sales.length,
     givenAway,
+    writtenOff,
   };
 }
 
@@ -1556,11 +1578,17 @@ export const listCashWithdrawals = query({
   },
 });
 
+/** Whole days one day-precision date sits past another. */
+function daysLate(dueDate: string, today: string) {
+  return Math.round((Date.parse(today) - Date.parse(dueDate)) / 86_400_000);
+}
+
 /** Every customer who still owes money, oldest debt first. */
 export const receivables = query({
-  args: {},
-  handler: async (ctx): Promise<Receivable[]> => {
+  args: { today: v.string() },
+  handler: async (ctx, args): Promise<Receivable[]> => {
     await requireAny(ctx, SELL_OR_MANAGE);
+    const today = parseDay(args.today, "Today");
 
     const sales = (await salesWithBalance(ctx)).filter(owesMoney);
     const nameById = await customerNamesOrMissing(
@@ -1577,10 +1605,24 @@ export const receivables = query({
         customerName: nameById.get(customerId) ?? null,
         totalOwedKobo: 0,
         oldestUnpaidAt: sale.occurredAt,
+        overdueKobo: 0,
+        oldestOverdueDueDate: null,
+        daysOverdue: null,
       };
       row.totalOwedKobo += sale.outstandingKobo;
       if (sale.occurredAt < row.oldestUnpaidAt) {
         row.oldestUnpaidAt = sale.occurredAt;
+      }
+      // Overdue means the promised date has passed with money still on it.
+      if (sale.dueDate && sale.dueDate < today) {
+        row.overdueKobo += sale.outstandingKobo;
+        if (
+          row.oldestOverdueDueDate === null ||
+          sale.dueDate < row.oldestOverdueDueDate
+        ) {
+          row.oldestOverdueDueDate = sale.dueDate;
+          row.daysOverdue = daysLate(sale.dueDate, today);
+        }
       }
       byCustomer.set(customerId, row);
     }
@@ -1591,20 +1633,41 @@ export const receivables = query({
   },
 });
 
-/** The unpaid sales of one customer, oldest first. */
+/** The unpaid sales of one customer, oldest first, with each sale's money rows. */
 export const customerDebt = query({
   args: { customerId: v.string() },
-  handler: async (ctx, { customerId }): Promise<SaleSummary[]> => {
+  handler: async (
+    ctx,
+    { customerId },
+  ): Promise<(SaleSummary & { payments: SalePaymentRow[] })[]> => {
     await requireAny(ctx, SELL_OR_MANAGE);
 
     const sales = (await salesWithBalance(ctx))
       .filter((sale) => sale.customerId === customerId && owesMoney(sale))
       .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
-    const nameById = await customerNames(ctx, sales);
+    const [nameById, ledgers] = await Promise.all([
+      customerNames(ctx, sales),
+      Promise.all(
+        sales.map(
+          (sale) =>
+            ctx.runQuery(components.inventory.salePayments.forSale, {
+              saleId: sale._id,
+            }) as Promise<Doc<"salePayments">[]>,
+        ),
+      ),
+    ]);
+    const takerById = await profileNames(
+      ctx,
+      ledgers.flat().map((row) => row.createdBy),
+    );
 
-    return sales.map((sale) => ({
+    return sales.map((sale, index) => ({
       ...sale,
       customerName: nameById.get(customerId) ?? null,
+      payments: ledgers[index].map((row) => ({
+        ...row,
+        recordedByName: takerById.get(row.createdBy) ?? row.createdBy,
+      })),
     }));
   },
 });

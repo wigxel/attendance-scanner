@@ -207,6 +207,12 @@ export const get = query({
   handler: async (ctx, { paymentId }) => await ctx.db.get(paymentId),
 });
 
+/** Every ledger row on one sale: payments, write-offs and reversals. */
+export const forSale = query({
+  args: { saleId: v.id("sales") },
+  handler: async (ctx, { saleId }) => ledgerFor(ctx, saleId),
+});
+
 export const reversePayment = mutation({
   args: {
     callerId: v.string(),
