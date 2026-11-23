@@ -42,17 +42,19 @@ export function RecordPaymentDialog({
   });
 
   const handleSubmit = async (values: PaymentFormValues) => {
+    const amountKobo = paymentKobo(values.amount);
+
     try {
       await recordPayment({
         saleId,
-        amountKobo: paymentKobo(values.amount),
+        amountKobo,
         paidAt: new Date(values.paidAt).toISOString(),
         channel: values.channel,
         note: values.note.trim() || undefined,
       });
       track("inventory_sale_payment_recorded", {
         sale_id: saleId,
-        amount_kobo: paymentKobo(values.amount),
+        amount_kobo: amountKobo,
         channel: values.channel,
       });
       toast.success("Payment recorded");

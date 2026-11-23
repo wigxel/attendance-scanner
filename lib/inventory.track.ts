@@ -20,13 +20,15 @@ export function useTrackOpen(
   open: boolean,
   props?: Record<string, unknown>,
 ): void {
-  const latest = useRef(props);
-  latest.current = props;
+  // Props go through a ref so a fresh object literal on every render cannot
+  // rerun the effect; the open-transition guard below decides when it fires.
+  const latestProps = useRef(props);
+  latestProps.current = props;
   const wasOpen = useRef(false);
 
   useEffect(() => {
     if (open && !wasOpen.current) {
-      track(event, latest.current);
+      track(event, latestProps.current);
     }
     wasOpen.current = open;
   }, [event, open]);
