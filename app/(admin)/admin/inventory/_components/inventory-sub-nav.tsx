@@ -9,6 +9,7 @@ import {
   ReceiptText,
   Ruler,
   ShoppingCart,
+  Store,
   Truck,
 } from "lucide-react";
 import Link from "next/link";
@@ -16,7 +17,18 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { name: "Sales", href: "/admin/inventory/sales", icon: ShoppingCart },
+  // exact so /sales/new activates Point of Sale, not Sales.
+  {
+    name: "Sales",
+    href: "/admin/inventory/sales",
+    icon: ShoppingCart,
+    exact: true,
+  },
+  {
+    name: "Point of Sale",
+    href: "/admin/inventory/sales/new",
+    icon: Store,
+  },
   {
     name: "Cash",
     href: "/admin/inventory/cash",
@@ -73,7 +85,9 @@ export function InventorySubNav({ canManage }: { canManage: boolean }) {
   return (
     <nav className="flex flex-col gap-2" aria-label="Inventory sections">
       {visibleTabs.map((tab) => {
-        const isActive = pathname.startsWith(tab.href);
+        const isActive = tab.exact
+          ? pathname === tab.href
+          : pathname.startsWith(tab.href);
         const Icon = tab.icon;
 
         return (

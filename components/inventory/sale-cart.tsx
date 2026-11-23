@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery } from "convex/react";
 import { ShoppingCart, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CustomerCombobox } from "@/components/forms/CustomerCombobox";
@@ -23,8 +22,6 @@ import {
 import { getErrorMessage } from "@/lib/error.helpers";
 import { cn } from "@/lib/utils";
 import { useSaleCart } from "./sale-cart-store";
-
-const SALES_PATH = "/admin/inventory/sales";
 
 type SaleChannel = "cash" | "pos" | "transfer" | "credit" | "free";
 
@@ -64,7 +61,6 @@ function saleNote(itemCount: number) {
 }
 
 export function SaleCart({ products }: SaleCartProps) {
-  const router = useRouter();
   const recordSale = useMutation(api.inventory.recordSale);
   const quantities = useSaleCart((state) => state.quantities);
   const remove = useSaleCart((state) => state.remove);
@@ -147,8 +143,11 @@ export function SaleCart({ products }: SaleCartProps) {
         line_count: saleLines.length,
       });
       clear();
+      // The form stays mounted now, so drop the channel inputs with the cart.
+      setPaidNaira("0");
+      setFreeNote("");
+      setSubmitting(false);
       toast.success("Sale recorded");
-      router.push(SALES_PATH);
     } catch (error) {
       toast.error("Could not record sale", {
         description: getErrorMessage(error),
