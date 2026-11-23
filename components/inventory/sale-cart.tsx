@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { api } from "@/convex/_generated/api";
 import type { SaleFormProduct } from "@/convex/inventory";
+import { track } from "@/lib/analytics";
 import {
   currencyFormatter,
   depositKobo,
@@ -139,6 +140,11 @@ export function SaleCart({ products }: SaleCartProps) {
         amountPaidKobo: isCredit ? paidKobo : undefined,
         note: isFree ? freeNote.trim() || undefined : saleNote(itemCount),
         lines: saleLines,
+      });
+      track("inventory_sale_recorded", {
+        channel,
+        customer_id: customerId || undefined,
+        line_count: saleLines.length,
       });
       clear();
       toast.success("Sale recorded");

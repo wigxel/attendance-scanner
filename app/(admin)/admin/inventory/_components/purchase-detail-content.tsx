@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/ui/confirm-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
+import { useTrackOpen } from "@/hooks/useTrackOpen";
+import { track } from "@/lib/analytics";
 import { formatKobo } from "@/lib/currency.helpers";
 import { purchaseLineColumns } from "./purchase-line-columns";
 
@@ -29,6 +31,10 @@ export function PurchaseDetailContent({
   const detail = useQuery(api.inventory.purchaseDetail, { purchaseId });
   const voidPurchase = useMutation(api.inventory.voidPurchase);
   const [search, setSearch] = useState("");
+  // It's a route, not a sheet, so one capture per mount is the "opened" event.
+  useTrackOpen("inventory_purchase_detail_viewed", true, {
+    purchase_id: purchaseId,
+  });
 
   if (detail === undefined) {
     return <Skeleton className="h-[60svh] w-full" />;
@@ -50,6 +56,7 @@ export function PurchaseDetailContent({
   const handleVoid = async () => {
     try {
       await voidPurchase({ purchaseId });
+      track("inventory_purchase_voided", { purchase_id: purchaseId });
       toast.success("Purchase voided");
     } catch (error) {
       toast.error("Could not void purchase", {

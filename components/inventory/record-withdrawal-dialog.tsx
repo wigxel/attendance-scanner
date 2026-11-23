@@ -27,6 +27,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
+import { useTrackOpen } from "@/hooks/useTrackOpen";
+import { track } from "@/lib/analytics";
 
 /** Today as YYYY-MM-DD in the shop's own timezone. */
 function todayInputValue() {
@@ -96,6 +98,7 @@ export function RecordWithdrawalDialog({
   cashInHandKobo,
 }: RecordWithdrawalDialogProps) {
   const recordWithdrawal = useMutation(api.inventory.recordCashWithdrawal);
+  useTrackOpen("inventory_withdrawal_dialog_opened", open);
   const form = useForm<WithdrawalFormValues>({
     resolver: zodResolver(withdrawalFormSchema(cashInHandKobo)),
     defaultValues: {
@@ -111,6 +114,9 @@ export function RecordWithdrawalDialog({
         amountKobo: paymentKobo(values.amount),
         withdrawnAt: new Date(values.withdrawnAt).toISOString(),
         note: values.note.trim(),
+      });
+      track("inventory_withdrawal_recorded", {
+        amount_kobo: paymentKobo(values.amount),
       });
       toast.success("Withdrawal recorded");
       form.reset({ amount: "", withdrawnAt: todayInputValue(), note: "" });

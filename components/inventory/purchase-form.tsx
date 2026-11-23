@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { currencyFormatter } from "@/lib/currency.helpers";
 
 const PURCHASES_PATH = "/admin/inventory/purchases";
@@ -159,7 +160,7 @@ export function PurchaseForm() {
 
   const handleSubmit = async (values: PurchaseFormValues) => {
     try {
-      await createPurchase({
+      const purchaseId = await createPurchase({
         supplierId: values.supplierId || undefined,
         occurredAt: new Date(`${values.occurredAt}T00:00:00`).toISOString(),
         amountPaidKobo:
@@ -179,6 +180,10 @@ export function PurchaseForm() {
           quantity: Number(line.quantity),
           unitCostKobo: toKobo(line.unitCostNaira),
         })),
+      });
+      track("inventory_purchase_recorded", {
+        purchase_id: purchaseId,
+        line_count: values.lines.length,
       });
       toast.success("Purchase recorded");
       router.push(PURCHASES_PATH);

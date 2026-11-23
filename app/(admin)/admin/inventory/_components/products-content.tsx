@@ -18,6 +18,7 @@ import { createConfirmAction } from "@/components/ui/confirm-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
+import { track } from "@/lib/analytics";
 import {
   createProductColumns,
   type ProductRow,
@@ -67,6 +68,7 @@ export function ProductsContent() {
     async (product: ProductRow) => {
       try {
         await archiveProduct({ productId: product._id });
+        track("inventory_product_archived", { product_id: product._id });
         toast.success("Product archived");
       } catch (error) {
         toast.error("Could not archive product", {
@@ -81,6 +83,7 @@ export function ProductsContent() {
     async (product: ProductRow) => {
       try {
         await restoreProduct({ productId: product._id });
+        track("inventory_product_restored", { product_id: product._id });
         toast.success("Product restored");
       } catch (error) {
         toast.error("Could not restore product", {

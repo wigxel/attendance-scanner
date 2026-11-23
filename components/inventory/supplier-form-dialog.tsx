@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
+import { useTrackOpen } from "@/hooks/useTrackOpen";
+import { track } from "@/lib/analytics";
 
 type Supplier = Doc<"suppliers">;
 
@@ -34,6 +36,9 @@ export function SupplierFormDialog({
 }: SupplierFormDialogProps) {
   const createSupplier = useMutation(api.inventory.createSupplier);
   const updateSupplier = useMutation(api.inventory.updateSupplier);
+  useTrackOpen("inventory_supplier_form_opened", open, {
+    mode: supplier ? "edit" : "create",
+  });
 
   const initialFormData: SupplierFormValues | undefined = supplier
     ? {
@@ -49,9 +54,11 @@ export function SupplierFormDialog({
     try {
       if (supplier) {
         await updateSupplier({ supplierId: supplier._id, ...values });
+        track("inventory_supplier_updated", { supplier_id: supplier._id });
         toast.success("Supplier updated");
       } else {
         const supplierId = await createSupplier(values);
+        track("inventory_supplier_created", { supplier_id: supplierId });
         toast.success("Supplier created");
         onCreated?.(supplierId);
       }

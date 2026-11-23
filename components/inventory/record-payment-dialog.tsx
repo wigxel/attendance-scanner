@@ -16,6 +16,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { api } from "@/convex/_generated/api";
+import { useTrackOpen } from "@/hooks/useTrackOpen";
+import { track } from "@/lib/analytics";
 
 type RecordPaymentDialogProps = {
   open: boolean;
@@ -35,15 +37,26 @@ export function RecordPaymentDialog({
   saleOccurredAt,
 }: RecordPaymentDialogProps) {
   const recordPayment = useMutation(api.inventory.recordSalePayment);
+  useTrackOpen("inventory_payment_dialog_opened", open, {
+    sale_id: saleId,
+    outstanding_kobo: outstandingKobo,
+  });
 
   const handleSubmit = async (values: PaymentFormValues) => {
+    const amountKobo = paymentKobo(values.amount);
+
     try {
       await recordPayment({
         saleId,
-        amountKobo: paymentKobo(values.amount),
+        amountKobo,
         paidAt: new Date(values.paidAt).toISOString(),
         channel: values.channel,
         note: values.note.trim() || undefined,
+      });
+      track("inventory_sale_payment_recorded", {
+        sale_id: saleId,
+        amount_kobo: amountKobo,
+        channel: values.channel,
       });
       toast.success("Payment recorded");
       onOpenChange(false);

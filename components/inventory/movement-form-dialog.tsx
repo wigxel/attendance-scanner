@@ -15,6 +15,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { api } from "@/convex/_generated/api";
+import { useTrackOpen } from "@/hooks/useTrackOpen";
+import { track } from "@/lib/analytics";
 
 export type MovementTarget = {
   productId: string;
@@ -35,6 +37,9 @@ export function MovementFormDialog({
   target,
 }: MovementFormDialogProps) {
   const recordMovement = useMutation(api.inventory.recordMovement);
+  useTrackOpen("inventory_movement_dialog_opened", open, {
+    product_id: target?.productId,
+  });
 
   const handleSubmit = async (values: MovementFormValues) => {
     if (!target) return;
@@ -46,6 +51,11 @@ export function MovementFormDialog({
         quantity: values.quantity,
         occurredAt: new Date(values.occurredAt).toISOString(),
         note: values.note.trim() || undefined,
+      });
+      track("inventory_movement_recorded", {
+        product_id: target.productId,
+        kind: values.kind,
+        quantity: values.quantity,
       });
       toast.success("Stock change recorded");
       onOpenChange(false);

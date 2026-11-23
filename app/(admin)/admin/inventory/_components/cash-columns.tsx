@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/ui/confirm-action";
 import { api } from "@/convex/_generated/api";
 import type { CashWithdrawalRow } from "@/convex/inventory";
+import { track } from "@/lib/analytics";
 import { formatKoboPlain } from "@/lib/currency.helpers";
 
 type RevertWithdrawalCellProps = {
@@ -26,6 +27,7 @@ function RevertWithdrawalCell({
   const handleReverse = async () => {
     try {
       await reverseWithdrawal({ withdrawalId });
+      track("inventory_withdrawal_reversed", { withdrawal_id: withdrawalId });
       toast.success("Withdrawal reversed");
     } catch (error) {
       toast.error("Could not reverse withdrawal", {
