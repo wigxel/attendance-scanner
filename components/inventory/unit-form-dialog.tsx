@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
-import { track, useTrackOpen } from "@/lib/inventory.track";
+import { track, useTrackOpen } from "@/lib/analytics";
 
 type Unit = Doc<"units">;
 

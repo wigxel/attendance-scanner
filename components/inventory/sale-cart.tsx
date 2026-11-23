@@ -14,13 +14,13 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { api } from "@/convex/_generated/api";
 import type { SaleFormProduct } from "@/convex/inventory";
+import { track } from "@/lib/analytics";
 import {
   currencyFormatter,
   depositKobo,
   parseAmountInput,
 } from "@/lib/currency.helpers";
 import { getErrorMessage } from "@/lib/error.helpers";
-import { track } from "@/lib/inventory.track";
 import { cn } from "@/lib/utils";
 import { useSaleCart } from "./sale-cart-store";
 

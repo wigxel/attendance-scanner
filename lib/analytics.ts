@@ -4,8 +4,8 @@ import posthog from "posthog-js";
 import { useEffect, useRef } from "react";
 
 /**
- * Frontend-only tracking of inventory actions and interactions. Event names
- * are snake_case with an `inventory_` prefix; properties use snake_case too.
+ * Frontend analytics helpers. `track` wraps `posthog.capture`; event names are
+ * snake_case, prefixed by their domain (`inventory_`, …); properties too.
  */
 export function track(event: string, props?: Record<string, unknown>): void {
   posthog.capture(event, props);

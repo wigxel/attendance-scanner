@@ -18,7 +18,7 @@ import { createConfirmAction } from "@/components/ui/confirm-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
-import { track } from "@/lib/inventory.track";
+import { track } from "@/lib/analytics";
 import {
   createProductColumns,
   type ProductRow,

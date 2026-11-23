@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { createConfirmAction } from "@/components/ui/confirm-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
-import { track } from "@/lib/inventory.track";
+import { track } from "@/lib/analytics";
 import { statusFilterOptions } from "./product-columns";
 import { createSupplierColumns, type SupplierRow } from "./supplier-columns";
 

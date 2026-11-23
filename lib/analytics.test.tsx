@@ -2,7 +2,7 @@
 import { renderHook } from "@testing-library/react";
 import posthog from "posthog-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { track, useTrackOpen } from "./inventory.track";
+import { track, useTrackOpen } from "./analytics";
 
 vi.mock("posthog-js", () => ({ default: { capture: vi.fn() } }));
 

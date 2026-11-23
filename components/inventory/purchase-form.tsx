@@ -53,8 +53,8 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
+import { track } from "@/lib/analytics";
 import { currencyFormatter } from "@/lib/currency.helpers";
-import { track } from "@/lib/inventory.track";
 
 const PURCHASES_PATH = "/admin/inventory/purchases";
 

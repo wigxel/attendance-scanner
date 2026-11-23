@@ -21,8 +21,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Receivable, SaleSummary } from "@/convex/inventory";
 import { usePrivilege } from "@/hooks/usePrivilege";
+import { track, useTrackOpen } from "@/lib/analytics";
 import { formatKobo } from "@/lib/currency.helpers";
-import { track, useTrackOpen } from "@/lib/inventory.track";
 import { SaleStatusBadge } from "./sale-columns";
 
 type DebtSheetProps = {

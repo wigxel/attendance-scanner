@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/ui/confirm-action";
 import { api } from "@/convex/_generated/api";
 import type { CashWithdrawalRow } from "@/convex/inventory";
+import { track } from "@/lib/analytics";
 import { formatKoboPlain } from "@/lib/currency.helpers";
-import { track } from "@/lib/inventory.track";
 
 type RevertWithdrawalCellProps = {
   withdrawalId: string;

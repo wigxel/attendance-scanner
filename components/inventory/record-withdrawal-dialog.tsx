@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
-import { track, useTrackOpen } from "@/lib/inventory.track";
+import { track, useTrackOpen } from "@/lib/analytics";
 
 /** Today as YYYY-MM-DD in the shop's own timezone. */
 function todayInputValue() {
