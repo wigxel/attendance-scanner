@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 function greetTime(): string {
   const hour = new Date().getHours();
@@ -17,7 +17,10 @@ interface GreetingProps {
 }
 
 export function Greeting({ className }: GreetingProps) {
-  const [text, setText] = useState("");
-  useEffect(() => setText(greetTime()), []);
+  const text = useSyncExternalStore(
+    () => () => {},
+    greetTime,
+    () => "",
+  );
   return <span className={className}>{text}</span>;
 }
