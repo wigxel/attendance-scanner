@@ -13,6 +13,7 @@ import { UnitFormDialog } from "@/components/inventory/unit-form-dialog";
 import { StdTable } from "@/components/std-table";
 import { useTableFilters } from "@/components/std-table/filters";
 import { Button } from "@/components/ui/button";
+import { createConfirmAction } from "@/components/ui/confirm-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/components/inventory/_generated/dataModel";
@@ -21,6 +22,12 @@ import { createUnitColumns, type UnitRow } from "./unit-columns";
 
 type Unit = Doc<"units">;
 
+const ConfirmArchiveUnit = createConfirmAction<UnitRow>({
+  title: (unit) => `Archive "${unit.name}"?`,
+  description: "It stays in the list but can no longer be picked.",
+  confirmLabel: "Archive",
+});
+
 export function UnitsContent() {
   const [search, setSearch] = useState("");
   const filters = useTableFilters({
@@ -28,6 +35,7 @@ export function UnitsContent() {
   });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Unit | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<UnitRow | null>(null);
 
   const units = useQuery(api.inventory.listUnits, {
     includeArchived: true,
@@ -46,9 +54,6 @@ export function UnitsContent() {
 
   const handleArchive = useCallback(
     async (unit: UnitRow) => {
-      const ok = window.confirm(`Archive "${unit.name}"?`);
-      if (!ok) return;
-
       try {
         await archiveUnit({ unitId: unit._id });
         toast.success("Unit archived");
@@ -62,8 +67,12 @@ export function UnitsContent() {
   );
 
   const columns = useMemo(
-    () => createUnitColumns({ onEdit: openEdit, onArchive: handleArchive }),
-    [openEdit, handleArchive],
+    () =>
+      createUnitColumns({
+        onEdit: openEdit,
+        onArchive: (unit) => setArchiveTarget(unit),
+      }),
+    [openEdit],
   );
 
   if (units === undefined) {
@@ -130,6 +139,15 @@ export function UnitsContent() {
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         unit={editing}
+      />
+
+      <ConfirmArchiveUnit
+        item={archiveTarget}
+        open={archiveTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setArchiveTarget(null);
+        }}
+        onConfirm={handleArchive}
       />
     </div>
   );

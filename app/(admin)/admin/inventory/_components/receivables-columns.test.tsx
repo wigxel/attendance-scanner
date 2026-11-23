@@ -21,10 +21,10 @@ const customerCell = (receivable: Receivable) => {
   );
 };
 
-const overdueCell = (receivable: Receivable) => {
-  const column = receivablesColumns.find((entry) => entry.id === "overdueKobo");
+const statusCell = (receivable: Receivable) => {
+  const column = receivablesColumns.find((entry) => entry.id === "status");
   if (!column || typeof column.cell !== "function") {
-    throw new Error("overdue cell missing");
+    throw new Error("status cell missing");
   }
   return renderToStaticMarkup(
     column.cell({
@@ -65,24 +65,24 @@ describe("receivables customer cell", () => {
   });
 });
 
-describe("receivables overdue cell", () => {
-  it("shows nothing for a customer with nothing overdue", () => {
-    expect(overdueCell(receivable)).not.toContain("₦");
+describe("receivables status cell", () => {
+  it("says not yet due for a customer with nothing overdue", () => {
+    expect(statusCell(receivable)).toContain("Not yet due");
   });
 
-  it("shows the overdue amount and how many days late", () => {
-    const html = overdueCell({
+  it("says overdue and how many days late", () => {
+    const html = statusCell({
       ...receivable,
       overdueKobo: 200000,
       daysOverdue: 12,
     });
 
-    expect(html).toContain("2,000.00");
+    expect(html).toContain("Overdue");
     expect(html).toContain("12 days late");
   });
 
   it("says day, not days, when one day late", () => {
-    const html = overdueCell({
+    const html = statusCell({
       ...receivable,
       overdueKobo: 5000,
       daysOverdue: 1,

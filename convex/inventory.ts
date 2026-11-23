@@ -1633,20 +1633,41 @@ export const receivables = query({
   },
 });
 
-/** The unpaid sales of one customer, oldest first. */
+/** The unpaid sales of one customer, oldest first, with each sale's money rows. */
 export const customerDebt = query({
   args: { customerId: v.string() },
-  handler: async (ctx, { customerId }): Promise<SaleSummary[]> => {
+  handler: async (
+    ctx,
+    { customerId },
+  ): Promise<(SaleSummary & { payments: SalePaymentRow[] })[]> => {
     await requireAny(ctx, SELL_OR_MANAGE);
 
     const sales = (await salesWithBalance(ctx))
       .filter((sale) => sale.customerId === customerId && owesMoney(sale))
       .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
-    const nameById = await customerNames(ctx, sales);
+    const [nameById, ledgers] = await Promise.all([
+      customerNames(ctx, sales),
+      Promise.all(
+        sales.map(
+          (sale) =>
+            ctx.runQuery(components.inventory.salePayments.forSale, {
+              saleId: sale._id,
+            }) as Promise<Doc<"salePayments">[]>,
+        ),
+      ),
+    ]);
+    const takerById = await profileNames(
+      ctx,
+      ledgers.flat().map((row) => row.createdBy),
+    );
 
-    return sales.map((sale) => ({
+    return sales.map((sale, index) => ({
       ...sale,
       customerName: nameById.get(customerId) ?? null,
+      payments: ledgers[index].map((row) => ({
+        ...row,
+        recordedByName: takerById.get(row.createdBy) ?? row.createdBy,
+      })),
     }));
   },
 });

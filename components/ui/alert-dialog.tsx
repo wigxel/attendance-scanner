@@ -149,7 +149,7 @@ function AlertDialogCancel({
       asChild
       className={className}
     >
-      <Button variant="ghost" {...props} />
+      <Button variant="outline" {...props} />
     </AlertDialogPrimitive.Cancel>
   );
 }

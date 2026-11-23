@@ -3,40 +3,27 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMutation } from "convex/react";
 import { Undo2 } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmAction } from "@/components/ui/confirm-action";
 import { api } from "@/convex/_generated/api";
 import type { CashWithdrawalRow } from "@/convex/inventory";
 import { formatKoboPlain } from "@/lib/currency.helpers";
 
-type RevertWithdrawalAlertProps = {
+type RevertWithdrawalCellProps = {
   withdrawalId: string;
   children: React.ReactNode;
 };
 
 /** One row's undo: opens its own confirm, runs the reversal, toasts the result. */
-function RevertWithdrawalAlert({
+function RevertWithdrawalCell({
   withdrawalId,
   children,
-}: RevertWithdrawalAlertProps) {
+}: RevertWithdrawalCellProps) {
   const reverseWithdrawal = useMutation(api.inventory.reverseCashWithdrawal);
-  const [isReversing, setIsReversing] = useState(false);
 
   const handleReverse = async () => {
-    setIsReversing(true);
     try {
       await reverseWithdrawal({ withdrawalId });
       toast.success("Withdrawal reversed");
@@ -44,37 +31,18 @@ function RevertWithdrawalAlert({
       toast.error("Could not reverse withdrawal", {
         description: error instanceof Error ? error.message : "Unknown error",
       });
-    } finally {
-      setIsReversing(false);
     }
   };
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
-
-      <AlertDialogContent>
-        <AlertDialogHeader className="gap-4">
-          <AlertDialogTitle>Reverse withdrawal?</AlertDialogTitle>
-          <AlertDialogDescription className="text-pretty font-thin">
-            This action will mark the withdrawal as reversed in the transaction
-            history. The withdrawn amount will be added back to the inventory
-            cash in-hand balance.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <AlertDialogFooter className="*:flex-1">
-          <AlertDialogCancel disabled={isReversing}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            onClick={handleReverse}
-            disabled={isReversing}
-          >
-            {isReversing ? "Reversing..." : "Reverse"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmAction
+      title="Reverse withdrawal?"
+      description="This action will mark the withdrawal as reversed in the transaction history. The withdrawn amount will be added back to the inventory cash in-hand balance."
+      confirmLabel="Reverse"
+      onConfirm={handleReverse}
+    >
+      {children}
+    </ConfirmAction>
   );
 }
 
@@ -171,7 +139,7 @@ export function cashColumns(): ColumnDef<CashWithdrawalRow>[] {
           return <Badge variant="secondary">Reversed</Badge>;
         }
         return (
-          <RevertWithdrawalAlert withdrawalId={row.original._id}>
+          <RevertWithdrawalCell withdrawalId={row.original._id}>
             <Button
               type="button"
               variant="ghost"
@@ -181,7 +149,7 @@ export function cashColumns(): ColumnDef<CashWithdrawalRow>[] {
             >
               <Undo2 className="size-3.5" />
             </Button>
-          </RevertWithdrawalAlert>
+          </RevertWithdrawalCell>
         );
       },
     },

@@ -926,6 +926,26 @@ describe("sales", () => {
     });
   });
 
+  it("defaults a credit sale's due date to two days after purchase", async () => {
+    const t = convexTest(schema, modules);
+    const { packId, productId } = await seed(t);
+
+    const saleId = await t.mutation(api.sales.create, {
+      callerId: "admin",
+      channel: "credit",
+      customerId: "customer-1",
+      lines: [{ productId, unitId: packId, quantity: 1, unitPriceKobo: 1500 }],
+    });
+
+    const sale = await t.run(async (ctx) => ctx.db.get(saleId));
+    if (!sale) throw new Error("sale missing");
+    expect(sale.dueDate).toBe(
+      new Date(Date.parse(sale.occurredAt) + 2 * 86_400_000)
+        .toISOString()
+        .slice(0, 10),
+    );
+  });
+
   it("caps the till deposit at the sale total", async () => {
     const t = convexTest(schema, modules);
     const { packId, productId } = await seed(t);
