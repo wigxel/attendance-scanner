@@ -35,6 +35,9 @@ const CHANNELS: { value: SaleChannel; label: string }[] = [
 
 const FREE_NOTE_PRESETS = ["Welcome gift", "Birthday"];
 
+/** The last customer a sale was recorded for, remembered on this device. */
+const LAST_CUSTOMER_KEY = "inspace:last-customer";
+
 type SaleCartProps = {
   products: SaleFormProduct[];
 };
@@ -67,7 +70,11 @@ export function SaleCart({ products }: SaleCartProps) {
   const clear = useSaleCart((state) => state.clear);
 
   const [channel, setChannel] = useState<SaleChannel>("cash");
-  const [customerId, setCustomerId] = useState("");
+  // Pre-fill the last customer a sale went to; the combobox drops it on its
+  // own if that customer no longer exists.
+  const [customerId, setCustomerId] = useState(
+    () => localStorage.getItem(LAST_CUSTOMER_KEY) ?? "",
+  );
   const [paidNaira, setPaidNaira] = useState("0");
   const [freeNote, setFreeNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -130,16 +137,21 @@ export function SaleCart({ products }: SaleCartProps) {
 
     setSubmitting(true);
     try {
-      await recordSale({
+      const saleId = await recordSale({
         channel,
         customerId: customerId || undefined,
         amountPaidKobo: isCredit ? paidKobo : undefined,
         note: isFree ? freeNote.trim() || undefined : saleNote(itemCount),
         lines: saleLines,
       });
+      if (customerId) {
+        localStorage.setItem(LAST_CUSTOMER_KEY, customerId);
+      }
       track("inventory_sale_recorded", {
+        sale_id: saleId,
         channel,
         customer_id: customerId || undefined,
+        amount_kobo: totalKobo,
         line_count: saleLines.length,
       });
       clear();

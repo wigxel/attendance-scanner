@@ -43,7 +43,7 @@ export function CustomerCombobox({
 
   const preselectedUser = useQuery(
     api.myFunctions.getUserById,
-    readOnly && value ? { userId: value } : "skip",
+    value ? { userId: value } : "skip",
   );
 
   const customers = useQuery(api.myFunctions.getAllUsers, {
@@ -61,6 +61,18 @@ export function CustomerCombobox({
     }
     return null;
   }, [preselectedUser, value, customers]);
+
+  // A value that matches no customer in the database (e.g. a remembered one
+  // who was deleted) cannot be resolved or submitted — drop it so the field
+  // reads empty instead of failing the save later. Read-only callers own
+  // their value, so they clear it themselves.
+  const stale = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (readOnly || !value || preselectedUser !== null) return;
+    if (stale.current === value) return;
+    stale.current = value;
+    onChange("");
+  }, [readOnly, value, preselectedUser, onChange]);
 
   if (readOnly) {
     return (
