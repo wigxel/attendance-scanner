@@ -4,9 +4,11 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CustomerCombobox } from "@/components/forms/CustomerCombobox";
+import { PaymentHistorySection } from "@/components/inventory/payment-history-section";
 import { RecordPaymentDialog } from "@/components/inventory/record-payment-dialog";
 import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/ui/confirm-action";
+import { DataList } from "@/components/ui/data-list";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +37,6 @@ import {
 import { api } from "@/convex/_generated/api";
 import { usePrivilege } from "@/hooks/usePrivilege";
 import { formatKobo } from "@/lib/currency.helpers";
-import { PaymentLedger } from "./payment-ledger";
 import { SaleStatusBadge } from "./sale-columns";
 
 const channelLabels = {
@@ -77,6 +78,12 @@ export function SaleDetailSheet({
     if (!open) setPaymentDialogOpen(false);
     onOpenChange(open);
   };
+
+  // The ledger is append-only, so a reversal is just another row. The shared
+  // PaymentLedger sorts newest first and marks already-reversed rows.
+  const canTakePayment = Boolean(
+    detail && detail.outstandingKobo > 0 && detail.status !== "voided",
+  );
 
   const handleVoid = async () => {
     if (!saleId) return;
@@ -132,12 +139,6 @@ export function SaleDetailSheet({
     }
   };
 
-  // The ledger is append-only, so a reversal is just another row. The shared
-  // PaymentLedger sorts newest first and marks already-reversed rows.
-  const canTakePayment = Boolean(
-    detail && detail.outstandingKobo > 0 && detail.status !== "voided",
-  );
-
   return (
     <>
       <Sheet open={saleId !== null} onOpenChange={handleSheetOpenChange}>
@@ -162,32 +163,28 @@ export function SaleDetailSheet({
               </SheetHeader>
 
               <div className="space-y-6 px-4 pb-8">
-                <dl className="grid grid-cols-[0.3fr_0.7fr] items-baseline gap-x-6 gap-y-4 text-sm">
-                  <dt className="text-muted-foreground">Status</dt>
-                  <dd>
+                <DataList>
+                  <DataList.Item label="Status">
                     <SaleStatusBadge status={detail.status} />
-                  </dd>
+                  </DataList.Item>
 
-                  <dt className="text-muted-foreground">Customer</dt>
-                  <dd className="text-foreground">
+                  <DataList.Item label="Customer">
                     {detail.customerName ?? "Walk-in"}
-                  </dd>
+                  </DataList.Item>
 
-                  <dt className="text-muted-foreground">Channel</dt>
-                  <dd className="text-foreground">
+                  <DataList.Item label="Channel">
                     {channelLabels[detail.sale.channel]}
-                  </dd>
+                  </DataList.Item>
 
-                  <dt className="text-muted-foreground">Date</dt>
-                  <dd className="whitespace-nowrap text-foreground">
+                  <DataList.Item label="Date" className="whitespace-nowrap">
                     {new Date(detail.sale.occurredAt).toLocaleString("en-NG")}
-                  </dd>
+                  </DataList.Item>
 
-                  <dt className="text-muted-foreground">Recorded by</dt>
-                  <dd className="text-foreground">{detail.createdByName}</dd>
+                  <DataList.Item label="Recorded by">
+                    {detail.createdByName}
+                  </DataList.Item>
 
-                  <dt className="text-muted-foreground">Due date</dt>
-                  <dd className="text-foreground">
+                  <DataList.Item label="Due date">
                     {detail.sale.dueDate
                       ? new Date(detail.sale.dueDate).toLocaleDateString(
                           "en-NG",
@@ -198,23 +195,20 @@ export function SaleDetailSheet({
                           },
                         )
                       : "—"}
-                  </dd>
+                  </DataList.Item>
 
-                  <dt className="text-muted-foreground">Total</dt>
-                  <dd className="tabular-nums text-foreground">
+                  <DataList.Item label="Total" className="tabular-nums">
                     {formatKobo(detail.sale.totalKobo)}
-                  </dd>
+                  </DataList.Item>
 
-                  <dt className="text-muted-foreground">Paid</dt>
-                  <dd className="tabular-nums text-foreground">
+                  <DataList.Item label="Paid" className="tabular-nums">
                     {formatKobo(detail.paidKobo)}
-                  </dd>
+                  </DataList.Item>
 
-                  <dt className="text-muted-foreground">Balance due</dt>
-                  <dd className="tabular-nums text-foreground">
+                  <DataList.Item label="Balance due" className="tabular-nums">
                     {formatKobo(detail.outstandingKobo)}
-                  </dd>
-                </dl>
+                  </DataList.Item>
+                </DataList>
 
                 <Separator />
 
@@ -254,26 +248,16 @@ export function SaleDetailSheet({
 
                 <Separator />
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium">Payments</p>
-                    {canTakePayment ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => setPaymentDialogOpen(true)}
-                      >
-                        Record payment
-                      </Button>
-                    ) : null}
-                  </div>
-
-                  <PaymentLedger
-                    payments={detail?.payments ?? []}
-                    canManage={canManage ?? false}
-                    onReverse={handleReverse}
-                  />
-                </div>
+                <PaymentHistorySection
+                  payments={detail.payments}
+                  canManage={canManage ?? false}
+                  onReverse={handleReverse}
+                  onRecordPayment={
+                    canTakePayment
+                      ? () => setPaymentDialogOpen(true)
+                      : undefined
+                  }
+                />
 
                 {canAdjust ? (
                   <div className="flex flex-wrap gap-2">

@@ -4,9 +4,11 @@ import { useMutation, useQuery } from "convex/react";
 import { format, parseISO } from "date-fns";
 import { Fragment, useState } from "react";
 import { toast } from "sonner";
+import { PaymentHistorySection } from "@/components/inventory/payment-history-section";
 import { RecordPaymentDialog } from "@/components/inventory/record-payment-dialog";
 import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/ui/confirm-action";
+import { DataList } from "@/components/ui/data-list";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -20,7 +22,6 @@ import { api } from "@/convex/_generated/api";
 import type { Receivable, SaleSummary } from "@/convex/inventory";
 import { usePrivilege } from "@/hooks/usePrivilege";
 import { formatKobo } from "@/lib/currency.helpers";
-import { PaymentLedger } from "./payment-ledger";
 import { SaleStatusBadge } from "./sale-columns";
 
 type DebtSheetProps = {
@@ -38,8 +39,7 @@ export function CustomerDebtSheet({ customer, onOpenChange }: DebtSheetProps) {
   const reverseSalePayment = useMutation(api.inventory.reverseSalePayment);
   const { valid: canManage } = usePrivilege("inventory:manage");
 
-  // The shared dialog is bound to one sale at a time; the row it was opened
-  // from keeps its balance visible while the form is up.
+  // The dialog is bound to one sale at a time; the section's trigger opens it.
   const [paymentSale, setPaymentSale] = useState<SaleSummary | null>(null);
 
   const handleWriteOff = async (sale: SaleSummary) => {
@@ -90,59 +90,54 @@ export function CustomerDebtSheet({ customer, onOpenChange }: DebtSheetProps) {
                 {/* ponytail: sale rows repeat inside the one data table; fine
                     for a handful of unpaid sales — swap in a sales table if
                     lists grow */}
-                <dl className="grid grid-cols-[0.3fr_0.7fr] items-baseline gap-x-6 gap-y-4 text-sm">
-                  <dt className="text-muted-foreground">Customer</dt>
-                  <dd className="text-foreground">
+                <DataList>
+                  <DataList.Item label="Customer">
                     {customer.customerName ?? "Deleted customer"}
-                  </dd>
+                  </DataList.Item>
 
-                  <dt className="text-muted-foreground">Total owed</dt>
-                  <dd className="tabular-nums text-foreground">
+                  <DataList.Item label="Total owed" className="tabular-nums">
                     {formatKobo(customer.totalOwedKobo)}
-                  </dd>
+                  </DataList.Item>
 
-                  <dt className="text-muted-foreground">Overdue</dt>
-                  <dd className="tabular-nums text-foreground">
+                  <DataList.Item label="Overdue" className="tabular-nums">
                     {customer.overdueKobo > 0
                       ? `${formatKobo(customer.overdueKobo)} · ${customer.daysOverdue} ${customer.daysOverdue === 1 ? "day" : "days"} late`
                       : "—"}
-                  </dd>
+                  </DataList.Item>
 
                   {(sales ?? []).map((sale) => (
                     <Fragment key={sale._id}>
-                      <dt className="text-muted-foreground">Date</dt>
-                      <dd className="whitespace-nowrap text-foreground">
+                      <DataList.Item label="Date" className="whitespace-nowrap">
                         {new Date(sale.occurredAt).toLocaleDateString("en-NG", {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
                         })}
-                      </dd>
+                      </DataList.Item>
 
-                      <dt className="text-muted-foreground">Due date</dt>
-                      <dd className="text-foreground">
+                      <DataList.Item label="Due date">
                         {sale.dueDate
                           ? format(parseISO(sale.dueDate), "d MMM yyyy")
                           : "—"}
-                      </dd>
+                      </DataList.Item>
 
-                      <dt className="text-muted-foreground">Status</dt>
-                      <dd>
+                      <DataList.Item label="Status">
                         <SaleStatusBadge status={sale.status} />
-                      </dd>
+                      </DataList.Item>
 
-                      <dt className="text-muted-foreground">Balance due</dt>
-                      <dd className="tabular-nums text-foreground">
+                      <DataList.Item
+                        label="Balance due"
+                        className="tabular-nums"
+                      >
                         {formatKobo(sale.outstandingKobo)}
-                      </dd>
+                      </DataList.Item>
 
-                      <dt className="text-muted-foreground">Total</dt>
-                      <dd className="tabular-nums text-foreground">
+                      <DataList.Item label="Total" className="tabular-nums">
                         {formatKobo(sale.totalKobo)}
-                      </dd>
+                      </DataList.Item>
                     </Fragment>
                   ))}
-                </dl>
+                </DataList>
 
                 <Separator />
               </>
@@ -157,20 +152,14 @@ export function CustomerDebtSheet({ customer, onOpenChange }: DebtSheetProps) {
                 sales.map((sale, index) => (
                   <Fragment key={sale._id}>
                     {index > 0 ? <Separator /> : null}
-                    <PaymentLedger
+                    <PaymentHistorySection
                       payments={sale.payments}
                       canManage={canManage}
                       onReverse={handleReverse}
+                      onRecordPayment={() => setPaymentSale(sale)}
                     />
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => setPaymentSale(sale)}
-                      >
-                        Record payment
-                      </Button>
-                      {canManage ? (
+                    {canManage ? (
+                      <div className="flex flex-wrap gap-2">
                         <ConfirmAction
                           title={`Write off ${formatKobo(sale.outstandingKobo)}?`}
                           description="That money stops counting as owed."
@@ -181,8 +170,8 @@ export function CustomerDebtSheet({ customer, onOpenChange }: DebtSheetProps) {
                             Write off
                           </Button>
                         </ConfirmAction>
-                      ) : null}
-                    </div>
+                      </div>
+                    ) : null}
                   </Fragment>
                 ))
               )}
