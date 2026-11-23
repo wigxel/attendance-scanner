@@ -16,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { ConfirmAction } from "@/components/ui/confirm-action";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
-import { track, useTrackOpen } from "@/lib/analytics";
+import { useTrackOpen } from "@/hooks/useTrackOpen";
+import { track } from "@/lib/analytics";
 import { formatKobo } from "@/lib/currency.helpers";
 import { purchaseLineColumns } from "./purchase-line-columns";
 

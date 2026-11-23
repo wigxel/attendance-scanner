@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label";
 import { StepperInput } from "@/components/ui/stepper-input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
-import { track, useTrackOpen } from "@/lib/analytics";
+import { useTrackOpen } from "@/hooks/useTrackOpen";
+import { track } from "@/lib/analytics";
 import type { StockRow } from "./stock-columns";
 
 type BulkAdjustmentDialogProps = {
